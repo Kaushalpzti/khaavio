@@ -1,0 +1,528 @@
+:root {
+    --khaavio-green: #064e3b;
+    --khaavio-ink: #103b32;
+    --khaavio-muted: #737b75;
+    --khaavio-cream: #f7f7ef;
+    --khaavio-white: #fffefa;
+    --khaavio-border: #e2e5db;
+}
+
+.dashboard-shell {
+    min-height: 100vh;
+    color: var(--khaavio-ink);
+    background: var(--khaavio-cream);
+    font-family: Inter, ui-sans-serif, system-ui, -apple-system, sans-serif;
+}
+
+.dashboard-header {
+    min-height: 76px;
+    padding: 14px clamp(20px, 4vw, 56px);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    border-bottom: 1px solid var(--khaavio-border);
+    background: rgba(255, 254, 250, 0.72);
+}
+
+.dashboard-brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 11px;
+    color: var(--khaavio-green);
+    font-size: 24px;
+    font-weight: 750;
+    letter-spacing: -0.8px;
+    text-decoration: none;
+}
+
+.dashboard-brand img {
+    width: 38px;
+    height: 38px;
+    object-fit: contain;
+    border-radius: 9px;
+}
+
+.dashboard-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.workspace-indicator {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: #52675d;
+}
+
+.workspace-indicator-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #31966b;
+}
+
+.signout-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    border: 1px solid var(--khaavio-border);
+    border-radius: 999px;
+    padding: 10px 15px;
+    color: var(--khaavio-green);
+    background: var(--khaavio-white);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.signout-button:disabled {
+    opacity: 0.6;
+    cursor: wait;
+}
+
+.dashboard-main {
+    width: min(1100px, calc(100% - 40px));
+    margin: 0 auto;
+    padding: 48px 0 32px;
+}
+
+.dashboard-eyebrow,
+.section-eyebrow {
+    color: #778177;
+    font-size: 11px;
+    font-weight: 750;
+    letter-spacing: 1.8px;
+}
+
+.dashboard-welcome {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 24px;
+    margin: 22px 0 30px;
+}
+
+.dashboard-welcome h1 {
+    margin: 0;
+    color: #064e3b;
+    font-size: clamp(30px, 4vw, 45px);
+    line-height: 1.15;
+    letter-spacing: -1.6px;
+}
+
+.dashboard-welcome p {
+    margin: 12px 0 0;
+    color: var(--khaavio-muted);
+    font-size: 15px;
+    line-height: 1.7;
+}
+
+.database-badge,
+.saved-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    flex-shrink: 0;
+    color: #176746;
+    font-size: 12px;
+    font-weight: 650;
+}
+
+.restaurant-summary {
+    padding: 25px;
+    border: 1px solid var(--khaavio-border);
+    border-radius: 17px;
+    background: var(--khaavio-white);
+}
+
+.restaurant-summary-top {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.restaurant-avatar,
+.module-icon {
+    display: grid;
+    place-items: center;
+    width: 48px;
+    height: 48px;
+    flex-shrink: 0;
+    color: var(--khaavio-green);
+    border-radius: 12px;
+    background: #e9efe4;
+}
+
+.restaurant-summary-name {
+    min-width: 0;
+    flex: 1;
+}
+
+.restaurant-summary-name>span {
+    color: #788278;
+    font-size: 10px;
+    font-weight: 750;
+    letter-spacing: 1.3px;
+}
+
+.restaurant-summary-name h2 {
+    margin: 5px 0;
+    color: var(--khaavio-ink);
+    font-size: 22px;
+    letter-spacing: -0.5px;
+}
+
+.restaurant-summary-name p {
+    margin: 0;
+    color: var(--khaavio-muted);
+    font-size: 13px;
+    text-transform: capitalize;
+}
+
+.restaurant-details {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 20px;
+    padding-top: 23px;
+    margin-top: 24px;
+    border-top: 1px solid #eaede5;
+}
+
+.restaurant-details>div {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    min-width: 0;
+}
+
+.restaurant-details span {
+    color: var(--khaavio-muted);
+    font-size: 12px;
+}
+
+.restaurant-details strong {
+    color: var(--khaavio-ink);
+    font-size: 13px;
+    font-weight: 650;
+    overflow-wrap: anywhere;
+    text-transform: capitalize;
+}
+
+.restaurant-details .restaurant-email {
+    text-transform: none;
+}
+
+.modules-section {
+    margin-top: 43px;
+}
+
+.modules-heading {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+.modules-heading h2 {
+    margin: 7px 0 0;
+    font-size: 25px;
+    letter-spacing: -0.7px;
+}
+
+.modules-heading>p {
+    max-width: 330px;
+    margin: 0;
+    color: var(--khaavio-muted);
+    font-size: 13px;
+    line-height: 1.6;
+}
+
+.dashboard-module-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 15px;
+}
+
+.dashboard-module {
+    min-width: 0;
+    min-height: 220px;
+    padding: 22px 19px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    border: 1px solid var(--khaavio-border);
+    border-radius: 15px;
+    background: var(--khaavio-white);
+    transition: transform 180ms ease, border-color 180ms ease;
+}
+
+.dashboard-module:hover {
+    transform: translateY(-3px);
+    border-color: #c4d3c4;
+}
+
+.dashboard-module .module-icon {
+    width: 43px;
+    height: 43px;
+    margin-bottom: 16px;
+}
+
+.dashboard-module h3 {
+    margin: 0 0 9px;
+    font-size: 16px;
+    letter-spacing: -0.3px;
+}
+
+.dashboard-module>p {
+    margin: 0 0 20px;
+    color: var(--khaavio-muted);
+    font-size: 12px;
+    line-height: 1.7;
+}
+
+.module-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    margin-top: auto;
+    padding: 6px 9px;
+    color: #777d75;
+    background: #f1f1eb;
+    border-radius: 999px;
+    font-size: 10px;
+    font-weight: 650;
+}
+
+.module-status-live {
+    color: #176746;
+    background: #e9f3e9;
+}
+
+.dashboard-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 15px;
+    margin-top: 31px;
+    padding-top: 19px;
+    border-top: 1px solid var(--khaavio-border);
+    color: var(--khaavio-muted);
+    font-size: 12px;
+}
+
+.dashboard-footer a {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--khaavio-green);
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.dashboard-footer a:hover {
+    text-decoration: underline;
+}
+
+.dashboard-state {
+    margin-top: 28px;
+    padding: 48px 24px;
+    text-align: center;
+    border: 1px solid var(--khaavio-border);
+    border-radius: 17px;
+    background: var(--khaavio-white);
+}
+
+.dashboard-state h2 {
+    margin: 14px 0 8px;
+    font-size: 23px;
+}
+
+.dashboard-state p {
+    max-width: 500px;
+    margin: 0 auto 20px;
+    color: var(--khaavio-muted);
+    font-size: 14px;
+    line-height: 1.7;
+    overflow-wrap: anywhere;
+}
+
+.dashboard-spinner {
+    color: var(--khaavio-green);
+    animation: khaavio-spin 1s linear infinite;
+}
+
+.dashboard-error h2 {
+    color: #9c352b;
+}
+
+.dashboard-primary-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px 18px;
+    color: white;
+    border: 0;
+    border-radius: 999px;
+    background: var(--khaavio-green);
+    font-size: 13px;
+    font-weight: 650;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+@keyframes khaavio-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@media (max-width: 850px) {
+    .dashboard-module-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    .dashboard-welcome {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+}
+
+@media (max-width: 560px) {
+    .dashboard-header {
+        min-height: 68px;
+        padding: 12px 18px;
+    }
+    .dashboard-brand {
+        font-size: 21px;
+    }
+    .dashboard-brand img {
+        width: 34px;
+        height: 34px;
+    }
+    .dashboard-header-actions {
+        gap: 12px;
+    }
+    .workspace-indicator {
+        display: none;
+    }
+    .signout-button {
+        padding: 9px 12px;
+        font-size: 12px;
+    }
+    .dashboard-main {
+        width: calc(100% - 32px);
+        padding-top: 32px;
+    }
+    .dashboard-welcome h1 {
+        font-size: 33px;
+    }
+    .database-badge {
+        font-size: 11px;
+    }
+    .restaurant-summary {
+        padding: 19px;
+    }
+    .restaurant-summary-top {
+        flex-wrap: wrap;
+    }
+    .restaurant-summary-name h2 {
+        font-size: 20px;
+    }
+    .saved-status {
+        margin-left: 63px;
+    }
+    .restaurant-details {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+    .modules-heading {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+    .dashboard-module-grid {
+        gap: 10px;
+    }
+    .dashboard-module {
+        min-height: 225px;
+        padding: 16px 13px;
+    }
+    .dashboard-module h3 {
+        font-size: 14px;
+    }
+    .dashboard-module>p {
+        font-size: 11px;
+    }
+    .dashboard-footer {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+}
+
+.module-action {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 12px;
+    color: #145640;
+    font-size: 11px;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.module-action:hover {
+    text-decoration: underline;
+}
+
+.dashboard-action-error {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin-bottom: 20px;
+    padding: 13px 15px;
+    color: #963f32;
+    border: 1px solid #f0d7d0;
+    border-radius: 11px;
+    background: #fff1ed;
+    font-size: 12px;
+    line-height: 1.6;
+}
+
+.dashboard-action-error span {
+    flex: 1;
+    overflow-wrap: anywhere;
+}
+
+.dashboard-action-error button {
+    border: 0;
+    background: transparent;
+    color: inherit;
+    font-size: 20px;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.menu-publication-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    flex-shrink: 0;
+    padding: 11px 16px;
+    color: #fffefa;
+    border: 0;
+    border-radius: 999px;
+    background: #07513b;
+    font-size: 12px;
+    font-weight: 650;
+    cursor: pointer;
+}
+
+.menu-publication-button:disabled {
+    opacity: 0.6;
+    cursor: wait;
+}
