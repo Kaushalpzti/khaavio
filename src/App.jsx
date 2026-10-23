@@ -13,6 +13,7 @@ const TableQRStudio = lazy(() => import("./pages/TableQRStudio"));
 const OrdersDashboard = lazy(() => import("./pages/OrdersDashboard"));
 const PublicBooking = lazy(() => import("./pages/PublicBooking"));
 const BookingsDashboard = lazy(() => import("./pages/BookingsDashboard"));
+const RestaurantSettings = lazy(() => import("./pages/RestaurantSettings"));
 
 function PageLoader() {
   return (
@@ -95,6 +96,15 @@ export default function App() {
             element={
               <ProtectedRoute>
                 <BookingsDashboard />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/dashboard/settings"
+            element={
+              <ProtectedRoute>
+                <RestaurantSettings />
               </ProtectedRoute>
             }
           />

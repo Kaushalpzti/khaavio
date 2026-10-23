@@ -9,6 +9,7 @@ import {
   LogOut,
   QrCode,
   Store,
+  Settings,
   UtensilsCrossed,
   AlertCircle,
 } from "lucide-react";
@@ -24,6 +25,14 @@ const modules = [
     status: "Saved",
     icon: Store,
   },
+
+  {
+    title: "Restaurant settings",
+    description: "Update your restaurant profile and business details.",
+    status: "Available",
+    icon: Settings,
+  },
+
   {
     title: "Menu manager",
     description: "Add food items, categories, prices and photos.",
@@ -403,6 +412,15 @@ export default function Dashboard() {
 
                       <h3>{module.title}</h3>
                       <p>{module.description}</p>
+
+                      {module.title === "Restaurant settings" && (
+                        <Link
+                          to="/dashboard/settings"
+                          className="module-action"
+                        >
+                          Edit restaurant settings <ArrowUpRight size={14} />
+                        </Link>
+                      )}
 
                       {module.title === "Menu manager" && (
                         <Link to="/dashboard/menu" className="module-action">
