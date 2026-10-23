@@ -4,14 +4,19 @@ import {
   ArrowLeft,
   CalendarDays,
   CheckCircle2,
+  ChevronRight,
+  Clock3,
   Leaf,
   LoaderCircle,
+  MapPin,
   Minus,
   Plus,
   Search,
   ShoppingBag,
+  Sparkles,
   Trash2,
   UtensilsCrossed,
+  X,
 } from "lucide-react";
 
 import { supabase } from "../lib/supabaseClient";
@@ -147,6 +152,7 @@ export default function PublicMenu() {
   const [categoryId, setCategoryId] = useState("all");
 
   const [cart, setCart] = useState([]);
+  const [isCartOpen, setIsCartOpen] = useState(false);
   const [customerName, setCustomerName] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
   const [orderNotes, setOrderNotes] = useState("");
@@ -172,6 +178,7 @@ export default function PublicMenu() {
       setTableContext(null);
       setCategoryId("all");
       setCart([]);
+      setIsCartOpen(false);
       setOrderResult(null);
       setCheckoutError("");
       setSubscriptionAllowsTransactions(null);
@@ -192,6 +199,20 @@ export default function PublicMenu() {
           throw new Error(
             "This menu is not published yet, or the link is incorrect.",
           );
+        }
+
+        // Restaurant logo is optional. If column access/storage is unavailable,
+        // the menu continues to work with a restaurant-name fallback mark.
+        let restaurantLogoUrl = null;
+        try {
+          const { data: logoData, error: logoError } = await supabase
+            .from("restaurants")
+            .select("logo_url")
+            .eq("id", restaurantData.id)
+            .maybeSingle();
+          if (!logoError) restaurantLogoUrl = logoData?.logo_url || null;
+        } catch {
+          // Optional branding must never block ordering or menu browsing.
         }
 
         // This public RPC returns only a boolean. The order RPC independently enforces access server-side.
@@ -255,7 +276,7 @@ export default function PublicMenu() {
 
         if (cancelled) return;
 
-        setRestaurant(restaurantData);
+        setRestaurant({ ...restaurantData, logo_url: restaurantLogoUrl });
         setSubscriptionAllowsTransactions(transactionAccess);
         setAvailabilityNow(Date.now());
 
@@ -297,6 +318,23 @@ export default function PublicMenu() {
     return () => window.clearInterval(intervalId);
   }, []);
 
+  useEffect(() => {
+    if (!isCartOpen) return undefined;
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    function handleEscape(event) {
+      if (event.key === "Escape" && !submitting) setIsCartOpen(false);
+    }
+
+    window.addEventListener("keydown", handleEscape);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", handleEscape);
+    };
+  }, [isCartOpen, submitting]);
+
   const visibleItems = items.filter((item) => {
     const matchesCategory =
       categoryId === "all" || item.category_id === categoryId;
@@ -315,6 +353,8 @@ export default function PublicMenu() {
   );
 
   const cartQuantity = cart.reduce((total, entry) => total + entry.quantity, 0);
+
+  const featuredItem = items.find((item) => item.image_url) || items[0] || null;
 
   const baseOrderingAvailability = getRestaurantAvailability(
     restaurant,
@@ -498,9 +538,12 @@ export default function PublicMenu() {
 
   if (loading) {
     return (
-      <main className="public-menu-state">
-        <LoaderCircle className="public-menu-spinner" size={30} />
-        <p>Loading restaurant menu...</p>
+      <main className="public-menu-page public-menu-loading">
+        <div className="public-menu-loader-mark" aria-hidden="true">
+          <UtensilsCrossed size={24} />
+        </div>
+        <LoaderCircle className="public-menu-spinner" size={28} />
+        <p>Preparing your menu...</p>
       </main>
     );
   }
@@ -508,104 +551,216 @@ export default function PublicMenu() {
   return (
     <main className="public-menu-page">
       <header className="public-menu-header">
-        <Link to="/" className="public-menu-brand">
-          <img src={khaavioIcon} alt="" />
-          <span>Khaavio</span>
-        </Link>
+        <div
+          className="public-menu-brand"
+          aria-label={`${restaurant?.name || "Restaurant"} menu`}
+        >
+          <span className="public-menu-brand-mark" aria-hidden="true">
+            <span className="public-menu-brand-initial">
+              {(restaurant?.name || "R").trim().charAt(0).toUpperCase()}
+            </span>
+            {restaurant?.logo_url && (
+              <img
+                src={restaurant.logo_url}
+                alt=""
+                onError={(event) => {
+                  event.currentTarget.style.opacity = "0";
+                }}
+              />
+            )}
+          </span>
+          <span className="public-menu-brand-copy">
+            <strong>{restaurant.name}</strong>
+            <small>
+              {restaurant.restaurant_type
+                ? restaurant.restaurant_type.replace(/_/g, " ")
+                : "Restaurant menu"}
+            </small>
+          </span>
+        </div>
 
-        <span className="public-menu-label">DIGITAL MENU</span>
+        <div className="public-menu-header-actions">
+          <button
+            type="button"
+            className="public-menu-header-cart"
+            aria-label={`View cart with ${cartQuantity} items`}
+            onClick={() => setIsCartOpen(true)}
+          >
+            <ShoppingBag size={17} />
+            <span>View cart</span>
+            <b>{cartQuantity}</b>
+          </button>
+        </div>
       </header>
 
       {error ? (
         <section className="public-menu-state">
-          <UtensilsCrossed size={34} />
+          <div className="public-menu-state-icon">
+            <UtensilsCrossed size={28} />
+          </div>
+          <span className="public-menu-eyebrow">MENU UNAVAILABLE</span>
           <h1>Menu unavailable</h1>
           <p>{error}</p>
-
           <Link to="/" className="public-menu-button">
             <ArrowLeft size={16} />
-            Back to Khaavio
+            Return home
           </Link>
         </section>
       ) : restaurant ? (
         <>
           <section className="public-menu-hero">
-            <span className="public-menu-eyebrow">
-              {restaurant.restaurant_type
-                ? restaurant.restaurant_type.replace(/_/g, " ")
-                : "RESTAURANT MENU"}
-            </span>
+            <div className="public-menu-hero-copy">
+              <div className="public-menu-hero-kicker">
+                <span className="public-menu-kicker-dot" />
+                {restaurant.restaurant_type
+                  ? restaurant.restaurant_type.replace(/_/g, " ")
+                  : "A PLACE FOR GOOD FOOD"}
+              </div>
 
-            <h1>{restaurant.name}</h1>
+              <h1>Good food, better moments.</h1>
 
-            <p>Explore our menu and discover something delicious.</p>
+              <p className="public-menu-hero-description">
+                Discover something delicious. Browse the menu, choose your
+                favourites, and let the good food moments begin.
+              </p>
 
-            <div
-              className={`public-menu-order-availability ${orderingAvailability.canOrder ? "is-open" : "is-closed"}`}
-              role="status"
-            >
-              <span className="public-menu-order-availability-dot" />
-              <div>
-                <strong>{orderingAvailability.title}</strong>
-                <p>{orderingAvailability.message}</p>
+              <div className="public-menu-hero-facts">
+                {restaurant.address && (
+                  <span>
+                    <MapPin size={15} />
+                    {restaurant.address}
+                  </span>
+                )}
+                {tableContext && (
+                  <span className="public-menu-hero-table">
+                    <UtensilsCrossed size={15} />
+                    Ordering at table {tableContext.table_number}
+                  </span>
+                )}
+              </div>
+
+              <div className="public-menu-hero-actions">
+                <a href="#menu" className="public-menu-primary-link">
+                  Explore menu
+                  <ChevronRight size={17} />
+                </a>
+                <Link
+                  to={`/book/${encodeURIComponent(restaurant.slug)}`}
+                  className="public-menu-secondary-link"
+                >
+                  <CalendarDays size={16} />
+                  Book a table
+                </Link>
+              </div>
+
+              <div className="public-menu-hero-trust">
+                <span className="public-menu-trust-icon">
+                  <CheckCircle2 size={15} />
+                </span>
+                <span>Directly from the restaurant</span>
               </div>
             </div>
 
-            {restaurant.address && (
-              <span className="public-menu-address">{restaurant.address}</span>
-            )}
+            <div className="public-menu-hero-visual">
+              {featuredItem?.image_url ? (
+                <img
+                  src={featuredItem.image_url}
+                  alt={featuredItem.name}
+                  className="public-menu-feature-image"
+                />
+              ) : (
+                <div className="public-menu-feature-placeholder">
+                  <UtensilsCrossed size={42} />
+                  <span>Fresh moments start here</span>
+                </div>
+              )}
+              <div className="public-menu-feature-floating">
+                <span className="public-menu-feature-label">
+                  <Sparkles size={12} />
+                  ON THE MENU
+                </span>
+                <strong>{featuredItem?.name || "Something delicious"}</strong>
+                {featuredItem && (
+                  <span className="public-menu-feature-price">
+                    {formatPrice(featuredItem.price)}
+                  </span>
+                )}
+              </div>
+              <div className="public-menu-hero-orb public-menu-hero-orb-one" />
+              <div className="public-menu-hero-orb public-menu-hero-orb-two" />
+            </div>
 
-            {tableContext && (
-              <span className="public-menu-table-badge">
-                Table: <strong>{tableContext.table_number}</strong>
-              </span>
-            )}
-
-            <span className="public-menu-live">
-              <span />
-              Official digital menu
-            </span>
-
-            <Link
-              to={`/book/${encodeURIComponent(restaurant.slug)}`}
-              className="public-menu-book-link"
-            >
-              <CalendarDays size={16} />
-              Book a table
-            </Link>
+            <div className="public-menu-hero-status">
+              <div
+                className={`public-menu-order-availability ${orderingAvailability.canOrder ? "is-open" : "is-closed"}`}
+                role="status"
+              >
+                <span className="public-menu-order-availability-dot" />
+                <div className="public-menu-availability-copy">
+                  <strong>{orderingAvailability.title}</strong>
+                  <p>{orderingAvailability.message}</p>
+                </div>
+                <Clock3 size={17} className="public-menu-status-clock" />
+              </div>
+            </div>
           </section>
 
-          <section className="public-menu-content">
+          <section className="public-menu-content" id="menu">
             <div className="public-menu-heading">
               <div>
-                <span className="public-menu-eyebrow">MADE FOR YOU</span>
-                <h2>Explore the menu</h2>
+                <span className="public-menu-eyebrow">
+                  A LITTLE SOMETHING FOR EVERYONE
+                </span>
+                <h2>What are you craving?</h2>
+                <p>Good food starts with a good choice.</p>
               </div>
 
-              <span className="public-menu-count">
-                {items.length} available {items.length === 1 ? "item" : "items"}
+              <div className="public-menu-count-card">
+                <span>{items.length}</span>
+                <small>
+                  {items.length === 1 ? "dish available" : "dishes available"}
+                </small>
+              </div>
+            </div>
+
+            <div className="public-menu-tools">
+              <label className="public-menu-search">
+                <Search size={18} />
+                <input
+                  type="search"
+                  placeholder="Search dishes..."
+                  value={search}
+                  onChange={(event) => setSearch(event.target.value)}
+                  aria-label="Search menu items"
+                />
+                {search && (
+                  <button
+                    type="button"
+                    className="public-menu-clear-search"
+                    onClick={() => setSearch("")}
+                    aria-label="Clear search"
+                  >
+                    ×
+                  </button>
+                )}
+              </label>
+              <span className="public-menu-tools-note">
+                <Leaf size={14} />
+                Freshly listed by the restaurant
               </span>
             </div>
 
-            <label className="public-menu-search">
-              <Search size={18} />
-
-              <input
-                type="search"
-                placeholder="Search dishes..."
-                value={search}
-                onChange={(event) => setSearch(event.target.value)}
-                aria-label="Search menu items"
-              />
-            </label>
-
-            <div className="public-menu-categories">
+            <div
+              className="public-menu-categories"
+              aria-label="Menu categories"
+            >
               <button
                 type="button"
                 className={categoryId === "all" ? "active" : ""}
                 onClick={() => setCategoryId("all")}
+                aria-pressed={categoryId === "all"}
               >
-                All items
+                All dishes
               </button>
 
               {categories.map((category) => (
@@ -614,6 +769,7 @@ export default function PublicMenu() {
                   key={category.id}
                   className={categoryId === category.id ? "active" : ""}
                   onClick={() => setCategoryId(category.id)}
+                  aria-pressed={categoryId === category.id}
                 >
                   {category.name}
                 </button>
@@ -630,25 +786,30 @@ export default function PublicMenu() {
 
                   return (
                     <article className="public-menu-card" key={item.id}>
-                      {item.image_url ? (
-                        <img
-                          className="public-menu-image"
-                          src={item.image_url}
-                          alt={item.name}
-                          loading="lazy"
-                        />
-                      ) : (
-                        <div className="public-menu-image public-menu-image-empty">
-                          <UtensilsCrossed size={28} />
-                          <span>Made with care</span>
-                        </div>
-                      )}
+                      <div className="public-menu-card-media">
+                        {item.image_url ? (
+                          <img
+                            className="public-menu-image"
+                            src={item.image_url}
+                            alt={item.name}
+                            loading="lazy"
+                          />
+                        ) : (
+                          <div className="public-menu-image-empty">
+                            <UtensilsCrossed size={25} />
+                            <span>Made with care</span>
+                          </div>
+                        )}
+                        <span className="public-menu-item-available">
+                          <span />
+                          Available
+                        </span>
+                      </div>
 
                       <div className="public-menu-card-body">
                         <span className="public-menu-item-category">
-                          {category?.name || "Our menu"}
+                          {category?.name || "From our kitchen"}
                         </span>
-
                         <h3>{item.name}</h3>
 
                         {item.description && (
@@ -659,52 +820,41 @@ export default function PublicMenu() {
 
                         <div className="public-menu-item-footer">
                           <strong>{formatPrice(item.price)}</strong>
-
-                          <span>
-                            <Leaf size={14} />
-                            Available
-                          </span>
-                        </div>
-
-                        {cartEntry ? (
-                          <div className="public-menu-add-controls">
+                          {cartEntry ? (
+                            <div className="public-menu-add-controls">
+                              <button
+                                type="button"
+                                aria-label={`Remove one ${item.name}`}
+                                onClick={() => changeQuantity(item.id, -1)}
+                              >
+                                <Minus size={14} />
+                              </button>
+                              <strong>{cartEntry.quantity}</strong>
+                              <button
+                                type="button"
+                                aria-label={`Add one ${item.name}`}
+                                onClick={() => changeQuantity(item.id, 1)}
+                                disabled={cartEntry.quantity >= 20}
+                              >
+                                <Plus size={14} />
+                              </button>
+                            </div>
+                          ) : (
                             <button
                               type="button"
-                              aria-label={`Remove one ${item.name}`}
-                              onClick={() => changeQuantity(item.id, -1)}
-                            >
-                              <Minus size={15} />
-                            </button>
-
-                            <strong>{cartEntry.quantity}</strong>
-
-                            <button
-                              type="button"
-                              aria-label={`Add one ${item.name}`}
-                              onClick={() => changeQuantity(item.id, 1)}
-                              disabled={cartEntry.quantity >= 20}
-                            >
-                              <Plus size={15} />
-                            </button>
-
-                            <button
-                              type="button"
-                              className="public-menu-add-more"
+                              className="public-menu-add-button"
                               onClick={() => addToCart(item)}
-                              disabled={cartEntry.quantity >= 20}
+                              aria-label={`Add ${item.name} to order`}
                             >
-                              Add more
+                              <Plus size={16} />
+                              Add
                             </button>
-                          </div>
-                        ) : (
-                          <button
-                            type="button"
-                            className="public-menu-add-button"
-                            onClick={() => addToCart(item)}
-                          >
-                            <Plus size={16} />
-                            Add to order
-                          </button>
+                          )}
+                        </div>
+                        {cartEntry && (
+                          <span className="public-menu-quantity-hint">
+                            {cartEntry.quantity} in your cart
+                          </span>
                         )}
                       </div>
                     </article>
@@ -713,246 +863,368 @@ export default function PublicMenu() {
               </div>
             ) : (
               <div className="public-menu-empty">
-                <UtensilsCrossed size={28} />
+                <div className="public-menu-empty-icon">
+                  <Search size={24} />
+                </div>
                 <h3>No dishes found</h3>
-
                 <p>
                   {items.length
-                    ? "Try another search or category."
+                    ? "Try another search or choose a different category."
                     : "This restaurant has no available dishes yet."}
                 </p>
+                {(search || categoryId !== "all") && (
+                  <button
+                    type="button"
+                    className="public-menu-reset-filters"
+                    onClick={() => {
+                      setSearch("");
+                      setCategoryId("all");
+                    }}
+                  >
+                    Clear filters
+                  </button>
+                )}
               </div>
             )}
           </section>
 
-          <section className="public-order-section" id="your-order">
-            <div className="public-order-heading">
-              <div>
-                <span className="public-menu-eyebrow">YOUR SELECTION</span>
-                <h2>Your order</h2>
-              </div>
-
-              <span className="public-order-count">
-                <ShoppingBag size={15} />
-                {cartQuantity} {cartQuantity === 1 ? "item" : "items"}
-              </span>
-            </div>
-
-            {orderResult ? (
-              <div className="public-order-success" role="status">
-                <div className="public-order-success-icon">
-                  <CheckCircle2 size={30} />
+          {isCartOpen && (
+            <div
+              className="public-cart-backdrop"
+              role="presentation"
+              onMouseDown={(event) => {
+                if (event.target === event.currentTarget && !submitting) {
+                  setIsCartOpen(false);
+                }
+              }}
+            >
+              <section
+                className="public-order-section public-cart-drawer"
+                id="your-order"
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="public-cart-heading"
+                tabIndex={-1}
+              >
+                <div className="public-cart-drawer-topbar">
+                  <span className="public-menu-eyebrow">YOUR SELECTION</span>
+                  <button
+                    type="button"
+                    className="public-cart-drawer-close"
+                    aria-label="Close cart"
+                    onClick={() => setIsCartOpen(false)}
+                    disabled={submitting}
+                  >
+                    <X size={19} />
+                  </button>
                 </div>
-
-                <span className="public-menu-eyebrow">ORDER SUBMITTED</span>
-
-                <h3>Thank you, {customerName.trim()}!</h3>
-
-                <p>
-                  Your order was saved successfully. Please share the reference
-                  below with restaurant staff.
-                </p>
-
-                <div className="public-order-reference">
-                  <span>Order reference</span>
-                  <strong>{orderResult.reference}</strong>
-                </div>
-
-                <div className="public-order-confirmed-total">
-                  <span>Confirmed total</span>
-                  <strong>{formatPrice(orderResult.total)}</strong>
-                </div>
-
-                {orderResult.trackingToken ? (
-                  <>
-                    <p className="public-order-pending-note">
-                      Your order is pending. Follow its progress using the
-                      secure tracking link below. Online payment is not
-                      collected by Khaavio yet.
+                <div className="public-order-heading">
+                  <div>
+                    <span className="public-menu-eyebrow">
+                      READY WHEN YOU ARE
+                    </span>
+                    <h2 id="public-cart-heading">Your order</h2>
+                    <p>
+                      Review your selection before sending it to the kitchen.
                     </p>
-
-                    <Link
-                      className="public-order-track-link"
-                      to={`/track/${encodeURIComponent(slug)}/${encodeURIComponent(
-                        orderResult.id,
-                      )}?token=${encodeURIComponent(orderResult.trackingToken)}`}
-                    >
-                      Track my order →
-                    </Link>
-                  </>
-                ) : (
-                  <p className="public-order-pending-note">
-                    Your order was submitted, but a tracking link could not be
-                    generated. Please share your order reference with restaurant
-                    staff and avoid placing the same order again.
-                  </p>
-                )}
-
-                <button
-                  type="button"
-                  className="public-order-submit"
-                  onClick={resetOrderForm}
-                >
-                  Place another order
-                </button>
-              </div>
-            ) : cart.length === 0 ? (
-              <div className="public-order-empty">
-                <ShoppingBag size={27} />
-                <h3>Your cart is empty</h3>
-                <p>Add dishes from the menu above to start an order.</p>
-              </div>
-            ) : (
-              <div className="public-order-layout">
-                <div className="public-order-cart">
-                  {cart.map((entry) => (
-                    <div className="public-order-line" key={entry.id}>
-                      <div className="public-order-line-info">
-                        <strong>{entry.name}</strong>
-                        <span>{formatPrice(entry.price)} each</span>
-                      </div>
-
-                      <div className="public-order-line-controls">
-                        <button
-                          type="button"
-                          aria-label={`Decrease ${entry.name} quantity`}
-                          onClick={() => changeQuantity(entry.id, -1)}
-                        >
-                          <Minus size={14} />
-                        </button>
-
-                        <span>{entry.quantity}</span>
-
-                        <button
-                          type="button"
-                          aria-label={`Increase ${entry.name} quantity`}
-                          onClick={() => changeQuantity(entry.id, 1)}
-                          disabled={entry.quantity >= 20}
-                        >
-                          <Plus size={14} />
-                        </button>
-                      </div>
-
-                      <strong className="public-order-line-total">
-                        {formatPrice(Number(entry.price) * entry.quantity)}
-                      </strong>
-
-                      <button
-                        className="public-order-remove"
-                        type="button"
-                        aria-label={`Remove ${entry.name} from cart`}
-                        onClick={() => removeFromCart(entry.id)}
-                      >
-                        <Trash2 size={16} />
-                      </button>
-                    </div>
-                  ))}
-
-                  <div className="public-order-total">
-                    <span>Estimated total</span>
-                    <strong>{formatPrice(cartTotal)}</strong>
                   </div>
 
-                  <p className="public-order-estimate-note">
-                    The final amount is recalculated using current restaurant
-                    menu prices when you submit your order.
-                  </p>
+                  <span className="public-order-count">
+                    <ShoppingBag size={15} />
+                    {cartQuantity} {cartQuantity === 1 ? "item" : "items"}
+                  </span>
                 </div>
 
-                <form className="public-order-form" onSubmit={placeOrder}>
-                  <h3>Customer details</h3>
-
-                  {tableContext ? (
-                    <div className="public-order-table-info">
-                      <CheckCircle2 size={16} />
-                      Ordering for table{" "}
-                      <strong>{tableContext.table_number}</strong>
+                {orderResult ? (
+                  <div className="public-order-success" role="status">
+                    <div className="public-order-success-icon">
+                      <CheckCircle2 size={30} />
                     </div>
-                  ) : (
-                    <div className="public-order-table-warning">
-                      Open this menu by scanning the QR code assigned to your
-                      restaurant table to place an order.
+
+                    <span className="public-menu-eyebrow">ORDER SUBMITTED</span>
+                    <h3>Thank you, {customerName.trim()}!</h3>
+                    <p>
+                      Your order was saved successfully. Please share the
+                      reference below with restaurant staff.
+                    </p>
+
+                    <div className="public-order-reference">
+                      <span>Order reference</span>
+                      <strong>{orderResult.reference}</strong>
                     </div>
-                  )}
 
-                  <label>
-                    <span>Your name *</span>
-                    <input
-                      value={customerName}
-                      onChange={(event) => setCustomerName(event.target.value)}
-                      maxLength={80}
-                      autoComplete="name"
-                      placeholder="Enter your name"
-                      required
-                    />
-                  </label>
-
-                  <label>
-                    <span>Phone number (optional)</span>
-                    <input
-                      type="tel"
-                      value={customerPhone}
-                      onChange={(event) => setCustomerPhone(event.target.value)}
-                      maxLength={25}
-                      autoComplete="tel"
-                      placeholder="Enter phone number"
-                    />
-                  </label>
-
-                  <label>
-                    <span>Special instructions (optional)</span>
-                    <textarea
-                      value={orderNotes}
-                      onChange={(event) => setOrderNotes(event.target.value)}
-                      maxLength={500}
-                      rows={3}
-                      placeholder="e.g. Less spicy, no onion..."
-                    />
-                  </label>
-
-                  {checkoutError && (
-                    <div className="public-order-error" role="alert">
-                      {checkoutError}
+                    <div className="public-order-confirmed-total">
+                      <span>Confirmed total</span>
+                      <strong>{formatPrice(orderResult.total)}</strong>
                     </div>
-                  )}
 
-                  <button
-                    type="submit"
-                    className="public-order-submit"
-                    disabled={
-                      submitting ||
-                      cart.length === 0 ||
-                      !tableContext ||
-                      !orderingAvailability.canOrder
-                    }
-                  >
-                    {submitting ? (
-                      <LoaderCircle className="public-menu-spinner" size={17} />
+                    {orderResult.trackingToken ? (
+                      <>
+                        <p className="public-order-pending-note">
+                          Your order is pending. Follow its progress using the
+                          secure tracking link below. Online payment has not
+                          been collected for this order.
+                        </p>
+
+                        <Link
+                          className="public-order-track-link"
+                          to={`/track/${encodeURIComponent(slug)}/${encodeURIComponent(
+                            orderResult.id,
+                          )}?token=${encodeURIComponent(orderResult.trackingToken)}`}
+                        >
+                          Track my order
+                          <ChevronRight size={17} />
+                        </Link>
+                      </>
                     ) : (
-                      <ShoppingBag size={17} />
+                      <p className="public-order-pending-note">
+                        Your order was submitted, but a tracking link could not
+                        be generated. Please share your order reference with
+                        restaurant staff and avoid placing the same order again.
+                      </p>
                     )}
 
-                    {submitting
-                      ? "Submitting order..."
-                      : `Place order · ${formatPrice(cartTotal)}`}
-                  </button>
+                    <button
+                      type="button"
+                      className="public-order-submit public-order-secondary-submit"
+                      onClick={() => {
+                        resetOrderForm();
+                        setIsCartOpen(false);
+                      }}
+                    >
+                      Place another order
+                    </button>
+                  </div>
+                ) : cart.length === 0 ? (
+                  <div className="public-order-empty">
+                    <div className="public-menu-empty-icon">
+                      <ShoppingBag size={24} />
+                    </div>
+                    <h3>Your cart is waiting</h3>
+                    <p>
+                      Add a dish from the menu above and it will show up here.
+                    </p>
+                    <a
+                      href="#menu"
+                      className="public-menu-secondary-link"
+                      onClick={() => setIsCartOpen(false)}
+                    >
+                      Browse menu
+                      <ChevronRight size={16} />
+                    </a>
+                  </div>
+                ) : (
+                  <div className="public-order-layout">
+                    <div className="public-order-cart">
+                      <div className="public-order-cart-heading">
+                        <h3>Items in your cart</h3>
+                        <button
+                          type="button"
+                          className="public-order-clear"
+                          onClick={() => {
+                            setCart([]);
+                            setCheckoutError("");
+                            setOrderResult(null);
+                          }}
+                        >
+                          Clear cart
+                        </button>
+                      </div>
 
-                  <p className="public-order-disclaimer">
-                    {!orderingAvailability.canOrder
-                      ? orderingAvailability.message
-                      : "No online payment is collected. The restaurant receives this order as pending."}
-                  </p>
-                </form>
-              </div>
-            )}
-          </section>
+                      {cart.map((entry) => (
+                        <div className="public-order-line" key={entry.id}>
+                          <div className="public-order-line-info">
+                            <strong>{entry.name}</strong>
+                            <span>{formatPrice(entry.price)} each</span>
+                          </div>
+
+                          <div className="public-order-line-controls">
+                            <button
+                              type="button"
+                              aria-label={`Decrease ${entry.name} quantity`}
+                              onClick={() => changeQuantity(entry.id, -1)}
+                            >
+                              <Minus size={14} />
+                            </button>
+                            <span>{entry.quantity}</span>
+                            <button
+                              type="button"
+                              aria-label={`Increase ${entry.name} quantity`}
+                              onClick={() => changeQuantity(entry.id, 1)}
+                              disabled={entry.quantity >= 20}
+                            >
+                              <Plus size={14} />
+                            </button>
+                          </div>
+
+                          <strong className="public-order-line-total">
+                            {formatPrice(Number(entry.price) * entry.quantity)}
+                          </strong>
+
+                          <button
+                            className="public-order-remove"
+                            type="button"
+                            aria-label={`Remove ${entry.name} from cart`}
+                            onClick={() => removeFromCart(entry.id)}
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
+                      ))}
+
+                      <div className="public-order-total">
+                        <span>Estimated total</span>
+                        <strong>{formatPrice(cartTotal)}</strong>
+                      </div>
+                      <p className="public-order-estimate-note">
+                        Final amount is recalculated using current menu prices
+                        when you submit your order.
+                      </p>
+                    </div>
+
+                    <form className="public-order-form" onSubmit={placeOrder}>
+                      <h3>Customer details</h3>
+
+                      {tableContext ? (
+                        <div className="public-order-table-info">
+                          <CheckCircle2 size={16} />
+                          <span>
+                            Ordering for table{" "}
+                            <strong>{tableContext.table_number}</strong>
+                          </span>
+                        </div>
+                      ) : (
+                        <div className="public-order-table-warning">
+                          Open this menu by scanning the QR code assigned to
+                          your restaurant table to place an order.
+                        </div>
+                      )}
+
+                      <label>
+                        <span>Your name *</span>
+                        <input
+                          value={customerName}
+                          onChange={(event) =>
+                            setCustomerName(event.target.value)
+                          }
+                          maxLength={80}
+                          autoComplete="name"
+                          placeholder="Enter your name"
+                          required
+                        />
+                      </label>
+
+                      <label>
+                        <span>Phone number (optional)</span>
+                        <input
+                          type="tel"
+                          value={customerPhone}
+                          onChange={(event) =>
+                            setCustomerPhone(event.target.value)
+                          }
+                          maxLength={25}
+                          autoComplete="tel"
+                          placeholder="Enter phone number"
+                        />
+                      </label>
+
+                      <label>
+                        <span>Special instructions (optional)</span>
+                        <textarea
+                          value={orderNotes}
+                          onChange={(event) =>
+                            setOrderNotes(event.target.value)
+                          }
+                          maxLength={500}
+                          rows={3}
+                          placeholder="e.g. Less spicy, no onion..."
+                        />
+                      </label>
+
+                      {checkoutError && (
+                        <div className="public-order-error" role="alert">
+                          {checkoutError}
+                        </div>
+                      )}
+
+                      <button
+                        type="submit"
+                        className="public-order-submit"
+                        disabled={
+                          submitting ||
+                          cart.length === 0 ||
+                          !tableContext ||
+                          !orderingAvailability.canOrder
+                        }
+                      >
+                        {submitting ? (
+                          <LoaderCircle
+                            className="public-menu-spinner"
+                            size={17}
+                          />
+                        ) : (
+                          <ShoppingBag size={17} />
+                        )}
+                        {submitting
+                          ? "Submitting order..."
+                          : `Place order · ${formatPrice(cartTotal)}`}
+                      </button>
+
+                      <p className="public-order-disclaimer">
+                        {!orderingAvailability.canOrder
+                          ? orderingAvailability.message
+                          : "No online payment is collected. The restaurant receives this order as pending."}
+                      </p>
+                    </form>
+                  </div>
+                )}
+              </section>
+            </div>
+          )}
 
           <footer className="public-menu-footer">
-            <img src={khaavioIcon} alt="" />
-            <span>
-              Powered by <strong>Khaavio</strong>
-            </span>
+            <a
+              className="public-menu-footer-brand"
+              href="https://khaavio.vercel.app/"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Khaavio — restaurant ordering platform"
+            >
+              <img src={khaavioIcon} alt="" />
+              <div>
+                <span>
+                  Powered by <strong>Khaavio</strong>
+                </span>
+                <small>A better way to order</small>
+              </div>
+            </a>
           </footer>
+
+          {cart.length > 0 && !orderResult && !isCartOpen && (
+            <button
+              type="button"
+              className="public-menu-sticky-cart"
+              aria-label={`View cart with ${cartQuantity} items, total ${formatPrice(cartTotal)}`}
+              onClick={() => setIsCartOpen(true)}
+            >
+              <span className="public-menu-sticky-cart-count">
+                <ShoppingBag size={17} />
+                {cartQuantity}
+              </span>
+              <span className="public-menu-sticky-cart-label">
+                <small>
+                  {cartQuantity === 1
+                    ? "1 ITEM ADDED"
+                    : `${cartQuantity} ITEMS ADDED`}
+                </small>
+                <strong>{formatPrice(cartTotal)}</strong>
+              </span>
+              <span className="public-menu-sticky-cart-action">
+                View cart
+                <ChevronRight size={17} />
+              </span>
+            </button>
+          )}
         </>
       ) : null}
     </main>

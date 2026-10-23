@@ -1,582 +1,2018 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import QRCode from "qrcode";
 import {
+  ArrowDownToLine,
   ArrowLeft,
+  Check,
   CheckCircle2,
+  ChevronDown,
   Copy,
   Download,
+  ExternalLink,
+  FileImage,
+  FileText,
+  Filter,
+  Info,
   LoaderCircle,
-  Plus,
+  Printer,
   QrCode,
-  Users,
+  RefreshCw,
+  Search,
+  Settings2,
+  ShieldCheck,
+  Store,
+  Table2,
+  X,
 } from "lucide-react";
-import QRCode from "qrcode";
 
 import { supabase } from "../lib/supabaseClient";
+import khaavioIcon from "../assets/icon.png";
 import "./TableQRStudio.css";
 
-function getTableMenuUrl(restaurant, table) {
-  const url = new URL(
-    `/menu/${encodeURIComponent(restaurant.slug)}`,
-    window.location.origin,
-  );
+const QR_OPTIONS = {
+  width: 900,
+  margin: 4,
+  errorCorrectionLevel: "H",
+  color: { dark: "#17120f", light: "#ffffff" },
+};
 
-  url.searchParams.set("table", table.qr_token);
+const CARD_WIDTH = 1080;
+const CARD_HEIGHT = 1620;
+const A4_WIDTH = 1240;
+const A4_HEIGHT = 1754;
 
-  return url.toString();
+const TEMPLATES = [
+  {
+    id: "classic",
+    name: "Classic Elegant",
+    caption: "Ivory · Espresso · Gold",
+    colors: {
+      background: "#fbf1dd",
+      card: "#fffaf1",
+      ink: "#2e1b12",
+      muted: "#725b49",
+      accent: "#a86824",
+      accentText: "#ffffff",
+      border: "#dfc89c",
+      soft: "#f2dfbd",
+      qr: "#ffffff",
+    },
+  },
+  {
+    id: "dark",
+    name: "Premium Dark",
+    caption: "Espresso · Ivory · Gold",
+    colors: {
+      background: "#241813",
+      card: "#302019",
+      ink: "#fff8ea",
+      muted: "#dbc8b4",
+      accent: "#d7aa55",
+      accentText: "#27180f",
+      border: "#6d5039",
+      soft: "#39271f",
+      qr: "#ffffff",
+    },
+  },
+  {
+    id: "indian",
+    name: "Modern Indian",
+    caption: "Cream · Terracotta · Sage",
+    colors: {
+      background: "#fff3e6",
+      card: "#fffbf4",
+      ink: "#512a1c",
+      muted: "#806656",
+      accent: "#bd4825",
+      accentText: "#ffffff",
+      border: "#e9c7a6",
+      soft: "#f8e2cb",
+      qr: "#ffffff",
+    },
+  },
+  {
+    id: "minimal",
+    name: "Minimal Premium",
+    caption: "Soft White · Deep Green",
+    colors: {
+      background: "#f4f5ef",
+      card: "#fffefa",
+      ink: "#163c31",
+      muted: "#5c746a",
+      accent: "#17634c",
+      accentText: "#ffffff",
+      border: "#d3ded2",
+      soft: "#e9f0e7",
+      qr: "#ffffff",
+    },
+  },
+];
+
+const DEFAULT_SETTINGS = {
+  template: "minimal",
+  showLogo: true,
+  showName: true,
+  showTagline: false,
+  showCuisine: true,
+  showTableNumber: true,
+  showPoweredBy: true,
+  ctaText: "SCAN TO ORDER",
+  tableNumberFormat: "table-02",
+};
+
+function getErrorMessage(error, fallback) {
+  return typeof error?.message === "string" && error.message.trim()
+    ? error.message
+    : fallback;
 }
 
-function TableQRCard({ restaurant, table, onToggleActive, updating }) {
-  const [qrImage, setQrImage] = useState("");
-  const [qrError, setQrError] = useState("");
-  const [actionMessage, setActionMessage] = useState("");
+function getPublicAppBase() {
+  const configured = import.meta.env.VITE_PUBLIC_APP_URL?.trim();
+  if (configured) return configured.replace(/\/+$/, "");
 
-  const menuUrl = getTableMenuUrl(restaurant, table);
-
-  useEffect(() => {
-    let active = true;
-
-    async function generateQR() {
-      setQrImage("");
-      setQrError("");
-
-      try {
-        const image = await QRCode.toDataURL(menuUrl, {
-          width: 420,
-          margin: 3,
-          errorCorrectionLevel: "H",
-          color: {
-            dark: "#064e3b",
-            light: "#ffffff",
-          },
-        });
-
-        if (active) setQrImage(image);
-      } catch (err) {
-        if (active) {
-          setQrError(
-            err?.message || "QR generation failed. Try refreshing the page.",
-          );
-        }
-      }
+  if (typeof window !== "undefined") {
+    const host = window.location.hostname;
+    if (host === "localhost" || host === "127.0.0.1") {
+      return "https://khaavio.vercel.app";
     }
+    return window.location.origin.replace(/\/+$/, "");
+  }
 
-    generateQR();
+  return "https://khaavio.vercel.app";
+}
 
-    return () => {
-      active = false;
+function getPublicMenuUrl(restaurant, table) {
+  if (
+    !restaurant?.slug ||
+    !table?.qr_token ||
+    table.restaurant_id !== restaurant.id
+  )
+    return "";
+  const base = getPublicAppBase();
+  return `${base}/menu/${encodeURIComponent(restaurant.slug)}?table=${encodeURIComponent(table.qr_token)}`;
+}
+
+function getInitials(name) {
+  const words = String(name || "Restaurant")
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean);
+  return words.length > 1
+    ? `${words[0][0]}${words[1][0]}`.toUpperCase()
+    : String(words[0] || "R")
+        .slice(0, 2)
+        .toUpperCase();
+}
+
+function getTableNumberParts(value, format = "table-02") {
+  const raw = String(value ?? "").trim() || "?";
+  const match = raw.match(/\d+/);
+  if (!match) {
+    return {
+      label: format === "number" ? "" : "TABLE",
+      value: raw.slice(0, 14),
+      full: raw,
     };
-  }, [menuUrl]);
-
-  function downloadQR() {
-    if (!qrImage || !table.is_active) return;
-
-    const safeTableName = table.table_number.replace(/[^a-z0-9_-]/gi, "-");
-
-    const link = document.createElement("a");
-    link.href = qrImage;
-    link.download = `${restaurant.slug}-table-${safeTableName}-qr.png`;
-
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-
-    setActionMessage("QR code download started.");
   }
 
-  async function copyLink() {
-    if (!table.is_active) return;
+  const digits = match[0];
+  const numeric = String(Number(digits));
+  if (format === "number") {
+    return { label: "", value: numeric, full: numeric };
+  }
+  if (format === "table-1") {
+    return { label: "TABLE", value: numeric, full: `TABLE ${numeric}` };
+  }
 
-    setActionMessage("");
+  const padded = digits.length >= 2 ? digits : digits.padStart(2, "0");
+  return { label: "TABLE", value: padded, full: `TABLE ${padded}` };
+}
 
-    try {
-      await navigator.clipboard.writeText(menuUrl);
-      setActionMessage("Table menu link copied.");
-    } catch {
-      setActionMessage(`Clipboard unavailable. Menu link: ${menuUrl}`);
+function safeFilename(value) {
+  return (
+    String(value || "table")
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "") || "table"
+  );
+}
+
+function roundedRect(
+  ctx,
+  x,
+  y,
+  width,
+  height,
+  radius,
+  fill,
+  stroke,
+  lineWidth = 1,
+) {
+  const r = Math.min(radius, width / 2, height / 2);
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + width - r, y);
+  ctx.quadraticCurveTo(x + width, y, x + width, y + r);
+  ctx.lineTo(x + width, y + height - r);
+  ctx.quadraticCurveTo(x + width, y + height, x + width - r, y + height);
+  ctx.lineTo(x + r, y + height);
+  ctx.quadraticCurveTo(x, y + height, x, y + height - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  if (fill) {
+    ctx.fillStyle = fill;
+    ctx.fill();
+  }
+  if (stroke) {
+    ctx.lineWidth = lineWidth;
+    ctx.strokeStyle = stroke;
+    ctx.stroke();
+  }
+}
+
+function wrapCanvasText(ctx, text, maxWidth, maxLines = 2) {
+  const words = String(text || "")
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean);
+  if (!words.length) return [];
+  const lines = [];
+  let current = "";
+
+  for (const word of words) {
+    const candidate = current ? `${current} ${word}` : word;
+    if (ctx.measureText(candidate).width <= maxWidth || !current) {
+      current = candidate;
+    } else {
+      lines.push(current);
+      current = word;
+      if (lines.length === maxLines - 1) break;
     }
   }
+  if (current && lines.length < maxLines) lines.push(current);
+
+  const joinedCount = lines.join(" ").split(/\s+/).filter(Boolean).length;
+  if (joinedCount < words.length && lines.length) {
+    let last = lines[lines.length - 1];
+    while (last && ctx.measureText(`${last}…`).width > maxWidth) {
+      last = last.slice(0, -1).trimEnd();
+    }
+    lines[lines.length - 1] = `${last}…`;
+  }
+  return lines;
+}
+
+function safeLoadImage(src) {
+  return new Promise((resolve) => {
+    if (!src) {
+      resolve(null);
+      return;
+    }
+    const image = new Image();
+    image.crossOrigin = "anonymous";
+    image.onload = () => resolve(image);
+    image.onerror = () => resolve(null);
+    image.src = src;
+  });
+}
+
+function drawLeaf(ctx, x, y, rotation, palette) {
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.rotate(rotation);
+  ctx.globalAlpha = 0.58;
+  ctx.strokeStyle = palette.border;
+  ctx.lineWidth = 3;
+  for (let i = 0; i < 3; i += 1) {
+    ctx.beginPath();
+    ctx.ellipse(i * 17, -i * 18, 13, 31, -0.55, 0, Math.PI * 2);
+    ctx.fillStyle = palette.soft;
+    ctx.fill();
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
+async function drawBrandedCard(restaurant, table, settings, qrDataUrl) {
+  const template =
+    TEMPLATES.find((item) => item.id === settings.template) || TEMPLATES[0];
+  const colors = template.colors;
+  const canvas = document.createElement("canvas");
+  canvas.width = CARD_WIDTH;
+  canvas.height = CARD_HEIGHT;
+  const ctx = canvas.getContext("2d");
+  if (!ctx)
+    throw new Error("Your browser could not create the QR card canvas.");
+
+  ctx.fillStyle = colors.background;
+  ctx.fillRect(0, 0, CARD_WIDTH, CARD_HEIGHT);
+  roundedRect(
+    ctx,
+    32,
+    32,
+    CARD_WIDTH - 64,
+    CARD_HEIGHT - 64,
+    44,
+    colors.background,
+    colors.border,
+    5,
+  );
+  roundedRect(
+    ctx,
+    55,
+    55,
+    CARD_WIDTH - 110,
+    CARD_HEIGHT - 110,
+    34,
+    null,
+    colors.border,
+    2,
+  );
+
+  if (settings.template === "indian") {
+    drawLeaf(ctx, 105, 108, 0.15, colors);
+    drawLeaf(ctx, CARD_WIDTH - 110, 110, Math.PI - 0.15, colors);
+    drawLeaf(ctx, 102, CARD_HEIGHT - 120, -0.35, colors);
+    drawLeaf(ctx, CARD_WIDTH - 110, CARD_HEIGHT - 120, Math.PI + 0.35, colors);
+  } else if (settings.template === "classic") {
+    ctx.fillStyle = colors.border;
+    for (const [x, y] of [
+      [100, 105],
+      [980, 105],
+      [100, 1510],
+      [980, 1510],
+    ]) {
+      ctx.beginPath();
+      ctx.arc(x, y, 7, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  } else if (settings.template === "dark") {
+    ctx.strokeStyle = colors.accent;
+    ctx.globalAlpha = 0.65;
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(185, 105);
+    ctx.lineTo(360, 105);
+    ctx.moveTo(720, 105);
+    ctx.lineTo(895, 105);
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+  }
+
+  const center = CARD_WIDTH / 2;
+  const initials = getInitials(restaurant?.name);
+  let headerBottom = 170;
+
+  if (settings.showLogo) {
+    const logo = await safeLoadImage(restaurant?.logo_url || "");
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(center, 150, 66, 0, Math.PI * 2);
+    ctx.fillStyle = colors.card;
+    ctx.fill();
+    ctx.lineWidth = 4;
+    ctx.strokeStyle = colors.accent;
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(center, 150, 58, 0, Math.PI * 2);
+    ctx.clip();
+    if (logo) {
+      const side = Math.min(logo.width, logo.height);
+      const sx = (logo.width - side) / 2;
+      const sy = (logo.height - side) / 2;
+      ctx.drawImage(logo, sx, sy, side, side, center - 54, 96, 108, 108);
+    } else {
+      ctx.fillStyle = colors.accent;
+      ctx.fillRect(center - 62, 88, 124, 124);
+      ctx.fillStyle = colors.accentText;
+      ctx.font = "700 45px Arial, sans-serif";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(initials, center, 151);
+    }
+    ctx.restore();
+    headerBottom = 245;
+  }
+
+  if (settings.showName) {
+    ctx.fillStyle = colors.ink;
+    ctx.font = "600 58px Georgia, 'Times New Roman', serif";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "alphabetic";
+    const lines = wrapCanvasText(ctx, restaurant?.name || "Restaurant", 900, 2);
+    let y = headerBottom + 44;
+    for (const line of lines) {
+      ctx.fillText(line, center, y);
+      y += 64;
+    }
+    headerBottom = y - 30;
+  }
+
+  if (settings.showCuisine && restaurant?.restaurant_type) {
+    ctx.fillStyle = colors.muted;
+    ctx.font = "500 25px Arial, sans-serif";
+    const cuisine = String(restaurant.restaurant_type).replace(/_/g, " ");
+    const lines = wrapCanvasText(ctx, cuisine, 880, 1);
+    ctx.textAlign = "center";
+    ctx.fillText(lines[0] || cuisine, center, Math.max(350, headerBottom + 20));
+    headerBottom = Math.max(350, headerBottom + 26);
+  }
+
+  if (settings.showTagline && restaurant?.description) {
+    ctx.fillStyle = colors.muted;
+    ctx.font = "400 21px Arial, sans-serif";
+    ctx.textAlign = "center";
+    const lines = wrapCanvasText(ctx, restaurant.description, 830, 1);
+    ctx.fillText(
+      lines[0] || "",
+      center,
+      Math.min(416, Math.max(390, headerBottom + 30)),
+    );
+  }
+
+  roundedRect(ctx, 135, 455, 810, 690, 32, colors.qr, colors.border, 3);
+  const qrImage = await safeLoadImage(qrDataUrl);
+  if (!qrImage)
+    throw new Error(
+      "The QR code could not be loaded for export. Please retry.",
+    );
+  ctx.imageSmoothingEnabled = false;
+  ctx.drawImage(qrImage, 225, 485, 630, 630);
+  ctx.imageSmoothingEnabled = true;
+
+  roundedRect(ctx, 180, 1175, 720, 82, 28, colors.accent, null);
+  ctx.fillStyle = colors.accentText;
+  ctx.font = "800 30px Arial, sans-serif";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  const cta =
+    String(settings.ctaText || "SCAN TO ORDER")
+      .trim()
+      .slice(0, 35) || "SCAN TO ORDER";
+  ctx.fillText(cta.toLocaleUpperCase(), center, 1216);
+
+  ctx.fillStyle = colors.muted;
+  ctx.font = "600 20px Arial, sans-serif";
+  ctx.fillText("VIEW MENU  •  PLACE ORDER", center, 1290);
+
+  if (settings.showTableNumber) {
+    const tableParts = getTableNumberParts(
+      table?.table_number,
+      settings.tableNumberFormat,
+    );
+    if (tableParts.label) {
+      ctx.fillStyle = colors.muted;
+      ctx.font = "800 25px Arial, sans-serif";
+      ctx.fillText(tableParts.label, center, 1370);
+    }
+    ctx.fillStyle = colors.ink;
+    ctx.font = "700 92px Georgia, 'Times New Roman', serif";
+    ctx.fillText(tableParts.value, center, 1460);
+  }
+
+  if (settings.showPoweredBy) {
+    const brandImage = await safeLoadImage(khaavioIcon);
+    if (brandImage) {
+      ctx.drawImage(brandImage, center - 110, 1500, 48, 48);
+      ctx.textAlign = "left";
+      ctx.fillStyle = colors.ink;
+      ctx.font = "700 30px Arial, sans-serif";
+      ctx.fillText("Powered by Khaavio", center - 50, 1533);
+    } else {
+      ctx.textAlign = "center";
+      ctx.fillStyle = colors.muted;
+      ctx.font = "700 25px Arial, sans-serif";
+      ctx.fillText("Powered by Khaavio", center, 1533);
+    }
+  }
+
+  return canvas;
+}
+
+function canvasToBlob(canvas, type = "image/png", quality) {
+  return new Promise((resolve, reject) => {
+    canvas.toBlob(
+      (blob) =>
+        blob
+          ? resolve(blob)
+          : reject(new Error("The browser could not export this file.")),
+      type,
+      quality,
+    );
+  });
+}
+
+async function canvasToJpegBytes(canvas, quality = 0.94) {
+  const blob = await canvasToBlob(canvas, "image/jpeg", quality);
+  return new Uint8Array(await blob.arrayBuffer());
+}
+
+function ascii(value) {
+  return new TextEncoder().encode(value);
+}
+
+function concatBytes(parts) {
+  const length = parts.reduce((sum, part) => sum + part.length, 0);
+  const result = new Uint8Array(length);
+  let offset = 0;
+  for (const part of parts) {
+    result.set(part, offset);
+    offset += part.length;
+  }
+  return result;
+}
+
+function makePdfFromJpegPages(pages) {
+  if (!pages.length)
+    throw new Error("Select at least one table to create a PDF.");
+  const objectBodies = [];
+  const pageObjectIds = pages.map((_, index) => 3 + index * 3);
+  const kids = pageObjectIds.map((id) => `${id} 0 R`).join(" ");
+  objectBodies.push(ascii("<< /Type /Catalog /Pages 2 0 R >>"));
+  objectBodies.push(
+    ascii(`<< /Type /Pages /Kids [${kids}] /Count ${pages.length} >>`),
+  );
+
+  pages.forEach((page, index) => {
+    const pageObjectId = 3 + index * 3;
+    const imageObjectId = pageObjectId + 1;
+    const contentObjectId = pageObjectId + 2;
+    const pageWidth = page.pageWidth || 595.28;
+    const pageHeight = page.pageHeight || 841.89;
+    const contents = ascii(
+      `q\n${pageWidth} 0 0 ${pageHeight} 0 0 cm\n/Im0 Do\nQ`,
+    );
+
+    objectBodies.push(
+      ascii(
+        `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${pageWidth} ${pageHeight}] ` +
+          `/Resources << /XObject << /Im0 ${imageObjectId} 0 R >> >> ` +
+          `/Contents ${contentObjectId} 0 R >>`,
+      ),
+    );
+    objectBodies.push(
+      concatBytes([
+        ascii(
+          `<< /Type /XObject /Subtype /Image /Width ${page.width} /Height ${page.height} ` +
+            `/ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${page.jpegBytes.length} >>\nstream\n`,
+        ),
+        page.jpegBytes,
+        ascii("\nendstream"),
+      ]),
+    );
+    objectBodies.push(
+      concatBytes([
+        ascii(`<< /Length ${contents.length} >>\nstream\n`),
+        contents,
+        ascii("\nendstream"),
+      ]),
+    );
+  });
+
+  const header = ascii("%PDF-1.4\n%Khaavio QR Studio\n");
+  const fullObjects = objectBodies.map((body, index) =>
+    concatBytes([ascii(`${index + 1} 0 obj\n`), body, ascii("\nendobj\n")]),
+  );
+  const offsets = [];
+  let byteOffset = header.length;
+  for (const object of fullObjects) {
+    offsets.push(byteOffset);
+    byteOffset += object.length;
+  }
+
+  const xrefOffset = byteOffset;
+  const xrefLines = ["0000000000 65535 f "];
+  for (const offset of offsets)
+    xrefLines.push(`${String(offset).padStart(10, "0")} 00000 n `);
+  const xref = ascii(
+    `xref\n0 ${fullObjects.length + 1}\n${xrefLines.join("\n")}\n` +
+      `trailer\n<< /Size ${fullObjects.length + 1} /Root 1 0 R >>\n` +
+      `startxref\n${xrefOffset}\n%%EOF`,
+  );
+  return concatBytes([header, ...fullObjects, xref]);
+}
+
+function downloadBlob(blob, filename) {
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = filename;
+  anchor.style.display = "none";
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+  window.setTimeout(() => URL.revokeObjectURL(url), 1500);
+}
+
+async function createA4PageForCard(cardCanvas) {
+  const canvas = document.createElement("canvas");
+  canvas.width = A4_WIDTH;
+  canvas.height = A4_HEIGHT;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) throw new Error("Unable to create an A4 export page.");
+  ctx.fillStyle = "#ffffff";
+  ctx.fillRect(0, 0, A4_WIDTH, A4_HEIGHT);
+  const width = 1040;
+  const height = 1560;
+  ctx.drawImage(
+    cardCanvas,
+    (A4_WIDTH - width) / 2,
+    (A4_HEIGHT - height) / 2,
+    width,
+    height,
+  );
+  return canvas;
+}
+
+async function createBulkA4Pages(tables, restaurant, settings, onProgress) {
+  const pages = [];
+  const perPage = 9;
+  const cardWidth = 340;
+  const cardHeight = 510;
+  const horizontalGap = 40;
+  const verticalGap = 25;
+  const startX = (A4_WIDTH - (cardWidth * 3 + horizontalGap * 2)) / 2;
+  const startY = (A4_HEIGHT - (cardHeight * 3 + verticalGap * 2)) / 2;
+
+  for (let offset = 0; offset < tables.length; offset += perPage) {
+    const canvas = document.createElement("canvas");
+    canvas.width = A4_WIDTH;
+    canvas.height = A4_HEIGHT;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) throw new Error("Unable to create an A4 export page.");
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, A4_WIDTH, A4_HEIGHT);
+
+    const pageTables = tables.slice(offset, offset + perPage);
+    for (let index = 0; index < pageTables.length; index += 1) {
+      const table = pageTables[index];
+      const qrDataUrl = await QRCode.toDataURL(
+        getPublicMenuUrl(restaurant, table),
+        QR_OPTIONS,
+      );
+      const cardCanvas = await drawBrandedCard(
+        restaurant,
+        table,
+        settings,
+        qrDataUrl,
+      );
+      const column = index % 3;
+      const row = Math.floor(index / 3);
+      const x = startX + column * (cardWidth + horizontalGap);
+      const y = startY + row * (cardHeight + verticalGap);
+      ctx.drawImage(cardCanvas, x, y, cardWidth, cardHeight);
+      onProgress?.(Math.min(offset + index + 1, tables.length), tables.length);
+      await new Promise((resolve) => window.setTimeout(resolve, 0));
+    }
+
+    pages.push({
+      jpegBytes: await canvasToJpegBytes(canvas, 0.92),
+      width: A4_WIDTH,
+      height: A4_HEIGHT,
+      pageWidth: 595.28,
+      pageHeight: 841.89,
+    });
+  }
+  return pages;
+}
+
+function SettingToggle({ label, checked, onChange, description }) {
+  return (
+    <label className="tqr-toggle-row">
+      <span className="tqr-toggle-copy">
+        <span>{label}</span>
+        {description ? <small>{description}</small> : null}
+      </span>
+      <input
+        type="checkbox"
+        checked={checked}
+        onChange={(event) => onChange(event.target.checked)}
+      />
+      <span className="tqr-switch" aria-hidden="true" />
+    </label>
+  );
+}
+
+function QRCardPreview({
+  restaurant,
+  table,
+  settings,
+  qrDataUrl,
+  logoFailed,
+  onLogoError,
+}) {
+  const theme =
+    TEMPLATES.find((item) => item.id === settings.template) || TEMPLATES[0];
+  const tableParts = getTableNumberParts(
+    table?.table_number,
+    settings.tableNumberFormat,
+  );
 
   return (
-    <article className="table-qr-card">
-      <div className="table-qr-card-header">
-        <div className="table-qr-icon">
-          <QrCode size={20} />
+    <div className={`tqr-card tqr-card--${theme.id}`}>
+      <div className="tqr-card-decor tqr-card-decor--one" />
+      <div className="tqr-card-decor tqr-card-decor--two" />
+      {settings.showLogo ? (
+        <div className="tqr-card-logo">
+          {restaurant?.logo_url && !logoFailed ? (
+            <img
+              src={restaurant.logo_url}
+              alt={`${restaurant.name} logo`}
+              onError={onLogoError}
+            />
+          ) : (
+            <span>{getInitials(restaurant?.name)}</span>
+          )}
         </div>
-
-        <div className="table-qr-title">
-          <h3>{table.table_number}</h3>
-          <p>
-            <Users size={13} />
-            Capacity: {table.capacity}
-          </p>
-        </div>
-
-        <span
-          className={`table-qr-active ${
-            table.is_active ? "" : "table-qr-inactive"
-          }`}
-        >
-          <span />
-          {table.is_active ? "Active" : "Inactive"}
-        </span>
-      </div>
-
-      <div className="table-qr-image-frame">
-        {qrError ? (
-          <p className="table-qr-error">{qrError}</p>
-        ) : qrImage ? (
+      ) : null}
+      {settings.showName ? (
+        <h3 className="tqr-card-restaurant-name">
+          {restaurant?.name || "Restaurant"}
+        </h3>
+      ) : null}
+      {settings.showCuisine && restaurant?.restaurant_type ? (
+        <p className="tqr-card-cuisine">
+          {String(restaurant.restaurant_type).replace(/_/g, " ")}
+        </p>
+      ) : null}
+      {settings.showTagline && restaurant?.description ? (
+        <p className="tqr-card-tagline">{restaurant.description}</p>
+      ) : null}
+      <div className="tqr-card-qr-shell">
+        {qrDataUrl ? (
           <img
-            src={qrImage}
-            alt={`QR code for ${restaurant.name}, ${table.table_number}`}
+            className="tqr-card-qr"
+            src={qrDataUrl}
+            alt={`QR code for ${restaurant?.name}, ${table?.table_number}`}
           />
         ) : (
-          <LoaderCircle className="table-qr-spinner" size={28} />
+          <div className="tqr-card-qr-placeholder">
+            <QrCode size={52} />
+            <span>QR preview unavailable</span>
+          </div>
         )}
       </div>
-
-      {!table.is_active && (
-        <div className="table-qr-inactive-note">
-          This table is inactive. Its QR will not validate until the table is
-          activated again.
-        </div>
-      )}
-
-      <div className="table-qr-card-actions">
-        <button
-          type="button"
-          className="table-qr-primary"
-          onClick={downloadQR}
-          disabled={!qrImage || !table.is_active}
-        >
-          <Download size={15} />
-          Download PNG
-        </button>
-
-        <button
-          type="button"
-          className="table-qr-secondary"
-          onClick={copyLink}
-          disabled={!table.is_active}
-        >
-          <Copy size={15} />
-          Copy link
-        </button>
-
-        <button
-          type="button"
-          className="table-qr-secondary table-qr-toggle"
-          onClick={() => onToggleActive(table)}
-          disabled={updating}
-        >
-          {updating ? (
-            <LoaderCircle size={15} className="table-qr-spinner" />
-          ) : (
-            <CheckCircle2 size={15} />
-          )}
-
-          {updating
-            ? "Updating..."
-            : table.is_active
-              ? "Deactivate table"
-              : "Activate table"}
-        </button>
+      <div className="tqr-card-cta">
+        {String(settings.ctaText || "SCAN TO ORDER")
+          .trim()
+          .slice(0, 35)
+          .toUpperCase() || "SCAN TO ORDER"}
       </div>
-
-      {actionMessage && (
-        <p className="table-qr-card-message" role="status">
-          {actionMessage}
-        </p>
-      )}
-
-      <p className="table-qr-card-note">
-        {table.is_active
-          ? "Scan to open the restaurant menu for this table."
-          : "Activate this table before downloading or sharing its QR."}
+      <p className="tqr-card-actions-line">
+        VIEW MENU <span>•</span> PLACE ORDER
       </p>
-    </article>
+      {settings.showTableNumber ? (
+        <div className="tqr-card-table-number">
+          {tableParts.label ? <span>{tableParts.label}</span> : null}
+          <strong>{tableParts.value}</strong>
+        </div>
+      ) : null}
+      {settings.showPoweredBy ? (
+        <div className="tqr-card-powered">
+          <span>Powered by</span>
+          <img src={khaavioIcon} alt="" />
+          <strong>Khaavio</strong>
+        </div>
+      ) : null}
+    </div>
   );
 }
 
 export default function TableQRStudio() {
   const navigate = useNavigate();
-
-  const [restaurant, setRestaurant] = useState(null);
+  const [restaurants, setRestaurants] = useState([]);
+  const [restaurantId, setRestaurantId] = useState("");
   const [tables, setTables] = useState([]);
-
-  const [tableNumber, setTableNumber] = useState("");
-  const [capacity, setCapacity] = useState("4");
-
+  const [activeTableId, setActiveTableId] = useState("");
+  const [selectedTableIds, setSelectedTableIds] = useState(() => new Set());
+  const [search, setSearch] = useState("");
+  const [tableFilter, setTableFilter] = useState("all");
+  const [settings, setSettings] = useState(DEFAULT_SETTINGS);
+  const [qrResult, setQrResult] = useState(null);
+  const [qrRefreshVersion, setQrRefreshVersion] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [updatingTableId, setUpdatingTableId] = useState("");
+  const [tablesLoading, setTablesLoading] = useState(false);
+  const [loadError, setLoadError] = useState("");
+  const [notice, setNotice] = useState(null);
+  const [actionBusy, setActionBusy] = useState("");
+  const [bulkProgress, setBulkProgress] = useState(null);
+  const [showLargePreview, setShowLargePreview] = useState(false);
+  const [failedLogoUrl, setFailedLogoUrl] = useState("");
 
-  const [error, setError] = useState("");
-  const [notice, setNotice] = useState("");
+  const restaurant = useMemo(
+    () => restaurants.find((item) => item.id === restaurantId) || null,
+    [restaurants, restaurantId],
+  );
+  const restaurantLogoUrl = restaurant?.logo_url;
+  const logoFailed = Boolean(
+    restaurantLogoUrl && failedLogoUrl === restaurantLogoUrl,
+  );
+  const markLogoFailed = useCallback(() => {
+    if (restaurantLogoUrl) setFailedLogoUrl(restaurantLogoUrl);
+  }, [restaurantLogoUrl]);
+  const restaurantTables = useMemo(
+    () => tables.filter((table) => table.restaurant_id === restaurantId),
+    [tables, restaurantId],
+  );
+  const activeTable = useMemo(
+    () => restaurantTables.find((table) => table.id === activeTableId) || null,
+    [restaurantTables, activeTableId],
+  );
+  const qrTargetUrl = useMemo(
+    () => getPublicMenuUrl(restaurant, activeTable),
+    [restaurant, activeTable],
+  );
+  const qrRequestKey = qrTargetUrl ? `${qrTargetUrl}::${qrRefreshVersion}` : "";
+  const qrDataUrl = qrResult?.key === qrRequestKey ? qrResult.dataUrl : "";
+  const qrLoading = Boolean(qrTargetUrl) && qrResult?.key !== qrRequestKey;
+
+  const tableStats = useMemo(() => {
+    const active = restaurantTables.filter(
+      (table) => table.is_active === true,
+    ).length;
+    const inactive = restaurantTables.length - active;
+    const qrReady = restaurantTables.filter(
+      (table) =>
+        restaurant?.is_published === true &&
+        table.is_active === true &&
+        Boolean(table.qr_token),
+    ).length;
+    return {
+      total: restaurantTables.length,
+      active,
+      inactive,
+      qrReady,
+      pending: restaurantTables.length - qrReady,
+    };
+  }, [restaurantTables, restaurant]);
+
+  const canExport = useCallback(
+    (table) =>
+      Boolean(
+        restaurant?.is_published &&
+        table?.restaurant_id === restaurant.id &&
+        table?.is_active === true &&
+        table?.qr_token,
+      ),
+    [restaurant],
+  );
+
+  const filteredTables = useMemo(() => {
+    const query = search.trim().toLowerCase();
+    return restaurantTables.filter((table) => {
+      const matchSearch =
+        !query ||
+        String(table.table_number || "")
+          .toLowerCase()
+          .includes(query);
+      const matchStatus =
+        tableFilter === "all" ||
+        (tableFilter === "active" && table.is_active === true) ||
+        (tableFilter === "inactive" && table.is_active !== true) ||
+        (tableFilter === "needs-qr" &&
+          (!table.qr_token || restaurant?.is_published !== true));
+      return matchSearch && matchStatus;
+    });
+  }, [restaurantTables, search, tableFilter, restaurant]);
+
+  const selectedTables = useMemo(
+    () =>
+      restaurantTables.filter(
+        (table) => selectedTableIds.has(table.id) && canExport(table),
+      ),
+    [restaurantTables, selectedTableIds, canExport],
+  );
 
   useEffect(() => {
     let active = true;
 
-    async function loadTables() {
+    async function loadRestaurants() {
       setLoading(true);
-      setError("");
-
+      setLoadError("");
       try {
         const {
           data: { user },
           error: authError,
         } = await supabase.auth.getUser();
-
         if (authError) throw authError;
-
         if (!user) {
           navigate("/login", { replace: true });
           return;
         }
 
-        const { data: restaurantData, error: restaurantError } = await supabase
+        const { data, error } = await supabase
           .from("restaurants")
-          .select("id, name, slug, is_published")
-          .eq("owner_id", user.id)
-          .maybeSingle();
-
-        if (restaurantError) throw restaurantError;
-
-        if (!restaurantData) {
-          if (active) {
-            setError("No restaurant found. Complete restaurant setup first.");
-          }
-          return;
-        }
-
-        const { data: tableData, error: tableError } = await supabase
-          .from("restaurant_tables")
           .select(
-            "id, restaurant_id, table_number, capacity, qr_token, is_active, created_at",
+            "id, name, slug, restaurant_type, logo_url, description, is_published, created_at",
           )
-          .eq("restaurant_id", restaurantData.id)
+          .eq("owner_id", user.id)
           .order("created_at", { ascending: true });
-
-        if (tableError) throw tableError;
-
+        if (error) throw error;
         if (!active) return;
 
-        setRestaurant(restaurantData);
-        setTables(tableData || []);
-      } catch (err) {
-        if (active) {
-          setError(
-            typeof err?.message === "string"
-              ? err.message
-              : "Could not load your restaurant tables.",
+        const ownedRestaurants = data || [];
+        setRestaurants(ownedRestaurants);
+        setRestaurantId((current) =>
+          ownedRestaurants.some((item) => item.id === current)
+            ? current
+            : ownedRestaurants[0]?.id || "",
+        );
+      } catch (error) {
+        if (active)
+          setLoadError(
+            getErrorMessage(error, "Unable to load your restaurant workspace."),
           );
-        }
       } finally {
         if (active) setLoading(false);
       }
     }
 
-    loadTables();
-
+    loadRestaurants();
     return () => {
       active = false;
     };
   }, [navigate]);
 
-  async function addTable(event) {
-    event.preventDefault();
-    setError("");
-    setNotice("");
+  useEffect(() => {
+    if (!restaurantId) return undefined;
 
-    if (!restaurant || saving) return;
-
-    const number = tableNumber.trim();
-    const seats = Number(capacity);
-
-    if (!number) {
-      setError("Enter a table name or number.");
-      return;
+    let active = true;
+    async function loadTables() {
+      setTablesLoading(true);
+      setLoadError("");
+      try {
+        const allRows = [];
+        const pageSize = 500;
+        let offset = 0;
+        while (true) {
+          const { data, error } = await supabase
+            .from("restaurant_tables")
+            .select(
+              "id, restaurant_id, table_number, capacity, is_active, qr_token",
+            )
+            .eq("restaurant_id", restaurantId)
+            .order("table_number", { ascending: true })
+            .range(offset, offset + pageSize - 1);
+          if (error) throw error;
+          const page = data || [];
+          allRows.push(...page);
+          if (page.length < pageSize) break;
+          offset += pageSize;
+          await new Promise((resolve) => window.setTimeout(resolve, 0));
+        }
+        if (!active) return;
+        setTables(allRows);
+        setActiveTableId((current) =>
+          allRows.some((table) => table.id === current)
+            ? current
+            : (
+                allRows.find((table) => table.is_active && table.qr_token) ||
+                allRows[0]
+              )?.id || "",
+        );
+        setSelectedTableIds(
+          (current) =>
+            new Set(
+              [...current].filter((id) =>
+                allRows.some((table) => table.id === id),
+              ),
+            ),
+        );
+      } catch (error) {
+        if (active) {
+          setTables([]);
+          setLoadError(
+            getErrorMessage(error, "Unable to load this restaurant's tables."),
+          );
+        }
+      } finally {
+        if (active) setTablesLoading(false);
+      }
     }
 
-    if (!Number.isInteger(seats) || seats < 1 || seats > 100) {
-      setError("Capacity must be a whole number between 1 and 100.");
+    loadTables();
+    return () => {
+      active = false;
+    };
+  }, [restaurantId]);
+
+  useEffect(() => {
+    if (!qrTargetUrl) return undefined;
+
+    let active = true;
+    const requestKey = `${qrTargetUrl}::${qrRefreshVersion}`;
+    QRCode.toDataURL(qrTargetUrl, QR_OPTIONS)
+      .then((dataUrl) => {
+        if (active) setQrResult({ key: requestKey, dataUrl });
+      })
+      .catch((error) => {
+        if (active) {
+          setQrResult({ key: requestKey, dataUrl: "" });
+          setNotice({
+            type: "error",
+            text: getErrorMessage(error, "Could not generate the QR preview."),
+          });
+        }
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [qrTargetUrl, qrRefreshVersion]);
+
+  function handleRestaurantChange(nextRestaurantId) {
+    setTables([]);
+    setActiveTableId("");
+    setSelectedTableIds(new Set());
+    setTablesLoading(Boolean(nextRestaurantId));
+    setLoadError("");
+    setNotice(null);
+    setRestaurantId(nextRestaurantId);
+  }
+
+  function updateSetting(key, value) {
+    setSettings((current) => ({ ...current, [key]: value }));
+  }
+
+  function toggleTableSelection(table) {
+    if (!canExport(table)) {
+      setNotice({
+        type: "error",
+        text: !restaurant?.is_published
+          ? "Publish your restaurant before exporting working table QR cards."
+          : table.is_active !== true
+            ? "Inactive tables cannot receive new table orders. Activate the table first."
+            : "This table has no saved QR token. Review the table setup before exporting.",
+      });
       return;
     }
+    setSelectedTableIds((current) => {
+      const next = new Set(current);
+      if (next.has(table.id)) next.delete(table.id);
+      else next.add(table.id);
+      return next;
+    });
+  }
 
-    const duplicate = tables.some(
-      (table) =>
-        table.table_number.trim().toLowerCase() === number.toLowerCase(),
-    );
+  function toggleSelectAllVisible() {
+    const availableIds = filteredTables
+      .filter(canExport)
+      .map((table) => table.id);
+    const allSelected =
+      availableIds.length > 0 &&
+      availableIds.every((id) => selectedTableIds.has(id));
+    setSelectedTableIds((current) => {
+      const next = new Set(current);
+      if (allSelected) availableIds.forEach((id) => next.delete(id));
+      else availableIds.forEach((id) => next.add(id));
+      return next;
+    });
+  }
 
-    if (duplicate) {
-      setError(
-        "This table name already exists. Use a different name or number.",
+  async function getCardCanvas(table) {
+    if (!restaurant)
+      throw new Error("Choose a restaurant before exporting QR cards.");
+    if (!canExport(table)) {
+      throw new Error(
+        !restaurant.is_published
+          ? "Publish your restaurant before exporting working table QR cards."
+          : table?.is_active !== true
+            ? "This table is inactive. Activate it before exporting its QR card."
+            : "This table has no saved QR token. Review the table setup before exporting.",
       );
-      return;
     }
+    const destination = getPublicMenuUrl(restaurant, table);
+    if (!destination)
+      throw new Error("A valid public menu destination could not be created.");
+    const qr = await QRCode.toDataURL(destination, QR_OPTIONS);
+    return drawBrandedCard(restaurant, table, settings, qr);
+  }
 
-    if (!window.crypto?.randomUUID) {
-      setError("Secure QR token generation is unavailable in this browser.");
-      return;
-    }
-
-    setSaving(true);
-
+  async function handleDownloadPng(table) {
+    setActionBusy(`png:${table.id}`);
+    setNotice(null);
     try {
-      const { data, error: insertError } = await supabase
-        .from("restaurant_tables")
-        .insert({
-          restaurant_id: restaurant.id,
-          table_number: number,
-          capacity: seats,
-          qr_token: window.crypto.randomUUID(),
-          is_active: true,
-        })
-        .select(
-          "id, restaurant_id, table_number, capacity, qr_token, is_active, created_at",
-        )
-        .single();
-
-      if (insertError) throw insertError;
-
-      setTables((current) =>
-        [...current, data].sort(
-          (a, b) => new Date(a.created_at || 0) - new Date(b.created_at || 0),
-        ),
+      const canvas = await getCardCanvas(table);
+      const blob = await canvasToBlob(canvas, "image/png");
+      downloadBlob(
+        blob,
+        `khaavio-table-${safeFilename(table.table_number)}.png`,
       );
-
-      setTableNumber("");
-      setCapacity("4");
-      setNotice(`QR code created for ${number}.`);
-    } catch (err) {
-      setError(
-        typeof err?.message === "string"
-          ? err.message
-          : "Unable to save this table.",
-      );
+      setNotice({
+        type: "success",
+        text: `PNG QR card for ${table.table_number} downloaded.`,
+      });
+    } catch (error) {
+      setNotice({
+        type: "error",
+        text: getErrorMessage(error, "Could not download this QR card."),
+      });
     } finally {
-      setSaving(false);
+      setActionBusy("");
     }
   }
 
-  async function toggleTableActive(table) {
-    if (!restaurant || updatingTableId) return;
+  async function handleDownloadPdf(table) {
+    setActionBusy(`pdf:${table.id}`);
+    setNotice(null);
+    try {
+      const card = await getCardCanvas(table);
+      const a4Canvas = await createA4PageForCard(card);
+      const page = {
+        jpegBytes: await canvasToJpegBytes(a4Canvas),
+        width: A4_WIDTH,
+        height: A4_HEIGHT,
+        pageWidth: 595.28,
+        pageHeight: 841.89,
+      };
+      const pdf = makePdfFromJpegPages([page]);
+      downloadBlob(
+        new Blob([pdf], { type: "application/pdf" }),
+        `khaavio-table-${safeFilename(table.table_number)}.pdf`,
+      );
+      setNotice({
+        type: "success",
+        text: `Print-ready PDF for ${table.table_number} downloaded.`,
+      });
+    } catch (error) {
+      setNotice({
+        type: "error",
+        text: getErrorMessage(error, "Could not create the PDF."),
+      });
+    } finally {
+      setActionBusy("");
+    }
+  }
 
-    if (
-      table.is_active &&
-      !window.confirm(
-        `Deactivate ${table.table_number}? Its table QR will no longer validate.`,
-      )
-    ) {
+  async function handlePrint(table) {
+    const printWindow = window.open("", "_blank", "width=900,height=1100");
+    if (!printWindow) {
+      setNotice({
+        type: "error",
+        text: "The print preview popup was blocked. Allow popups for this page and try again.",
+      });
       return;
     }
 
-    setError("");
-    setNotice("");
-    setUpdatingTableId(table.id);
+    printWindow.document.open();
+    printWindow.document.write(
+      "<!doctype html><html><head><title>Khaavio Table QR</title><style>body{margin:0;padding:12mm;display:flex;justify-content:center;align-items:center;background:#fff}img{display:block;max-height:270mm;max-width:100%;object-fit:contain}@page{size:A4;margin:8mm}@media print{body{padding:0}}</style></head><body><p>Preparing print preview…</p></body></html>",
+    );
+    printWindow.document.close();
 
+    setActionBusy(`print:${table.id}`);
     try {
-      const nextActive = !table.is_active;
-
-      const { data, error: updateError } = await supabase
-        .from("restaurant_tables")
-        .update({ is_active: nextActive })
-        .eq("id", table.id)
-        .eq("restaurant_id", restaurant.id)
-        .select(
-          "id, restaurant_id, table_number, capacity, qr_token, is_active, created_at",
-        )
-        .single();
-
-      if (updateError) throw updateError;
-
-      setTables((current) =>
-        current.map((entry) => (entry.id === data.id ? data : entry)),
-      );
-
-      setNotice(
-        nextActive
-          ? `${table.table_number} is active again. Its existing QR will work again.`
-          : `${table.table_number} is inactive. Its existing QR will no longer validate.`,
-      );
-    } catch (err) {
-      setError(
-        typeof err?.message === "string"
-          ? err.message
-          : "Could not update the table.",
-      );
+      const canvas = await getCardCanvas(table);
+      const a4Canvas = await createA4PageForCard(canvas);
+      const imageUrl = a4Canvas.toDataURL("image/png");
+      printWindow.document.body.innerHTML = "";
+      const image = printWindow.document.createElement("img");
+      image.alt = `QR card for ${restaurant?.name || "restaurant"} ${table.table_number}`;
+      image.src = imageUrl;
+      printWindow.document.body.appendChild(image);
+      image.onload = () => {
+        printWindow.focus();
+        printWindow.print();
+      };
+      setNotice({
+        type: "success",
+        text: `Print preview opened for ${table.table_number}.`,
+      });
+    } catch (error) {
+      printWindow.close();
+      setNotice({
+        type: "error",
+        text: getErrorMessage(error, "Could not open the print preview."),
+      });
     } finally {
-      setUpdatingTableId("");
+      setActionBusy("");
+    }
+  }
+
+  async function handleCopyLink(table) {
+    setActionBusy(`copy:${table.id}`);
+    setNotice(null);
+    try {
+      if (!canExport(table))
+        throw new Error(
+          "Only published restaurants with active tables and saved QR tokens can copy a working QR destination.",
+        );
+      const url = getPublicMenuUrl(restaurant, table);
+      if (navigator.clipboard?.writeText && window.isSecureContext) {
+        await navigator.clipboard.writeText(url);
+      } else {
+        const input = document.createElement("textarea");
+        input.value = url;
+        input.setAttribute("readonly", "");
+        input.style.position = "fixed";
+        input.style.opacity = "0";
+        document.body.appendChild(input);
+        input.select();
+        const copied = document.execCommand("copy");
+        input.remove();
+        if (!copied)
+          throw new Error("Clipboard access was denied by this browser.");
+      }
+      setNotice({
+        type: "success",
+        text: `Public QR link for ${table.table_number} copied.`,
+      });
+    } catch (error) {
+      setNotice({
+        type: "error",
+        text: getErrorMessage(error, "Could not copy the table link."),
+      });
+    } finally {
+      setActionBusy("");
+    }
+  }
+
+  async function handleBulkPdf() {
+    if (!selectedTables.length) {
+      setNotice({
+        type: "error",
+        text: "Select at least one active table with a saved QR token.",
+      });
+      return;
+    }
+    setActionBusy("bulk");
+    setNotice(null);
+    setBulkProgress({ completed: 0, total: selectedTables.length });
+    try {
+      const pages = await createBulkA4Pages(
+        selectedTables,
+        restaurant,
+        settings,
+        (completed, total) => setBulkProgress({ completed, total }),
+      );
+      const pdf = makePdfFromJpegPages(pages);
+      downloadBlob(
+        new Blob([pdf], { type: "application/pdf" }),
+        `khaavio-table-qrs-${selectedTables.length}-tables.pdf`,
+      );
+      setNotice({
+        type: "success",
+        text: `Created an A4 PDF with ${selectedTables.length} selected table QR card${selectedTables.length === 1 ? "" : "s"}. Each selected table appears once.`,
+      });
+    } catch (error) {
+      setNotice({
+        type: "error",
+        text: getErrorMessage(error, "Could not create the bulk QR PDF."),
+      });
+    } finally {
+      setActionBusy("");
+      setBulkProgress(null);
     }
   }
 
   if (loading) {
     return (
-      <main className="table-qr-state">
-        <LoaderCircle className="table-qr-spinner" size={30} />
-        <p>Loading your tables...</p>
+      <main className="tqr-state">
+        <LoaderCircle className="tqr-spinner" size={28} />
+        <p>Loading your restaurant QR workspace…</p>
       </main>
     );
   }
 
-  return (
-    <main className="table-qr-page">
-      <header className="table-qr-header">
-        <Link to="/dashboard" className="table-qr-back">
-          <ArrowLeft size={17} />
-          Dashboard
+  if (!restaurants.length && !loadError) {
+    return (
+      <main className="tqr-state">
+        <div className="tqr-state-icon">
+          <Store size={25} />
+        </div>
+        <h1>No restaurant workspace yet</h1>
+        <p>Create your restaurant profile before generating table QR cards.</p>
+        <Link className="tqr-button tqr-button--primary" to="/onboarding">
+          Set up restaurant
         </Link>
+      </main>
+    );
+  }
 
-        <Link to="/dashboard/qr" className="table-qr-header-link">
-          Restaurant QR Studio
-        </Link>
+  const allVisibleSelected =
+    filteredTables.filter(canExport).length > 0 &&
+    filteredTables
+      .filter(canExport)
+      .every((table) => selectedTableIds.has(table.id));
+  const qrIsReady = Boolean(qrDataUrl && activeTable && canExport(activeTable));
+
+  return (
+    <main className="tqr-page">
+      <header className="tqr-page-header">
+        <div className="tqr-heading-wrap">
+          <Link
+            className="tqr-back-link"
+            to="/dashboard"
+            aria-label="Back to dashboard"
+          >
+            <ArrowLeft size={17} /> Dashboard
+          </Link>
+          <div className="tqr-heading-row">
+            <div className="tqr-heading-icon">
+              <QrCode size={24} />
+            </div>
+            <div>
+              <p className="tqr-eyebrow">BRANDED TABLE EXPERIENCE</p>
+              <h1>Table QR Studio</h1>
+              <p className="tqr-subtitle">
+                Create branded QR codes for every restaurant table.
+              </p>
+            </div>
+          </div>
+        </div>
+        {restaurants.length > 1 ? (
+          <label className="tqr-restaurant-picker">
+            <span>Restaurant workspace</span>
+            <span className="tqr-select-wrap">
+              <Store size={16} />
+              <select
+                value={restaurantId}
+                onChange={(event) => handleRestaurantChange(event.target.value)}
+                aria-label="Select restaurant"
+              >
+                {restaurants.map((item) => (
+                  <option key={item.id} value={item.id}>
+                    {item.name}
+                  </option>
+                ))}
+              </select>
+              <ChevronDown size={16} />
+            </span>
+          </label>
+        ) : restaurant ? (
+          <div className="tqr-selected-restaurant">
+            <span className="tqr-restaurant-avatar">
+              {restaurant.logo_url && !logoFailed ? (
+                <img
+                  src={restaurant.logo_url}
+                  alt=""
+                  onError={markLogoFailed}
+                />
+              ) : (
+                getInitials(restaurant.name)
+              )}
+            </span>
+            <span>
+              <strong>{restaurant.name}</strong>
+              <small>
+                {restaurant.is_published
+                  ? "Published restaurant"
+                  : "Not published yet"}
+              </small>
+            </span>
+          </div>
+        ) : null}
       </header>
 
-      <div className="table-qr-container">
-        <div className="table-qr-heading">
-          <span className="table-qr-eyebrow">RESTAURANT WORKSPACE</span>
-
-          <h1>Table QR Codes</h1>
-
-          <p>
-            Create a separate QR code for every table at{" "}
-            <strong>{restaurant?.name || "your restaurant"}</strong>.
-          </p>
+      {loadError ? (
+        <div className="tqr-alert tqr-alert--error" role="alert">
+          <Info size={18} />
+          <div>
+            <strong>We couldn't load the QR workspace.</strong>
+            <p>{loadError}</p>
+            <button type="button" onClick={() => window.location.reload()}>
+              Retry
+            </button>
+          </div>
         </div>
+      ) : null}
 
-        {error && (
-          <div className="table-qr-alert table-qr-alert-error" role="alert">
-            <span>{error}</span>
+      {!loadError && restaurant && !restaurant.is_published ? (
+        <div className="tqr-alert tqr-alert--warning" role="status">
+          <Info size={18} />
+          <div>
+            <strong>Publish your restaurant before printing QR cards.</strong>
+            <p>
+              You can customize the preview now. Export and copy actions stay
+              disabled until public menu links can work for customers.
+            </p>
+          </div>
+          <Link to="/dashboard">Review publishing</Link>
+        </div>
+      ) : null}
+
+      {notice ? (
+        <div
+          className={`tqr-alert ${notice.type === "error" ? "tqr-alert--error" : "tqr-alert--success"}`}
+          role={notice.type === "error" ? "alert" : "status"}
+        >
+          {notice.type === "error" ? (
+            <Info size={18} />
+          ) : (
+            <CheckCircle2 size={18} />
+          )}
+          <p>{notice.text}</p>
+          <button
+            type="button"
+            className="tqr-alert-close"
+            onClick={() => setNotice(null)}
+            aria-label="Dismiss message"
+          >
+            <X size={16} />
+          </button>
+        </div>
+      ) : null}
+
+      <section className="tqr-stats" aria-label="Table QR statistics">
+        <article className="tqr-stat-card">
+          <span className="tqr-stat-icon">
+            <Table2 size={18} />
+          </span>
+          <div>
+            <small>Total tables</small>
+            <strong>{tableStats.total}</strong>
+          </div>
+        </article>
+        <article className="tqr-stat-card">
+          <span className="tqr-stat-icon tqr-stat-icon--green">
+            <CheckCircle2 size={18} />
+          </span>
+          <div>
+            <small>QR ready</small>
+            <strong>{tableStats.qrReady}</strong>
+          </div>
+        </article>
+        <article className="tqr-stat-card">
+          <span className="tqr-stat-icon tqr-stat-icon--amber">
+            <RefreshCw size={18} />
+          </span>
+          <div>
+            <small>Pending setup</small>
+            <strong>{tableStats.pending}</strong>
+          </div>
+        </article>
+        <article className="tqr-stat-card">
+          <span className="tqr-stat-icon tqr-stat-icon--rose">
+            <ShieldCheck size={18} />
+          </span>
+          <div>
+            <small>Inactive tables</small>
+            <strong>{tableStats.inactive}</strong>
+          </div>
+        </article>
+      </section>
+
+      <div className="tqr-workspace">
+        <section className="tqr-panel tqr-table-panel">
+          <div className="tqr-panel-heading">
+            <div>
+              <h2>Your tables</h2>
+              <p>Select a table to preview its unique QR code.</p>
+            </div>
+            <span className="tqr-count-pill">
+              {filteredTables.length} shown
+            </span>
+          </div>
+
+          <div className="tqr-table-tools">
+            <label className="tqr-search">
+              <Search size={17} />
+              <input
+                value={search}
+                onChange={(event) => setSearch(event.target.value)}
+                placeholder="Search tables…"
+                aria-label="Search tables"
+              />
+            </label>
+            <label className="tqr-filter">
+              <Filter size={16} />
+              <select
+                value={tableFilter}
+                onChange={(event) => setTableFilter(event.target.value)}
+                aria-label="Filter tables"
+              >
+                <option value="all">All tables</option>
+                <option value="active">Active</option>
+                <option value="needs-qr">Needs setup</option>
+                <option value="inactive">Inactive</option>
+              </select>
+            </label>
+          </div>
+
+          <div className="tqr-select-all-row">
+            <label>
+              <input
+                type="checkbox"
+                checked={allVisibleSelected}
+                onChange={toggleSelectAllVisible}
+                disabled={!filteredTables.some(canExport)}
+              />
+              <span>Select all ready tables shown</span>
+            </label>
+            <span>{selectedTables.length} selected</span>
+          </div>
+
+          {tablesLoading ? (
+            <div className="tqr-inline-state">
+              <LoaderCircle className="tqr-spinner" size={22} />
+              <span>Loading all tables…</span>
+            </div>
+          ) : tables.length === 0 && !loadError ? (
+            <div className="tqr-inline-state tqr-inline-state--empty">
+              <Table2 size={28} />
+              <strong>No tables found</strong>
+              <span>
+                Add your tables from Table QR Studio / Table Management, then
+                return here.
+              </span>
+              <Link to="/dashboard/settings">Open restaurant settings</Link>
+            </div>
+          ) : filteredTables.length === 0 ? (
+            <div className="tqr-inline-state tqr-inline-state--empty">
+              <Search size={24} />
+              <strong>No matching tables</strong>
+              <span>Try changing your search or filter.</span>
+            </div>
+          ) : (
+            <div className="tqr-table-list">
+              {filteredTables.map((table) => {
+                const isActive = table.is_active === true;
+                const hasToken = Boolean(table.qr_token);
+                const isReady = canExport(table);
+                const isSelected = selectedTableIds.has(table.id);
+                const isPreview = activeTableId === table.id;
+                return (
+                  <article
+                    key={table.id}
+                    className={`tqr-table-row ${isPreview ? "is-preview" : ""} ${!isActive ? "is-inactive" : ""}`}
+                  >
+                    <label className="tqr-table-checkbox">
+                      <input
+                        type="checkbox"
+                        checked={isSelected}
+                        onChange={() => toggleTableSelection(table)}
+                        disabled={!isReady || Boolean(actionBusy === "bulk")}
+                        aria-label={`Select ${table.table_number} for bulk PDF`}
+                      />
+                    </label>
+                    <button
+                      type="button"
+                      className="tqr-table-main"
+                      onClick={() => setActiveTableId(table.id)}
+                      aria-pressed={isPreview}
+                    >
+                      <span className="tqr-mini-qr">
+                        <QrCode size={22} />
+                      </span>
+                      <span className="tqr-table-copy">
+                        <strong>{table.table_number}</strong>
+                        <small>
+                          {table.capacity
+                            ? `${table.capacity} seats`
+                            : "Restaurant table"}
+                        </small>
+                      </span>
+                      <span
+                        className={`tqr-status ${isReady ? "tqr-status--ready" : isActive ? "tqr-status--pending" : "tqr-status--inactive"}`}
+                      >
+                        <span />
+                        {!isActive
+                          ? "Inactive"
+                          : !hasToken
+                            ? "No token"
+                            : !restaurant?.is_published
+                              ? "Unpublished"
+                              : "Ready"}
+                      </span>
+                    </button>
+                    <div className="tqr-row-actions">
+                      <button
+                        type="button"
+                        onClick={() => handleDownloadPng(table)}
+                        disabled={!isReady || Boolean(actionBusy)}
+                        aria-label={`Download PNG for ${table.table_number}`}
+                        title="Download PNG"
+                      >
+                        {actionBusy === `png:${table.id}` ? (
+                          <LoaderCircle className="tqr-spinner" size={16} />
+                        ) : (
+                          <Download size={16} />
+                        )}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleCopyLink(table)}
+                        disabled={!isReady || Boolean(actionBusy)}
+                        aria-label={`Copy QR link for ${table.table_number}`}
+                        title="Copy QR link"
+                      >
+                        {actionBusy === `copy:${table.id}` ? (
+                          <LoaderCircle className="tqr-spinner" size={16} />
+                        ) : (
+                          <Copy size={15} />
+                        )}
+                      </button>
+                    </div>
+                  </article>
+                );
+              })}
+            </div>
+          )}
+
+          <div className="tqr-bulk-card">
+            <div className="tqr-bulk-icon">
+              <FileText size={20} />
+            </div>
+            <div className="tqr-bulk-copy">
+              <strong>Bulk A4 PDF</strong>
+              <span>
+                Up to 9 cards per page; additional pages are added
+                automatically.
+              </span>
+            </div>
             <button
               type="button"
-              aria-label="Dismiss error"
-              onClick={() => setError("")}
+              className="tqr-button tqr-button--primary"
+              onClick={handleBulkPdf}
+              disabled={
+                !selectedTables.length ||
+                Boolean(actionBusy) ||
+                !restaurant?.is_published
+              }
             >
-              ×
-            </button>
-          </div>
-        )}
-
-        {notice && (
-          <div className="table-qr-alert table-qr-alert-success" role="status">
-            <CheckCircle2 size={17} />
-            <span>{notice}</span>
-            <button
-              type="button"
-              aria-label="Dismiss message"
-              onClick={() => setNotice("")}
-            >
-              ×
-            </button>
-          </div>
-        )}
-
-        {restaurant && (
-          <>
-            {!restaurant.is_published && (
-              <div className="table-qr-notice">
-                Your restaurant menu is not published yet. You can prepare table
-                QR codes now, but publish the menu before sharing them with
-                customers. <Link to="/dashboard">Go to dashboard</Link>
-              </div>
-            )}
-
-            {["localhost", "127.0.0.1"].includes(window.location.hostname) && (
-              <div className="table-qr-notice table-qr-notice-warning">
-                These codes currently use a localhost URL. After deploying,
-                generate new QR codes from your public domain before printing.
-              </div>
-            )}
-
-            <section className="table-qr-create-panel">
-              <div className="table-qr-create-icon">
-                <Plus size={22} />
-              </div>
-
-              <div className="table-qr-create-heading">
-                <h2>Add a restaurant table</h2>
-                <p>Every saved table gets its own unique QR token.</p>
-              </div>
-
-              <form className="table-qr-create-form" onSubmit={addTable}>
-                <label className="table-qr-field">
-                  <span>Table name or number</span>
-                  <input
-                    value={tableNumber}
-                    onChange={(event) => setTableNumber(event.target.value)}
-                    placeholder="e.g. Table 1, Window 2"
-                    maxLength={60}
-                    required
-                  />
-                </label>
-
-                <label className="table-qr-field table-qr-capacity-field">
-                  <span>Seating capacity</span>
-                  <input
-                    type="number"
-                    min="1"
-                    max="100"
-                    step="1"
-                    value={capacity}
-                    onChange={(event) => setCapacity(event.target.value)}
-                    required
-                  />
-                </label>
-
-                <button
-                  className="table-qr-primary"
-                  type="submit"
-                  disabled={saving}
-                >
-                  {saving ? (
-                    <LoaderCircle size={16} className="table-qr-spinner" />
-                  ) : (
-                    <Plus size={16} />
-                  )}
-
-                  {saving ? "Saving..." : "Create table QR"}
-                </button>
-              </form>
-            </section>
-
-            <section className="table-qr-list-section">
-              <div className="table-qr-list-heading">
-                <div>
-                  <span className="table-qr-eyebrow">YOUR RESTAURANT</span>
-                  <h2>Saved tables</h2>
-                </div>
-
-                <span className="table-qr-count">
-                  {tables.length} {tables.length === 1 ? "table" : "tables"}
-                </span>
-              </div>
-
-              {tables.length > 0 ? (
-                <div className="table-qr-grid">
-                  {tables.map((table) => (
-                    <TableQRCard
-                      key={table.id}
-                      restaurant={restaurant}
-                      table={table}
-                      onToggleActive={toggleTableActive}
-                      updating={updatingTableId === table.id}
-                    />
-                  ))}
-                </div>
+              {actionBusy === "bulk" ? (
+                <>
+                  <LoaderCircle className="tqr-spinner" size={16} />{" "}
+                  {bulkProgress
+                    ? `${bulkProgress.completed}/${bulkProgress.total}`
+                    : "Preparing"}
+                </>
               ) : (
-                <div className="table-qr-empty">
-                  <QrCode size={34} />
-                  <h3>No tables added yet</h3>
-                  <p>
-                    Create your first table above to generate its unique menu QR
-                    code.
-                  </p>
+                <>
+                  <ArrowDownToLine size={16} /> Export
+                </>
+              )}
+            </button>
+          </div>
+          {bulkProgress ? (
+            <div className="tqr-progress-wrap">
+              <div className="tqr-progress-label">
+                <span>Creating QR cards…</span>
+                <strong>
+                  {bulkProgress.completed} / {bulkProgress.total}
+                </strong>
+              </div>
+              <div className="tqr-progress">
+                <span
+                  style={{
+                    width: `${(bulkProgress.completed / Math.max(1, bulkProgress.total)) * 100}%`,
+                  }}
+                />
+              </div>
+            </div>
+          ) : null}
+        </section>
+
+        <section className="tqr-panel tqr-design-panel">
+          <div className="tqr-panel-heading">
+            <div>
+              <h2>Customize your QR card</h2>
+              <p>Changes update the preview and exports immediately.</p>
+            </div>
+            <span className="tqr-live-pill">
+              <span /> Live preview
+            </span>
+          </div>
+
+          <div
+            className="tqr-template-grid"
+            role="group"
+            aria-label="QR card template"
+          >
+            {TEMPLATES.map((template) => (
+              <button
+                key={template.id}
+                type="button"
+                className={`tqr-template-option tqr-template-option--${template.id} ${settings.template === template.id ? "is-selected" : ""}`}
+                onClick={() => updateSetting("template", template.id)}
+                aria-pressed={settings.template === template.id}
+              >
+                <span className="tqr-template-swatch">
+                  <span className="tqr-template-logo" />
+                  <span className="tqr-template-qr" />
+                  <span className="tqr-template-line" />
+                  <span className="tqr-template-number">03</span>
+                </span>
+                <strong>{template.name}</strong>
+                <small>{template.caption}</small>
+                {settings.template === template.id ? (
+                  <span className="tqr-template-check">
+                    <Check size={13} />
+                  </span>
+                ) : null}
+              </button>
+            ))}
+          </div>
+
+          <div className="tqr-customize-grid">
+            <div className="tqr-customize-card">
+              <div className="tqr-subheading">
+                <Settings2 size={17} />
+                <h3>Card content</h3>
+              </div>
+              <SettingToggle
+                label="Restaurant logo"
+                checked={settings.showLogo}
+                onChange={(value) => updateSetting("showLogo", value)}
+                description={
+                  restaurant?.logo_url
+                    ? "Uses the saved restaurant logo"
+                    : "Shows restaurant initials until a logo is uploaded"
+                }
+              />
+              <SettingToggle
+                label="Restaurant name"
+                checked={settings.showName}
+                onChange={(value) => updateSetting("showName", value)}
+              />
+              <SettingToggle
+                label="Tagline / description"
+                checked={settings.showTagline}
+                onChange={(value) => updateSetting("showTagline", value)}
+                description={
+                  restaurant?.description
+                    ? "Uses the saved restaurant description"
+                    : "No description is saved yet"
+                }
+              />
+              <SettingToggle
+                label="Cuisine type"
+                checked={settings.showCuisine}
+                onChange={(value) => updateSetting("showCuisine", value)}
+              />
+              <SettingToggle
+                label="Table number"
+                checked={settings.showTableNumber}
+                onChange={(value) => updateSetting("showTableNumber", value)}
+              />
+              <SettingToggle
+                label="Powered by Khaavio"
+                checked={settings.showPoweredBy}
+                onChange={(value) => updateSetting("showPoweredBy", value)}
+              />
+            </div>
+            <div className="tqr-customize-card">
+              <div className="tqr-subheading">
+                <Settings2 size={17} />
+                <h3>Style & format</h3>
+              </div>
+              <label className="tqr-field">
+                <span>Call-to-action text</span>
+                <input
+                  value={settings.ctaText}
+                  maxLength={35}
+                  onChange={(event) =>
+                    updateSetting("ctaText", event.target.value)
+                  }
+                  placeholder="SCAN TO ORDER"
+                />
+              </label>
+              <label className="tqr-field">
+                <span>Table number format</span>
+                <select
+                  value={settings.tableNumberFormat}
+                  onChange={(event) =>
+                    updateSetting("tableNumberFormat", event.target.value)
+                  }
+                >
+                  <option value="table-02">TABLE 03</option>
+                  <option value="number">03</option>
+                  <option value="table-1">TABLE 3</option>
+                </select>
+              </label>
+              <div className="tqr-export-note">
+                <ShieldCheck size={17} />
+                <p>
+                  QR destinations use each table's saved token. No database
+                  records or tokens are created while previewing.
+                </p>
+              </div>
+              <div className="tqr-format-pills">
+                <span>PNG · 1080 × 1620</span>
+                <span>PDF · A4 print page</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="tqr-preview-heading">
+            <div>
+              <h3>Live preview</h3>
+              <p>
+                {activeTable
+                  ? `Preview for ${activeTable.table_number}`
+                  : "Select a table to preview its code"}
+              </p>
+            </div>
+            <button
+              type="button"
+              className="tqr-icon-button"
+              onClick={() => {
+                setNotice(null);
+                setQrRefreshVersion((version) => version + 1);
+              }}
+              disabled={!qrTargetUrl || qrLoading}
+              aria-label="Refresh QR preview"
+              title="Refresh preview"
+            >
+              <RefreshCw size={17} />
+            </button>
+          </div>
+
+          <div className="tqr-preview-layout">
+            <div className="tqr-preview-stage">
+              {qrLoading ? (
+                <div className="tqr-preview-loading">
+                  <LoaderCircle className="tqr-spinner" size={24} />
+                  <span>Generating secure QR preview…</span>
+                </div>
+              ) : activeTable ? (
+                <QRCardPreview
+                  restaurant={restaurant}
+                  table={activeTable}
+                  settings={settings}
+                  qrDataUrl={qrTargetUrl ? qrDataUrl : ""}
+                  logoFailed={logoFailed}
+                  onLogoError={markLogoFailed}
+                />
+              ) : (
+                <div className="tqr-preview-empty">
+                  <QrCode size={32} />
+                  <span>Select a table to begin</span>
                 </div>
               )}
-            </section>
-          </>
-        )}
+            </div>
+            <div className="tqr-download-options">
+              <div className="tqr-download-copy">
+                <span className="tqr-download-option-icon">
+                  <FileImage size={19} />
+                </span>
+                <span>
+                  <strong>Download as PNG</strong>
+                  <small>High-resolution branded card</small>
+                </span>
+              </div>
+              <button
+                type="button"
+                aria-label="Download selected table card as PNG"
+                onClick={() => activeTable && handleDownloadPng(activeTable)}
+                disabled={!activeTable || !qrIsReady || Boolean(actionBusy)}
+              >
+                <Download size={18} />
+              </button>
+
+              <div className="tqr-download-copy">
+                <span className="tqr-download-option-icon tqr-download-option-icon--pdf">
+                  <FileText size={19} />
+                </span>
+                <span>
+                  <strong>Download as PDF</strong>
+                  <small>A4 page, print ready</small>
+                </span>
+              </div>
+              <button
+                type="button"
+                aria-label="Download selected table card as PDF"
+                onClick={() => activeTable && handleDownloadPdf(activeTable)}
+                disabled={!activeTable || !qrIsReady || Boolean(actionBusy)}
+              >
+                <Download size={18} />
+              </button>
+
+              <div className="tqr-download-copy">
+                <span className="tqr-download-option-icon tqr-download-option-icon--print">
+                  <Printer size={19} />
+                </span>
+                <span>
+                  <strong>Print directly</strong>
+                  <small>Open a print-ready page</small>
+                </span>
+              </div>
+              <button
+                type="button"
+                aria-label="Print selected table card"
+                onClick={() => activeTable && handlePrint(activeTable)}
+                disabled={!activeTable || !qrIsReady || Boolean(actionBusy)}
+              >
+                <Printer size={17} />
+              </button>
+
+              <div className="tqr-download-copy">
+                <span className="tqr-download-option-icon tqr-download-option-icon--link">
+                  <Copy size={19} />
+                </span>
+                <span>
+                  <strong>Copy QR link</strong>
+                  <small>Public menu + this table</small>
+                </span>
+              </div>
+              <button
+                type="button"
+                aria-label="Copy selected table QR link"
+                onClick={() => activeTable && handleCopyLink(activeTable)}
+                disabled={!activeTable || !qrIsReady || Boolean(actionBusy)}
+              >
+                <Copy size={17} />
+              </button>
+
+              <button
+                type="button"
+                className="tqr-full-preview-button"
+                onClick={() => setShowLargePreview(true)}
+                disabled={!activeTable || !qrDataUrl}
+              >
+                <ExternalLink size={16} /> View larger preview
+              </button>
+              {activeTable && qrIsReady ? (
+                <a
+                  className="tqr-open-menu-link"
+                  href={qrTargetUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  <ExternalLink size={14} /> Test public table link
+                </a>
+              ) : (
+                <p className="tqr-export-disabled-note">
+                  Exports unlock when the restaurant is published and the
+                  selected table is active with a saved QR token.
+                </p>
+              )}
+            </div>
+          </div>
+        </section>
       </div>
+
+      <footer className="tqr-page-footer">
+        <img src={khaavioIcon} alt="" />
+        <span>
+          Powered by <strong>Khaavio</strong>
+        </span>
+        <span className="tqr-footer-separator">·</span>
+        <span>Branded for {restaurant?.name || "your restaurant"}</span>
+      </footer>
+
+      {showLargePreview && activeTable ? (
+        <div
+          className="tqr-modal-backdrop"
+          role="presentation"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget)
+              setShowLargePreview(false);
+          }}
+        >
+          <section
+            className="tqr-preview-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="tqr-modal-title"
+          >
+            <div className="tqr-modal-heading">
+              <div>
+                <h2 id="tqr-modal-title">Live QR card preview</h2>
+                <p>
+                  {activeTable.table_number} · {restaurant?.name}
+                </p>
+              </div>
+              <button
+                type="button"
+                className="tqr-icon-button"
+                onClick={() => setShowLargePreview(false)}
+                aria-label="Close large preview"
+              >
+                <X size={18} />
+              </button>
+            </div>
+            <div className="tqr-large-card-stage">
+              <QRCardPreview
+                restaurant={restaurant}
+                table={activeTable}
+                settings={settings}
+                qrDataUrl={qrTargetUrl ? qrDataUrl : ""}
+                logoFailed={logoFailed}
+                onLogoError={markLogoFailed}
+              />
+            </div>
+            <div className="tqr-modal-actions">
+              <button
+                type="button"
+                className="tqr-button tqr-button--secondary"
+                onClick={() => setShowLargePreview(false)}
+              >
+                Close preview
+              </button>
+              <button
+                type="button"
+                className="tqr-button tqr-button--primary"
+                onClick={() => handleDownloadPng(activeTable)}
+                disabled={!qrIsReady || Boolean(actionBusy)}
+              >
+                <Download size={16} /> Download PNG
+              </button>
+            </div>
+          </section>
+        </div>
+      ) : null}
     </main>
   );
 }
