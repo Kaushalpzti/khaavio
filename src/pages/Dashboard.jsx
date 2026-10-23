@@ -3,9 +3,11 @@ import { Link, useNavigate } from "react-router-dom";
 import {
   ArrowUpRight,
   CalendarDays,
+  ChefHat,
   BarChart3,
   CheckCircle2,
   ClipboardList,
+  CreditCard,
   LoaderCircle,
   LogOut,
   QrCode,
@@ -33,10 +35,11 @@ const modules = [
     status: "Available",
     icon: Settings,
   },
-  
+
   {
     title: "Analytics",
-    description: "Track completed order value, popular dishes and upcoming bookings.",
+    description:
+      "Track completed order value, popular dishes and upcoming bookings.",
     status: "Available",
     icon: BarChart3,
   },
@@ -71,6 +74,18 @@ const modules = [
     description: "View incoming orders and manage kitchen progress.",
     status: "Available",
     icon: ClipboardList,
+  },
+  {
+    title: "Kitchen Display",
+    description: "View active orders, kitchen timers and preparation progress.",
+    status: "Available",
+    icon: ChefHat,
+  },
+  {
+    title: "Subscription & plan",
+    description: "View your current plan, trial status and access dates.",
+    status: "Available",
+    icon: CreditCard,
   },
 ];
 
@@ -261,7 +276,7 @@ export default function Dashboard() {
           <section className="dashboard-state">
             <LoaderCircle className="dashboard-spinner" size={30} />
             <h2>Loading your workspace...</h2>
-            <p>Fetching your restaurant details from Supabase.</p>
+            <p>Fetching your restaurant details from Supabase.</p>{" "}
           </section>
         ) : loadError ? (
           <section className="dashboard-state dashboard-error">
@@ -292,7 +307,7 @@ export default function Dashboard() {
                   onClick={() => setActionError("")}
                   aria-label="Dismiss error"
                 >
-                  ×
+                  Ã—
                 </button>
               </div>
             )}
@@ -430,7 +445,10 @@ export default function Dashboard() {
                       )}
 
                       {module.title === "Analytics" && (
-                        <Link to="/dashboard/analytics" className="module-action">
+                        <Link
+                          to="/dashboard/analytics"
+                          className="module-action"
+                        >
                           View analytics <ArrowUpRight size={14} />
                         </Link>
                       )}
@@ -467,7 +485,22 @@ export default function Dashboard() {
 
                       {module.title === "Orders" && (
                         <Link to="/dashboard/orders" className="module-action">
-                          Manage orders <ArrowUpRight size={14} />
+                          Manage orders <ArrowUpRight size={14} />{" "}
+                        </Link>
+                      )}
+
+                      {module.title === "Kitchen Display" && (
+                        <Link to="/dashboard/kitchen" className="module-action">
+                          Open kitchen display <ArrowUpRight size={14} />
+                        </Link>
+                      )}
+
+                      {module.title === "Subscription & plan" && (
+                        <Link
+                          to="/dashboard/subscription"
+                          className="module-action"
+                        >
+                          View subscription <ArrowUpRight size={14} />
                         </Link>
                       )}
 

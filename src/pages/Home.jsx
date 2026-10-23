@@ -27,7 +27,7 @@ import "./Home.css";
 /* Add actual Khaavio contact details here before public launch. */
 const BRAND_CONTACT = {
   email: "khaavioapp@gmail.com",
-  instagram: "https://www.instagram.com/your-official-handle/",
+  instagram: "",
   linkedin: "",
   youtube: "",
   facebook: "",
@@ -44,86 +44,68 @@ const features = [
   {
     number: "01",
     label: "DIGITAL MENU",
-    title: "A menu that feels like your brand.",
+    title: "Your menu, always up to date.",
     description:
-      "Showcase your dishes, photos, prices, categories and customizations in a beautiful mobile-friendly menu.",
+      "Show dishes, photos, prices and categories in a mobile-friendly menu you can manage from your restaurant workspace.",
     icon: UtensilsCrossed,
   },
   {
     number: "02",
-    label: "SMART QR",
-    title: "One scan. A better experience.",
+    label: "QR ORDERING",
+    title: "From table scan to kitchen.",
     description:
-      "Create a QR code for your restaurant or individual tables. Update your menu without printing it again.",
+      "Give every table its own QR code so guests can browse the menu and place orders without downloading an app.",
     icon: QrCode,
   },
   {
     number: "03",
     label: "TABLE BOOKINGS",
-    title: "Make room for every guest.",
+    title: "Keep every reservation organised.",
     description:
-      "Keep reservation requests, guest information and booking confirmations organised in one place.",
+      "Receive booking requests, review guest details, manage confirmations and see reservations in one clear workspace.",
     icon: CalendarCheck,
   },
   {
     number: "04",
-    label: "ONE WORKSPACE",
-    title: "Everything, in its right place.",
+    label: "KITCHEN + INSIGHTS",
+    title: "Know what needs attention.",
     description:
-      "Manage your restaurant profile, menus, QR codes and subscription from one dedicated dashboard.",
+      "Follow order progress in the Kitchen Display and use receipts and basic analytics to keep daily operations moving.",
     icon: BarChart3,
   },
 ];
 
 const plans = [
   {
-    name: "Free",
-    price: "0",
-    description: "A simple start for your digital journey.",
-    features: [
-      "Digital restaurant menu",
-      "Basic menu QR code",
-      "Restaurant profile",
-      "One restaurant outlet",
-    ],
-    cta: "Start for free",
-  },
-  {
     name: "Starter",
-    price: "299",
-    description: "For businesses ready to stand out.",
+    monthlyPrice: "499",
+    yearlyPrice: "4,990",
+    foundingPrice: "3,999",
+    description: "The essentials for bringing a single restaurant online.",
     features: [
-      "Everything in Free",
-      "Advanced menu customization",
-      "Restaurant branding",
-      "Extended menu management",
+      "Mobile-friendly digital menu",
+      "Restaurant and table QR codes",
+      "Online orders and Kitchen Display",
+      "Customer order tracking and receipts",
+      "Basic booking management and order analytics",
     ],
-    cta: "Explore Starter",
+    cta: "Start 7-day free trial",
   },
   {
     name: "Growth",
-    price: "699",
-    description: "For restaurants ready to work smarter.",
+    monthlyPrice: "899",
+    yearlyPrice: "8,990",
+    foundingPrice: "6,999",
+    description: "More visibility and control for busy restaurants.",
     features: [
       "Everything in Starter",
-      "Table-wise QR codes",
-      "Table booking management",
-      "Menu and booking insights",
+      "Booking calendar, search and date filters",
+      "Booking CSV export and enhanced analytics",
+      "Restaurant hours and pause-orders controls",
+      "Priority support during the pilot",
     ],
-    cta: "Choose Growth",
+    cta: "Start 7-day free trial",
     popular: true,
-  },
-  {
-    name: "Pro",
-    price: "1299",
-    description: "For growing food businesses.",
-    features: [
-      "Everything in Growth",
-      "Advanced reporting",
-      "Priority support",
-      "Planned multi-outlet tools",
-    ],
-    cta: "Explore Pro",
   },
 ];
 
@@ -131,32 +113,32 @@ const faqs = [
   {
     question: "Who can use Khaavio?",
     answer:
-      "Cafés, restaurants, bakeries, dessert shops and cloud kitchens can use Khaavio to build their digital restaurant presence.",
+      "Independent cafés, restaurants, bakeries, dessert shops and cloud kitchens can use Khaavio to manage their digital menu, QR ordering and guest reservations.",
   },
   {
-    question: "Do my customers need an app?",
+    question: "Do my customers need to download an app?",
     answer:
-      "No. Customers can open a published digital menu in their phone's browser through a link or QR code.",
+      "No. Guests can scan a table QR code or open a restaurant link in their phone browser to view the menu and use the available customer features.",
   },
   {
-    question: "Can I update my menu whenever I want?",
+    question: "Can I update my menu and availability?",
     answer:
-      "The platform is being built so restaurant owners can edit dishes, prices and availability through their dashboard. Those changes will appear on the published menu once the corresponding publishing functionality is enabled.",
+      "Yes. Restaurant owners can manage menu items and availability from their workspace. They can also configure business hours and pause online orders when needed.",
   },
   {
-    question: "Can customers reserve tables online?",
+    question: "Can customers place orders and reserve tables?",
     answer:
-      "Online table booking is part of the planned platform. The goal is to let customers submit requests and restaurants manage confirmations in their workspace.",
+      "Published restaurants can offer QR-based table ordering and online table booking. Restaurants can manage incoming orders and booking requests from their dashboard.",
   },
   {
-    question: "What does Khaavio cost?",
+    question: "How does pricing work?",
     answer:
-      "The proposed model includes a free plan and paid subscriptions starting at ₹299 per month. Final pricing and feature limits will be confirmed before public launch.",
+      "Every new restaurant starts with a 7-day free trial. Starter is ₹499 per month or ₹4,990 per year; Growth is ₹899 per month or ₹8,990 per year. The first 10 restaurants can request a founding annual price. During the pilot, plan activation is handled manually and online payments or automatic renewals are not enabled yet.",
   },
   {
-    question: "Will Khaavio work across India?",
+    question: "Can I try Khaavio before paying?",
     answer:
-      "Yes, the product is being designed for Indian food businesses nationwide, with initial customer acquisition starting in Patna.",
+      "Yes. The 7-day trial is designed for you to set up your menu, try QR ordering, review the Kitchen Display and test booking workflows before choosing a paid plan.",
   },
 ];
 
@@ -181,7 +163,7 @@ function SocialLinks() {
   if (!available.length) {
     return (
       <p className="kh-social-pending">
-        Official social profiles will be added before launch.
+        Official social profiles will be announced here.
       </p>
     );
   }
@@ -348,6 +330,7 @@ function DashboardPreview() {
 function PricingSection() {
   const trackRef = useRef(null);
   const [activePlan, setActivePlan] = useState(0);
+  const [billingCycle, setBillingCycle] = useState("yearly");
 
   function updateActivePlan() {
     const track = trackRef.current;
@@ -401,9 +384,45 @@ function PricingSection() {
             A plan for <em>your next chapter.</em>
           </h2>
           <p>
-            Start with the essentials. Add more capabilities as your restaurant
-            grows.
+            Try every core feature for 7 days, then choose monthly flexibility
+            or save with annual billing.
           </p>
+        </div>
+
+        <div className="kh-pricing-trial-banner">
+          <span className="kh-pricing-trial-icon">
+            <Sparkles size={18} />
+          </span>
+          <div>
+            <strong>Start with 7 days on us.</strong>
+            <p>
+              Full trial access · No card required · Choose a plan when you're
+              ready
+            </p>
+          </div>
+        </div>
+
+        <div
+          className="kh-pricing-billing"
+          role="group"
+          aria-label="Billing frequency"
+        >
+          <button
+            type="button"
+            className={billingCycle === "monthly" ? "active" : ""}
+            aria-pressed={billingCycle === "monthly"}
+            onClick={() => setBillingCycle("monthly")}
+          >
+            Monthly
+          </button>
+          <button
+            type="button"
+            className={billingCycle === "yearly" ? "active" : ""}
+            aria-pressed={billingCycle === "yearly"}
+            onClick={() => setBillingCycle("yearly")}
+          >
+            Yearly <span>Save 2 months</span>
+          </button>
         </div>
 
         <div
@@ -428,10 +447,23 @@ function PricingSection() {
 
               <div className="kh-price-amount">
                 <span>₹</span>
-                {plan.price}
-                <small>/ month</small>
+                {billingCycle === "monthly"
+                  ? plan.monthlyPrice
+                  : plan.yearlyPrice}
+                <small>/ {billingCycle === "monthly" ? "month" : "year"}</small>
               </div>
-              <p className="kh-price-note">Proposed launch pricing</p>
+
+              {billingCycle === "yearly" ? (
+                <div className="kh-plan-founders-offer">
+                  <span>FOUNDING OFFER · FIRST 10 RESTAURANTS</span>
+                  <strong>₹{plan.foundingPrice} for year one</strong>
+                  <small>Regular annual price ₹{plan.yearlyPrice}</small>
+                </div>
+              ) : (
+                <p className="kh-price-note">
+                  Flexible monthly billing · 7-day free trial included
+                </p>
+              )}
 
               <Link
                 to="/signup"
@@ -490,8 +522,11 @@ function PricingSection() {
         </div>
 
         <p className="kh-pricing-disclaimer">
-          Pricing and included features are proposed launch details. Final
-          limits and billing terms will be confirmed before public launch.
+          During the early-access pilot, subscriptions are activated manually.
+          Online payment collection, automatic renewals and plan-based feature
+          restrictions are not enabled yet. Founding prices are for the first 10
+          restaurants for their first year; renewal is at the then-current
+          published annual price.
         </p>
       </div>
     </section>
@@ -512,7 +547,7 @@ export default function Home() {
         <span>
           <Sparkles size={13} />
         </span>
-        A NEW DIGITAL HOME FOR HOSPITALITY
+        7 DAYS FREE · NO CARD REQUIRED
         <a href="#features">
           Meet Khaavio <ArrowRight size={13} />
         </a>
@@ -586,9 +621,9 @@ export default function Home() {
             </h1>
 
             <p>
-              Your menu, table bookings and digital storefront. Everything your
-              restaurant needs to show up beautifully, all in one thoughtful
-              platform.
+              Digital menus, table QR ordering, kitchen updates and guest
+              bookings—all brought together in one calm, easy-to-use restaurant
+              workspace.
             </p>
 
             <div className="kh-hero-actions">
@@ -596,7 +631,7 @@ export default function Home() {
                 to="/signup"
                 className="kh-button kh-button-dark kh-button-large"
               >
-                Bring your restaurant online <ArrowUpRight size={17} />
+                Start your 7-day free trial <ArrowUpRight size={17} />
               </Link>
               <a
                 href="#how-it-works"
@@ -662,10 +697,10 @@ export default function Home() {
               <em> More welcoming people.</em>
             </h2>
             <p>
-              Running a restaurant is about the food, the atmosphere and the
-              little details that bring everyone together. Khaavio is being
-              built to make the digital side feel simpler, so you can focus on
-              the experience.
+              Running a restaurant is about the food and the people. Khaavio
+              brings your digital menu, table ordering, booking requests and
+              kitchen workflow into one workspace, so daily service feels easier
+              to manage.
             </p>
             <a href="#features" className="kh-text-link">
               Get to know the platform <ArrowRight size={16} />
@@ -688,8 +723,8 @@ export default function Home() {
               </h2>
             </div>
             <p>
-              Thoughtful tools for everyday restaurant operations. Simple to
-              start, with room to grow as your business does.
+              From the first QR scan to the final order update, manage the
+              essentials of your restaurant in one connected workspace.
             </p>
           </div>
 
@@ -734,8 +769,8 @@ export default function Home() {
               to <em>fully yours.</em>
             </h2>
             <p>
-              No complicated setup. Your restaurant gets its own digital space,
-              ready for you to make it yours.
+              Create your restaurant workspace, add your menu, then share your
+              QR code with guests. Start with a 7-day free trial.
             </p>
             <Link to="/signup" className="kh-button kh-button-dark">
               Start your journey <ArrowUpRight size={16} />
@@ -849,7 +884,7 @@ export default function Home() {
             <br />
             <em>next chapter delicious.</em>
           </h2>
-          <p>Start creating a better digital experience for your restaurant.</p>
+          <p>Try Khaavio free for 7 days. No card required.</p>
 
           <div className="kh-final-actions">
             <Link to="/signup" className="kh-button kh-button-cream">
@@ -905,9 +940,7 @@ export default function Home() {
               <span>LET'S CONNECT</span>
               <p>Follow Khaavio's journey.</p>
               <SocialLinks />
-              <small>
-                Add official social URLs in the BRAND_CONTACT settings.
-              </small>
+              <small>Follow official Khaavio channels as they launch.</small>
             </div>
           </div>
 

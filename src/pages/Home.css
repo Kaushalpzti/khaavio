@@ -2235,3 +2235,250 @@
         transition-duration: 0.01ms !important;
     }
 }
+
+
+/* Launch pricing refresh: trial, monthly/yearly toggle, founding offer */
+
+.kh-pricing-trial-banner {
+    display: flex;
+    align-items: center;
+    gap: 13px;
+    max-width: 670px;
+    margin: 0 auto 22px;
+    padding: 15px 18px;
+    color: #234331;
+    background: linear-gradient(115deg, #edf4e8, #fffefa);
+    border: 1px solid #dce6d6;
+    border-radius: 10px;
+}
+
+.kh-pricing-trial-icon {
+    display: grid;
+    place-items: center;
+    flex: 0 0 39px;
+    width: 39px;
+    height: 39px;
+    color: #356444;
+    background: #dfeadd;
+    border-radius: 10px;
+}
+
+.kh-pricing-trial-banner strong {
+    display: block;
+    margin-bottom: 4px;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.kh-pricing-trial-banner p {
+    margin: 0;
+    color: #758274;
+    font-size: 10px;
+    line-height: 1.65;
+}
+
+.kh-pricing-billing {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    width: fit-content;
+    max-width: 100%;
+    margin: 0 auto 24px;
+    padding: 5px;
+    background: #ecefe7;
+    border: 1px solid #e1e6dc;
+    border-radius: 999px;
+}
+
+.kh-pricing-billing>button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 39px;
+    padding: 0 18px;
+    color: #657465;
+    background: transparent;
+    border: 0;
+    border-radius: 999px;
+    cursor: pointer;
+    font-size: 11px;
+    font-weight: 700;
+    transition: background 160ms ease, color 160ms ease, box-shadow 160ms ease;
+}
+
+.kh-pricing-billing>button.active {
+    color: #fffdf7;
+    background: #19372d;
+    box-shadow: 0 4px 13px rgb(25 55 45 / 13%);
+}
+
+.kh-pricing-billing>button>span {
+    padding: 4px 7px;
+    color: #315c3c;
+    background: #e2eddb;
+    border-radius: 999px;
+    font-size: 8px;
+    white-space: nowrap;
+}
+
+.kh-pricing-billing>button.active>span {
+    color: #234331;
+    background: #eff6e8;
+}
+
+.kh-pricing-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: stretch;
+    max-width: 880px;
+    margin-inline: auto;
+    gap: 18px;
+}
+
+.kh-price-card {
+    padding: 30px 28px 27px;
+}
+
+.kh-price-card h3 {
+    margin: 0 0 8px;
+    color: #19372d;
+    font-size: 20px;
+    letter-spacing: -0.5px;
+}
+
+.kh-price-description {
+    min-height: 40px;
+    margin: 0;
+    color: #7c877b;
+    font-size: 11px;
+    line-height: 1.75;
+}
+
+.kh-price-amount {
+    margin-top: 20px;
+}
+
+.kh-price-amount small {
+    margin-left: 4px;
+    color: #7b867a;
+    font-size: 10px;
+    font-weight: 500;
+}
+
+.kh-plan-founders-offer {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    margin: 13px 0 0;
+    padding: 12px 13px;
+    background: #f2f5ed;
+    border: 1px solid #e3e9dd;
+    border-radius: 7px;
+}
+
+.kh-plan-founders-offer>span {
+    color: #6d8067;
+    font-size: 8px;
+    font-weight: 800;
+    letter-spacing: 0.6px;
+}
+
+.kh-plan-founders-offer>strong {
+    color: #28533a;
+    font-size: 14px;
+    font-weight: 800;
+}
+
+.kh-plan-founders-offer>small {
+    color: #818b7e;
+    font-size: 9px;
+}
+
+.kh-price-note {
+    min-height: 37px;
+    margin: 11px 0 0;
+    color: #7b867a;
+    font-size: 9px;
+    line-height: 1.65;
+}
+
+.kh-plan-cta {
+    margin-top: 20px;
+}
+
+.kh-price-card .kh-plan-divider {
+    margin-top: 22px;
+}
+
+.kh-pricing-disclaimer {
+    max-width: 760px;
+    font-size: 9px;
+}
+
+@media (max-width: 1080px) and (min-width: 761px) {
+    .kh-pricing-grid {
+        gap: 15px;
+        max-width: 800px;
+    }
+    .kh-price-card {
+        padding: 28px 22px 24px;
+    }
+}
+
+@media (max-width: 760px) {
+    .kh-pricing-trial-banner {
+        align-items: flex-start;
+        margin-bottom: 17px;
+        padding: 13px;
+    }
+    .kh-pricing-trial-banner strong {
+        font-size: 11px;
+    }
+    .kh-pricing-trial-banner p {
+        font-size: 9px;
+    }
+    .kh-pricing-billing {
+        margin-bottom: 18px;
+    }
+    .kh-pricing-billing>button {
+        min-height: 36px;
+        padding-inline: 13px;
+        font-size: 10px;
+    }
+    .kh-pricing-billing>button>span {
+        font-size: 7px;
+    }
+    .kh-pricing-grid {
+        display: flex;
+        grid-template-columns: none;
+        max-width: none;
+    }
+    .kh-price-card {
+        flex: 0 0 88%;
+        width: 88%;
+        max-width: 390px;
+        padding: 25px 22px;
+    }
+    .kh-price-description {
+        min-height: 0;
+    }
+    .kh-plan-founders-offer {
+        padding: 11px;
+    }
+    .kh-pricing-disclaimer {
+        margin-top: 16px;
+        font-size: 8px;
+        text-align: left;
+    }
+}
+
+@media (max-width: 380px) {
+    .kh-pricing-billing>button {
+        padding-inline: 10px;
+        gap: 5px;
+    }
+    .kh-pricing-billing>button>span {
+        padding: 3px 5px;
+    }
+}

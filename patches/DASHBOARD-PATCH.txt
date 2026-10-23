@@ -1,0 +1,24 @@
+DASHBOARD PATCH — src/pages/Dashboard.jsx
+
+1) Add CreditCard to the lucide-react import list:
+
+  CreditCard,
+
+2) Add this entry inside the existing `modules` array:
+
+  {
+    title: "Subscription & plan",
+    description: "View your current plan, trial status and access dates.",
+    status: "Available",
+    icon: CreditCard,
+  },
+
+3) Inside the modules.map(...) JSX, add this action near the other module-specific Link actions:
+
+{module.title === "Subscription & plan" && (
+  <Link to="/dashboard/subscription" className="module-action">
+    View subscription <ArrowUpRight size={14} />
+  </Link>
+)}
+
+Do not replace the entire Dashboard.jsx file. Insert only these changes.

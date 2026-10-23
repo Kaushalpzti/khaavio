@@ -64,12 +64,8 @@ function normalizeBusinessHours(value) {
         key,
         {
           closed: Boolean(day?.closed),
-          open: /^\d{2}:\d{2}$/.test(day?.open || "")
-            ? day.open
-            : "00:00",
-          close: /^\d{2}:\d{2}$/.test(day?.close || "")
-            ? day.close
-            : "23:59",
+          open: /^\d{2}:\d{2}$/.test(day?.open || "") ? day.open : "00:00",
+          close: /^\d{2}:\d{2}$/.test(day?.close || "") ? day.close : "23:59",
         },
       ];
     }),
@@ -93,7 +89,9 @@ function formFromRestaurant(restaurant) {
 }
 
 function timeToMinutes(value) {
-  const [hours, minutes] = String(value || "").split(":").map(Number);
+  const [hours, minutes] = String(value || "")
+    .split(":")
+    .map(Number);
   return hours * 60 + minutes;
 }
 
@@ -220,9 +218,7 @@ export default function RestaurantSettings() {
       );
     } catch (err) {
       console.error("Could not update online-order setting:", err);
-      setError(
-        err?.message || "Could not update online-order availability.",
-      );
+      setError(err?.message || "Could not update online-order availability.");
     } finally {
       setSavingOrderMode(false);
     }
@@ -251,7 +247,10 @@ export default function RestaurantSettings() {
     for (const { key, label } of DAYS) {
       const hours = form.business_hours[key];
       if (hours.closed) continue;
-      if (!/^\d{2}:\d{2}$/.test(hours.open) || !/^\d{2}:\d{2}$/.test(hours.close)) {
+      if (
+        !/^\d{2}:\d{2}$/.test(hours.open) ||
+        !/^\d{2}:\d{2}$/.test(hours.close)
+      ) {
         setError(`Enter valid opening and closing times for ${label}.`);
         return;
       }
@@ -347,29 +346,47 @@ export default function RestaurantSettings() {
           </div>
           <h1>Restaurant settings</h1>
           <p>
-            Update your business profile, opening hours and online-order availability.
+            Update your business profile, opening hours and online-order
+            availability.
           </p>
         </div>
 
         {restaurant && (
           <section className="restaurant-settings-public-card">
-            <div className="restaurant-settings-public-icon"><Store size={23} /></div>
-            <div className="restaurant-settings-public-info">
-              <span className="restaurant-settings-muted-label">YOUR RESTAURANT</span>
-              <h2>{restaurant.name}</h2>
-              <p>{restaurant.city || "City not added"}{restaurant.state ? `, ${restaurant.state}` : ""}</p>
+            <div className="restaurant-settings-public-icon">
+              <Store size={23} />
             </div>
-            <span className={`restaurant-settings-status ${restaurant.is_published ? "is-published" : "is-draft"}`}>
+            <div className="restaurant-settings-public-info">
+              <span className="restaurant-settings-muted-label">
+                YOUR RESTAURANT
+              </span>
+              <h2>{restaurant.name}</h2>
+              <p>
+                {restaurant.city || "City not added"}
+                {restaurant.state ? `, ${restaurant.state}` : ""}
+              </p>
+            </div>
+            <span
+              className={`restaurant-settings-status ${restaurant.is_published ? "is-published" : "is-draft"}`}
+            >
               {restaurant.is_published ? "Published" : "Unpublished"}
             </span>
           </section>
         )}
 
         {restaurant && (
-          <section className={`khaavio-order-mode-card ${restaurant.is_accepting_orders ? "is-accepting" : "is-paused"}`}>
+          <section
+            className={`khaavio-order-mode-card ${restaurant.is_accepting_orders ? "is-accepting" : "is-paused"}`}
+          >
             <div className="khaavio-order-mode-copy">
-              <span className="khaavio-order-mode-eyebrow">ONLINE ORDERING</span>
-              <h2>{restaurant.is_accepting_orders ? "Accepting online orders" : "Online orders are paused"}</h2>
+              <span className="khaavio-order-mode-eyebrow">
+                ONLINE ORDERING
+              </span>
+              <h2>
+                {restaurant.is_accepting_orders
+                  ? "Accepting online orders"
+                  : "Online orders are paused"}
+              </h2>
               <p>
                 {restaurant.is_accepting_orders
                   ? "Customers can place orders while the restaurant is within its opening hours."
@@ -382,115 +399,290 @@ export default function RestaurantSettings() {
               onClick={toggleOrderAcceptance}
               disabled={savingOrderMode || saving}
             >
-              {savingOrderMode ? <LoaderCircle size={17} className="restaurant-settings-spinner" /> : restaurant.is_accepting_orders ? <PauseCircle size={17} /> : <PlayCircle size={17} />}
-              {savingOrderMode ? "Updating..." : restaurant.is_accepting_orders ? "Pause online orders" : "Resume online orders"}
+              {savingOrderMode ? (
+                <LoaderCircle
+                  size={17}
+                  className="restaurant-settings-spinner"
+                />
+              ) : restaurant.is_accepting_orders ? (
+                <PauseCircle size={17} />
+              ) : (
+                <PlayCircle size={17} />
+              )}
+              {savingOrderMode
+                ? "Updating..."
+                : restaurant.is_accepting_orders
+                  ? "Pause online orders"
+                  : "Resume online orders"}
             </button>
           </section>
         )}
 
-        {error && <div className="restaurant-settings-message is-error" role="alert">{error}</div>}
-        {notice && <div className="restaurant-settings-message is-success" role="status"><CheckCircle2 size={17} /><span>{notice}</span></div>}
+        {error && (
+          <div className="restaurant-settings-message is-error" role="alert">
+            {error}
+          </div>
+        )}
+        {notice && (
+          <div className="restaurant-settings-message is-success" role="status">
+            <CheckCircle2 size={17} />
+            <span>{notice}</span>
+          </div>
+        )}
 
         {restaurant && (
           <>
             <form className="restaurant-settings-form" onSubmit={handleSubmit}>
               <section className="restaurant-settings-section">
                 <div className="restaurant-settings-section-heading">
-                  <div><h2>Business information</h2><p>The basic details associated with your restaurant.</p></div>
+                  <div>
+                    <h2>Business information</h2>
+                    <p>The basic details associated with your restaurant.</p>
+                  </div>
                 </div>
                 <div className="restaurant-settings-grid">
                   <div className="restaurant-settings-field full-width">
                     <label htmlFor="settings-name">Restaurant name *</label>
-                    <input id="settings-name" name="name" value={form.name} onChange={updateField} placeholder="e.g. The Green Table" maxLength={120} required />
+                    <input
+                      id="settings-name"
+                      name="name"
+                      value={form.name}
+                      onChange={updateField}
+                      placeholder="e.g. The Green Table"
+                      maxLength={120}
+                      required
+                    />
                   </div>
                   <div className="restaurant-settings-field full-width">
                     <label htmlFor="settings-type">Business type *</label>
-                    <select id="settings-type" name="restaurant_type" value={form.restaurant_type} onChange={updateField} required>
-                      {BUSINESS_TYPES.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}
+                    <select
+                      id="settings-type"
+                      name="restaurant_type"
+                      value={form.restaurant_type}
+                      onChange={updateField}
+                      required
+                    >
+                      {BUSINESS_TYPES.map((item) => (
+                        <option key={item.value} value={item.value}>
+                          {item.label}
+                        </option>
+                      ))}
                     </select>
                   </div>
                   <div className="restaurant-settings-field">
                     <label htmlFor="settings-phone">Phone number</label>
-                    <input id="settings-phone" name="phone" type="tel" autoComplete="tel" value={form.phone} onChange={updateField} placeholder="+91 98765 43210" maxLength={20} />
+                    <input
+                      id="settings-phone"
+                      name="phone"
+                      type="tel"
+                      autoComplete="tel"
+                      value={form.phone}
+                      onChange={updateField}
+                      placeholder="+91 98765 43210"
+                      maxLength={20}
+                    />
                   </div>
                   <div className="restaurant-settings-field">
                     <label htmlFor="settings-email">Business email</label>
-                    <input id="settings-email" name="contact_email" type="email" autoComplete="email" value={form.contact_email} onChange={updateField} placeholder="cafe@example.com" maxLength={254} />
+                    <input
+                      id="settings-email"
+                      name="contact_email"
+                      type="email"
+                      autoComplete="email"
+                      value={form.contact_email}
+                      onChange={updateField}
+                      placeholder="cafe@example.com"
+                      maxLength={254}
+                    />
                   </div>
                 </div>
               </section>
 
               <section className="restaurant-settings-section">
                 <div className="restaurant-settings-section-heading">
-                  <div><h2>Location</h2><p>Where customers can find your business.</p></div>
+                  <div>
+                    <h2>Location</h2>
+                    <p>Where customers can find your business.</p>
+                  </div>
                 </div>
                 <div className="restaurant-settings-grid">
                   <div className="restaurant-settings-field full-width">
                     <label htmlFor="settings-address">Street address</label>
-                    <input id="settings-address" name="address" autoComplete="street-address" value={form.address} onChange={updateField} placeholder="Street, building or locality" maxLength={250} />
+                    <input
+                      id="settings-address"
+                      name="address"
+                      autoComplete="street-address"
+                      value={form.address}
+                      onChange={updateField}
+                      placeholder="Street, building or locality"
+                      maxLength={250}
+                    />
                   </div>
                   <div className="restaurant-settings-field">
                     <label htmlFor="settings-city">City</label>
-                    <input id="settings-city" name="city" autoComplete="address-level2" value={form.city} onChange={updateField} placeholder="e.g. Patna" maxLength={100} />
+                    <input
+                      id="settings-city"
+                      name="city"
+                      autoComplete="address-level2"
+                      value={form.city}
+                      onChange={updateField}
+                      placeholder="e.g. Patna"
+                      maxLength={100}
+                    />
                   </div>
                   <div className="restaurant-settings-field">
                     <label htmlFor="settings-state">State</label>
-                    <input id="settings-state" name="state" autoComplete="address-level1" value={form.state} onChange={updateField} placeholder="e.g. Bihar" maxLength={100} />
+                    <input
+                      id="settings-state"
+                      name="state"
+                      autoComplete="address-level1"
+                      value={form.state}
+                      onChange={updateField}
+                      placeholder="e.g. Bihar"
+                      maxLength={100}
+                    />
                   </div>
                   <div className="restaurant-settings-field">
                     <label htmlFor="settings-postal">PIN code</label>
-                    <input id="settings-postal" name="postal_code" inputMode="numeric" autoComplete="postal-code" value={form.postal_code} onChange={updateField} placeholder="e.g. 800001" maxLength={12} />
+                    <input
+                      id="settings-postal"
+                      name="postal_code"
+                      inputMode="numeric"
+                      autoComplete="postal-code"
+                      value={form.postal_code}
+                      onChange={updateField}
+                      placeholder="e.g. 800001"
+                      maxLength={12}
+                    />
                   </div>
                   <div className="restaurant-settings-field full-width">
-                    <label htmlFor="settings-description">About your restaurant</label>
-                    <textarea id="settings-description" name="description" value={form.description} onChange={updateField} placeholder="Tell customers what makes your restaurant special." rows={4} maxLength={1000} />
-                    <span className="restaurant-settings-field-hint">{form.description.length}/1000 characters</span>
+                    <label htmlFor="settings-description">
+                      About your restaurant
+                    </label>
+                    <textarea
+                      id="settings-description"
+                      name="description"
+                      value={form.description}
+                      onChange={updateField}
+                      placeholder="Tell customers what makes your restaurant special."
+                      rows={4}
+                      maxLength={1000}
+                    />
+                    <span className="restaurant-settings-field-hint">
+                      {form.description.length}/1000 characters
+                    </span>
                   </div>
                 </div>
               </section>
 
               <section className="restaurant-settings-section khaavio-hours-section">
                 <div className="restaurant-settings-section-heading">
-                  <div><h2>Opening hours</h2><p>Times are in India Standard Time (IST). Closing time must be later than opening time on the same day.</p></div>
+                  <div>
+                    <h2>Opening hours</h2>
+                    <p>
+                      Times are in India Standard Time (IST). Closing time must
+                      be later than opening time on the same day.
+                    </p>
+                  </div>
                 </div>
                 <div className="khaavio-hours-list">
                   {DAYS.map(({ key, label }) => {
                     const hours = form.business_hours[key];
                     return (
-                      <div className={`khaavio-hours-row ${hours.closed ? "is-day-closed" : ""}`} key={key}>
+                      <div
+                        className={`khaavio-hours-row ${hours.closed ? "is-day-closed" : ""}`}
+                        key={key}
+                      >
                         <div className="khaavio-hours-day">{label}</div>
                         <label className="khaavio-day-closed">
-                          <input type="checkbox" checked={hours.closed} onChange={(event) => updateDay(key, "closed", event.target.checked)} disabled={saving} />
+                          <input
+                            type="checkbox"
+                            checked={hours.closed}
+                            onChange={(event) =>
+                              updateDay(key, "closed", event.target.checked)
+                            }
+                            disabled={saving}
+                          />
                           <span>Closed</span>
                         </label>
                         <label className="khaavio-time-field">
                           <span>Opens</span>
-                          <input type="time" value={hours.open} onChange={(event) => updateDay(key, "open", event.target.value)} disabled={saving || hours.closed} required={!hours.closed} />
+                          <input
+                            type="time"
+                            value={hours.open}
+                            onChange={(event) =>
+                              updateDay(key, "open", event.target.value)
+                            }
+                            disabled={saving || hours.closed}
+                            required={!hours.closed}
+                          />
                         </label>
                         <label className="khaavio-time-field">
                           <span>Closes</span>
-                          <input type="time" value={hours.close} onChange={(event) => updateDay(key, "close", event.target.value)} disabled={saving || hours.closed} required={!hours.closed} />
+                          <input
+                            type="time"
+                            value={hours.close}
+                            onChange={(event) =>
+                              updateDay(key, "close", event.target.value)
+                            }
+                            disabled={saving || hours.closed}
+                            required={!hours.closed}
+                          />
                         </label>
                       </div>
                     );
                   })}
                 </div>
-                <p className="khaavio-hours-note">All days default to 00:00–23:59 to preserve existing ordering behavior. Set your actual hours above. Overnight hours are not supported yet.</p>
+                <p className="khaavio-hours-note">
+                  All days default to 00:00–23:59 to preserve existing ordering
+                  behavior. Set your actual hours above. Overnight hours are not
+                  supported yet.
+                </p>
               </section>
 
               <div className="restaurant-settings-actions">
-                <Link to="/dashboard" className="restaurant-settings-cancel">Cancel</Link>
-                <button type="submit" className="restaurant-settings-save" disabled={saving || savingOrderMode}>
-                  {saving ? <LoaderCircle className="restaurant-settings-spinner" size={18} /> : <Save size={17} />}
+                <Link to="/dashboard" className="restaurant-settings-cancel">
+                  Cancel
+                </Link>
+                <button
+                  type="submit"
+                  className="restaurant-settings-save"
+                  disabled={saving || savingOrderMode}
+                >
+                  {saving ? (
+                    <LoaderCircle
+                      className="restaurant-settings-spinner"
+                      size={18}
+                    />
+                  ) : (
+                    <Save size={17} />
+                  )}
                   {saving ? "Saving changes..." : "Save changes"}
                 </button>
               </div>
             </form>
 
             <section className="restaurant-settings-public-section">
-              <div><h2>Your public menu</h2><p>Share your restaurant menu link with customers.{restaurant.is_published ? "" : " Publish your restaurant before sharing this link."}</p></div>
-              <button type="button" className="restaurant-settings-link-button" onClick={copyMenuLink}><ExternalLink size={16} />Copy menu link</button>
-              <code className="restaurant-settings-url">{window.location.origin}/menu/{restaurant.slug}</code>
+              <div>
+                <h2>Your public menu</h2>
+                <p>
+                  Share your restaurant menu link with customers.
+                  {restaurant.is_published
+                    ? ""
+                    : " Publish your restaurant before sharing this link."}
+                </p>
+              </div>
+              <button
+                type="button"
+                className="restaurant-settings-link-button"
+                onClick={copyMenuLink}
+              >
+                <ExternalLink size={16} />
+                Copy menu link
+              </button>
+              <code className="restaurant-settings-url">
+                {window.location.origin}/menu/{restaurant.slug}
+              </code>
             </section>
           </>
         )}

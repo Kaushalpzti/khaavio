@@ -1,6 +1,7 @@
 import { lazy, Suspense } from "react";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import ProtectedRoute from "./components/ProtectedRoute";
+import "./PageLoader.css";
 
 // Public pages
 const Home = lazy(() => import("./pages/Home"));
@@ -13,6 +14,10 @@ const OrderTracking = lazy(() => import("./pages/OrderTracking"));
 const Onboarding = lazy(() => import("./pages/Onboarding"));
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 const RestaurantSettings = lazy(() => import("./pages/RestaurantSettings"));
+const Subscription = lazy(() => import("./pages/Subscription"));
+const PlatformAdminSubscriptions = lazy(
+  () => import("./pages/PlatformAdminSubscriptions"),
+);
 
 // Menu and QR management
 const MenuManager = lazy(() => import("./pages/MenuManager"));
@@ -28,9 +33,43 @@ const KitchenDisplay = lazy(() => import("./pages/KitchenDisplay"));
 
 function PageLoader() {
   return (
-    <main className="app-loading">
-      <img src="/icon.png" alt="" width="40" height="40" />
-      <p>Preparing your Khaavio experience...</p>
+    <main
+      className="khaavio-page-loader"
+      role="status"
+      aria-live="polite"
+      aria-label="Loading Khaavio"
+    >
+      <div
+        className="khaavio-loader-orb khaavio-loader-orb-one"
+        aria-hidden="true"
+      />
+      <div
+        className="khaavio-loader-orb khaavio-loader-orb-two"
+        aria-hidden="true"
+      />
+
+      <div className="khaavio-loader-content">
+        <div className="khaavio-loader-mark-wrap">
+          <span className="khaavio-loader-halo" aria-hidden="true" />
+          <img
+            className="khaavio-loader-mark"
+            src="/icon.png"
+            alt=""
+            width="58"
+            height="58"
+          />
+        </div>
+
+        <div className="khaavio-loader-wordmark">Khaavio</div>
+        <p className="khaavio-loader-message">Getting Khaavio ready for you</p>
+
+        <div className="khaavio-loader-track" aria-hidden="true">
+          <span />
+        </div>
+        <span className="khaavio-loader-caption">
+          Every table, digitally connected.
+        </span>
+      </div>
     </main>
   );
 }
@@ -44,6 +83,7 @@ export default function App() {
     <BrowserRouter>
       <Suspense fallback={<PageLoader />}>
         <Routes>
+          {/* Public homepage */}
           <Route path="/" element={<Home />} />
 
           {/* Authentication */}
@@ -79,12 +119,30 @@ export default function App() {
             }
           />
 
-          {/* Restaurant settings */}
+          {/* Restaurant settings and subscription */}
           <Route
             path="/dashboard/settings"
             element={
               <ProtectedPage>
                 <RestaurantSettings />
+              </ProtectedPage>
+            }
+          />
+          <Route
+            path="/dashboard/subscription"
+            element={
+              <ProtectedPage>
+                <Subscription />
+              </ProtectedPage>
+            }
+          />
+
+          {/* Restricted platform-admin tools. The RPCs enforce the admin allowlist in the database. */}
+          <Route
+            path="/platform-admin/subscriptions"
+            element={
+              <ProtectedPage>
+                <PlatformAdminSubscriptions />
               </ProtectedPage>
             }
           />
@@ -151,15 +209,17 @@ export default function App() {
             }
           />
 
+          {/* Kitchen Display */}
           <Route
             path="/dashboard/kitchen"
             element={
-              <ProtectedRoute>
+              <ProtectedPage>
                 <KitchenDisplay />
-              </ProtectedRoute>
+              </ProtectedPage>
             }
           />
 
+          {/* Unknown routes */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </Suspense>

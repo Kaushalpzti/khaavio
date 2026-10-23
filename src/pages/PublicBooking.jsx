@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import {
@@ -18,31 +17,275 @@ function pad(value) {
   return String(value).padStart(2, "0");
 }
 
-function localDateString(date = new Date()) {
-  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+const WEEKDAYS = [
+  "sunday",
+  "monday",
+  "tuesday",
+  "wednesday",
+  "thursday",
+  "friday",
+  "saturday",
+];
+const DEFAULT_TIME_ZONE = "Asia/Kolkata";
+
+function getZonedParts(value = new Date(), timeZone = DEFAULT_TIME_ZONE) {
+  const date = value instanceof Date ? value : new Date(value);
+  const options = {
+    timeZone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    weekday: "long",
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+  };
+
+  let parts;
+  try {
+    parts = new Intl.DateTimeFormat("en-GB", options).formatToParts(date);
+  } catch {
+    parts = new Intl.DateTimeFormat("en-GB", {
+      ...options,
+      timeZone: DEFAULT_TIME_ZONE,
+    }).formatToParts(date);
+  }
+
+  return Object.fromEntries(
+    parts
+      .filter((part) => part.type !== "literal")
+      .map((part) => [part.type, part.value]),
+  );
 }
 
-function localTimeString(date = new Date()) {
-  return `${pad(date.getHours())}:${pad(date.getMinutes())}`;
+function restaurantDateString(timeZone = DEFAULT_TIME_ZONE, now = new Date()) {
+  const parts = getZonedParts(now, timeZone);
+  return `${parts.year}-${parts.month}-${parts.day}`;
 }
 
-function dateAfterDays(days) {
-  const date = new Date();
-  date.setDate(date.getDate() + days);
-  return localDateString(date);
+function restaurantTimeString(timeZone = DEFAULT_TIME_ZONE, now = new Date()) {
+  const parts = getZonedParts(now, timeZone);
+  return `${parts.hour}:${parts.minute}`;
 }
 
-function formatBookingDate(value) {
+function dateAfterDays(dateString, days) {
+  const [year, month, day] = dateString.split("-").map(Number);
+  const date = new Date(Date.UTC(year, month - 1, day + days, 12));
+  return `${date.getUTCFullYear()}-${pad(date.getUTCMonth() + 1)}-${pad(date.getUTCDate())}`;
+}
+
+function parseTimeMinutes(value) {
+  if (!/^\d{2}:\d{2}$/.test(String(value || ""))) return null;
+  const [hour, minute] = value.split(":").map(Number);
+  if (hour > 23 || minute > 59) return null;
+  return hour * 60 + minute;
+}
+
+function minutesToTime(value) {
+  return `${pad(Math.floor(value / 60))}:${pad(value % 60)}`;
+}
+
+function getScheduleForDate(restaurant, dateString) {
+  if (!restaurant || !dateString) return null;
+
+  const [year, month, day] = dateString.split("-").map(Number);
+  const date = new Date(Date.UTC(year, month - 1, day, 12));
+  const dayKey = WEEKDAYS[date.getUTCDay()];
+  const entry = restaurant.business_hours?.[dayKey];
+
+  return {
+    dayKey,
+    label: dayKey
+      ? `${dayKey[0].toUpperCase()}${dayKey.slice(1)}`
+      : "selected day",
+    closed: !entry || entry.closed === true,
+    open: entry?.open || "",
+    close: entry?.close || "",
+  };
+}
+
+// Convert a restaurant-local date/time to an ISO timestamp. The iterative
+// conversion avoids interpreting the selected time in the customer's browser
+// time zone, which may differ from the restaurant's time zone.
+function zonedWallTimeToIso(
+  dateString,
+  timeString,
+  timeZone = DEFAULT_TIME_ZONE,
+) {
+  const [year, month, day] = dateString.split("-").map(Number);
+  const [hour, minute] = timeString.split(":").map(Number);
+  const targetWallTime = Date.UTC(year, month - 1, day, hour, minute, 0, 0);
+  let candidate = targetWallTime;
+
+  for (let attempt = 0; attempt < 5; attempt += 1) {
+    const parts = getZonedParts(new Date(candidate), timeZone);
+    const representedWallTime = Date.UTC(
+      Number(parts.year),
+      Number(parts.month) - 1,
+      Number(parts.day),
+      Number(parts.hour),
+      Number(parts.minute),
+      0,
+      0,
+    );
+    const difference = targetWallTime - representedWallTime;
+    candidate += difference;
+    if (difference === 0) break;
+  }
+
+  const result = new Date(candidate);
+  const check = getZonedParts(result, timeZone);
+  if (
+    Number(check.year) !== year ||
+    Number(check.month) !== month ||
+    Number(check.day) !== day ||
+    Number(check.hour) !== hour ||
+    Number(check.minute) !== minute
+  ) {
+    // This also rejects local wall-clock times that do not exist during a
+    // daylight-saving transition in time zones that observe DST.
+    return "";
+  }
+
+  return result.toISOString();
+}
+
+function getBookingSlotValidation(
+  restaurant,
+  dateString,
+  timeString,
+  now = new Date(),
+) {
+  if (!dateString || !timeString) {
+    return {
+      valid: false,
+      iso: "",
+      message: "Choose a date and time to check availability.",
+    };
+  }
+
+  const timeZone = restaurant?.timezone || DEFAULT_TIME_ZONE;
+  const today = restaurantDateString(timeZone, now);
+  const lastDate = dateAfterDays(today, 90);
+
+  if (dateString < today || dateString > lastDate) {
+    return {
+      valid: false,
+      iso: "",
+      message: "Choose a date from today through the next 90 days.",
+    };
+  }
+
+  const schedule = getScheduleForDate(restaurant, dateString);
+  if (!schedule || schedule.closed) {
+    return {
+      valid: false,
+      iso: "",
+      message: `The restaurant is closed on ${schedule?.label || "this day"}. Please choose another date.`,
+    };
+  }
+
+  const openMinutes = parseTimeMinutes(schedule.open);
+  const closeMinutes = parseTimeMinutes(schedule.close);
+  if (
+    openMinutes === null ||
+    closeMinutes === null ||
+    openMinutes >= closeMinutes
+  ) {
+    return {
+      valid: false,
+      iso: "",
+      message:
+        "Reservation hours are not configured correctly for this day. Please contact the restaurant.",
+    };
+  }
+
+  const selectedMinutes = parseTimeMinutes(timeString);
+  if (selectedMinutes === null) {
+    return {
+      valid: false,
+      iso: "",
+      message: "Choose a valid reservation time.",
+    };
+  }
+
+  const closesAtEndOfDay = schedule.close === "23:59";
+  if (
+    selectedMinutes < openMinutes ||
+    (!closesAtEndOfDay && selectedMinutes >= closeMinutes)
+  ) {
+    return {
+      valid: false,
+      iso: "",
+      message: `Reservations on ${schedule.label} are available from ${schedule.open} to ${schedule.close}. Choose a time within those hours.`,
+    };
+  }
+
+  const iso = zonedWallTimeToIso(dateString, timeString, timeZone);
+  if (!iso) {
+    return {
+      valid: false,
+      iso: "",
+      message: "That local time cannot be used. Please choose another time.",
+    };
+  }
+
+  if (new Date(iso).getTime() <= now.getTime()) {
+    return {
+      valid: false,
+      iso: "",
+      message: "Choose a future time. Reservations cannot be made in the past.",
+    };
+  }
+
+  return { valid: true, iso, message: "" };
+}
+
+function getTimeInputBounds(restaurant, dateString, today, currentTime) {
+  const schedule = getScheduleForDate(restaurant, dateString);
+  if (!schedule || schedule.closed) return { min: undefined, max: undefined };
+
+  const openMinutes = parseTimeMinutes(schedule.open);
+  const closeMinutes = parseTimeMinutes(schedule.close);
+  if (
+    openMinutes === null ||
+    closeMinutes === null ||
+    openMinutes >= closeMinutes
+  ) {
+    return { min: undefined, max: undefined };
+  }
+
+  let min = openMinutes;
+  if (dateString === today) {
+    const nowMinutes = parseTimeMinutes(currentTime);
+    if (nowMinutes !== null) min = Math.max(min, nowMinutes);
+  }
+
+  const max = schedule.close === "23:59" ? closeMinutes : closeMinutes - 1;
+  return { min: minutesToTime(min), max: minutesToTime(max) };
+}
+
+function formatBookingDate(value, timeZone = DEFAULT_TIME_ZONE) {
   if (!value) return "";
 
   const date = new Date(value);
-
   if (Number.isNaN(date.getTime())) return value;
 
-  return new Intl.DateTimeFormat("en-IN", {
-    dateStyle: "full",
-    timeStyle: "short",
-  }).format(date);
+  let formatter;
+  try {
+    formatter = new Intl.DateTimeFormat("en-IN", {
+      dateStyle: "full",
+      timeStyle: "short",
+      timeZone,
+    });
+  } catch {
+    formatter = new Intl.DateTimeFormat("en-IN", {
+      dateStyle: "full",
+      timeStyle: "short",
+      timeZone: DEFAULT_TIME_ZONE,
+    });
+  }
+  return formatter.format(date);
 }
 
 function getErrorMessage(error, fallback) {
@@ -77,9 +320,21 @@ export default function PublicBooking() {
   const [bookingError, setBookingError] = useState("");
   const [bookingResult, setBookingResult] = useState(null);
 
-  const today = localDateString();
-  const maxDate = dateAfterDays(90);
-  const minimumTime = bookingDate === today ? localTimeString() : undefined;
+  const timeZone = restaurant?.timezone || DEFAULT_TIME_ZONE;
+  const today = restaurantDateString(timeZone);
+  const maxDate = dateAfterDays(today, 90);
+  const currentTime = restaurantTimeString(timeZone);
+  const timeBounds = getTimeInputBounds(
+    restaurant,
+    bookingDate,
+    today,
+    currentTime,
+  );
+  const bookingSlot = getBookingSlotValidation(
+    restaurant,
+    bookingDate,
+    bookingTime,
+  );
 
   // Load the published restaurant.
   useEffect(() => {
@@ -90,12 +345,11 @@ export default function PublicBooking() {
       setPageError("");
 
       try {
-        const {
-          data,
-          error: restaurantError,
-        } = await supabase
+        const { data, error: restaurantError } = await supabase
           .from("restaurants")
-          .select("id, name, slug, restaurant_type, address, is_published")
+          .select(
+            "id, name, slug, restaurant_type, address, is_published, business_hours, timezone",
+          )
           .eq("slug", slug)
           .eq("is_published", true)
           .maybeSingle();
@@ -104,16 +358,14 @@ export default function PublicBooking() {
 
         if (!data) {
           throw new Error(
-            "This restaurant has not published its menu, or the link is incorrect."
+            "This restaurant has not published its menu, or the link is incorrect.",
           );
         }
 
         if (active) setRestaurant(data);
       } catch (err) {
         if (active) {
-          setPageError(
-            getErrorMessage(err, "Unable to load this restaurant.")
-          );
+          setPageError(getErrorMessage(err, "Unable to load this restaurant."));
         }
       } finally {
         if (active) setLoading(false);
@@ -129,19 +381,15 @@ export default function PublicBooking() {
 
   // Find tables whenever the selected date, time or party size changes.
   useEffect(() => {
-    if (!restaurant || !bookingDate || !bookingTime) {
+    // Input handlers clear the previous availability whenever date, time, or
+    // party size changes. This effect only synchronizes valid selections with
+    // the availability RPC, avoiding synchronous state updates in an effect.
+    if (!restaurant || !bookingDate || !bookingTime || !bookingSlot.valid) {
       return undefined;
     }
 
     const seats = Number(partySize);
-    const localDateTime = new Date(`${bookingDate}T${bookingTime}`);
-
-    if (
-      !Number.isInteger(seats) ||
-      seats < 1 ||
-      seats > 50 ||
-      Number.isNaN(localDateTime.getTime())
-    ) {
+    if (!Number.isInteger(seats) || seats < 1 || seats > 50) {
       return undefined;
     }
 
@@ -160,8 +408,8 @@ export default function PublicBooking() {
             {
               p_slug: restaurant.slug,
               p_party_size: seats,
-              p_booking_time: localDateTime.toISOString(),
-            }
+              p_booking_time: bookingSlot.iso,
+            },
           );
 
           if (rpcError) throw rpcError;
@@ -170,18 +418,13 @@ export default function PublicBooking() {
           const tables = Array.isArray(data) ? data : [];
 
           setAvailableTables(tables);
-          setAvailabilityStatus(
-            tables.length > 0 ? "loaded" : "empty"
-          );
+          setAvailabilityStatus(tables.length > 0 ? "loaded" : "empty");
         } catch (err) {
           if (!active) return;
 
           setAvailabilityStatus("error");
           setAvailabilityError(
-            getErrorMessage(
-              err,
-              "Could not check table availability."
-            )
+            getErrorMessage(err, "Could not check table availability."),
           );
         }
       }
@@ -199,6 +442,8 @@ export default function PublicBooking() {
     bookingTime,
     partySize,
     availabilityRefresh,
+    bookingSlot.valid,
+    bookingSlot.iso,
   ]);
 
   function clearPreviousResult() {
@@ -262,9 +507,7 @@ export default function PublicBooking() {
     }
 
     if (requests.length > 500) {
-      setBookingError(
-        "Special requests must be 500 characters or fewer."
-      );
+      setBookingError("Special requests must be 500 characters or fewer.");
       return;
     }
 
@@ -273,38 +516,38 @@ export default function PublicBooking() {
       return;
     }
 
+    const slotAtSubmit = getBookingSlotValidation(
+      restaurant,
+      bookingDate,
+      bookingTime,
+      new Date(),
+    );
+    if (!slotAtSubmit.valid) {
+      setBookingError(
+        slotAtSubmit.message || "Choose a valid reservation time.",
+      );
+      return;
+    }
+
     if (!Number.isInteger(seats) || seats < 1 || seats > 50) {
       setBookingError("Party size must be between 1 and 50 guests.");
       return;
     }
 
-    const localDateTime = new Date(`${bookingDate}T${bookingTime}`);
-
-    if (
-      Number.isNaN(localDateTime.getTime()) ||
-      localDateTime.getTime() <= Date.now() ||
-      localDateTime.getTime() > Date.now() + 90 * 24 * 60 * 60 * 1000
-    ) {
-      setBookingError(
-        "Choose a future date and time within the next 90 days."
-      );
-      return;
-    }
-
     if (!selectedTableId || availabilityStatus !== "loaded") {
       setBookingError(
-        "Check availability and select an available table first."
+        "Check availability and select an available table first.",
       );
       return;
     }
 
     const chosenTable = availableTables.find(
-      (table) => table.available_table_id === selectedTableId
+      (table) => table.available_table_id === selectedTableId,
     );
 
     if (!chosenTable) {
       setBookingError(
-        "That table is no longer in the available list. Check availability again."
+        "That table is no longer in the available list. Check availability again.",
       );
       return;
     }
@@ -321,9 +564,9 @@ export default function PublicBooking() {
           p_guest_email: email || null,
           p_guest_phone: phone,
           p_party_size: seats,
-          p_booking_time: localDateTime.toISOString(),
+          p_booking_time: slotAtSubmit.iso,
           p_special_requests: requests,
-        }
+        },
       );
 
       if (submitError) throw submitError;
@@ -332,7 +575,7 @@ export default function PublicBooking() {
 
       if (!result?.booking_id) {
         throw new Error(
-          "The reservation reference could not be confirmed. Please contact the restaurant before submitting again."
+          "The reservation reference could not be confirmed. Please contact the restaurant before submitting again.",
         );
       }
 
@@ -347,8 +590,8 @@ export default function PublicBooking() {
       setBookingError(
         getErrorMessage(
           err,
-          "Unable to submit the reservation. Please check availability and try again."
-        )
+          "Unable to submit the reservation. Please check availability and try again.",
+        ),
       );
     } finally {
       setSubmitting(false);
@@ -398,6 +641,7 @@ export default function PublicBooking() {
     <main className="booking-page">
       <header className="booking-header">
         <Link to={`/menu/${encodeURIComponent(restaurant.slug)}`}>
+          {" "}
           <ArrowLeft size={16} />
           View menu
         </Link>
@@ -412,8 +656,8 @@ export default function PublicBooking() {
         <span className="booking-eyebrow">PLAN YOUR VISIT</span>
         <h1>Reserve a table.</h1>
         <p>
-          Book your next visit at <strong>{restaurant.name}</strong>.
-          Choose your preferred time and we’ll check available tables.
+          Book your next visit at <strong>{restaurant.name}</strong>. Choose
+          your preferred time and we’ll check available tables.
         </p>
 
         {restaurant.address && (
@@ -444,7 +688,7 @@ export default function PublicBooking() {
               <div>
                 <span>Date & time</span>
                 <strong>
-                  {formatBookingDate(bookingResult.reservedTime)}
+                  {formatBookingDate(bookingResult.reservedTime, timeZone)}
                 </strong>
               </div>
 
@@ -462,8 +706,8 @@ export default function PublicBooking() {
             </div>
 
             <p className="booking-pending-note">
-              This is a pending request, not a confirmed reservation.
-              Please wait for the restaurant to confirm your booking.
+              This is a pending request, not a confirmed reservation. Please
+              wait for the restaurant to confirm your booking.
             </p>
 
             <button
@@ -483,12 +727,14 @@ export default function PublicBooking() {
           </section>
         ) : (
           <form className="booking-form" onSubmit={submitBooking}>
+            {" "}
             <div className="booking-section-title">
               <span className="booking-eyebrow">YOUR RESERVATION</span>
               <h2>Find your table</h2>
-              <p>Select your date, time and group size to check availability.</p>
+              <p>
+                Select your date, time and group size to check availability.
+              </p>
             </div>
-
             <div className="booking-field-grid">
               <label className="booking-field">
                 <span>
@@ -513,7 +759,8 @@ export default function PublicBooking() {
                 <input
                   type="time"
                   value={bookingTime}
-                  min={minimumTime}
+                  min={timeBounds.min}
+                  max={timeBounds.max}
                   onChange={handleTimeChange}
                   required
                 />
@@ -535,14 +782,13 @@ export default function PublicBooking() {
                 />
               </label>
             </div>
-
             <section className="booking-availability">
               <div className="booking-availability-heading">
                 <div>
                   <h3>Available tables</h3>
                   <p>
-                    Tables are checked against existing pending and
-                    confirmed reservations.
+                    Times follow the restaurant’s opening hours. Tables are
+                    checked against existing pending and confirmed reservations.
                   </p>
                 </div>
 
@@ -566,25 +812,23 @@ export default function PublicBooking() {
                 <div className="booking-availability-empty">
                   Select a date and time to see available tables.
                 </div>
+              ) : !bookingSlot.valid ? (
+                <div className="booking-availability-empty" role="status">
+                  {bookingSlot.message}
+                </div>
               ) : availabilityStatus === "loading" ? (
                 <div className="booking-availability-empty">
-                  <LoaderCircle
-                    className="booking-spinner"
-                    size={23}
-                  />
+                  <LoaderCircle className="booking-spinner" size={23} />
                   Checking availability...
                 </div>
               ) : availabilityStatus === "error" ? (
-                <div
-                  className="booking-inline-error"
-                  role="alert"
-                >
+                <div className="booking-inline-error" role="alert">
                   {availabilityError}
                 </div>
               ) : availabilityStatus === "empty" ? (
                 <div className="booking-availability-empty">
-                  No suitable tables are available at this time. Try
-                  another time or reduce the number of guests.
+                  No suitable tables are available at this time. Try another
+                  time or reduce the number of guests.
                 </div>
               ) : availabilityStatus === "loaded" ? (
                 <div className="booking-table-options">
@@ -601,9 +845,7 @@ export default function PublicBooking() {
                         type="radio"
                         name="booking-table"
                         value={table.available_table_id}
-                        checked={
-                          selectedTableId === table.available_table_id
-                        }
+                        checked={selectedTableId === table.available_table_id}
                         onChange={(event) =>
                           setSelectedTableId(event.target.value)
                         }
@@ -611,10 +853,9 @@ export default function PublicBooking() {
                       />
 
                       <span className="booking-table-option-info">
+                        {" "}
                         <strong>{table.table_label}</strong>
-                        <small>
-                          Capacity: {table.seating_capacity} guests
-                        </small>
+                        <small>Capacity: {table.seating_capacity} guests</small>
                       </span>
 
                       {selectedTableId === table.available_table_id && (
@@ -629,14 +870,13 @@ export default function PublicBooking() {
                 </div>
               )}
             </section>
-
             <div className="booking-section-title booking-details-title">
               <span className="booking-eyebrow">CONTACT DETAILS</span>
               <h2>Who’s coming?</h2>
             </div>
-
             <div className="booking-field-grid">
               <label className="booking-field booking-field-full">
+                {" "}
                 <span>Full name</span>
                 <input
                   type="text"
@@ -684,6 +924,7 @@ export default function PublicBooking() {
               </label>
 
               <label className="booking-field booking-field-full">
+                {" "}
                 <span>Special requests (optional)</span>
                 <textarea
                   value={specialRequests}
@@ -697,47 +938,42 @@ export default function PublicBooking() {
                 />
               </label>
             </div>
-
             {bookingError && (
               <div className="booking-inline-error" role="alert">
                 {bookingError}
               </div>
             )}
-
             <button
               type="submit"
               className="booking-submit"
               disabled={
                 submitting ||
+                !bookingSlot.valid ||
                 availabilityStatus !== "loaded" ||
                 !selectedTableId
               }
             >
               {submitting ? (
-                <LoaderCircle
-                  size={17}
-                  className="booking-spinner"
-                />
+                <LoaderCircle size={17} className="booking-spinner" />
               ) : (
                 <CalendarDays size={17} />
               )}
 
-              {submitting
-                ? "Submitting request..."
-                : "Request a reservation"}
+              {submitting ? "Submitting request..." : "Request a reservation"}
             </button>
-
             <p className="booking-disclaimer">
-              Your reservation remains pending until the restaurant
-              confirms it. Checking availability does not guarantee a
-              reservation; availability is checked again when submitted.
+              Your reservation remains pending until the restaurant confirms it.
+              Checking availability does not guarantee a reservation;
+              availability is checked again when submitted.
             </p>
           </form>
         )}
 
         <footer className="booking-footer">
           <img src={khaavioIcon} alt="" />
-          <span>Powered by <strong>Khaavio</strong></span>
+          <span>
+            Powered by <strong>Khaavio</strong>
+          </span>
         </footer>
       </div>
     </main>

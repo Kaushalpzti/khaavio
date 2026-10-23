@@ -1,0 +1,157 @@
+/* Branded fallback while lazy-loaded Khaavio routes are preparing. */
+
+.khaavio-page-loader {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    padding: 28px;
+    color: #073b31;
+    background: radial-gradient(ellipse at 50% 38%, rgba(228, 244, 233, 0.9) 0%, rgba(248, 250, 245, 0.2) 46%, transparent 72%), #f8f9f4;
+    isolation: isolate;
+}
+
+.khaavio-loader-content {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    width: min(100%, 330px);
+    align-items: center;
+    flex-direction: column;
+    text-align: center;
+    animation: khaavio-loader-enter 480ms cubic-bezier(.2, .8, .2, 1) both;
+}
+
+.khaavio-loader-mark-wrap {
+    position: relative;
+    display: grid;
+    width: 92px;
+    height: 92px;
+    place-items: center;
+    margin-bottom: 20px;
+}
+
+.khaavio-loader-halo {
+    position: absolute;
+    inset: 0;
+    border: 1px solid rgba(0, 104, 75, 0.18);
+    border-radius: 28px;
+    animation: khaavio-loader-halo 2.4s ease-in-out infinite;
+}
+
+.khaavio-loader-mark {
+    position: relative;
+    display: block;
+    width: 58px;
+    height: 58px;
+    object-fit: contain;
+    border-radius: 18px;
+    box-shadow: 0 12px 30px rgba(0, 78, 57, 0.12);
+}
+
+.khaavio-loader-wordmark {
+    font-family: inherit;
+    font-size: clamp(28px, 5vw, 34px);
+    font-weight: 800;
+    letter-spacing: -0.055em;
+    line-height: 1.1;
+}
+
+.khaavio-loader-message {
+    margin: 11px 0 0;
+    color: #65776f;
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 1.6;
+}
+
+.khaavio-loader-track {
+    width: 156px;
+    height: 4px;
+    margin-top: 29px;
+    overflow: hidden;
+    border-radius: 999px;
+    background: #e4eee7;
+}
+
+.khaavio-loader-track span {
+    display: block;
+    width: 42%;
+    height: 100%;
+    border-radius: inherit;
+    background: linear-gradient(90deg, #047857, #43a77d);
+    animation: khaavio-loader-progress 1.25s ease-in-out infinite;
+}
+
+.khaavio-loader-caption {
+    margin-top: 14px;
+    color: #96a59d;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+}
+
+.khaavio-loader-orb {
+    position: absolute;
+    z-index: 0;
+    width: 280px;
+    height: 280px;
+    border-radius: 50%;
+    filter: blur(1px);
+    pointer-events: none;
+}
+
+.khaavio-loader-orb-one {
+    top: -185px;
+    right: -125px;
+    background: radial-gradient(circle, rgba(213, 237, 221, 0.75), rgba(213, 237, 221, 0));
+}
+
+.khaavio-loader-orb-two {
+    bottom: -205px;
+    left: -135px;
+    background: radial-gradient(circle, rgba(226, 240, 227, 0.9), rgba(226, 240, 227, 0));
+}
+
+@keyframes khaavio-loader-progress {
+    0% {
+        transform: translateX(-115%);
+    }
+    100% {
+        transform: translateX(360%);
+    }
+}
+
+@keyframes khaavio-loader-halo {
+    0%,
+    100% {
+        transform: scale(0.94);
+        opacity: 0.62;
+    }
+    50% {
+        transform: scale(1.06);
+        opacity: 1;
+    }
+}
+
+@keyframes khaavio-loader-enter {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .khaavio-loader-content,
+    .khaavio-loader-halo,
+    .khaavio-loader-track span {
+        animation: none !important;
+    }
+}
