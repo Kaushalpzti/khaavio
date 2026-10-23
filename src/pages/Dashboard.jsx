@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import {
   ArrowUpRight,
   CalendarDays,
+  BarChart3,
   CheckCircle2,
   ClipboardList,
   LoaderCircle,
@@ -32,7 +33,13 @@ const modules = [
     status: "Available",
     icon: Settings,
   },
-
+  
+  {
+    title: "Analytics",
+    description: "Track completed order value, popular dishes and upcoming bookings.",
+    status: "Available",
+    icon: BarChart3,
+  },
   {
     title: "Menu manager",
     description: "Add food items, categories, prices and photos.",
@@ -419,6 +426,12 @@ export default function Dashboard() {
                           className="module-action"
                         >
                           Edit restaurant settings <ArrowUpRight size={14} />
+                        </Link>
+                      )}
+
+                      {module.title === "Analytics" && (
+                        <Link to="/dashboard/analytics" className="module-action">
+                          View analytics <ArrowUpRight size={14} />
                         </Link>
                       )}
 

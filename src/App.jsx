@@ -14,6 +14,7 @@ const OrdersDashboard = lazy(() => import("./pages/OrdersDashboard"));
 const PublicBooking = lazy(() => import("./pages/PublicBooking"));
 const BookingsDashboard = lazy(() => import("./pages/BookingsDashboard"));
 const RestaurantSettings = lazy(() => import("./pages/RestaurantSettings"));
+const Analytics = lazy(() => import("./pages/Analytics"));
 
 function PageLoader() {
   return (
@@ -38,6 +39,7 @@ export default function App() {
             element={<Auth mode="reset-password" />}
           />
           <Route path="/book/:slug" element={<PublicBooking />} />
+
           <Route
             path="/onboarding"
             element={
@@ -57,6 +59,24 @@ export default function App() {
           />
 
           <Route
+            path="/dashboard/settings"
+            element={
+              <ProtectedRoute>
+                <RestaurantSettings />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/dashboard/analytics"
+            element={
+              <ProtectedRoute>
+                <Analytics />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
             path="/dashboard/menu"
             element={
               <ProtectedRoute>
@@ -64,6 +84,7 @@ export default function App() {
               </ProtectedRoute>
             }
           />
+
           <Route
             path="/dashboard/qr"
             element={
@@ -96,15 +117,6 @@ export default function App() {
             element={
               <ProtectedRoute>
                 <BookingsDashboard />
-              </ProtectedRoute>
-            }
-          />
-
-          <Route
-            path="/dashboard/settings"
-            element={
-              <ProtectedRoute>
-                <RestaurantSettings />
               </ProtectedRoute>
             }
           />
