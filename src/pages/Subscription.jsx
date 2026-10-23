@@ -3,15 +3,19 @@ import { Link, useNavigate } from "react-router-dom";
 import {
   ArrowLeft,
   CalendarClock,
+  Send,
   CheckCircle2,
   CreditCard,
+  FileText,
   Info,
   LoaderCircle,
+  Printer,
   RefreshCw,
   ShieldCheck,
   Sparkles,
   Store,
   Tag,
+  X,
 } from "lucide-react";
 
 import { supabase } from "../lib/supabaseClient";
@@ -67,6 +71,27 @@ function formatPrice(value, interval) {
   return price;
 }
 
+function formatDateTime(value) {
+  if (!value) return "Not available";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "Not available";
+  return new Intl.DateTimeFormat("en-IN", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  }).format(date);
+}
+
+function getReceiptNumber(requestId) {
+  const compactId = String(requestId || "")
+    .replace(/-/g, "")
+    .slice(0, 10)
+    .toUpperCase();
+  return `KHV-RCPT-${compactId || "UNAVAILABLE"}`;
+}
+
 function resolveStatus(subscription, now) {
   if (
     subscription?.ends_at &&
@@ -110,6 +135,11 @@ export default function Subscription() {
   const [restaurant, setRestaurant] = useState(null);
   const [subscription, setSubscription] = useState(null);
   const [plans, setPlans] = useState([]);
+  const [renewalRequests, setRenewalRequests] = useState([]);
+  const [receiptRequest, setReceiptRequest] = useState(null);
+  const [requestingPlanKey, setRequestingPlanKey] = useState("");
+  const [foundingOfferRequested, setFoundingOfferRequested] = useState(false);
+  const [requestNotice, setRequestNotice] = useState("");
   const [billingInterval, setBillingInterval] = useState("yearly");
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -173,6 +203,13 @@ export default function Subscription() {
         if (subscriptionError) throw subscriptionError;
         if (!active) return;
         setSubscription(subscriptionData || null);
+
+        const { data: requestData, error: requestError } = await supabase.rpc(
+          "get_my_subscription_renewal_requests",
+        );
+        if (requestError) throw requestError;
+        if (!active) return;
+        setRenewalRequests(Array.isArray(requestData) ? requestData : []);
       } catch (loadError) {
         if (active) {
           setError(
@@ -192,6 +229,55 @@ export default function Subscription() {
       active = false;
     };
   }, [navigate, refreshKey]);
+
+  async function requestPlan(availablePlan) {
+    if (
+      !availablePlan ||
+      requestingPlanKey ||
+      renewalRequests.some((request) => request.status === "pending")
+    )
+      return;
+    const isYearly = availablePlan.billing_interval === "yearly";
+    const askFoundingOffer = isYearly && foundingOfferRequested;
+    const confirmed = window.confirm(
+      `Request ${availablePlan.name} (${formatPrice(availablePlan.price_inr, availablePlan.billing_interval)}) for ${restaurant?.name || "your restaurant"}?\n\nThis does not make a payment or activate access. Khaavio will confirm the final amount/payment instructions manually${askFoundingOffer ? ", including founding-offer eligibility" : ""}.`,
+    );
+    if (!confirmed) return;
+
+    setError("");
+    setRequestNotice("");
+    setRequestingPlanKey(availablePlan.plan_key);
+    try {
+      const { data, error: requestError } = await supabase.rpc(
+        "request_subscription_renewal",
+        {
+          p_plan_key: availablePlan.plan_key,
+          p_founding_offer_requested: askFoundingOffer,
+          p_request_note: null,
+        },
+      );
+      if (requestError) throw requestError;
+      const result = Array.isArray(data) ? data[0] : data;
+      if (!result?.request_id) {
+        throw new Error(
+          "Khaavio did not confirm the renewal request. Refresh before trying again.",
+        );
+      }
+      setRequestNotice(
+        "Request sent to Khaavio. No payment has been collected and your plan has not changed. Wait for the final quote and payment instructions.",
+      );
+      setRefreshKey((current) => current + 1);
+    } catch (requestError) {
+      setError(
+        getErrorMessage(
+          requestError,
+          "Could not submit the subscription request.",
+        ),
+      );
+    } finally {
+      setRequestingPlanKey("");
+    }
+  }
 
   function refresh() {
     if (loading || refreshing) return;
@@ -268,6 +354,43 @@ export default function Subscription() {
             {error}
           </div>
         )}
+
+        {requestNotice && (
+          <div
+            className="subscription-alert subscription-alert-success"
+            role="status"
+          >
+            <CheckCircle2 size={17} /> <span>{requestNotice}</span>
+          </div>
+        )}
+
+        {restaurant &&
+          ["expired", "cancelled", "past_due", "unassigned"].includes(
+            currentStatus,
+          ) && (
+            <section className="subscription-access-attention" role="status">
+              <div className="subscription-access-attention-icon">
+                <ShieldCheck size={20} />
+              </div>
+              <div>
+                <h2>
+                  {currentStatus === "expired"
+                    ? "Your access period has ended"
+                    : currentStatus === "cancelled"
+                      ? "Your subscription is cancelled"
+                      : currentStatus === "past_due"
+                        ? "Your subscription needs attention"
+                        : "No active plan assigned"}
+                </h2>
+                <p>
+                  Your restaurant data and history are preserved. Select an
+                  annual or monthly plan below, then contact Khaavio support to
+                  verify payment and activate access. Payments are still handled
+                  manually.
+                </p>
+              </div>
+            </section>
+          )}
 
         {!restaurant ? (
           <section className="subscription-empty">
@@ -347,10 +470,10 @@ export default function Subscription() {
             <div className="subscription-notice" role="note">
               <Info size={19} />
               <p>
-                This is the manual-plan MVP. Prices are displayed for planning
-                only; payment collection, automatic renewals and feature limits
-                are not enabled. Plan activation is handled manually during the
-                pilot.
+                Manual billing during the pilot: requesting a plan does not
+                collect payment or activate access. Khaavio will confirm the
+                final quote and payment instructions; access changes only after
+                an authorised admin verifies payment.
               </p>
             </div>
 
@@ -403,10 +526,29 @@ export default function Subscription() {
                       Founding restaurant offer · first 10 restaurants
                     </strong>
                     <p>
-                      Special first-year prices are shown on yearly plans.
-                      Khaavio will confirm eligibility manually; this offer is
-                      not automatically counted or activated yet.
+                      Requesting the founding offer does not guarantee a
+                      discount. Khaavio will confirm eligibility and the final
+                      amount before payment.
                     </p>
+                    <label className="subscription-founding-request-check">
+                      <input
+                        type="checkbox"
+                        checked={foundingOfferRequested}
+                        onChange={(event) =>
+                          setFoundingOfferRequested(event.target.checked)
+                        }
+                        disabled={
+                          Boolean(requestingPlanKey) ||
+                          renewalRequests.some(
+                            (request) => request.status === "pending",
+                          )
+                        }
+                      />
+                      <span>
+                        Request founding pricing for one of the first 10
+                        restaurants
+                      </span>
+                    </label>
                   </div>
                 </div>
               )}
@@ -516,11 +658,40 @@ export default function Subscription() {
                           )}
 
                         <div className="subscription-plan-footer">
-                          {isCurrent
-                            ? "Your current plan"
-                            : isTrial
-                              ? "Available to new restaurants"
-                              : "Manual activation · no checkout yet"}
+                          {isTrial ? (
+                            <span className="subscription-plan-footer-note">
+                              A trial is assigned automatically to eligible new
+                              restaurants.
+                            </span>
+                          ) : (
+                            <button
+                              type="button"
+                              className="subscription-request-button"
+                              onClick={() => requestPlan(availablePlan)}
+                              disabled={
+                                Boolean(requestingPlanKey) ||
+                                renewalRequests.some(
+                                  (request) => request.status === "pending",
+                                )
+                              }
+                            >
+                              {requestingPlanKey === availablePlan.plan_key ? (
+                                <LoaderCircle
+                                  size={15}
+                                  className="subscription-spinner"
+                                />
+                              ) : (
+                                <Send size={15} />
+                              )}
+                              {renewalRequests.some(
+                                (request) => request.status === "pending",
+                              )
+                                ? "Request pending"
+                                : isCurrent
+                                  ? "Request renewal"
+                                  : "Request this plan"}
+                            </button>
+                          )}
                         </div>
                       </article>
                     );
@@ -534,12 +705,244 @@ export default function Subscription() {
               )}
 
               <p className="subscription-pricing-footnote">
-                Monthly and annual prices are the planned launch prices.
-                Checkout, automated billing, renewals and plan-based feature
-                restrictions are not active in this MVP. Founding discounts are
-                manually confirmed and are not automatically applied.
+                Prices are catalog prices for the pilot. Plan requests are
+                recorded here; payments are handled outside Khaavio and
+                activation is manual. Founding discounts must be approved by
+                Khaavio before payment.
               </p>
             </section>
+
+            <section className="subscription-renewal-history">
+              <div className="subscription-section-heading">
+                <div>
+                  <span className="subscription-eyebrow">REQUEST HISTORY</span>
+                  <h2>Plan requests</h2>
+                  <p>
+                    Requests are reviewed manually. Your access changes only
+                    when an authorised admin activates a plan.
+                  </p>
+                </div>
+              </div>
+              {renewalRequests.length ? (
+                <div className="subscription-request-list">
+                  {renewalRequests.map((request) => (
+                    <article
+                      className="subscription-request-history-card"
+                      key={request.request_id}
+                    >
+                      <div className="subscription-request-history-main">
+                        <div>
+                          <strong>
+                            {request.plan_name} ·{" "}
+                            {request.billing_interval === "yearly"
+                              ? "Yearly"
+                              : "Monthly"}
+                          </strong>
+                          <span>
+                            Requested {formatDate(request.created_at)}
+                          </span>
+                        </div>
+                        <span
+                          className={`subscription-request-status status-${request.status}`}
+                        >
+                          {request.status === "pending"
+                            ? "Awaiting review"
+                            : request.status === "activated"
+                              ? "Activated"
+                              : "Declined"}
+                        </span>
+                      </div>
+                      <p className="subscription-request-amount">
+                        Catalog price:{" "}
+                        {formatCurrency(request.catalog_price_inr)}
+                        {request.billing_interval === "yearly"
+                          ? " / year"
+                          : " / month"}
+                        {request.founding_offer_requested
+                          ? " · Founding offer requested (subject to approval)"
+                          : ""}
+                      </p>
+                      {request.confirmed_amount_inr != null && (
+                        <p className="subscription-request-payment">
+                          Confirmed amount:{" "}
+                          {formatCurrency(request.confirmed_amount_inr)}
+                          {request.payment_reference
+                            ? ` · Reference: ${request.payment_reference}`
+                            : ""}
+                        </p>
+                      )}
+                      {request.status === "activated" &&
+                        request.confirmed_amount_inr != null &&
+                        request.payment_reference && (
+                          <button
+                            type="button"
+                            className="subscription-receipt-button"
+                            onClick={() => setReceiptRequest(request)}
+                          >
+                            <FileText size={15} /> View payment receipt
+                          </button>
+                        )}
+                      {request.admin_note && (
+                        <p className="subscription-request-admin-note">
+                          Khaavio note: {request.admin_note}
+                        </p>
+                      )}
+                      {request.status === "pending" && (
+                        <p className="subscription-request-pending-note">
+                          No payment has been collected in Khaavio. Wait for the
+                          final quote and payment instructions before
+                          transferring money.
+                        </p>
+                      )}
+                    </article>
+                  ))}
+                </div>
+              ) : (
+                <div className="subscription-empty-inline">
+                  You have not submitted a plan request yet.
+                </div>
+              )}
+            </section>
+
+            {receiptRequest && (
+              <div className="subscription-receipt-backdrop">
+                <section
+                  className="subscription-receipt-modal"
+                  role="dialog"
+                  aria-modal="true"
+                  aria-labelledby="subscription-receipt-title"
+                >
+                  <div className="subscription-receipt-actions">
+                    <span>Payment receipt preview</span>
+                    <button
+                      type="button"
+                      className="subscription-receipt-close"
+                      onClick={() => setReceiptRequest(null)}
+                      aria-label="Close receipt preview"
+                    >
+                      <X size={18} />
+                    </button>
+                  </div>
+
+                  <div className="subscription-receipt-paper">
+                    <header className="subscription-receipt-brand-row">
+                      <div className="subscription-receipt-brand">
+                        <img src={khaavioIcon} alt="" />
+                        <div>
+                          <strong>Khaavio</strong>
+                          <span>Every Table, Digitally Connected.</span>
+                        </div>
+                      </div>
+                      <span className="subscription-receipt-paid-badge">
+                        <CheckCircle2 size={14} /> Payment verified
+                      </span>
+                    </header>
+
+                    <div className="subscription-receipt-title-row">
+                      <div>
+                        <span className="subscription-eyebrow">
+                          ACCOUNT & BILLING
+                        </span>
+                        <h2 id="subscription-receipt-title">Payment receipt</h2>
+                        <p>
+                          Receipt for a manually verified Khaavio subscription
+                          payment.
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="subscription-receipt-meta-grid">
+                      <div>
+                        <span>Receipt number</span>
+                        <strong>
+                          {getReceiptNumber(receiptRequest.request_id)}
+                        </strong>
+                      </div>
+                      <div>
+                        <span>Payment verified</span>
+                        <strong>
+                          {formatDateTime(
+                            receiptRequest.payment_verified_at ||
+                              receiptRequest.resolved_at,
+                          )}
+                        </strong>
+                      </div>
+                      <div>
+                        <span>Restaurant</span>
+                        <strong>{restaurant?.name || "Restaurant"}</strong>
+                      </div>
+                      <div>
+                        <span>Plan requested</span>
+                        <strong>
+                          {receiptRequest.plan_name || "Khaavio subscription"}
+                        </strong>
+                      </div>
+                    </div>
+
+                    <div className="subscription-receipt-line-item">
+                      <div>
+                        <strong>{receiptRequest.plan_name} subscription</strong>
+                        <span>
+                          {receiptRequest.billing_interval === "yearly"
+                            ? "Annual subscription"
+                            : "Monthly subscription"}
+                        </span>
+                      </div>
+                      <strong>
+                        {formatCurrency(receiptRequest.confirmed_amount_inr)}
+                      </strong>
+                    </div>
+
+                    <div className="subscription-receipt-total">
+                      <span>Amount recorded as received</span>
+                      <strong>
+                        {formatCurrency(receiptRequest.confirmed_amount_inr)}
+                      </strong>
+                    </div>
+
+                    <div className="subscription-receipt-reference">
+                      <span>Payment reference / UTR</span>
+                      <strong>{receiptRequest.payment_reference}</strong>
+                    </div>
+
+                    <div className="subscription-receipt-note">
+                      <ShieldCheck size={17} />
+                      <p>
+                        Khaavio marked this payment as verified manually. Keep
+                        this receipt and the payment reference for your records.
+                        Subscription activation was recorded against the
+                        associated plan request.
+                      </p>
+                    </div>
+
+                    <footer className="subscription-receipt-footer">
+                      <span>
+                        Request ID:{" "}
+                        {String(receiptRequest.request_id || "").toUpperCase()}
+                      </span>
+                      <p>
+                        This is a payment acknowledgement, not a GST tax
+                        invoice.
+                      </p>
+                    </footer>
+                  </div>
+
+                  <div className="subscription-receipt-actions subscription-receipt-bottom-actions">
+                    <span>
+                      Use your browser's print dialog to save this receipt as
+                      PDF.
+                    </span>
+                    <button
+                      type="button"
+                      className="subscription-receipt-print-button"
+                      onClick={() => window.print()}
+                    >
+                      <Printer size={16} /> Print / Save as PDF
+                    </button>
+                  </div>
+                </section>
+              </div>
+            )}
 
             <section className="subscription-next-steps">
               <CalendarClock size={21} />

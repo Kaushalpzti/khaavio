@@ -557,3 +557,21 @@
         grid-template-columns: 1fr;
     }
 }
+
+.booking-subscription-unavailable {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    margin-bottom: 18px;
+    padding: 15px 17px;
+    color: #734822;
+    background: #fff6e9;
+    border: 1px solid #efd4ad;
+    border-radius: 12px;
+    font-size: 13px;
+    line-height: 1.65;
+}
+
+.booking-subscription-unavailable strong {
+    font-size: 14px;
+}

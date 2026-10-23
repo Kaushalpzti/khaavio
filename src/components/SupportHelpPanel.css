@@ -1,0 +1,355 @@
+.khaavio-help-panel {
+    margin-top: 28px;
+    padding: clamp(20px, 3vw, 30px);
+    border: 1px solid #e0e9e4;
+    border-radius: 24px;
+    background: #fff;
+    color: #14231c;
+    box-shadow: 0 12px 34px rgba(22, 57, 41, 0.035);
+}
+
+.khaavio-help-heading {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    margin-bottom: 22px;
+}
+
+.khaavio-help-heading-icon,
+.khaavio-help-contact-icon {
+    display: grid;
+    flex: 0 0 auto;
+    place-items: center;
+    width: 46px;
+    height: 46px;
+    border-radius: 15px;
+    color: #08794c;
+    background: #e8f6ee;
+}
+
+.khaavio-help-heading-copy {
+    min-width: 0;
+}
+
+.khaavio-help-eyebrow,
+.khaavio-help-contact-eyebrow,
+.khaavio-help-shortcuts>span {
+    display: block;
+    color: #65796e;
+    font-size: 10px;
+    font-weight: 850;
+    letter-spacing: 0.14em;
+    line-height: 1.4;
+}
+
+.khaavio-help-heading h2 {
+    margin: 5px 0 5px;
+    font-size: clamp(22px, 2vw, 28px);
+    line-height: 1.15;
+    letter-spacing: -0.035em;
+}
+
+.khaavio-help-heading p,
+.khaavio-help-contact>p {
+    margin: 0;
+    color: #66776e;
+    font-size: 13px;
+    line-height: 1.6;
+}
+
+.khaavio-help-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1.55fr) minmax(245px, 0.8fr);
+    align-items: start;
+    gap: 20px;
+}
+
+.khaavio-help-faq {
+    min-width: 0;
+}
+
+.khaavio-help-search {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 44px;
+    padding: 0 13px;
+    border: 1px solid #dce7e0;
+    border-radius: 13px;
+    color: #7b8b82;
+    background: #fbfdfb;
+}
+
+.khaavio-help-search:focus-within {
+    border-color: #16875a;
+    box-shadow: 0 0 0 3px rgba(22, 135, 90, 0.1);
+}
+
+.khaavio-help-search input {
+    width: 100%;
+    min-width: 0;
+    padding: 12px 0;
+    border: 0;
+    outline: 0;
+    color: #183025;
+    background: transparent;
+    font: inherit;
+    font-size: 13px;
+}
+
+.khaavio-help-search input::placeholder {
+    color: #8b9991;
+}
+
+.khaavio-help-articles {
+    margin-top: 12px;
+}
+
+.khaavio-help-article {
+    border-bottom: 1px solid #e9efeb;
+}
+
+.khaavio-help-question {
+    display: flex;
+    width: 100%;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 15px 1px;
+    border: 0;
+    text-align: left;
+    color: inherit;
+    background: transparent;
+    cursor: pointer;
+}
+
+.khaavio-help-question>span {
+    display: grid;
+    gap: 4px;
+}
+
+.khaavio-help-question small {
+    color: #16845a;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.035em;
+}
+
+.khaavio-help-question strong {
+    font-size: 13px;
+    font-weight: 750;
+    line-height: 1.45;
+}
+
+.khaavio-help-chevron {
+    flex: 0 0 auto;
+    color: #72867a;
+    transition: transform 160ms ease;
+}
+
+.khaavio-help-chevron.is-open {
+    transform: rotate(180deg);
+}
+
+.khaavio-help-question:focus-visible,
+.khaavio-help-action:focus-visible,
+.khaavio-help-article-link:focus-visible,
+.khaavio-help-shortcuts a:focus-visible {
+    outline: 3px solid rgba(22, 135, 90, 0.3);
+    outline-offset: 3px;
+    border-radius: 6px;
+}
+
+.khaavio-help-answer {
+    padding: 0 25px 16px 1px;
+}
+
+.khaavio-help-answer p {
+    margin: 0 0 10px;
+    color: #61736a;
+    font-size: 12px;
+    line-height: 1.7;
+}
+
+.khaavio-help-article-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    color: #08794c;
+    font-size: 12px;
+    font-weight: 800;
+    text-decoration: none;
+}
+
+.khaavio-help-article-link:hover {
+    text-decoration: underline;
+}
+
+.khaavio-help-empty {
+    display: grid;
+    justify-items: start;
+    gap: 7px;
+    padding: 26px 4px;
+    color: #66776e;
+}
+
+.khaavio-help-empty strong {
+    color: #263a2f;
+    font-size: 13px;
+}
+
+.khaavio-help-empty p {
+    margin: 0;
+    font-size: 12px;
+    line-height: 1.5;
+}
+
+.khaavio-help-contact {
+    min-width: 0;
+    padding: 20px;
+    border: 1px solid #dcefe3;
+    border-radius: 18px;
+    background: linear-gradient(155deg, #f5fbf7 0%, #fbfdfb 82%);
+}
+
+.khaavio-help-contact-icon {
+    width: 40px;
+    height: 40px;
+    margin-bottom: 15px;
+    border-radius: 13px;
+}
+
+.khaavio-help-contact h3 {
+    margin: 6px 0 7px;
+    font-size: 20px;
+    letter-spacing: -0.025em;
+}
+
+.khaavio-help-contact>p {
+    font-size: 12px;
+}
+
+.khaavio-help-contact-actions {
+    display: grid;
+    gap: 8px;
+    margin-top: 16px;
+}
+
+.khaavio-help-action {
+    display: flex;
+    width: 100%;
+    min-height: 40px;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 8px;
+    padding: 10px 11px;
+    border: 1px solid #dce7e0;
+    border-radius: 11px;
+    color: #254538;
+    background: #fff;
+    font: inherit;
+    font-size: 12px;
+    font-weight: 750;
+    text-decoration: none;
+    cursor: pointer;
+    transition: border-color 140ms ease, transform 140ms ease, background 140ms ease;
+}
+
+.khaavio-help-action:hover {
+    transform: translateY(-1px);
+    border-color: #a7cdb7;
+    background: #fbfffc;
+}
+
+.khaavio-help-action svg:last-child {
+    margin-left: auto;
+}
+
+.khaavio-help-action-primary {
+    border-color: #08794c;
+    color: #fff;
+    background: #08794c;
+}
+
+.khaavio-help-action-primary:hover {
+    border-color: #066940;
+    background: #066940;
+}
+
+.khaavio-help-contact-note {
+    margin-top: 12px !important;
+    color: #7b897f !important;
+    font-size: 11px !important;
+}
+
+.khaavio-help-copy-status {
+    margin-top: 11px !important;
+    color: #08794c !important;
+    font-weight: 700;
+}
+
+.khaavio-help-draft {
+    display: block;
+    width: 100%;
+    margin-top: 10px;
+    padding: 10px;
+    resize: vertical;
+    border: 1px solid #dce7e0;
+    border-radius: 9px;
+    color: #3f5549;
+    background: #fff;
+    font: inherit;
+    font-size: 11px;
+    line-height: 1.55;
+}
+
+.khaavio-help-shortcuts {
+    display: grid;
+    gap: 11px;
+    margin-top: 20px;
+    padding-top: 17px;
+    border-top: 1px solid #dfece3;
+}
+
+.khaavio-help-shortcuts>span {
+    margin-bottom: 2px;
+}
+
+.khaavio-help-shortcuts a {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: #456254;
+    font-size: 12px;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.khaavio-help-shortcuts a:hover {
+    color: #08794c;
+}
+
+@media (max-width: 760px) {
+    .khaavio-help-panel {
+        margin-top: 22px;
+        padding: 18px;
+        border-radius: 19px;
+    }
+    .khaavio-help-layout {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 18px;
+    }
+    .khaavio-help-contact {
+        padding: 17px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .khaavio-help-chevron,
+    .khaavio-help-action {
+        transition: none;
+    }
+    .khaavio-help-action:hover {
+        transform: none;
+    }
+}

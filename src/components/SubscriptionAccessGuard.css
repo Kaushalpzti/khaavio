@@ -1,0 +1,101 @@
+ .subscription-guard-state {
+     min-height: 100vh;
+     display: flex;
+     flex-direction: column;
+     align-items: center;
+     justify-content: center;
+     gap: 14px;
+     padding: 32px 20px;
+     color: #19372d;
+     background: #faf9f4;
+     text-align: center;
+ }
+ 
+ .subscription-guard-state>svg {
+     color: #4d765a;
+ }
+ 
+ .subscription-guard-state h1 {
+     max-width: 640px;
+     margin: 0;
+     font-size: clamp(27px, 4vw, 42px);
+     line-height: 1.12;
+     letter-spacing: -1.2px;
+ }
+ 
+ .subscription-guard-state p {
+     max-width: 560px;
+     margin: 0;
+     color: #657466;
+     font-size: 15px;
+     line-height: 1.75;
+ }
+ 
+ .subscription-guard-primary {
+     min-height: 46px;
+     display: inline-flex;
+     align-items: center;
+     justify-content: center;
+     gap: 9px;
+     padding: 0 19px;
+     color: #fffefa;
+     background: #006b4b;
+     border: 0;
+     border-radius: 9px;
+     font: inherit;
+     font-weight: 700;
+     text-decoration: none;
+     cursor: pointer;
+ }
+ 
+ .subscription-guard-primary:hover {
+     background: #07583f;
+ }
+ 
+ .subscription-guard-link {
+     color: #42664c;
+     font-weight: 650;
+     text-decoration: underline;
+     text-underline-offset: 3px;
+ }
+ 
+ .subscription-guard-state small {
+     max-width: 580px;
+     margin-top: 10px;
+     color: #7f8a7e;
+     font-size: 12px;
+     line-height: 1.7;
+ }
+ 
+ .subscription-guard-icon {
+     width: 58px;
+     height: 58px;
+     display: grid;
+     place-items: center;
+     color: #206d4b;
+     background: #e7f1e8;
+     border-radius: 17px;
+ }
+ 
+ .subscription-guard-eyebrow {
+     color: #6a866c;
+     font-size: 10px;
+     font-weight: 800;
+     letter-spacing: 1.4px;
+ }
+ 
+ .subscription-guard-spinner {
+     animation: subscription-guard-spin 1s linear infinite;
+ }
+ 
+ @keyframes subscription-guard-spin {
+     to {
+         transform: rotate(360deg);
+     }
+ }
+ 
+ @media (prefers-reduced-motion: reduce) {
+     .subscription-guard-spinner {
+         animation: none;
+     }
+ }

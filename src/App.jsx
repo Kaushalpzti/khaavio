@@ -1,6 +1,7 @@
 import { lazy, Suspense } from "react";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import ProtectedRoute from "./components/ProtectedRoute";
+import SubscriptionAccessGuard from "./components/SubscriptionAccessGuard";
 import "./PageLoader.css";
 
 // Public pages
@@ -61,7 +62,9 @@ function PageLoader() {
         </div>
 
         <div className="khaavio-loader-wordmark">Khaavio</div>
-        <p className="khaavio-loader-message">Getting Khaavio ready for you</p>
+        <p className="khaavio-loader-message">
+          Getting your restaurant workspace ready
+        </p>
 
         <div className="khaavio-loader-track" aria-hidden="true">
           <span />
@@ -76,6 +79,14 @@ function PageLoader() {
 
 function ProtectedPage({ children }) {
   return <ProtectedRoute>{children}</ProtectedRoute>;
+}
+
+function ProtectedRestaurantPage({ children }) {
+  return (
+    <ProtectedPage>
+      <SubscriptionAccessGuard>{children}</SubscriptionAccessGuard>
+    </ProtectedPage>
+  );
 }
 
 export default function App() {
@@ -113,9 +124,9 @@ export default function App() {
           <Route
             path="/dashboard"
             element={
-              <ProtectedPage>
+              <ProtectedRestaurantPage>
                 <Dashboard />
-              </ProtectedPage>
+              </ProtectedRestaurantPage>
             }
           />
 
@@ -123,9 +134,9 @@ export default function App() {
           <Route
             path="/dashboard/settings"
             element={
-              <ProtectedPage>
+              <ProtectedRestaurantPage>
                 <RestaurantSettings />
-              </ProtectedPage>
+              </ProtectedRestaurantPage>
             }
           />
           <Route
@@ -151,25 +162,25 @@ export default function App() {
           <Route
             path="/dashboard/menu"
             element={
-              <ProtectedPage>
+              <ProtectedRestaurantPage>
                 <MenuManager />
-              </ProtectedPage>
+              </ProtectedRestaurantPage>
             }
           />
           <Route
             path="/dashboard/qr"
             element={
-              <ProtectedPage>
+              <ProtectedRestaurantPage>
                 <QRStudio />
-              </ProtectedPage>
+              </ProtectedRestaurantPage>
             }
           />
           <Route
             path="/dashboard/table-qr"
             element={
-              <ProtectedPage>
+              <ProtectedRestaurantPage>
                 <TableQRStudio />
-              </ProtectedPage>
+              </ProtectedRestaurantPage>
             }
           />
 
@@ -177,17 +188,17 @@ export default function App() {
           <Route
             path="/dashboard/orders"
             element={
-              <ProtectedPage>
+              <ProtectedRestaurantPage>
                 <OrdersDashboard />
-              </ProtectedPage>
+              </ProtectedRestaurantPage>
             }
           />
           <Route
             path="/dashboard/receipts"
             element={
-              <ProtectedPage>
+              <ProtectedRestaurantPage>
                 <OrderReceipts />
-              </ProtectedPage>
+              </ProtectedRestaurantPage>
             }
           />
 
@@ -195,17 +206,17 @@ export default function App() {
           <Route
             path="/dashboard/bookings"
             element={
-              <ProtectedPage>
+              <ProtectedRestaurantPage>
                 <BookingsDashboard />
-              </ProtectedPage>
+              </ProtectedRestaurantPage>
             }
           />
           <Route
             path="/dashboard/analytics"
             element={
-              <ProtectedPage>
+              <ProtectedRestaurantPage>
                 <Analytics />
-              </ProtectedPage>
+              </ProtectedRestaurantPage>
             }
           />
 
@@ -213,9 +224,9 @@ export default function App() {
           <Route
             path="/dashboard/kitchen"
             element={
-              <ProtectedPage>
+              <ProtectedRestaurantPage>
                 <KitchenDisplay />
-              </ProtectedPage>
+              </ProtectedRestaurantPage>
             }
           />
 

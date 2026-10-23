@@ -19,6 +19,9 @@ import {
 
 import { supabase } from "../lib/supabaseClient";
 import khaavioIcon from "../assets/icon.png";
+import SubscriptionExpiryBanner from "../components/SubscriptionExpiryBanner";
+import SupportHelpPanel from "../components/SupportHelpPanel";
+
 import "./Dashboard.css";
 
 const modules = [
@@ -324,6 +327,9 @@ export default function Dashboard() {
               </div>
             </section>
 
+            {/* Subscription expiry reminder */}
+            <SubscriptionExpiryBanner restaurantId={restaurant.id} />
+
             <section className="restaurant-summary">
               <div className="restaurant-summary-top">
                 <div className="restaurant-avatar">
@@ -527,6 +533,8 @@ export default function Dashboard() {
                 })}
               </div>
             </section>
+
+            <SupportHelpPanel restaurant={restaurant} accountEmail={email} />
 
             <footer className="dashboard-footer">
               <Link to="/">

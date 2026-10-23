@@ -319,6 +319,8 @@ export default function PublicBooking() {
   const [submitting, setSubmitting] = useState(false);
   const [bookingError, setBookingError] = useState("");
   const [bookingResult, setBookingResult] = useState(null);
+  const [subscriptionAllowsTransactions, setSubscriptionAllowsTransactions] =
+    useState(null);
 
   const timeZone = restaurant?.timezone || DEFAULT_TIME_ZONE;
   const today = restaurantDateString(timeZone);
@@ -343,6 +345,7 @@ export default function PublicBooking() {
     async function loadRestaurant() {
       setLoading(true);
       setPageError("");
+      setSubscriptionAllowsTransactions(null);
 
       try {
         const { data, error: restaurantError } = await supabase
@@ -362,7 +365,18 @@ export default function PublicBooking() {
           );
         }
 
-        if (active) setRestaurant(data);
+        // The public RPC reveals only whether bookings/ordering are available; the create RPC checks again on submit.
+        let transactionAccess = null;
+        const { data: accessData, error: accessError } = await supabase.rpc(
+          "khaavio_public_restaurant_can_transact",
+          { p_slug: slug },
+        );
+        if (!accessError) transactionAccess = accessData === true;
+
+        if (active) {
+          setRestaurant(data);
+          setSubscriptionAllowsTransactions(transactionAccess);
+        }
       } catch (err) {
         if (active) {
           setPageError(getErrorMessage(err, "Unable to load this restaurant."));
@@ -484,6 +498,12 @@ export default function PublicBooking() {
     setBookingResult(null);
 
     if (submitting) return;
+    if (subscriptionAllowsTransactions === false) {
+      setBookingError(
+        "Online bookings are temporarily unavailable at this restaurant. Please contact the restaurant team.",
+      );
+      return;
+    }
 
     const name = guestName.trim();
     const phone = guestPhone.trim();
@@ -666,6 +686,15 @@ export default function PublicBooking() {
       </section>
 
       <div className="booking-container">
+        {subscriptionAllowsTransactions === false && (
+          <div className="booking-subscription-unavailable" role="status">
+            <strong>Online bookings are temporarily unavailable.</strong>
+            <span>
+              Please contact {restaurant.name} directly for reservations. The
+              restaurant’s menu remains available.
+            </span>
+          </div>
+        )}
         {bookingResult ? (
           <section className="booking-success" role="status">
             <div className="booking-success-icon">
@@ -812,6 +841,11 @@ export default function PublicBooking() {
                 <div className="booking-availability-empty">
                   Select a date and time to see available tables.
                 </div>
+              ) : subscriptionAllowsTransactions === false ? (
+                <div className="booking-availability-empty" role="status">
+                  Online bookings are not available right now. Please contact
+                  the restaurant directly.
+                </div>
               ) : !bookingSlot.valid ? (
                 <div className="booking-availability-empty" role="status">
                   {bookingSlot.message}
@@ -948,6 +982,7 @@ export default function PublicBooking() {
               className="booking-submit"
               disabled={
                 submitting ||
+                subscriptionAllowsTransactions === false ||
                 !bookingSlot.valid ||
                 availabilityStatus !== "loaded" ||
                 !selectedTableId

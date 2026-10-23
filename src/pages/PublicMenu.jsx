@@ -157,6 +157,8 @@ export default function PublicMenu() {
   const [checkoutError, setCheckoutError] = useState("");
   const [orderResult, setOrderResult] = useState(null);
   const [availabilityNow, setAvailabilityNow] = useState(0);
+  const [subscriptionAllowsTransactions, setSubscriptionAllowsTransactions] =
+    useState(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -172,6 +174,7 @@ export default function PublicMenu() {
       setCart([]);
       setOrderResult(null);
       setCheckoutError("");
+      setSubscriptionAllowsTransactions(null);
 
       try {
         const { data: restaurantData, error: restaurantError } = await supabase
@@ -190,6 +193,14 @@ export default function PublicMenu() {
             "This menu is not published yet, or the link is incorrect.",
           );
         }
+
+        // This public RPC returns only a boolean. The order RPC independently enforces access server-side.
+        let transactionAccess = null;
+        const { data: accessData, error: accessError } = await supabase.rpc(
+          "khaavio_public_restaurant_can_transact",
+          { p_slug: slug },
+        );
+        if (!accessError) transactionAccess = accessData === true;
 
         let resolvedTable = null;
 
@@ -245,6 +256,7 @@ export default function PublicMenu() {
         if (cancelled) return;
 
         setRestaurant(restaurantData);
+        setSubscriptionAllowsTransactions(transactionAccess);
         setAvailabilityNow(Date.now());
 
         setCategories(
@@ -304,10 +316,19 @@ export default function PublicMenu() {
 
   const cartQuantity = cart.reduce((total, entry) => total + entry.quantity, 0);
 
-  const orderingAvailability = getRestaurantAvailability(
+  const baseOrderingAvailability = getRestaurantAvailability(
     restaurant,
     availabilityNow,
   );
+  const orderingAvailability =
+    subscriptionAllowsTransactions === false
+      ? {
+          canOrder: false,
+          title: "Online ordering is temporarily unavailable",
+          message:
+            "This restaurant is not currently accepting online orders. Please contact the restaurant team for assistance.",
+        }
+      : baseOrderingAvailability;
 
   function addToCart(item) {
     setCheckoutError("");
@@ -378,6 +399,13 @@ export default function PublicMenu() {
     setCheckoutError("");
 
     if (submitting) return;
+
+    if (subscriptionAllowsTransactions === false) {
+      setCheckoutError(
+        "Online ordering is temporarily unavailable at this restaurant. Please contact the restaurant team.",
+      );
+      return;
+    }
 
     const currentAvailability = getRestaurantAvailability(
       restaurant,

@@ -470,3 +470,183 @@
         flex-direction: column
     }
 }
+
+
+/* Manual renewal request queue */
+
+.platform-admin-renewals {
+    margin: 26px 0 30px;
+    padding: 22px;
+    background: #fff;
+    border: 1px solid #e0e8e1;
+    border-radius: 18px;
+}
+
+.platform-admin-renewals-heading {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
+.platform-admin-renewals-heading h2 {
+    margin: 8px 0 6px;
+    color: #1f3326;
+    font-size: 21px;
+}
+
+.platform-admin-renewals-heading p {
+    max-width: 650px;
+    margin: 0;
+    color: #6c796f;
+    font-size: 12px;
+    line-height: 1.65;
+}
+
+.platform-admin-pending-count {
+    flex: 0 0 auto;
+    padding: 7px 10px;
+    color: #755326;
+    background: #fff1d8;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 800;
+}
+
+.platform-admin-renewal-list {
+    display: grid;
+    gap: 12px;
+}
+
+.platform-admin-renewal-card {
+    padding: 16px;
+    border: 1px solid #e5ebe5;
+    border-radius: 13px;
+}
+
+.platform-admin-renewal-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.platform-admin-renewal-top h3 {
+    margin: 0 0 4px;
+    color: #21362a;
+    font-size: 14px;
+}
+
+.platform-admin-renewal-top p {
+    margin: 0;
+    color: #7b877e;
+    font-size: 11px;
+}
+
+.platform-admin-renewal-facts {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+    margin: 15px 0 4px;
+}
+
+.platform-admin-renewal-facts>div {
+    display: grid;
+    gap: 5px;
+    min-width: 0;
+}
+
+.platform-admin-renewal-facts span {
+    color: #7b877e;
+    font-size: 10px;
+}
+
+.platform-admin-renewal-facts strong {
+    color: #2b3b30;
+    font-size: 12px;
+    overflow-wrap: anywhere;
+}
+
+.platform-admin-renewal-note {
+    margin: 10px 0 0;
+    color: #5f6d63;
+    font-size: 11px;
+    line-height: 1.55;
+    overflow-wrap: anywhere;
+}
+
+.platform-admin-renewal-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 9px;
+    margin-top: 14px;
+}
+
+.platform-admin-reject-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    min-height: 40px;
+    padding: 9px 12px;
+    color: #8e3636;
+    background: #fff;
+    border: 1px solid #edcccc;
+    border-radius: 10px;
+    font: inherit;
+    font-size: 11px;
+    font-weight: 750;
+    cursor: pointer;
+}
+
+.platform-admin-reject-button:hover:not(:disabled) {
+    background: #fff2f2;
+}
+
+.platform-admin-reject-button:disabled {
+    opacity: .55;
+    cursor: not-allowed;
+}
+
+.platform-admin-renewal-empty {
+    padding: 20px;
+    color: #708075;
+    background: #f8faf8;
+    border: 1px dashed #d8e2d9;
+    border-radius: 12px;
+    font-size: 12px;
+}
+
+.platform-admin-status.status-activated {
+    color: #22623a;
+    background: #e5f5e9;
+}
+
+.platform-admin-status.status-rejected {
+    color: #8e3636;
+    background: #fdeaea;
+}
+
+.platform-admin-status.status-pending {
+    color: #805522;
+    background: #fff1d8;
+}
+
+@media (max-width: 640px) {
+    .platform-admin-renewals {
+        padding: 15px;
+    }
+    .platform-admin-renewals-heading {
+        flex-direction: column;
+    }
+    .platform-admin-renewal-facts {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    .platform-admin-renewal-actions {
+        flex-direction: column;
+    }
+    .platform-admin-renewal-actions button {
+        width: 100%;
+    }
+}
