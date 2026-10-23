@@ -1,0 +1,571 @@
+.order-tracking-page {
+  min-height: 100vh;
+  background: #f6f8f4;
+  color: #20362a;
+  padding-bottom: 48px;
+}
+
+.order-tracking-header {
+  min-height: 70px;
+  padding: 0 6%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  background: #fff;
+  border-bottom: 1px solid #e6ebe3;
+}
+
+.order-tracking-back,
+.order-tracking-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #345440;
+  text-decoration: none;
+}
+
+.order-tracking-back {
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.order-tracking-brand {
+  color: #203b2b;
+  font-size: 23px;
+  font-weight: 850;
+  letter-spacing: -1px;
+}
+
+.order-tracking-brand span {
+  color: #74a37b;
+}
+
+.order-tracking-content {
+  width: min(100% - 32px, 780px);
+  margin: 0 auto;
+}
+
+.order-tracking-intro {
+  padding: 38px 0 25px;
+}
+
+.order-tracking-eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  color: #6a8d70;
+  font-size: 10px;
+  font-weight: 850;
+  letter-spacing: 1.5px;
+}
+
+.order-tracking-eyebrow > span,
+.order-tracking-live-dot {
+  width: 7px;
+  height: 7px;
+  display: inline-block;
+  border-radius: 50%;
+  background: #6fa878;
+}
+
+.order-tracking-intro h1 {
+  margin: 12px 0 8px;
+  font-size: clamp(30px, 5vw, 41px);
+  line-height: 1.15;
+  letter-spacing: -1.5px;
+}
+
+.order-tracking-intro > p {
+  margin: 0;
+  color: #77847a;
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+.order-tracking-summary,
+.order-tracking-progress-card,
+.order-tracking-items-card,
+.order-tracking-state {
+  border: 1px solid #e4eae1;
+  border-radius: 17px;
+  background: #fff;
+  box-shadow: 0 7px 24px rgb(35 61 43 / 4%);
+}
+
+.order-tracking-summary {
+  padding: 22px;
+  margin-bottom: 18px;
+}
+
+.order-tracking-summary-top {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.order-tracking-restaurant-icon {
+  display: grid;
+  place-items: center;
+  flex: 0 0 48px;
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  color: #3c7049;
+  background: #edf5eb;
+}
+
+.order-tracking-restaurant {
+  min-width: 0;
+  flex: 1;
+}
+
+.order-tracking-restaurant > span,
+.order-tracking-small-label {
+  color: #879389;
+  font-size: 9px;
+  font-weight: 850;
+  letter-spacing: 1.1px;
+}
+
+.order-tracking-restaurant h2 {
+  margin: 5px 0 3px;
+  color: #21382a;
+  font-size: 17px;
+  overflow-wrap: anywhere;
+}
+
+.order-tracking-restaurant p {
+  margin: 0;
+  color: #758278;
+  font-size: 12px;
+}
+
+.order-tracking-status {
+  flex-shrink: 0;
+  padding: 7px 10px;
+  border-radius: 30px;
+  background: #f0f3ed;
+  color: #556a59;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.order-tracking-status.status-pending {
+  background: #fff4dc;
+  color: #8a6821;
+}
+
+.order-tracking-status.status-accepted,
+.order-tracking-status.status-preparing {
+  background: #e9f1ff;
+  color: #3e6099;
+}
+
+.order-tracking-status.status-ready,
+.order-tracking-status.status-completed {
+  background: #e5f5e8;
+  color: #2f7445;
+}
+
+.order-tracking-status.status-cancelled {
+  background: #fff0ee;
+  color: #a64237;
+}
+
+.order-tracking-meta {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  padding-top: 20px;
+  margin-top: 20px;
+  border-top: 1px solid #edf0ea;
+}
+
+.order-tracking-meta > div {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  min-width: 0;
+}
+
+.order-tracking-meta span {
+  color: #849087;
+  font-size: 11px;
+}
+
+.order-tracking-meta strong {
+  color: #304536;
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+
+.order-tracking-progress-card,
+.order-tracking-items-card {
+  padding: 23px;
+  margin-bottom: 18px;
+}
+
+.order-tracking-section-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+  margin-bottom: 22px;
+}
+
+.order-tracking-section-heading h2 {
+  margin: 6px 0 0;
+  font-size: 19px;
+  letter-spacing: -0.4px;
+}
+
+.order-tracking-refresh,
+.order-tracking-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 39px;
+  padding: 0 12px;
+  border: 1px solid #dce5da;
+  border-radius: 9px;
+  background: #fff;
+  color: #3b6045;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 750;
+  cursor: pointer;
+}
+
+.order-tracking-refresh:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+.order-tracking-timeline {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  margin: 0;
+}
+
+.order-tracking-timeline li {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 13px;
+  min-height: 72px;
+  padding-bottom: 18px;
+}
+
+.order-tracking-timeline li:not(:last-child)::after {
+  content: "";
+  position: absolute;
+  top: 32px;
+  bottom: -1px;
+  left: 13px;
+  width: 2px;
+  background: #e7ece5;
+}
+
+.order-tracking-timeline li.is-done:not(:last-child)::after {
+  background: #9ac5a0;
+}
+
+.order-tracking-step-marker {
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  flex: 0 0 28px;
+  border: 1px solid #e1e8df;
+  border-radius: 50%;
+  background: #fff;
+  color: #9ba79c;
+}
+
+.order-tracking-timeline li.is-done .order-tracking-step-marker {
+  border-color: #cbe4ce;
+  background: #ebf6ec;
+  color: #3b7a4a;
+}
+
+.order-tracking-timeline li.is-current .order-tracking-step-marker {
+  box-shadow: 0 0 0 4px rgb(102 160 111 / 12%);
+}
+
+.order-tracking-step-copy {
+  flex: 1;
+  min-width: 0;
+  padding-top: 3px;
+}
+
+.order-tracking-step-copy strong {
+  color: #506056;
+  font-size: 13px;
+}
+
+.order-tracking-timeline li.is-done .order-tracking-step-copy strong {
+  color: #263f2e;
+}
+
+.order-tracking-step-copy p {
+  margin: 5px 0 0;
+  color: #8a948b;
+  font-size: 11px;
+  line-height: 1.6;
+}
+
+.order-tracking-current-pill {
+  margin-top: 4px;
+  padding: 5px 7px;
+  border-radius: 5px;
+  background: #edf5ea;
+  color: #48734e;
+  font-size: 8px;
+  font-weight: 850;
+  letter-spacing: 0.7px;
+}
+
+.order-tracking-cancelled {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid #f0d5d1;
+  border-radius: 12px;
+  background: #fff4f2;
+  color: #a3463b;
+}
+
+.order-tracking-cancelled strong {
+  font-size: 13px;
+}
+
+.order-tracking-cancelled p {
+  margin: 5px 0 0;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.order-tracking-auto-refresh {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 9px;
+  padding-top: 15px;
+  margin-top: 5px;
+  border-top: 1px solid #edf0ea;
+  color: #849087;
+  font-size: 10px;
+}
+
+.order-tracking-live-dot {
+  width: 6px;
+  height: 6px;
+  box-shadow: 0 0 0 3px rgb(111 168 120 / 13%);
+}
+
+.order-tracking-auto-refresh > span:last-child {
+  margin-left: auto;
+}
+
+.order-tracking-items-heading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-bottom: 17px;
+  border-bottom: 1px solid #edf0ea;
+  color: #46714e;
+}
+
+.order-tracking-items-heading h2 {
+  margin: 0;
+  color: #263e2e;
+  font-size: 16px;
+}
+
+.order-tracking-items-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.order-tracking-item {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 15px;
+  padding: 15px 0;
+  border-bottom: 1px solid #f0f2ed;
+}
+
+.order-tracking-item > div {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.order-tracking-item strong {
+  color: #344b3a;
+  font-size: 12px;
+}
+
+.order-tracking-item span {
+  color: #879188;
+  font-size: 11px;
+}
+
+.order-tracking-empty-items {
+  padding: 18px 0;
+  margin: 0;
+  color: #818d83;
+  font-size: 12px;
+}
+
+.order-tracking-total {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  padding-top: 17px;
+}
+
+.order-tracking-total span {
+  color: #637267;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.order-tracking-total strong {
+  color: #183a25;
+  font-size: 20px;
+  letter-spacing: -0.5px;
+}
+
+.order-tracking-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 42px 24px;
+  color: #628269;
+}
+
+.order-tracking-state h2 {
+  margin: 17px 0 7px;
+  color: #293f30;
+  font-size: 19px;
+}
+
+.order-tracking-state p {
+  max-width: 440px;
+  margin: 0;
+  color: #7b887e;
+  font-size: 13px;
+  line-height: 1.7;
+  overflow-wrap: anywhere;
+}
+
+.order-tracking-error {
+  color: #a24d43;
+}
+
+.order-tracking-primary {
+  margin-top: 20px;
+  background: #2f6842;
+  border-color: #2f6842;
+  color: #fff;
+}
+
+.order-tracking-inline-error {
+  margin: 14px 0 0;
+  color: #a34e42;
+  font-size: 11px;
+  line-height: 1.6;
+}
+
+.order-tracking-footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 20px 2px 0;
+  color: #98a198;
+  font-size: 10px;
+}
+
+.order-tracking-spinner {
+  animation: order-tracking-spin 1s linear infinite;
+}
+
+@keyframes order-tracking-spin {
+  to { transform: rotate(360deg); }
+}
+
+@media (max-width: 600px) {
+  .order-tracking-header {
+    min-height: 62px;
+    padding: 0 16px;
+  }
+
+  .order-tracking-content {
+    width: calc(100% - 26px);
+  }
+
+  .order-tracking-intro {
+    padding: 30px 0 20px;
+  }
+
+  .order-tracking-intro > p {
+    font-size: 12px;
+  }
+
+  .order-tracking-summary,
+  .order-tracking-progress-card,
+  .order-tracking-items-card {
+    padding: 17px;
+    border-radius: 14px;
+  }
+
+  .order-tracking-summary-top {
+    flex-wrap: wrap;
+    gap: 11px;
+  }
+
+  .order-tracking-status {
+    margin-left: 59px;
+  }
+
+  .order-tracking-meta {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .order-tracking-meta > div:last-child {
+    grid-column: 1 / -1;
+  }
+
+  .order-tracking-section-heading {
+    align-items: flex-start;
+  }
+
+  .order-tracking-refresh span {
+    display: none;
+  }
+
+  .order-tracking-current-pill {
+    display: none;
+  }
+
+  .order-tracking-auto-refresh > span:last-child {
+    width: 100%;
+    margin-left: 15px;
+  }
+
+  .order-tracking-footer {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+}

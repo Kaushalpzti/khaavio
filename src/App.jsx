@@ -2,19 +2,29 @@ import { lazy, Suspense } from "react";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import ProtectedRoute from "./components/ProtectedRoute";
 
+// Public pages
 const Home = lazy(() => import("./pages/Home"));
 const Auth = lazy(() => import("./pages/Auth"));
-const Dashboard = lazy(() => import("./pages/Dashboard"));
-const Onboarding = lazy(() => import("./pages/Onboarding"));
-const MenuManager = lazy(() => import("./pages/MenuManager"));
 const PublicMenu = lazy(() => import("./pages/PublicMenu"));
+const PublicBooking = lazy(() => import("./pages/PublicBooking"));
+const OrderTracking = lazy(() => import("./pages/OrderTracking"));
+
+// Restaurant setup and dashboard
+const Onboarding = lazy(() => import("./pages/Onboarding"));
+const Dashboard = lazy(() => import("./pages/Dashboard"));
+const RestaurantSettings = lazy(() => import("./pages/RestaurantSettings"));
+
+// Menu and QR management
+const MenuManager = lazy(() => import("./pages/MenuManager"));
 const QRStudio = lazy(() => import("./pages/QRStudio"));
 const TableQRStudio = lazy(() => import("./pages/TableQRStudio"));
+
+// Orders, receipts, bookings and analytics
 const OrdersDashboard = lazy(() => import("./pages/OrdersDashboard"));
-const PublicBooking = lazy(() => import("./pages/PublicBooking"));
+const OrderReceipts = lazy(() => import("./pages/OrderReceipts"));
 const BookingsDashboard = lazy(() => import("./pages/BookingsDashboard"));
-const RestaurantSettings = lazy(() => import("./pages/RestaurantSettings"));
 const Analytics = lazy(() => import("./pages/Analytics"));
+const KitchenDisplay = lazy(() => import("./pages/KitchenDisplay"));
 
 function PageLoader() {
   return (
@@ -25,6 +35,10 @@ function PageLoader() {
   );
 }
 
+function ProtectedPage({ children }) {
+  return <ProtectedRoute>{children}</ProtectedRoute>;
+}
+
 export default function App() {
   return (
     <BrowserRouter>
@@ -32,96 +46,120 @@ export default function App() {
         <Routes>
           <Route path="/" element={<Home />} />
 
+          {/* Authentication */}
           <Route path="/login" element={<Auth mode="login" />} />
           <Route path="/signup" element={<Auth mode="signup" />} />
           <Route
             path="/reset-password"
             element={<Auth mode="reset-password" />}
           />
-          <Route path="/book/:slug" element={<PublicBooking />} />
 
+          {/* Public customer pages */}
+          <Route path="/menu/:slug" element={<PublicMenu />} />
+          <Route path="/book/:slug" element={<PublicBooking />} />
+          <Route path="/track/:slug/:orderId" element={<OrderTracking />} />
+
+          {/* Restaurant onboarding */}
           <Route
             path="/onboarding"
             element={
-              <ProtectedRoute>
+              <ProtectedPage>
                 <Onboarding />
-              </ProtectedRoute>
+              </ProtectedPage>
             }
           />
 
+          {/* Main restaurant dashboard */}
           <Route
             path="/dashboard"
             element={
-              <ProtectedRoute>
+              <ProtectedPage>
                 <Dashboard />
-              </ProtectedRoute>
+              </ProtectedPage>
             }
           />
 
+          {/* Restaurant settings */}
           <Route
             path="/dashboard/settings"
             element={
-              <ProtectedRoute>
+              <ProtectedPage>
                 <RestaurantSettings />
-              </ProtectedRoute>
+              </ProtectedPage>
             }
           />
 
-          <Route
-            path="/dashboard/analytics"
-            element={
-              <ProtectedRoute>
-                <Analytics />
-              </ProtectedRoute>
-            }
-          />
-
+          {/* Menu and QR management */}
           <Route
             path="/dashboard/menu"
             element={
-              <ProtectedRoute>
+              <ProtectedPage>
                 <MenuManager />
-              </ProtectedRoute>
+              </ProtectedPage>
             }
           />
-
           <Route
             path="/dashboard/qr"
             element={
-              <ProtectedRoute>
+              <ProtectedPage>
                 <QRStudio />
-              </ProtectedRoute>
+              </ProtectedPage>
             }
           />
-
           <Route
             path="/dashboard/table-qr"
             element={
-              <ProtectedRoute>
+              <ProtectedPage>
                 <TableQRStudio />
-              </ProtectedRoute>
+              </ProtectedPage>
             }
           />
 
+          {/* Orders and receipts */}
           <Route
             path="/dashboard/orders"
             element={
-              <ProtectedRoute>
+              <ProtectedPage>
                 <OrdersDashboard />
-              </ProtectedRoute>
+              </ProtectedPage>
+            }
+          />
+          <Route
+            path="/dashboard/receipts"
+            element={
+              <ProtectedPage>
+                <OrderReceipts />
+              </ProtectedPage>
+            }
+          />
+
+          {/* Bookings and analytics */}
+          <Route
+            path="/dashboard/bookings"
+            element={
+              <ProtectedPage>
+                <BookingsDashboard />
+              </ProtectedPage>
+            }
+          />
+          <Route
+            path="/dashboard/analytics"
+            element={
+              <ProtectedPage>
+                <Analytics />
+              </ProtectedPage>
             }
           />
 
           <Route
-            path="/dashboard/bookings"
+            path="/dashboard/kitchen"
             element={
               <ProtectedRoute>
-                <BookingsDashboard />
+                <KitchenDisplay />
               </ProtectedRoute>
             }
           />
 
-          <Route path="/menu/:slug" element={<PublicMenu />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </Suspense>

@@ -9,6 +9,7 @@ import {
   ClipboardList,
   Clock3,
   LoaderCircle,
+  MessageCircle,
   Phone,
   RefreshCw,
   Store,
@@ -90,6 +91,73 @@ function getErrorMessage(error, fallback) {
   return typeof error?.message === "string" && error.message.trim()
     ? error.message
     : fallback;
+}
+
+function normalizeWhatsAppPhone(value) {
+  let phone = String(value || "").replace(/\D/g, "");
+
+  if (phone.startsWith("00")) {
+    phone = phone.slice(2);
+  }
+
+  if (phone.length === 11 && phone.startsWith("0")) {
+    phone = phone.slice(1);
+  }
+
+  // Treat 10-digit local Indian numbers as +91 numbers.
+  if (phone.length === 10) {
+    phone = `91${phone}`;
+  }
+
+  return phone.length >= 10 && phone.length <= 15 ? phone : "";
+}
+
+function formatTableLabel(value) {
+  const table = String(value || "").trim();
+
+  if (!table || /^restaurant(?:\s|$)/i.test(table)) {
+    return "Restaurant order";
+  }
+
+  if (/^table\s*/i.test(table)) {
+    return table.replace(/^table\s*/i, "Table ");
+  }
+
+  return `Table ${table}`;
+}
+
+function getWhatsAppUrl(order, restaurant) {
+  const phone = normalizeWhatsAppPhone(order.customer_phone);
+  if (!phone) return "";
+
+  const status = STATUS_LABELS[order.status] || order.status || "Updated";
+  const statusMessage =
+    {
+      pending:
+        "We have received your order and it is awaiting restaurant confirmation.",
+      accepted: "Your order has been accepted by the restaurant.",
+      preparing: "Your order is now being prepared.",
+      ready: "Your order is ready.",
+      completed:
+        "Your order has been marked completed. Thank you for ordering with us!",
+      cancelled:
+        "Your order has been cancelled. Please contact the restaurant if you need help.",
+    }[order.status] || "Your order status has been updated.";
+
+  const message = [
+    `Hello ${order.customer_name || "there"},`,
+    "",
+    `Order update from ${restaurant?.name || "the restaurant"}.`,
+    `Order reference: #${getReference(order.id)}`,
+    `Table: ${formatTableLabel(order.table_number)}`,
+    `Status: ${status}`,
+    statusMessage,
+    `Order total: ${formatPrice(order.total_amount)}`,
+    "",
+    "Thank you!",
+  ].join("\n");
+
+  return `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
 }
 
 export default function OrdersDashboard() {
@@ -231,8 +299,6 @@ export default function OrdersDashboard() {
 
     let active = true;
     let liveConnected = false;
-
-    
 
     const channel = supabase
       .channel(`restaurant-orders-${restaurantId}`)
@@ -477,7 +543,6 @@ export default function OrdersDashboard() {
       <div className="orders-container">
         <div className="orders-heading">
           <span className="orders-eyebrow">RESTAURANT WORKSPACE</span>
-
           <h1>Orders</h1>
 
           <p>
@@ -627,13 +692,14 @@ export default function OrdersDashboard() {
                 <div className="orders-grid">
                   {visibleOrders.map((order) => {
                     const actions = STATUS_ACTIONS[order.status] || [];
+                    const whatsappUrl = getWhatsAppUrl(order, restaurant);
 
                     return (
                       <article className="order-card" key={order.id}>
                         <div className="order-card-header">
                           <div className="order-reference">
                             <span>ORDER</span>
-                            <strong>#{getReference(order.id)}</strong>
+                            <strong>#{getReference(order.id)}</strong>{" "}
                           </div>
 
                           <span
@@ -665,6 +731,19 @@ export default function OrdersDashboard() {
                             >
                               <Phone size={14} />
                               {order.customer_phone}
+                            </a>
+                          )}
+
+                          {whatsappUrl && (
+                            <a
+                              className="order-phone order-whatsapp-link"
+                              href={whatsappUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              aria-label={`Prepare WhatsApp status update for order ${getReference(order.id)}`}
+                            >
+                              <MessageCircle size={14} />
+                              WhatsApp status update
                             </a>
                           )}
                         </div>

@@ -32,6 +32,105 @@ function getErrorMessage(error, fallback) {
     : fallback;
 }
 
+function getRestaurantAvailability(restaurant, timestamp) {
+  if (!restaurant) {
+    return {
+      canOrder: false,
+      title: "Checking order availability",
+      message: "Please wait while we check the restaurant's hours.",
+    };
+  }
+
+  if (restaurant.is_accepting_orders === false) {
+    return {
+      canOrder: false,
+      title: "Online orders are paused",
+      message:
+        "This restaurant is temporarily not accepting online orders. You can still browse the menu or ask the staff for assistance.",
+    };
+  }
+
+  const schedule = restaurant.business_hours;
+  if (!schedule || typeof schedule !== "object" || !timestamp) {
+    return {
+      canOrder: true,
+      title: "Online ordering",
+      message: "Online orders are available when the restaurant is open.",
+    };
+  }
+
+  const timezone = restaurant.timezone || "Asia/Kolkata";
+  let parts;
+  try {
+    parts = new Intl.DateTimeFormat("en-US", {
+      timeZone: timezone,
+      weekday: "long",
+      hour: "2-digit",
+      minute: "2-digit",
+      hourCycle: "h23",
+    }).formatToParts(new Date(timestamp));
+  } catch {
+    parts = new Intl.DateTimeFormat("en-US", {
+      timeZone: "Asia/Kolkata",
+      weekday: "long",
+      hour: "2-digit",
+      minute: "2-digit",
+      hourCycle: "h23",
+    }).formatToParts(new Date(timestamp));
+  }
+
+  const values = Object.fromEntries(
+    parts.map((part) => [part.type, part.value]),
+  );
+  const dayKey = String(values.weekday || "").toLowerCase();
+  const day = schedule[dayKey];
+
+  if (!day || day.closed) {
+    return {
+      canOrder: false,
+      title: "Restaurant is closed",
+      message:
+        "Online ordering is currently closed for today. Please check back during opening hours.",
+    };
+  }
+
+  const parseMinutes = (value) => {
+    if (!/^\d{2}:\d{2}$/.test(String(value || ""))) return null;
+    const [hour, minute] = value.split(":").map(Number);
+    if (hour > 23 || minute > 59) return null;
+    return hour * 60 + minute;
+  };
+
+  const opens = parseMinutes(day.open);
+  const closes = parseMinutes(day.close);
+  const current = Number(values.hour) * 60 + Number(values.minute);
+
+  if (opens === null || closes === null || opens >= closes) {
+    return {
+      canOrder: false,
+      title: "Ordering hours unavailable",
+      message:
+        "The restaurant's opening hours need to be updated. Please ask staff for assistance.",
+    };
+  }
+
+  const beforeOpen = current < opens;
+  const afterClose = closes !== 1439 && current >= closes;
+  if (beforeOpen || afterClose) {
+    return {
+      canOrder: false,
+      title: "Restaurant is currently closed",
+      message: `Online ordering is open from ${day.open} to ${day.close} IST today. Please try again during opening hours.`,
+    };
+  }
+
+  return {
+    canOrder: true,
+    title: "Online ordering is open",
+    message: "You can place an order while the restaurant is open.",
+  };
+}
+
 export default function PublicMenu() {
   const { slug } = useParams();
   const [searchParams] = useSearchParams();
@@ -57,6 +156,7 @@ export default function PublicMenu() {
   const [error, setError] = useState("");
   const [checkoutError, setCheckoutError] = useState("");
   const [orderResult, setOrderResult] = useState(null);
+  const [availabilityNow, setAvailabilityNow] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
@@ -76,7 +176,9 @@ export default function PublicMenu() {
       try {
         const { data: restaurantData, error: restaurantError } = await supabase
           .from("restaurants")
-          .select("id, name, slug, restaurant_type, address, is_published")
+          .select(
+            "id, name, slug, restaurant_type, address, is_published, is_accepting_orders, business_hours, timezone",
+          )
           .eq("slug", slug)
           .eq("is_published", true)
           .maybeSingle();
@@ -143,6 +245,7 @@ export default function PublicMenu() {
         if (cancelled) return;
 
         setRestaurant(restaurantData);
+        setAvailabilityNow(Date.now());
 
         setCategories(
           [...(categoryResult.data || [])].sort((a, b) =>
@@ -175,6 +278,13 @@ export default function PublicMenu() {
     };
   }, [slug, tableToken, hasTableParam]);
 
+  useEffect(() => {
+    const intervalId = window.setInterval(() => {
+      setAvailabilityNow(Date.now());
+    }, 60000);
+    return () => window.clearInterval(intervalId);
+  }, []);
+
   const visibleItems = items.filter((item) => {
     const matchesCategory =
       categoryId === "all" || item.category_id === categoryId;
@@ -193,6 +303,11 @@ export default function PublicMenu() {
   );
 
   const cartQuantity = cart.reduce((total, entry) => total + entry.quantity, 0);
+
+  const orderingAvailability = getRestaurantAvailability(
+    restaurant,
+    availabilityNow,
+  );
 
   function addToCart(item) {
     setCheckoutError("");
@@ -264,6 +379,15 @@ export default function PublicMenu() {
 
     if (submitting) return;
 
+    const currentAvailability = getRestaurantAvailability(
+      restaurant,
+      Date.now(),
+    );
+    if (!currentAvailability.canOrder) {
+      setCheckoutError(currentAvailability.message);
+      return;
+    }
+
     if (!tableContext || !tableToken) {
       setCheckoutError(
         "To place an order, scan the QR code assigned to your restaurant table.",
@@ -327,6 +451,7 @@ export default function PublicMenu() {
         id: result.order_id,
         reference: result.order_reference,
         total: result.total_amount,
+        trackingToken: result.tracking_token || null,
       });
 
       setCart([]);
@@ -386,6 +511,17 @@ export default function PublicMenu() {
             <h1>{restaurant.name}</h1>
 
             <p>Explore our menu and discover something delicious.</p>
+
+            <div
+              className={`public-menu-order-availability ${orderingAvailability.canOrder ? "is-open" : "is-closed"}`}
+              role="status"
+            >
+              <span className="public-menu-order-availability-dot" />
+              <div>
+                <strong>{orderingAvailability.title}</strong>
+                <p>{orderingAvailability.message}</p>
+              </div>
+            </div>
 
             {restaurant.address && (
               <span className="public-menu-address">{restaurant.address}</span>
@@ -599,10 +735,30 @@ export default function PublicMenu() {
                   <strong>{formatPrice(orderResult.total)}</strong>
                 </div>
 
-                <p className="public-order-pending-note">
-                  Your order has been submitted as pending. This page does not
-                  yet provide live order tracking or online payment.
-                </p>
+                {orderResult.trackingToken ? (
+                  <>
+                    <p className="public-order-pending-note">
+                      Your order is pending. Follow its progress using the
+                      secure tracking link below. Online payment is not
+                      collected by Khaavio yet.
+                    </p>
+
+                    <Link
+                      className="public-order-track-link"
+                      to={`/track/${encodeURIComponent(slug)}/${encodeURIComponent(
+                        orderResult.id,
+                      )}?token=${encodeURIComponent(orderResult.trackingToken)}`}
+                    >
+                      Track my order →
+                    </Link>
+                  </>
+                ) : (
+                  <p className="public-order-pending-note">
+                    Your order was submitted, but a tracking link could not be
+                    generated. Please share your order reference with restaurant
+                    staff and avoid placing the same order again.
+                  </p>
+                )}
 
                 <button
                   type="button"
@@ -735,7 +891,12 @@ export default function PublicMenu() {
                   <button
                     type="submit"
                     className="public-order-submit"
-                    disabled={submitting || cart.length === 0 || !tableContext}
+                    disabled={
+                      submitting ||
+                      cart.length === 0 ||
+                      !tableContext ||
+                      !orderingAvailability.canOrder
+                    }
                   >
                     {submitting ? (
                       <LoaderCircle className="public-menu-spinner" size={17} />
@@ -749,8 +910,9 @@ export default function PublicMenu() {
                   </button>
 
                   <p className="public-order-disclaimer">
-                    No online payment is collected. The restaurant receives this
-                    order as pending.
+                    {!orderingAvailability.canOrder
+                      ? orderingAvailability.message
+                      : "No online payment is collected. The restaurant receives this order as pending."}
                   </p>
                 </form>
               </div>

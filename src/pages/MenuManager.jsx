@@ -4,17 +4,21 @@ import {
   ArrowLeft,
   Check,
   CheckCircle2,
+  Download,
+  FileSpreadsheet,
   ImagePlus,
   LoaderCircle,
   Pencil,
   Plus,
   Trash2,
   UtensilsCrossed,
+  Upload,
   X,
 } from "lucide-react";
 
 import { supabase } from "../lib/supabaseClient";
 import "./MenuManager.css";
+import "./MenuBulkImport.css";
 
 const emptyForm = {
   name: "",
@@ -31,6 +35,85 @@ function formatPrice(value) {
     currency: "INR",
     maximumFractionDigits: 2,
   }).format(Number(value) || 0);
+}
+
+function parseCsvText(text) {
+  const rows = [];
+  let row = [];
+  let cell = "";
+  let quoted = false;
+
+  for (let index = 0; index < text.length; index += 1) {
+    const char = text[index];
+
+    if (char === '"') {
+      if (quoted && text[index + 1] === '"') {
+        cell += '"';
+        index += 1;
+      } else {
+        quoted = !quoted;
+      }
+    } else if (char === "," && !quoted) {
+      row.push(cell);
+      cell = "";
+    } else if ((char === "\n" || char === "\r") && !quoted) {
+      if (char === "\r" && text[index + 1] === "\n") index += 1;
+      row.push(cell);
+      if (row.some((value) => value.trim() !== "")) rows.push(row);
+      row = [];
+      cell = "";
+    } else {
+      cell += char;
+    }
+  }
+
+  if (quoted) {
+    throw new Error(
+      "This CSV has an unclosed quote. Check the file and try again.",
+    );
+  }
+
+  row.push(cell);
+  if (row.some((value) => value.trim() !== "")) rows.push(row);
+  return rows;
+}
+
+function normalizeCsvHeader(value) {
+  return String(value || "")
+    .replace(/^\uFEFF/, "")
+    .trim()
+    .toLowerCase()
+    .replace(/[\s-]+/g, "_")
+    .replace(/[^a-z0-9_]/g, "");
+}
+
+function readCsvBoolean(value) {
+  const normalized = String(value || "")
+    .trim()
+    .toLowerCase();
+  if (!normalized) return true;
+  if (["true", "yes", "1", "available", "active"].includes(normalized))
+    return true;
+  if (["false", "no", "0", "unavailable", "inactive"].includes(normalized))
+    return false;
+  return null;
+}
+
+function downloadMenuTemplate() {
+  const template = [
+    "name,category,description,price,is_available,image_url",
+    'Masala Dosa,South Indian,"Crispy dosa with potato filling",180,true,',
+    'Cold Coffee,Beverages,"Chilled coffee",120,true,',
+  ].join("\r\n");
+  const blob = new Blob([template], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = "khaavio-menu-template.csv";
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+  window.setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
 export default function MenuManager() {
@@ -52,6 +135,11 @@ export default function MenuManager() {
   const [workspaceMissing, setWorkspaceMissing] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
+
+  const [importFileName, setImportFileName] = useState("");
+  const [importRows, setImportRows] = useState([]);
+  const [importError, setImportError] = useState("");
+  const [importNotice, setImportNotice] = useState("");
 
   useEffect(() => {
     let cancelled = false;
@@ -429,6 +517,276 @@ export default function MenuManager() {
     }
   }
 
+  async function handleCsvFileChange(event) {
+    const file = event.target.files?.[0];
+    setImportError("");
+    setImportNotice("");
+    setImportRows([]);
+    setImportFileName("");
+
+    if (!file) return;
+
+    if (!file.name.toLowerCase().endsWith(".csv")) {
+      setImportError(
+        "Please choose a .csv file. You can export an Excel sheet as CSV first.",
+      );
+      event.target.value = "";
+      return;
+    }
+
+    if (file.size > 2 * 1024 * 1024) {
+      setImportError("The CSV file must be 2 MB or smaller.");
+      event.target.value = "";
+      return;
+    }
+
+    try {
+      const parsed = parseCsvText(await file.text());
+      if (parsed.length < 2) {
+        throw new Error(
+          "The CSV must include a header row and at least one menu item.",
+        );
+      }
+
+      const headers = parsed[0].map(normalizeCsvHeader);
+      const findColumn = (...aliases) =>
+        headers.findIndex((header) => aliases.includes(header));
+      const columns = {
+        name: findColumn("name", "item", "item_name", "dish", "dish_name"),
+        category: findColumn("category", "category_name", "menu_category"),
+        description: findColumn("description", "details", "item_description"),
+        price: findColumn("price", "item_price", "price_inr", "price_rs"),
+        isAvailable: findColumn(
+          "is_available",
+          "available",
+          "availability",
+          "status",
+        ),
+        imageUrl: findColumn("image_url", "image", "photo_url", "image_link"),
+      };
+
+      const missingColumns = ["name", "category", "price"].filter(
+        (key) => columns[key] < 0,
+      );
+      if (missingColumns.length) {
+        throw new Error(
+          `Missing required CSV column${missingColumns.length > 1 ? "s" : ""}: ${missingColumns.join(", ")}. Download the template for the correct format.`,
+        );
+      }
+
+      const dataRows = parsed.slice(1);
+      if (dataRows.length > 500) {
+        throw new Error(
+          "Import up to 500 menu items at a time. Split larger menus into multiple CSV files.",
+        );
+      }
+
+      const existingCategoriesByName = new Map(
+        categories.map((category) => [
+          category.name.trim().toLowerCase(),
+          category,
+        ]),
+      );
+      const existingItemKeys = new Set(
+        items.map((item) => {
+          const category = categories.find(
+            (entry) => entry.id === item.category_id,
+          );
+          return `${category?.name?.trim().toLowerCase() || ""}::${item.name.trim().toLowerCase()}`;
+        }),
+      );
+      const seenItemKeys = new Set();
+
+      const rows = dataRows.map((cells, index) => {
+        const read = (column) =>
+          column < 0 ? "" : String(cells[column] ?? "").trim();
+        const name = read(columns.name);
+        const category = read(columns.category);
+        const description = read(columns.description);
+        const priceText = read(columns.price);
+        const imageUrl = read(columns.imageUrl);
+        const availabilityText = read(columns.isAvailable);
+        const price = Number(priceText);
+        const errors = [];
+
+        if (!name) errors.push("Item name is required.");
+        else if (name.length > 120)
+          errors.push("Item name must be 120 characters or fewer.");
+        if (!category) errors.push("Category is required.");
+        else if (category.length > 80)
+          errors.push("Category must be 80 characters or fewer.");
+        if (!priceText || !Number.isFinite(price) || price < 0)
+          errors.push("Enter a valid non-negative price.");
+        if (description.length > 500)
+          errors.push("Description must be 500 characters or fewer.");
+
+        let isAvailable = readCsvBoolean(availabilityText);
+        if (isAvailable === null)
+          errors.push(
+            "Availability must be true/false, yes/no, 1/0, or available/unavailable.",
+          );
+
+        if (imageUrl) {
+          try {
+            const parsedUrl = new URL(imageUrl);
+            if (!["http:", "https:"].includes(parsedUrl.protocol)) {
+              errors.push("Image URL must start with http:// or https://.");
+            }
+          } catch {
+            errors.push("Enter a valid image URL or leave it blank.");
+          }
+        }
+
+        const itemKey = `${category.toLowerCase()}::${name.toLowerCase()}`;
+        if (name && category && seenItemKeys.has(itemKey)) {
+          errors.push(
+            "This item appears more than once in the CSV for the same category.",
+          );
+        } else if (name && category) {
+          seenItemKeys.add(itemKey);
+        }
+        if (
+          name &&
+          category &&
+          existingCategoriesByName.has(category.toLowerCase()) &&
+          existingItemKeys.has(itemKey)
+        ) {
+          errors.push(
+            "An item with this name already exists in this category.",
+          );
+        }
+
+        return {
+          rowNumber: index + 2,
+          name,
+          category,
+          description,
+          price: priceText,
+          numericPrice:
+            priceText && Number.isFinite(price) && price >= 0 ? price : null,
+          imageUrl,
+          isAvailable: isAvailable === null ? true : isAvailable,
+          valid: errors.length === 0,
+          error: errors.join(" "),
+          categoryExists: existingCategoriesByName.has(category.toLowerCase()),
+        };
+      });
+
+      setImportFileName(file.name);
+      setImportRows(rows);
+      const validCount = rows.filter((row) => row.valid).length;
+      const invalidCount = rows.length - validCount;
+      setImportNotice(
+        `${rows.length} rows loaded: ${validCount} valid${invalidCount ? `, ${invalidCount} need attention` : ""}.`,
+      );
+    } catch (err) {
+      setImportError(err?.message || "Could not read this CSV file.");
+      event.target.value = "";
+    }
+  }
+
+  async function importMenuItems() {
+    if (!restaurant || busy) return;
+
+    const validRows = importRows.filter((row) => row.valid);
+    if (!validRows.length) {
+      setImportError(
+        "There are no valid rows to import. Fix the CSV and upload it again.",
+      );
+      return;
+    }
+
+    setBusy(true);
+    setImportError("");
+    setImportNotice("");
+
+    try {
+      const categoryMap = new Map(
+        categories.map((category) => [
+          category.name.trim().toLowerCase(),
+          category.id,
+        ]),
+      );
+      const categoriesToCreate = new Map();
+
+      for (const row of validRows) {
+        const key = row.category.trim().toLowerCase();
+        if (!categoryMap.has(key) && !categoriesToCreate.has(key)) {
+          categoriesToCreate.set(key, row.category.trim());
+        }
+      }
+
+      let createdCategories = [];
+      if (categoriesToCreate.size > 0) {
+        const { data, error: categoryError } = await supabase
+          .from("menu_categories")
+          .insert(
+            [...categoriesToCreate.values()].map((name) => ({
+              restaurant_id: restaurant.id,
+              name,
+            })),
+          )
+          .select("id, name, restaurant_id");
+
+        if (categoryError) throw categoryError;
+        createdCategories = data || [];
+        for (const category of createdCategories) {
+          categoryMap.set(category.name.trim().toLowerCase(), category.id);
+        }
+      }
+
+      const payload = validRows.map((row) => {
+        const categoryId = categoryMap.get(row.category.trim().toLowerCase());
+        if (!categoryId) {
+          throw new Error(
+            `Could not resolve category "${row.category}". Refresh the menu and try again.`,
+          );
+        }
+        return {
+          restaurant_id: restaurant.id,
+          category_id: categoryId,
+          name: row.name.trim(),
+          description: row.description.trim() || null,
+          price: row.numericPrice,
+          image_url: row.imageUrl.trim() || null,
+          is_available: row.isAvailable,
+        };
+      });
+
+      const { error: itemError } = await supabase
+        .from("menu_items")
+        .insert(payload);
+      if (itemError) throw itemError;
+
+      await refreshMenu(restaurant.id);
+      const skippedCount = importRows.length - validRows.length;
+      setImportRows([]);
+      setImportFileName("");
+      setImportNotice(
+        `Imported ${payload.length} menu item${payload.length === 1 ? "" : "s"}${createdCategories.length ? ` and created ${createdCategories.length} categor${createdCategories.length === 1 ? "y" : "ies"}` : ""}.${skippedCount ? ` Skipped ${skippedCount} invalid row${skippedCount === 1 ? "" : "s"}.` : ""}`,
+      );
+      const fileInput = document.getElementById("menu-csv-file");
+      if (fileInput) fileInput.value = "";
+    } catch (err) {
+      console.error("Bulk menu import failed:", err);
+      setImportError(
+        err?.message ||
+          "Could not import the menu. Check your permissions and try again.",
+      );
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  function clearCsvPreview() {
+    setImportRows([]);
+    setImportFileName("");
+    setImportError("");
+    setImportNotice("");
+    const fileInput = document.getElementById("menu-csv-file");
+    if (fileInput) fileInput.value = "";
+  }
+
   const visibleItems =
     filterCategory === "all"
       ? items
@@ -569,6 +927,171 @@ export default function MenuManager() {
           )}
         </section>
 
+        <section
+          className="menu-import-panel"
+          aria-labelledby="menu-import-title"
+        >
+          <div className="menu-import-heading">
+            <div className="menu-import-title-wrap">
+              <div className="menu-import-icon">
+                <FileSpreadsheet size={21} />
+              </div>
+              <div>
+                <span className="menu-eyebrow">SAVE TIME ON SETUP</span>
+                <h2 id="menu-import-title">Bulk import menu</h2>
+                <p>Upload a CSV to add many dishes and categories at once.</p>
+              </div>
+            </div>
+            <button
+              type="button"
+              className="menu-secondary-button menu-import-template"
+              onClick={downloadMenuTemplate}
+              disabled={busy}
+            >
+              <Download size={16} /> Download template
+            </button>
+          </div>
+
+          <div className="menu-import-format-note">
+            <strong>Required columns:</strong> <code>name</code>,{" "}
+            <code>category</code>, <code>price</code>.
+            <span>
+              Optional: <code>description</code>, <code>is_available</code>,{" "}
+              <code>image_url</code>.
+            </span>
+            <small>
+              CSV only (max 2 MB, 500 rows). Missing categories are created
+              automatically. Existing duplicate items are flagged.
+            </small>
+          </div>
+
+          <div className="menu-import-upload-row">
+            <label className="menu-import-file-label" htmlFor="menu-csv-file">
+              <Upload size={18} />
+              <span>{importFileName || "Choose a CSV file"}</span>
+              <input
+                id="menu-csv-file"
+                type="file"
+                accept=".csv,text/csv"
+                onChange={handleCsvFileChange}
+                disabled={busy}
+              />
+            </label>
+            <span className="menu-import-file-hint">
+              Export Excel or Google Sheets as CSV first.
+            </span>
+          </div>
+
+          {importError && (
+            <div className="menu-import-message is-error" role="alert">
+              {importError}
+            </div>
+          )}
+          {importNotice && (
+            <div className="menu-import-message is-success" role="status">
+              <CheckCircle2 size={16} /> <span>{importNotice}</span>
+            </div>
+          )}
+
+          {importRows.length > 0 && (
+            <>
+              <div className="menu-import-preview-heading">
+                <div>
+                  <h3>Import preview</h3>
+                  <p>
+                    {importRows.filter((row) => row.valid).length} valid of{" "}
+                    {importRows.length} rows
+                  </p>
+                </div>
+                <div className="menu-import-preview-actions">
+                  <button
+                    type="button"
+                    className="menu-secondary-button"
+                    onClick={clearCsvPreview}
+                    disabled={busy}
+                  >
+                    Clear preview
+                  </button>
+                  <button
+                    type="button"
+                    className="menu-primary-button"
+                    onClick={importMenuItems}
+                    disabled={busy || !importRows.some((row) => row.valid)}
+                  >
+                    {busy ? (
+                      <LoaderCircle size={16} className="menu-spinner" />
+                    ) : (
+                      <Upload size={16} />
+                    )}
+                    {busy
+                      ? "Importing..."
+                      : `Import ${importRows.filter((row) => row.valid).length} valid items`}
+                  </button>
+                </div>
+              </div>
+              <div className="menu-import-table-wrap">
+                <table className="menu-import-table">
+                  <thead>
+                    <tr>
+                      <th>Row</th>
+                      <th>Item</th>
+                      <th>Category</th>
+                      <th>Price</th>
+                      <th>Availability</th>
+                      <th>Validation</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {importRows.map((row) => (
+                      <tr
+                        key={row.rowNumber}
+                        className={row.valid ? "is-valid" : "is-invalid"}
+                      >
+                        <td>{row.rowNumber}</td>
+                        <td>
+                          <strong>{row.name || "—"}</strong>
+                          {row.description && <small>{row.description}</small>}
+                          {row.imageUrl && <small>Image URL included</small>}
+                        </td>
+                        <td>
+                          {row.category || "—"}
+                          {!row.categoryExists && row.category && row.valid && (
+                            <small className="menu-import-create-note">
+                              New category
+                            </small>
+                          )}
+                        </td>
+                        <td>
+                          {row.numericPrice === null
+                            ? row.price || "—"
+                            : formatPrice(row.numericPrice)}
+                        </td>
+                        <td>{row.isAvailable ? "Available" : "Unavailable"}</td>
+                        <td>
+                          <span
+                            className={`menu-import-row-status ${row.valid ? "is-valid" : "is-invalid"}`}
+                          >
+                            {row.valid ? "Ready" : "Needs attention"}
+                          </span>
+                          {!row.valid && (
+                            <small className="menu-import-row-error">
+                              {row.error}
+                            </small>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <p className="menu-import-footer-note">
+                Only valid rows are imported. Invalid rows stay out of the
+                database and are listed above.
+              </p>
+            </>
+          )}
+        </section>
+
         <section className="menu-editor-panel" id="menu-item-form">
           <div className="menu-section-heading">
             <div>
@@ -617,6 +1140,7 @@ export default function MenuManager() {
                   <option value="">Select category</option>
                   {categories.map((category) => (
                     <option value={category.id} key={category.id}>
+                      {" "}
                       {category.name}
                     </option>
                   ))}
@@ -624,7 +1148,7 @@ export default function MenuManager() {
               </label>
 
               <label className="menu-field">
-                <span>Price (₹) *</span>
+                <span>Price (â‚¹) *</span>
                 <input
                   name="price"
                   type="number"

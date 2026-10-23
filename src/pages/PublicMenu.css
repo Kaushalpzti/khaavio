@@ -849,3 +849,103 @@
 .public-menu-book-link:hover {
     background: #edf4e8;
 }
+
+
+/* Secure customer order tracking link shown after successful checkout. */
+
+.public-order-track-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: min(100%, 320px);
+    min-height: 46px;
+    box-sizing: border-box;
+    margin: 2px 0 4px;
+    padding: 12px 18px;
+    border: 1px solid #07513b;
+    border-radius: 10px;
+    color: #fffefa;
+    background: #07513b;
+    font: inherit;
+    font-size: 12px;
+    font-weight: 750;
+    text-align: center;
+    text-decoration: none;
+    transition: background 150ms ease, transform 150ms ease;
+}
+
+.public-order-track-link:hover {
+    background: #063e2f;
+    transform: translateY(-1px);
+}
+
+.public-order-track-link:focus-visible {
+    outline: 3px solid #9dbda4;
+    outline-offset: 3px;
+}
+
+
+/* Restaurant opening status / online order pause banner */
+
+.public-menu-order-availability {
+    display: flex;
+    align-items: flex-start;
+    gap: 11px;
+    width: min(100%, 590px);
+    box-sizing: border-box;
+    margin-top: 21px;
+    padding: 13px 16px;
+    border: 1px solid #cfe1cc;
+    border-radius: 12px;
+    background: #f5fbf1;
+    color: #285b3a;
+    text-align: left;
+}
+
+.public-menu-order-availability.is-closed {
+    border-color: #ead8b2;
+    background: #fff8e8;
+    color: #805d1c;
+}
+
+.public-menu-order-availability-dot {
+    flex: 0 0 8px;
+    width: 8px;
+    height: 8px;
+    margin-top: 5px;
+    border-radius: 50%;
+    background: #318755;
+}
+
+.public-menu-order-availability.is-closed .public-menu-order-availability-dot {
+    background: #c08a2c;
+}
+
+.public-menu-order-availability strong {
+    display: block;
+    font-size: 12px;
+    font-weight: 800;
+}
+
+.public-menu-order-availability p {
+    margin: 5px 0 0;
+    color: inherit;
+    opacity: .86;
+    font-size: 11px;
+    line-height: 1.65;
+}
+
+.public-order-submit:disabled {
+    opacity: .48;
+    cursor: not-allowed;
+}
+
+@media (max-width: 520px) {
+    .public-menu-order-availability {
+        padding: 12px;
+    }
+    .public-menu-order-availability strong {
+        font-size: 11px;
+    }
+}

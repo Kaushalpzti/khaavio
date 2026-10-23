@@ -8,6 +8,7 @@ import {
   CheckCircle2,
   ClipboardList,
   Clock3,
+  Download,
   LoaderCircle,
   RefreshCw,
   ShoppingBag,
@@ -19,6 +20,12 @@ import { supabase } from "../lib/supabaseClient";
 import "./Analytics.css";
 
 const INITIAL_REFERENCE_DATE = new Date();
+
+const ANALYTICS_RANGES = [
+  { value: 7, label: "Last 7 days" },
+  { value: 30, label: "Last 30 days" },
+  { value: 90, label: "Last 90 days" },
+];
 
 const ORDER_STATUSES = [
   { key: "pending", label: "Pending" },
@@ -93,6 +100,7 @@ export default function Analytics() {
   const [error, setError] = useState("");
   const [refreshKey, setRefreshKey] = useState(0);
   const [referenceDate, setReferenceDate] = useState(INITIAL_REFERENCE_DATE);
+  const [rangeDays, setRangeDays] = useState(30);
 
   useEffect(() => {
     let active = true;
@@ -125,7 +133,7 @@ export default function Analytics() {
 
         const now = new Date();
         const start = new Date(now);
-        start.setDate(start.getDate() - 29);
+        start.setDate(start.getDate() - 89);
         start.setHours(0, 0, 0, 0);
         const future = new Date(now);
         future.setDate(future.getDate() + 90);
@@ -156,16 +164,14 @@ export default function Analytics() {
 
         const orderData = ordersResult.data || [];
         const bookingData = bookingsResult.data || [];
-        const completedIds = orderData
-          .filter((order) => order.status === "completed")
-          .map((order) => order.id);
+        const orderIds = orderData.map((order) => order.id);
 
         let itemsData = [];
-        if (completedIds.length > 0) {
+        if (orderIds.length > 0) {
           const { data, error: itemsError } = await supabase
             .from("order_items")
             .select("order_id, item_name, unit_price, quantity, line_total")
-            .in("order_id", completedIds);
+            .in("order_id", orderIds);
           if (itemsError) throw itemsError;
           itemsData = data || [];
         }
@@ -198,10 +204,23 @@ export default function Analytics() {
     };
   }, [navigate, refreshKey]);
 
-  const completedOrders = orders.filter(
+  const rangeStart = new Date(referenceDate);
+  rangeStart.setHours(0, 0, 0, 0);
+  rangeStart.setDate(rangeStart.getDate() - (rangeDays - 1));
+  const rangeEnd = new Date(referenceDate);
+  rangeEnd.setHours(23, 59, 59, 999);
+  const rangeStartTime = rangeStart.getTime();
+  const rangeEndTime = rangeEnd.getTime();
+  const rangeOrders = orders.filter((order) => {
+    const createdAt = new Date(order.created_at).getTime();
+    return createdAt >= rangeStartTime && createdAt <= rangeEndTime;
+  });
+  const completedOrders = rangeOrders.filter(
     (order) => order.status === "completed",
   );
-  const pendingOrders = orders.filter((order) => order.status === "pending");
+  const pendingOrders = rangeOrders.filter(
+    (order) => order.status === "pending",
+  );
   const completedOrderValue = completedOrders.reduce(
     (sum, order) => sum + (Number(order.total_amount) || 0),
     0,
@@ -230,8 +249,12 @@ export default function Analytics() {
   });
   const maxSales = Math.max(...salesDays.map((day) => day.value), 1);
 
+  const selectedCompletedOrderIds = new Set(
+    completedOrders.map((order) => order.id),
+  );
   const bestSellersMap = new Map();
   orderItems.forEach((item) => {
+    if (!selectedCompletedOrderIds.has(item.order_id)) return;
     const key = item.item_name || "Unnamed item";
     const current = bestSellersMap.get(key) || {
       name: key,
@@ -249,6 +272,66 @@ export default function Analytics() {
     ...bestSellers.map((item) => item.quantity),
     1,
   );
+
+  function exportOrdersCsv() {
+    const escapeCsv = (value) => {
+      let text = value == null ? "" : String(value);
+      if (/^[\s]*[=+@-]/.test(text)) text = `'${text}`;
+      return `"${text.replace(/"/g, '""')}"`;
+    };
+
+    const rows = [
+      [
+        "order_id",
+        "created_at",
+        "customer_name",
+        "status",
+        "order_total_inr",
+        "item_name",
+        "unit_price_inr",
+        "quantity",
+        "line_total_inr",
+      ],
+    ];
+
+    rangeOrders.forEach((order) => {
+      const items = orderItems.filter((item) => item.order_id === order.id);
+      const base = [
+        order.id,
+        order.created_at,
+        order.customer_name || "",
+        order.status || "",
+      ];
+
+      if (items.length === 0) {
+        rows.push([...base, Number(order.total_amount) || 0, "", "", "", ""]);
+      } else {
+        items.forEach((item, index) => {
+          rows.push([
+            ...base,
+            index === 0 ? Number(order.total_amount) || 0 : "",
+            item.item_name || "",
+            Number(item.unit_price) || 0,
+            Number(item.quantity) || 0,
+            Number(item.line_total) || 0,
+          ]);
+        });
+      }
+    });
+
+    const csv = rows.map((row) => row.map(escapeCsv).join(",")).join("\r\n");
+    const blob = new Blob([`\uFEFF${csv}`], {
+      type: "text/csv;charset=utf-8;",
+    });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `khaavio-orders-${rangeDays}-days-${getDateKey(referenceDate)}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
 
   const refresh = () => {
     setRefreshing(true);
@@ -293,8 +376,34 @@ export default function Analytics() {
                 : "A snapshot of your restaurant's recent activity."}
             </p>
           </div>
-          <div className="analytics-period-badge">
-            <CalendarDays size={15} /> Last 30 days
+          <div className="analytics-heading-actions">
+            <label className="analytics-range-control">
+              <span>Reporting period</span>
+              <select
+                value={rangeDays}
+                onChange={(event) => setRangeDays(Number(event.target.value))}
+                aria-label="Analytics reporting period"
+              >
+                {ANALYTICS_RANGES.map((range) => (
+                  <option key={range.value} value={range.value}>
+                    {range.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <button
+              type="button"
+              className="analytics-export-button"
+              onClick={exportOrdersCsv}
+              disabled={loading || refreshing || rangeOrders.length === 0}
+              title={
+                rangeOrders.length
+                  ? "Export orders for the selected period"
+                  : "No orders available for this period"
+              }
+            >
+              <Download size={16} /> Export CSV
+            </button>
           </div>
         </section>
 
@@ -330,8 +439,8 @@ export default function Analytics() {
                       <ShoppingBag size={19} />
                     </span>
                   </div>
-                  <strong>{orders.length.toLocaleString("en-IN")}</strong>
-                  <p>Orders created in the last 30 days</p>
+                  <strong>{rangeOrders.length.toLocaleString("en-IN")}</strong>
+                  <p>Orders created in the last {rangeDays} days</p>
                 </article>
 
                 <article className="analytics-stat-card">
@@ -448,11 +557,11 @@ export default function Analytics() {
 
                   <div className="analytics-status-list">
                     {ORDER_STATUSES.map((status) => {
-                      const count = orders.filter(
+                      const count = rangeOrders.filter(
                         (order) => order.status === status.key,
                       ).length;
-                      const percentage = orders.length
-                        ? (count / orders.length) * 100
+                      const percentage = rangeOrders.length
+                        ? (count / rangeOrders.length) * 100
                         : 0;
                       return (
                         <div className="analytics-status-row" key={status.key}>
@@ -488,7 +597,8 @@ export default function Analytics() {
                       </span>
                       <h2>Popular dishes</h2>
                       <p>
-                        Top items from completed orders in the last 30 days.
+                        Top items from completed orders in the last {rangeDays}{" "}
+                        days.
                       </p>
                     </div>
                     <span className="analytics-panel-icon">
