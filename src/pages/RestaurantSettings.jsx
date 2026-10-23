@@ -4,35 +4,76 @@ import {
   ArrowLeft,
   CheckCircle2,
   ExternalLink,
+  FileImage,
+  ImagePlus,
   LoaderCircle,
-  PauseCircle,
-  PlayCircle,
   Save,
   Store,
+  Upload,
 } from "lucide-react";
 import { supabase } from "../lib/supabaseClient";
 import "./RestaurantSettings.css";
-import "./RestaurantAvailability.css";
+import "./RestaurantSettingsLogo.css";
 
 const RESTAURANT_FIELDS =
-  "id, name, slug, restaurant_type, phone, contact_email, address, city, state, postal_code, description, is_published, is_accepting_orders, business_hours, timezone";
+  "id, name, slug, restaurant_type, logo_url, phone, contact_email, address, city, state, postal_code, description, is_published";
 
-const DAYS = [
-  { key: "monday", label: "Monday" },
-  { key: "tuesday", label: "Tuesday" },
-  { key: "wednesday", label: "Wednesday" },
-  { key: "thursday", label: "Thursday" },
-  { key: "friday", label: "Friday" },
-  { key: "saturday", label: "Saturday" },
-  { key: "sunday", label: "Sunday" },
-];
+const LOGO_BUCKET = "restaurant-logos";
+const MAX_LOGO_FILE_BYTES = 5 * 1024 * 1024;
 
-const DEFAULT_BUSINESS_HOURS = Object.fromEntries(
-  DAYS.map(({ key }) => [
-    key,
-    { closed: false, open: "00:00", close: "23:59" },
-  ]),
-);
+function getOwnedLogoObjectPath(publicUrl, restaurantId) {
+  if (!publicUrl || !restaurantId) return null;
+  try {
+    const parsed = new URL(publicUrl);
+    const marker = `/storage/v1/object/public/${LOGO_BUCKET}/`;
+    const markerIndex = parsed.pathname.indexOf(marker);
+    if (markerIndex < 0) return null;
+    const objectPath = decodeURIComponent(parsed.pathname.slice(markerIndex + marker.length));
+    return objectPath.startsWith(`${restaurantId}/`) ? objectPath : null;
+  } catch {
+    return null;
+  }
+}
+const ACCEPTED_LOGO_TYPES = ["image/png", "image/jpeg", "image/webp"];
+
+async function optimizeLogoImage(file) {
+  if (!ACCEPTED_LOGO_TYPES.includes(file.type)) {
+    throw new Error("Choose a PNG, JPG or WebP image.");
+  }
+  if (file.size > MAX_LOGO_FILE_BYTES) {
+    throw new Error("Logo must be 5 MB or smaller.");
+  }
+  if (typeof createImageBitmap !== "function") {
+    throw new Error("This browser cannot optimise the image. Please use a recent Chrome, Edge or Safari version.");
+  }
+
+  const bitmap = await createImageBitmap(file);
+  try {
+    if (bitmap.width * bitmap.height > 40000000) {
+      throw new Error("This image is too large to process safely. Please choose a smaller logo file.");
+    }
+    const maxSide = 800;
+    const scale = Math.min(1, maxSide / Math.max(bitmap.width, bitmap.height));
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.max(1, Math.round(bitmap.width * scale));
+    canvas.height = Math.max(1, Math.round(bitmap.height * scale));
+    const context = canvas.getContext("2d", { alpha: true });
+    if (!context) throw new Error("Could not prepare this logo image. Please try another file.");
+    context.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+
+    const blob = await new Promise((resolve, reject) => {
+      canvas.toBlob(
+        (result) => result ? resolve(result) : reject(new Error("Could not optimise this image.")),
+        "image/webp",
+        0.84,
+      );
+    });
+    const contentType = blob.type || "image/png";
+    return { blob, contentType, extension: contentType === "image/webp" ? "webp" : "png" };
+  } finally {
+    bitmap.close?.();
+  }
+}
 
 const INITIAL_FORM = {
   name: "",
@@ -44,8 +85,6 @@ const INITIAL_FORM = {
   state: "",
   postal_code: "",
   description: "",
-  is_accepting_orders: true,
-  business_hours: DEFAULT_BUSINESS_HOURS,
 };
 
 const BUSINESS_TYPES = [
@@ -55,22 +94,6 @@ const BUSINESS_TYPES = [
   { value: "cloud_kitchen", label: "Cloud kitchen" },
   { value: "other", label: "Other food business" },
 ];
-
-function normalizeBusinessHours(value) {
-  return Object.fromEntries(
-    DAYS.map(({ key }) => {
-      const day = value && typeof value === "object" ? value[key] : null;
-      return [
-        key,
-        {
-          closed: Boolean(day?.closed),
-          open: /^\d{2}:\d{2}$/.test(day?.open || "") ? day.open : "00:00",
-          close: /^\d{2}:\d{2}$/.test(day?.close || "") ? day.close : "23:59",
-        },
-      ];
-    }),
-  );
-}
 
 function formFromRestaurant(restaurant) {
   return {
@@ -83,16 +106,7 @@ function formFromRestaurant(restaurant) {
     state: restaurant.state || "",
     postal_code: restaurant.postal_code || "",
     description: restaurant.description || "",
-    is_accepting_orders: restaurant.is_accepting_orders !== false,
-    business_hours: normalizeBusinessHours(restaurant.business_hours),
   };
-}
-
-function timeToMinutes(value) {
-  const [hours, minutes] = String(value || "")
-    .split(":")
-    .map(Number);
-  return hours * 60 + minutes;
 }
 
 export default function RestaurantSettings() {
@@ -101,9 +115,12 @@ export default function RestaurantSettings() {
   const [userId, setUserId] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [savingOrderMode, setSavingOrderMode] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
+  const [logoFile, setLogoFile] = useState(null);
+  const [logoPreviewUrl, setLogoPreviewUrl] = useState("");
+  const [logoUploading, setLogoUploading] = useState(false);
+  const [logoImageFailed, setLogoImageFailed] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -115,6 +132,7 @@ export default function RestaurantSettings() {
       try {
         const { data: authData, error: authError } =
           await supabase.auth.getUser();
+
         if (authError) throw authError;
         if (!authData.user) {
           throw new Error("Please sign in before opening restaurant settings.");
@@ -159,69 +177,98 @@ export default function RestaurantSettings() {
     };
   }, []);
 
-  function updateField(event) {
-    const { name, value, type, checked } = event.target;
-    setForm((current) => ({
-      ...current,
-      [name]: type === "checkbox" ? checked : value,
-    }));
-    setNotice("");
+  useEffect(() => {
+    return () => {
+      if (logoPreviewUrl.startsWith("blob:")) URL.revokeObjectURL(logoPreviewUrl);
+    };
+  }, [logoPreviewUrl]);
+
+  function handleLogoFileChange(event) {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+
+    if (logoPreviewUrl.startsWith("blob:")) URL.revokeObjectURL(logoPreviewUrl);
+    setLogoFile(file);
+    setLogoPreviewUrl(URL.createObjectURL(file));
+    setLogoImageFailed(false);
     setError("");
+    setNotice("");
   }
 
-  function updateDay(dayKey, field, value) {
-    setForm((current) => ({
-      ...current,
-      business_hours: {
-        ...current.business_hours,
-        [dayKey]: {
-          ...current.business_hours[dayKey],
-          [field]: value,
-        },
-      },
-    }));
-    setNotice("");
-    setError("");
-  }
+  async function uploadRestaurantLogo() {
+    if (!restaurant || !userId || !logoFile || logoUploading) return;
 
-  async function toggleOrderAcceptance() {
-    if (!restaurant || !userId || savingOrderMode || saving) return;
-
-    const nextValue = restaurant.is_accepting_orders === false;
-    setSavingOrderMode(true);
+    setLogoUploading(true);
     setError("");
     setNotice("");
 
+    let uploadedPath = "";
     try {
+      const optimized = await optimizeLogoImage(logoFile);
+      uploadedPath = `${restaurant.id}/logo-${Date.now()}.${optimized.extension}`;
+      const { error: uploadError } = await supabase.storage
+        .from(LOGO_BUCKET)
+        .upload(uploadedPath, optimized.blob, {
+          cacheControl: "60",
+          contentType: optimized.contentType,
+          // Use a unique object key so this is INSERT-only. Supabase upsert
+          // requires INSERT + SELECT + UPDATE policies; new keys only need INSERT.
+          upsert: false,
+        });
+      if (uploadError) throw uploadError;
+
+      const { data: publicData } = supabase.storage
+        .from(LOGO_BUCKET)
+        .getPublicUrl(uploadedPath);
+      const logoUrl = `${publicData.publicUrl}?v=${Date.now()}`;
+
       const { data, error: updateError } = await supabase
         .from("restaurants")
-        .update({ is_accepting_orders: nextValue })
+        .update({ logo_url: logoUrl })
         .eq("id", restaurant.id)
         .eq("owner_id", userId)
-        .select("is_accepting_orders")
+        .select(RESTAURANT_FIELDS)
         .single();
-
       if (updateError) throw updateError;
 
-      setRestaurant((current) => ({
-        ...current,
-        is_accepting_orders: data.is_accepting_orders,
-      }));
-      setForm((current) => ({
-        ...current,
-        is_accepting_orders: data.is_accepting_orders,
-      }));
-      setNotice(
-        data.is_accepting_orders
-          ? "Online ordering resumed. Opening hours still apply."
-          : "Online ordering paused. Customers can still view your menu.",
-      );
+      // Best-effort cleanup: don't fail a successful logo save if an older
+      // object cannot be removed for any reason.
+      const previousLogoPath = getOwnedLogoObjectPath(restaurant.logo_url, restaurant.id);
+      if (previousLogoPath && previousLogoPath !== uploadedPath) {
+        const { error: cleanupError } = await supabase.storage
+          .from(LOGO_BUCKET)
+          .remove([previousLogoPath]);
+        if (cleanupError) console.warn("Could not remove previous restaurant logo:", cleanupError);
+      }
+
+      setRestaurant(data);
+      setForm(formFromRestaurant(data));
+      setLogoFile(null);
+      if (logoPreviewUrl.startsWith("blob:")) URL.revokeObjectURL(logoPreviewUrl);
+      setLogoPreviewUrl("");
+      setLogoImageFailed(false);
+      setNotice("Restaurant logo uploaded and optimised successfully.");
     } catch (err) {
-      console.error("Could not update online-order setting:", err);
-      setError(err?.message || "Could not update online-order availability.");
+      console.error("Restaurant logo upload failed:", err);
+      const message = err?.message || "We couldn't upload this logo. Please try again.";
+      if (/bucket/i.test(message) && /not found|exist/i.test(message)) {
+        setError("Logo storage is not set up yet. Apply supabase/restaurant-logo-storage-migration.sql in the Supabase SQL Editor, then retry.");
+      } else if (/row-level security|permission|not allowed|unauthori[sz]ed/i.test(message)) {
+        setError("Supabase Storage denied this upload. Run the restaurant-logo storage migration in the same Supabase project used by this app. If it is already applied, verify that this restaurant's owner_id matches the signed-in user's ID.");
+      } else {
+        setError(message);
+      }
     } finally {
-      setSavingOrderMode(false);
+      setLogoUploading(false);
     }
+  }
+
+  function updateField(event) {
+    const { name, value } = event.target;
+    setForm((current) => ({ ...current, [name]: value }));
+    setNotice("");
+    setError("");
   }
 
   async function handleSubmit(event) {
@@ -235,31 +282,15 @@ export default function RestaurantSettings() {
       setError("Restaurant name must contain at least 2 characters.");
       return;
     }
+
     if (!BUSINESS_TYPES.some((item) => item.value === form.restaurant_type)) {
       setError("Please choose a valid business type.");
       return;
     }
+
     if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       setError("Please enter a valid business email address.");
       return;
-    }
-
-    for (const { key, label } of DAYS) {
-      const hours = form.business_hours[key];
-      if (hours.closed) continue;
-      if (
-        !/^\d{2}:\d{2}$/.test(hours.open) ||
-        !/^\d{2}:\d{2}$/.test(hours.close)
-      ) {
-        setError(`Enter valid opening and closing times for ${label}.`);
-        return;
-      }
-      if (timeToMinutes(hours.open) >= timeToMinutes(hours.close)) {
-        setError(
-          `${label}: closing time must be after opening time. Overnight hours are not supported yet; mark the day closed or choose a same-day range.`,
-        );
-        return;
-      }
     }
 
     setSaving(true);
@@ -277,8 +308,6 @@ export default function RestaurantSettings() {
         state: form.state.trim() || null,
         postal_code: form.postal_code.trim() || null,
         description: form.description.trim(),
-        is_accepting_orders: form.is_accepting_orders,
-        business_hours: form.business_hours,
       };
 
       const { data, error: updateError } = await supabase
@@ -290,9 +319,10 @@ export default function RestaurantSettings() {
         .single();
 
       if (updateError) throw updateError;
+
       setRestaurant(data);
       setForm(formFromRestaurant(data));
-      setNotice("Restaurant details and opening hours saved successfully.");
+      setNotice("Restaurant details saved successfully.");
     } catch (err) {
       console.error("Could not save restaurant settings:", err);
       setError(
@@ -305,6 +335,7 @@ export default function RestaurantSettings() {
 
   async function copyMenuLink() {
     if (!restaurant?.slug) return;
+
     const url = `${window.location.origin}/menu/${encodeURIComponent(restaurant.slug)}`;
 
     try {
@@ -346,8 +377,8 @@ export default function RestaurantSettings() {
           </div>
           <h1>Restaurant settings</h1>
           <p>
-            Update your business profile, opening hours and online-order
-            availability.
+            Keep your restaurant profile and contact information up to date.
+            These details help customers identify your business.
           </p>
         </div>
 
@@ -367,7 +398,9 @@ export default function RestaurantSettings() {
               </p>
             </div>
             <span
-              className={`restaurant-settings-status ${restaurant.is_published ? "is-published" : "is-draft"}`}
+              className={`restaurant-settings-status ${
+                restaurant.is_published ? "is-published" : "is-draft"
+              }`}
             >
               {restaurant.is_published ? "Published" : "Unpublished"}
             </span>
@@ -375,46 +408,50 @@ export default function RestaurantSettings() {
         )}
 
         {restaurant && (
-          <section
-            className={`khaavio-order-mode-card ${restaurant.is_accepting_orders ? "is-accepting" : "is-paused"}`}
-          >
-            <div className="khaavio-order-mode-copy">
-              <span className="khaavio-order-mode-eyebrow">
-                ONLINE ORDERING
-              </span>
-              <h2>
-                {restaurant.is_accepting_orders
-                  ? "Accepting online orders"
-                  : "Online orders are paused"}
-              </h2>
-              <p>
-                {restaurant.is_accepting_orders
-                  ? "Customers can place orders while the restaurant is within its opening hours."
-                  : "Customers can still browse the menu, but new orders will be blocked."}
-              </p>
+          <section className="restaurant-logo-section" aria-labelledby="restaurant-logo-heading">
+            <div className="restaurant-logo-copy">
+              <span className="restaurant-logo-eyebrow">BRAND IDENTITY</span>
+              <h2 id="restaurant-logo-heading">Your restaurant logo</h2>
+              <p>Upload a logo to personalise your public menu and branded table QR cards. The image is resized and compressed before upload.</p>
+              <div className="restaurant-logo-specs"><FileImage size={15} /> PNG, JPG or WebP · up to 5 MB</div>
             </div>
-            <button
-              type="button"
-              className="khaavio-order-mode-button"
-              onClick={toggleOrderAcceptance}
-              disabled={savingOrderMode || saving}
-            >
-              {savingOrderMode ? (
-                <LoaderCircle
-                  size={17}
-                  className="restaurant-settings-spinner"
+            <div className="restaurant-logo-actions">
+              <div className="restaurant-logo-preview" aria-label="Restaurant logo preview">
+                {((logoPreviewUrl || restaurant.logo_url) && !logoImageFailed) ? (
+                  <img
+                    src={logoPreviewUrl || restaurant.logo_url}
+                    alt={`${restaurant.name} logo preview`}
+                    onError={() => setLogoImageFailed(true)}
+                    onLoad={() => setLogoImageFailed(false)}
+                  />
+                ) : (
+                  <span>{String(restaurant.name || "R").trim().slice(0, 2).toUpperCase()}</span>
+                )}
+              </div>
+              <div className="restaurant-logo-controls">
+                <label className="restaurant-logo-choose" htmlFor="restaurant-logo-file">
+                  <ImagePlus size={16} /> {restaurant.logo_url ? "Choose new logo" : "Choose logo"}
+                </label>
+                <input
+                  id="restaurant-logo-file"
+                  className="restaurant-logo-file-input"
+                  type="file"
+                  accept="image/png,image/jpeg,image/webp"
+                  onChange={handleLogoFileChange}
+                  aria-label="Choose restaurant logo image"
                 />
-              ) : restaurant.is_accepting_orders ? (
-                <PauseCircle size={17} />
-              ) : (
-                <PlayCircle size={17} />
-              )}
-              {savingOrderMode
-                ? "Updating..."
-                : restaurant.is_accepting_orders
-                  ? "Pause online orders"
-                  : "Resume online orders"}
-            </button>
+                <button
+                  type="button"
+                  className="restaurant-logo-upload"
+                  onClick={uploadRestaurantLogo}
+                  disabled={!logoFile || logoUploading}
+                >
+                  {logoUploading ? <LoaderCircle className="restaurant-settings-spinner" size={16} /> : <Upload size={16} />}
+                  {logoUploading ? "Optimising & uploading…" : "Upload logo"}
+                </button>
+                {logoFile && <span className="restaurant-logo-picked">Selected: {logoFile.name}</span>}
+              </div>
+            </div>
           </section>
         )}
 
@@ -423,8 +460,12 @@ export default function RestaurantSettings() {
             {error}
           </div>
         )}
+
         {notice && (
-          <div className="restaurant-settings-message is-success" role="status">
+          <div
+            className="restaurant-settings-message is-success"
+            role="status"
+          >
             <CheckCircle2 size={17} />
             <span>{notice}</span>
           </div>
@@ -440,6 +481,7 @@ export default function RestaurantSettings() {
                     <p>The basic details associated with your restaurant.</p>
                   </div>
                 </div>
+
                 <div className="restaurant-settings-grid">
                   <div className="restaurant-settings-field full-width">
                     <label htmlFor="settings-name">Restaurant name *</label>
@@ -453,6 +495,7 @@ export default function RestaurantSettings() {
                       required
                     />
                   </div>
+
                   <div className="restaurant-settings-field full-width">
                     <label htmlFor="settings-type">Business type *</label>
                     <select
@@ -469,6 +512,7 @@ export default function RestaurantSettings() {
                       ))}
                     </select>
                   </div>
+
                   <div className="restaurant-settings-field">
                     <label htmlFor="settings-phone">Phone number</label>
                     <input
@@ -482,6 +526,7 @@ export default function RestaurantSettings() {
                       maxLength={20}
                     />
                   </div>
+
                   <div className="restaurant-settings-field">
                     <label htmlFor="settings-email">Business email</label>
                     <input
@@ -505,6 +550,7 @@ export default function RestaurantSettings() {
                     <p>Where customers can find your business.</p>
                   </div>
                 </div>
+
                 <div className="restaurant-settings-grid">
                   <div className="restaurant-settings-field full-width">
                     <label htmlFor="settings-address">Street address</label>
@@ -518,6 +564,7 @@ export default function RestaurantSettings() {
                       maxLength={250}
                     />
                   </div>
+
                   <div className="restaurant-settings-field">
                     <label htmlFor="settings-city">City</label>
                     <input
@@ -530,6 +577,7 @@ export default function RestaurantSettings() {
                       maxLength={100}
                     />
                   </div>
+
                   <div className="restaurant-settings-field">
                     <label htmlFor="settings-state">State</label>
                     <input
@@ -542,6 +590,7 @@ export default function RestaurantSettings() {
                       maxLength={100}
                     />
                   </div>
+
                   <div className="restaurant-settings-field">
                     <label htmlFor="settings-postal">PIN code</label>
                     <input
@@ -555,6 +604,7 @@ export default function RestaurantSettings() {
                       maxLength={12}
                     />
                   </div>
+
                   <div className="restaurant-settings-field full-width">
                     <label htmlFor="settings-description">
                       About your restaurant
@@ -575,71 +625,6 @@ export default function RestaurantSettings() {
                 </div>
               </section>
 
-              <section className="restaurant-settings-section khaavio-hours-section">
-                <div className="restaurant-settings-section-heading">
-                  <div>
-                    <h2>Opening hours</h2>
-                    <p>
-                      Times are in India Standard Time (IST). Closing time must
-                      be later than opening time on the same day.
-                    </p>
-                  </div>
-                </div>
-                <div className="khaavio-hours-list">
-                  {DAYS.map(({ key, label }) => {
-                    const hours = form.business_hours[key];
-                    return (
-                      <div
-                        className={`khaavio-hours-row ${hours.closed ? "is-day-closed" : ""}`}
-                        key={key}
-                      >
-                        <div className="khaavio-hours-day">{label}</div>
-                        <label className="khaavio-day-closed">
-                          <input
-                            type="checkbox"
-                            checked={hours.closed}
-                            onChange={(event) =>
-                              updateDay(key, "closed", event.target.checked)
-                            }
-                            disabled={saving}
-                          />
-                          <span>Closed</span>
-                        </label>
-                        <label className="khaavio-time-field">
-                          <span>Opens</span>
-                          <input
-                            type="time"
-                            value={hours.open}
-                            onChange={(event) =>
-                              updateDay(key, "open", event.target.value)
-                            }
-                            disabled={saving || hours.closed}
-                            required={!hours.closed}
-                          />
-                        </label>
-                        <label className="khaavio-time-field">
-                          <span>Closes</span>
-                          <input
-                            type="time"
-                            value={hours.close}
-                            onChange={(event) =>
-                              updateDay(key, "close", event.target.value)
-                            }
-                            disabled={saving || hours.closed}
-                            required={!hours.closed}
-                          />
-                        </label>
-                      </div>
-                    );
-                  })}
-                </div>
-                <p className="khaavio-hours-note">
-                  All days default to 00:00–23:59 to preserve existing ordering
-                  behavior. Set your actual hours above. Overnight hours are not
-                  supported yet.
-                </p>
-              </section>
-
               <div className="restaurant-settings-actions">
                 <Link to="/dashboard" className="restaurant-settings-cancel">
                   Cancel
@@ -647,7 +632,7 @@ export default function RestaurantSettings() {
                 <button
                   type="submit"
                   className="restaurant-settings-save"
-                  disabled={saving || savingOrderMode}
+                  disabled={saving}
                 >
                   {saving ? (
                     <LoaderCircle

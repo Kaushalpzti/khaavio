@@ -1,0 +1,210 @@
+/* Standalone logo panel. Scoped styles avoid changing the existing settings form. */
+
+.restaurant-logo-section,
+.restaurant-logo-section * {
+    box-sizing: border-box;
+}
+
+.restaurant-logo-section {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(250px, .85fr);
+    gap: 26px;
+    align-items: center;
+    margin: 20px 0;
+    padding: clamp(18px, 3vw, 28px);
+    border: 1px solid #e3e8de;
+    border-radius: 18px;
+    background: linear-gradient(135deg, #fffefa 0%, #f5f7ef 100%);
+    box-shadow: 0 10px 28px rgb(25 55 45 / 4%);
+}
+
+.restaurant-logo-eyebrow {
+    display: inline-block;
+    margin-bottom: 9px;
+    color: #7b9479;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 1.35px;
+}
+
+.restaurant-logo-copy h2 {
+    margin: 0;
+    color: #19372d;
+    font-size: clamp(19px, 2.3vw, 24px);
+    line-height: 1.2;
+    letter-spacing: -.55px;
+}
+
+.restaurant-logo-copy p {
+    max-width: 520px;
+    margin: 10px 0 14px;
+    color: #69776a;
+    font-size: 13px;
+    line-height: 1.75;
+}
+
+.restaurant-logo-specs {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    color: #718070;
+    font-size: 11px;
+}
+
+.restaurant-logo-specs svg {
+    color: #537457;
+}
+
+.restaurant-logo-actions {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    min-width: 0;
+    padding: 15px;
+    border: 1px solid #e5e9df;
+    border-radius: 14px;
+    background: #fffefa;
+}
+
+.restaurant-logo-preview {
+    display: grid;
+    place-items: center;
+    width: 84px;
+    height: 84px;
+    flex: 0 0 84px;
+    overflow: hidden;
+    border: 1px solid #e2e8de;
+    border-radius: 18px;
+    color: #f7f8f1;
+    background: #19372d;
+    font-family: Georgia, serif;
+    font-size: 26px;
+    font-weight: 700;
+    letter-spacing: -1px;
+}
+
+.restaurant-logo-preview img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    padding: 5px;
+    background: #fffefa;
+}
+
+.restaurant-logo-controls {
+    display: flex;
+    flex: 1;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 9px;
+    min-width: 0;
+}
+
+.restaurant-logo-file-input {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    clip-path: inset(50%);
+    white-space: nowrap;
+}
+
+.restaurant-logo-choose,
+.restaurant-logo-upload {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    min-height: 39px;
+    padding: 9px 12px;
+    border: 1px solid #d9e2d5;
+    border-radius: 10px;
+    color: #244632;
+    background: #f7f9f3;
+    font: inherit;
+    font-size: 11px;
+    font-weight: 750;
+    cursor: pointer;
+    text-decoration: none;
+    transition: background 150ms ease, border-color 150ms ease, transform 150ms ease;
+}
+
+.restaurant-logo-upload {
+    color: #fffefa;
+    border-color: #19372d;
+    background: #19372d;
+}
+
+.restaurant-logo-choose:hover,
+.restaurant-logo-upload:hover:not(:disabled) {
+    transform: translateY(-1px);
+}
+
+.restaurant-logo-choose:hover {
+    border-color: #b7c9b2;
+    background: #edf3e8;
+}
+
+.restaurant-logo-upload:hover:not(:disabled) {
+    background: #102a21;
+}
+
+.restaurant-logo-upload:disabled {
+    opacity: .52;
+    cursor: not-allowed;
+}
+
+.restaurant-logo-picked {
+    flex-basis: 100%;
+    color: #7b8577;
+    font-size: 10px;
+    overflow-wrap: anywhere;
+}
+
+.restaurant-logo-choose:focus-within,
+.restaurant-logo-file-input:focus-visible+.restaurant-logo-upload,
+.restaurant-logo-upload:focus-visible {
+    outline: 3px solid rgb(123 148 121 / 35%);
+    outline-offset: 3px;
+}
+
+@media (max-width: 760px) {
+    .restaurant-logo-section {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 17px;
+        border-radius: 15px;
+    }
+    .restaurant-logo-actions {
+        align-items: flex-start;
+    }
+    .restaurant-logo-preview {
+        width: 70px;
+        height: 70px;
+        flex-basis: 70px;
+        border-radius: 15px;
+    }
+}
+
+@media (max-width: 420px) {
+    .restaurant-logo-actions {
+        padding: 11px;
+        gap: 10px;
+    }
+    .restaurant-logo-controls {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .restaurant-logo-choose,
+    .restaurant-logo-upload {
+        width: 100%;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .restaurant-logo-choose,
+    .restaurant-logo-upload {
+        transition: none;
+    }
+}

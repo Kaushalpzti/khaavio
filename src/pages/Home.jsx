@@ -26,8 +26,8 @@ import "./Home.css";
 
 /* Add actual Khaavio contact details here before public launch. */
 const BRAND_CONTACT = {
-  email: "khaavioapp@gmail.com",
-  instagram: "",
+  email: "khaavioqr@gmail.com",
+  instagram: "https://www.instagram.com/khaavio/",
   linkedin: "",
   youtube: "",
   facebook: "",
@@ -621,9 +621,9 @@ export default function Home() {
             </h1>
 
             <p>
-              Digital menus, table QR ordering, kitchen updates and guest
-              bookings—all brought together in one calm, easy-to-use restaurant
-              workspace.
+              Digital menus, table-by-table QR ordering, kitchen updates and
+              guest bookings—all connected in one calm workspace built around
+              your restaurant and its own identity.
             </p>
 
             <div className="kh-hero-actions">
@@ -657,6 +657,21 @@ export default function Home() {
                 <strong>Made for independent food businesses</strong>
                 <p>From your first café to multiple locations.</p>
               </div>
+            </div>
+
+            <div
+              className="kh-hero-capabilities"
+              aria-label="Khaavio essentials"
+            >
+              <span>
+                <Check size={13} /> Restaurant-branded menus
+              </span>
+              <span>
+                <Check size={13} /> Unique table QR codes
+              </span>
+              <span>
+                <Check size={13} /> Orders and bookings together
+              </span>
             </div>
           </div>
 
@@ -932,7 +947,7 @@ export default function Home() {
               <span>YOUR ACCOUNT</span>
               <Link to="/signup">Create account</Link>
               <Link to="/login">Sign in</Link>
-              <Link to="/reset-password">Reset password</Link>
+              {/* <Link to="/reset-password">Reset password</Link> */}
               <Link to="/onboarding">Restaurant setup</Link>
             </div>
 
@@ -940,7 +955,7 @@ export default function Home() {
               <span>LET'S CONNECT</span>
               <p>Follow Khaavio's journey.</p>
               <SocialLinks />
-              <small>Follow official Khaavio channels as they launch.</small>
+              {/* <small>Follow official Khaavio channels as they launch.</small> */}
             </div>
           </div>
 

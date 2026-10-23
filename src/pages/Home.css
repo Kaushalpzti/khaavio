@@ -2482,3 +2482,415 @@
         padding: 3px 5px;
     }
 }
+
+
+/* Home refresh: sharper hero hierarchy, clearer capability cues, same brand palette. */
+
+.kh-home .kh-hero {
+    isolation: isolate;
+    background: radial-gradient(ellipse at 77% 30%, rgb(215 226 204 / 72%), transparent 35%), radial-gradient(ellipse at 5% 88%, rgb(231 236 220 / 65%), transparent 31%), linear-gradient(180deg, #fbfaf6 0%, #f3f5ed 100%);
+}
+
+.kh-home .kh-hero::before {
+    content: "";
+    position: absolute;
+    z-index: -1;
+    inset: 0;
+    pointer-events: none;
+    opacity: .4;
+    background-image: radial-gradient(rgb(25 55 45 / 9%) .65px, transparent .65px);
+    background-size: 15px 15px;
+    mask-image: linear-gradient(90deg, #000, transparent 72%);
+}
+
+.kh-home .kh-hero-grid {
+    position: relative;
+    z-index: 1;
+}
+
+.kh-home .kh-hero-copy h1 {
+    line-height: 1.02;
+    letter-spacing: -4.2px;
+    text-wrap: balance;
+}
+
+.kh-home .kh-hero-copy>p {
+    font-size: 13px;
+    line-height: 1.9;
+}
+
+.kh-home .kh-button-dark {
+    box-shadow: 0 8px 18px rgb(16 42 33 / 12%);
+}
+
+.kh-home .kh-button-dark:hover {
+    box-shadow: 0 12px 25px rgb(16 42 33 / 18%);
+    transform: translateY(-2px);
+}
+
+.kh-home .kh-preview-window {
+    overflow: hidden;
+    border-radius: 15px;
+    box-shadow: 0 34px 95px rgb(25 55 45 / 15%), 0 3px 10px rgb(25 55 45 / 5%);
+}
+
+.kh-home .kh-floating-card {
+    border-radius: 11px;
+    box-shadow: 0 16px 38px rgb(25 55 45 / 12%);
+}
+
+.kh-home .kh-hero-capabilities {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    margin-top: 22px;
+}
+
+.kh-home .kh-hero-capabilities>span {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 30px;
+    padding: 7px 9px;
+    color: #4c6650;
+    background: rgb(255 254 250 / 78%);
+    border: 1px solid #e1e7dc;
+    border-radius: 999px;
+    font-size: 8px;
+    font-weight: 650;
+    letter-spacing: .05px;
+}
+
+.kh-home .kh-hero-capabilities svg {
+    flex: 0 0 auto;
+    color: #5e8663;
+}
+
+.kh-home .kh-feature-card {
+    transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
+}
+
+.kh-home .kh-feature-card:hover {
+    transform: translateY(-3px);
+    border-color: #d2ddcf;
+    box-shadow: 0 16px 32px rgb(25 55 45 / 7%);
+}
+
+@media (max-width: 760px) {
+    .kh-home .kh-hero-copy h1 {
+        letter-spacing: -2.7px;
+    }
+    .kh-home .kh-hero-copy>p {
+        font-size: 12px;
+    }
+    .kh-home .kh-hero-capabilities {
+        gap: 6px;
+        margin-top: 20px;
+    }
+    .kh-home .kh-hero-capabilities>span {
+        min-height: 29px;
+        padding: 7px 8px;
+        font-size: 8px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .kh-home .kh-button-dark,
+    .kh-home .kh-feature-card {
+        transition: none !important;
+    }
+    .kh-home .kh-button-dark:hover,
+    .kh-home .kh-feature-card:hover {
+        transform: none !important;
+    }
+}
+
+
+/* =============================================================
+   Khaavio home footer — responsive layout refinement
+   Append this section after existing Home.css styles.
+   ============================================================= */
+
+.kh-footer {
+    padding: clamp(42px, 5vw, 58px) 0 20px;
+    overflow: hidden;
+}
+
+.kh-footer-main {
+    grid-template-columns: minmax(0, 1.3fr) minmax(125px, 0.62fr) minmax(150px, 0.78fr) minmax(155px, 0.95fr);
+    gap: clamp(22px, 2.8vw, 38px);
+}
+
+.kh-footer-main>*,
+.kh-footer-bottom>* {
+    min-width: 0;
+}
+
+.kh-footer-brand>p {
+    max-width: 34ch;
+    margin: 16px 0 14px;
+    font-size: 13px;
+    line-height: 1.75;
+}
+
+.kh-footer-contact>a,
+.kh-contact-unset {
+    max-width: 100%;
+    align-items: center;
+    gap: 9px;
+    font-size: 12px;
+    line-height: 1.55;
+    overflow-wrap: anywhere;
+}
+
+.kh-footer-column,
+.kh-footer-social {
+    min-width: 0;
+    gap: 9px;
+}
+
+.kh-footer-column>span,
+.kh-footer-social>span {
+    margin: 0 0 5px;
+    font-size: 10px;
+    line-height: 1.5;
+    letter-spacing: 1.1px;
+}
+
+.kh-footer-column>a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 30px;
+    max-width: 100%;
+    padding: 3px 0;
+    font-size: 13px;
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+}
+
+.kh-footer-social>p {
+    font-size: 13px;
+    line-height: 1.65;
+}
+
+.kh-social-pending {
+    font-size: 12px;
+    line-height: 1.65;
+}
+
+.kh-footer-social>small {
+    font-size: 10px;
+    line-height: 1.6;
+}
+
+.kh-social-links {
+    gap: 10px;
+}
+
+.kh-social-links>a {
+    width: 40px;
+    height: 40px;
+    border-radius: 11px;
+    font-size: 12px;
+}
+
+.kh-footer-bottom {
+    gap: 12px 18px;
+    padding-top: 17px;
+    font-size: 11px;
+    line-height: 1.65;
+}
+
+.kh-footer-bottom>a {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 34px;
+    padding: 5px 10px;
+    border: 1px solid rgb(255 255 255 / 14%);
+    border-radius: 999px;
+    white-space: nowrap;
+    transition: background 160ms ease, border-color 160ms ease;
+}
+
+.kh-footer-bottom>a:hover {
+    background: rgb(255 255 255 / 7%);
+    border-color: rgb(255 255 255 / 28%);
+}
+
+
+/* Tablet: brand gets its own row; navigation groups line up evenly. */
+
+@media (max-width: 1024px) {
+    .kh-footer-main {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 28px 24px;
+    }
+    .kh-footer-brand {
+        grid-column: 1 / -1;
+        max-width: 620px;
+    }
+    .kh-footer-social {
+        grid-column: auto;
+    }
+}
+
+
+/* Mobile: brand, two balanced link groups, then contact/social info. */
+
+@media (max-width: 760px) {
+    .kh-footer {
+        padding: 36px 0 18px;
+    }
+    .kh-footer-main {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 26px 20px;
+        padding-bottom: 24px;
+    }
+    .kh-footer-brand {
+        grid-column: 1 / -1;
+        max-width: none;
+    }
+    .kh-brand-footer {
+        gap: 10px;
+        font-size: 27px;
+    }
+    .kh-brand-footer>img {
+        width: 42px;
+        height: 42px;
+        border-radius: 12px;
+    }
+    .kh-footer-brand>p {
+        max-width: 40ch;
+        margin: 13px 0 13px;
+        font-size: 13px;
+        line-height: 1.75;
+    }
+    .kh-footer-contact>a,
+    .kh-contact-unset {
+        font-size: 12px;
+    }
+    .kh-footer-column {
+        gap: 8px;
+    }
+    .kh-footer-column>span {
+        margin-bottom: 4px;
+        font-size: 9px;
+        letter-spacing: 0.9px;
+    }
+    .kh-footer-column>a {
+        min-height: 36px;
+        font-size: 13px;
+        line-height: 1.45;
+    }
+    .kh-footer-social {
+        grid-column: 1 / -1;
+        gap: 9px;
+        padding-top: 20px;
+        border-top: 1px solid rgb(255 255 255 / 12%);
+    }
+    .kh-footer-social>span {
+        margin: 0 0 2px;
+        font-size: 10px;
+    }
+    .kh-footer-social>p {
+        margin: 0;
+        font-size: 13px;
+    }
+    .kh-social-pending {
+        max-width: 36ch;
+        font-size: 12px;
+    }
+    .kh-footer-social>small {
+        display: none;
+    }
+    .kh-social-links>a {
+        width: 42px;
+        height: 42px;
+    }
+    .kh-footer-bottom {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        align-items: center;
+        gap: 8px 12px;
+        padding-top: 16px;
+        font-size: 11px;
+    }
+    .kh-footer-bottom>span:first-child {
+        grid-column: 1 / -1;
+    }
+    .kh-footer-bottom>span:nth-child(2) {
+        max-width: 30ch;
+    }
+    .kh-footer-bottom>a {
+        justify-self: end;
+        min-height: 36px;
+        padding-inline: 11px;
+        font-size: 11px;
+    }
+}
+
+
+/* Small phones: tighter gutters without shrinking the tap targets. */
+
+@media (max-width: 420px) {
+    .kh-footer {
+        padding-top: 30px;
+    }
+    .kh-footer-main {
+        gap: 23px 14px;
+        padding-bottom: 21px;
+    }
+    .kh-brand-footer {
+        font-size: 25px;
+    }
+    .kh-brand-footer>img {
+        width: 39px;
+        height: 39px;
+    }
+    .kh-footer-column>a {
+        font-size: 12px;
+    }
+    .kh-footer-bottom {
+        font-size: 10px;
+        gap: 8px;
+    }
+}
+
+
+/* Respect reduced-motion preference for the footer CTA too. */
+
+@media (prefers-reduced-motion: reduce) {
+    .kh-footer-bottom>a {
+        transition: none;
+    }
+}
+
+
+/* Quick-link spacing refinement: closer rows on mobile without changing layout. */
+
+@media (max-width: 760px) {
+    .kh-footer-column {
+        gap: 2px;
+    }
+    .kh-footer-column>span {
+        margin: 0 0 6px;
+    }
+    .kh-footer-column>a {
+        min-height: 28px;
+        padding: 2px 0;
+        line-height: 1.35;
+    }
+}
+
+@media (max-width: 420px) {
+    .kh-footer-column {
+        gap: 1px;
+    }
+    .kh-footer-column>a {
+        min-height: 26px;
+        padding: 1px 0;
+        line-height: 1.3;
+    }
+}
