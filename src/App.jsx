@@ -2,6 +2,8 @@ import { lazy, Suspense } from "react";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import ProtectedRoute from "./components/ProtectedRoute";
 import SubscriptionAccessGuard from "./components/SubscriptionAccessGuard";
+import SeoManager from "./components/SeoManager";
+import LegalPage from "./pages/LegalPage";
 import "./PageLoader.css";
 
 // Public pages
@@ -93,10 +95,15 @@ function ProtectedRestaurantPage({ children }) {
 export default function App() {
   return (
     <BrowserRouter>
+      <SeoManager />
       <Suspense fallback={<PageLoader />}>
         <Routes>
-          {/* Public homepage */}
+          {/* Public marketing and legal pages */}
           <Route path="/" element={<Home />} />
+          <Route path="/privacy" element={<LegalPage type="privacy" />} />
+          <Route path="/terms" element={<LegalPage type="terms" />} />
+          <Route path="/refund-policy" element={<LegalPage type="refund" />} />
+          <Route path="/refunds" element={<Navigate to="/refund-policy" replace />} />
 
           {/* Authentication */}
           <Route path="/login" element={<Auth mode="login" />} />

@@ -768,9 +768,9 @@ export default function Auth({ mode = "login" }) {
 
           <div className="auth-legal">
             By continuing, you agree to our{" "}
-            <a href="/terms">Terms of Service</a> and{" "}
-            <a href="/privacy">Privacy Policy</a>.
-            <span>These legal pages must be published before public launch.</span>
+            <Link to="/terms">Terms &amp; Conditions</Link>,{" "}
+            <Link to="/privacy">Privacy Policy</Link> and{" "}
+            <Link to="/refund-policy">Refund Policy</Link>.
           </div>
         </div>
 

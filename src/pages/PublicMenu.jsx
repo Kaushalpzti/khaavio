@@ -169,6 +169,43 @@ export default function PublicMenu() {
   const [subscriptionAllowsTransactions, setSubscriptionAllowsTransactions] =
     useState(null);
 
+  // Give each published restaurant menu a useful, restaurant-specific title.
+  useEffect(() => {
+    if (!restaurant?.name) return;
+
+    const pageTitle = `${restaurant.name} Digital Menu | Khaavio`;
+    const pageDescription = `Explore ${restaurant.name}'s digital menu on Khaavio. Browse available dishes and prices, and use table QR ordering where available.`;
+    document.title = pageTitle;
+
+    const setMeta = (selector, attribute, key, content) => {
+      let node = document.head.querySelector(selector);
+      if (!node) {
+        node = document.createElement("meta");
+        node.setAttribute(attribute, key);
+        document.head.appendChild(node);
+      }
+      node.setAttribute("content", content);
+    };
+
+    setMeta('meta[name="description"]', "name", "description", pageDescription);
+    setMeta('meta[name="robots"]', "name", "robots", "index,follow,max-image-preview:large");
+    setMeta('meta[property="og:title"]', "property", "og:title", pageTitle);
+    setMeta('meta[property="og:description"]', "property", "og:description", pageDescription);
+    setMeta('meta[property="og:url"]', "property", "og:url", `https://khaavio.in/menu/${encodeURIComponent(restaurant.slug || slug)}`);
+    setMeta('meta[property="og:image"]', "property", "og:image", "https://khaavio.in/khaavio-social-preview.png");
+    setMeta('meta[name="twitter:title"]', "name", "twitter:title", pageTitle);
+    setMeta('meta[name="twitter:description"]', "name", "twitter:description", pageDescription);
+    setMeta('meta[name="twitter:image"]', "name", "twitter:image", "https://khaavio.in/khaavio-social-preview.png");
+
+    let canonical = document.head.querySelector('link[rel="canonical"]');
+    if (!canonical) {
+      canonical = document.createElement("link");
+      canonical.rel = "canonical";
+      document.head.appendChild(canonical);
+    }
+    canonical.href = `https://khaavio.in/menu/${encodeURIComponent(restaurant.slug || slug)}`;
+  }, [restaurant?.name, restaurant?.slug, slug]);
+
   useEffect(() => {
     let cancelled = false;
 

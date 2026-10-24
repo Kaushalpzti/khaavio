@@ -953,6 +953,13 @@ export default function Home() {
               <Link to="/onboarding">Restaurant setup</Link>
             </div>
 
+            <div className="kh-footer-column">
+              <span>LEGAL</span>
+              <Link to="/privacy">Privacy Policy</Link>
+              <Link to="/terms">Terms &amp; Conditions</Link>
+              <Link to="/refund-policy">Refund Policy</Link>
+            </div>
+
             <div className="kh-footer-social">
               <span>LET'S CONNECT</span>
               <p>Follow Khaavio's journey.</p>
