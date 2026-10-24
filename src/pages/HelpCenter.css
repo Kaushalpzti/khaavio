@@ -1,0 +1,148 @@
+
+.help-center-page {
+  width: 100%;
+  min-width: 0;
+  min-height: calc(100vh - 76px);
+  color: var(--workspace-ink, #173a2e);
+  background: transparent;
+  overflow-x: clip;
+}
+
+.help-center-main {
+  width: min(1320px, calc(100% - 64px));
+  min-width: 0;
+  margin: 0 auto;
+  padding: 30px 0 42px;
+}
+
+.help-center-page-heading {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 20px;
+  min-width: 0;
+  margin-bottom: 24px;
+}
+
+.help-center-title-wrap { min-width: 0; }
+.help-center-page-eyebrow {
+  display: block;
+  margin-bottom: 9px;
+  color: #829187;
+  font-size: 9px;
+  font-weight: 850;
+  letter-spacing: 1.55px;
+}
+.help-center-page-heading h1 {
+  margin: 0;
+  color: var(--workspace-ink-strong, #0d3024);
+  font-size: clamp(28px, 3vw, 38px);
+  font-weight: 800;
+  letter-spacing: -1.2px;
+  line-height: 1.12;
+}
+.help-center-page-heading p {
+  max-width: 650px;
+  margin: 10px 0 0;
+  color: #718078;
+  font-size: 14px;
+  line-height: 1.65;
+  overflow-wrap: anywhere;
+}
+.help-center-back-link {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 9px 13px;
+  border: 1px solid #dce6db;
+  border-radius: 11px;
+  background: #fffefa;
+  color: #24563e;
+  font-size: 12px;
+  font-weight: 750;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.help-center-back-link:hover { border-color: #b6cfbd; background: #f5f9f2; }
+.help-center-main .khaavio-help-panel {
+  width: 100%;
+  max-width: 100%;
+  margin-top: 0;
+  padding: clamp(18px, 2.6vw, 30px);
+  overflow: hidden;
+}
+.help-center-state {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 24px;
+  border: 1px solid #dce7dc;
+  border-radius: 18px;
+  background: #fffefa;
+  color: #244c38;
+}
+.help-center-state p { margin: 0; color: #6b7b70; overflow-wrap: anywhere; }
+.help-center-state button {
+  min-height: 40px;
+  padding: 9px 14px;
+  border: 0;
+  border-radius: 10px;
+  background: #07513b;
+  color: #fffefa;
+  font: inherit;
+  font-weight: 750;
+  cursor: pointer;
+}
+.help-center-state-error { border-color: #f2d3cd; color: #983f31; }
+.help-center-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 22px;
+  padding-top: 16px;
+  border-top: 1px solid #e0e8df;
+  color: #819087;
+  font-size: 11px;
+}
+.help-center-footer a {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: #426450;
+  font-weight: 750;
+  text-decoration: none;
+}
+.help-center-footer a:hover { color: #08794c; text-decoration: underline; }
+
+@media (max-width: 1050px) {
+  .help-center-main { width: calc(100% - 42px); }
+  .help-center-main .khaavio-help-layout { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 780px) {
+  .help-center-page { min-height: calc(100vh - 62px); }
+  .help-center-main { width: calc(100% - 28px); padding: 22px 0 30px; }
+  .help-center-page-heading { align-items: flex-start; flex-direction: column; gap: 14px; margin-bottom: 18px; }
+  .help-center-page-heading h1 { font-size: clamp(26px, 7vw, 32px); letter-spacing: -.85px; }
+  .help-center-page-heading p { font-size: 13px; }
+  .help-center-back-link { min-height: 38px; }
+  .help-center-main .khaavio-help-panel { padding: 14px; border-radius: 16px; }
+  .help-center-main .khaavio-help-heading { gap: 10px; margin-bottom: 16px; }
+  .help-center-main .khaavio-help-heading-icon { width: 39px; height: 39px; border-radius: 12px; }
+  .help-center-main .khaavio-help-layout { gap: 12px; }
+  .help-center-main .khaavio-help-contact { padding: 14px; }
+  .help-center-main .khaavio-help-question { padding: 12px 0; gap: 9px; }
+  .help-center-main .khaavio-help-question strong { font-size: 12px; }
+  .help-center-main .khaavio-help-answer p { font-size: 12px; }
+  .help-center-footer { align-items: flex-start; flex-direction: column; }
+}
+@media (max-width: 380px) {
+  .help-center-main { width: calc(100% - 20px); }
+  .help-center-main .khaavio-help-panel { padding: 11px; }
+  .help-center-main .khaavio-help-contact { padding: 12px; }
+  .help-center-main .khaavio-help-action { gap: 6px; padding: 9px; font-size: 11px; }
+}

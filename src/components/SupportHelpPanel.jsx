@@ -111,7 +111,7 @@ function buildSupportMessage(restaurant, accountEmail) {
   ].join("\n");
 }
 
-export default function SupportHelpPanel({ restaurant, accountEmail }) {
+export default function SupportHelpPanel({ restaurant, accountEmail, id = "help-center" }) {
   const [query, setQuery] = useState("");
   const [openArticleId, setOpenArticleId] = useState("menu-items");
   const [copyState, setCopyState] = useState("");
@@ -163,7 +163,7 @@ export default function SupportHelpPanel({ restaurant, accountEmail }) {
   }
 
   return (
-    <section className="khaavio-help-panel" aria-labelledby="khaavio-help-title">
+    <section id={id} className="khaavio-help-panel" aria-labelledby="khaavio-help-title">
       <div className="khaavio-help-heading">
         <div className="khaavio-help-heading-icon" aria-hidden="true">
           <Headset size={22} />

@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { supabase } from "../lib/supabaseClient";
 import "./OrderReceipts.css";
+import "../RestaurantWorkspaceDesign.css";
 
 function formatPrice(value) {
   return new Intl.NumberFormat("en-IN", {
@@ -166,7 +167,6 @@ export default function OrderReceipts() {
         <Link to="/dashboard" className="order-receipts-back">
           <ArrowLeft size={17} /> Dashboard
         </Link>
-        <Link to="/" className="order-receipts-brand">Khaavio<span>.</span></Link>
       </header>
 
       <div className="order-receipts-main">

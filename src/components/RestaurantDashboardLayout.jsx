@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, NavLink, useLocation } from "react-router-dom";
+import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import {
   ArrowUpRight,
   BarChart3,
@@ -12,6 +12,7 @@ import {
   ExternalLink,
   LayoutDashboard,
   LifeBuoy,
+  LogOut,
   Menu,
   QrCode,
   Receipt,
@@ -21,7 +22,9 @@ import {
   X,
 } from "lucide-react";
 import khaavioIcon from "../assets/icon.png";
+import { supabase } from "../lib/supabaseClient";
 import "./RestaurantDashboardLayout.css";
+import "../RestaurantWorkspaceDesign.css";
 
 const NAV_GROUPS = [
   {
@@ -63,11 +66,65 @@ const NAV_GROUPS = [
   },
 ];
 
+function RestaurantIdentityMark({ restaurant }) {
+  const [imageFailed, setImageFailed] = useState(false);
+  useEffect(() => setImageFailed(false), [restaurant?.logo_url]);
+  const name = restaurant?.name?.trim() || "Your restaurant";
+  const initials = name
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0])
+    .join("")
+    .toUpperCase() || "R";
+
+  return (
+    <span className="restaurant-dashboard-identity-mark">
+      {restaurant?.logo_url && !imageFailed ? (
+        <img
+          src={restaurant.logo_url}
+          alt=""
+          onError={() => setImageFailed(true)}
+        />
+      ) : (
+        <span aria-hidden="true">{initials}</span>
+      )}
+    </span>
+  );
+}
+
 export default function RestaurantDashboardLayout({ children }) {
   const location = useLocation();
+  const navigate = useNavigate();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [isMobileViewport, setIsMobileViewport] = useState(false);
+  const [restaurantIdentity, setRestaurantIdentity] = useState(null);
+  const [signingOut, setSigningOut] = useState(false);
+  const [signOutError, setSignOutError] = useState("");
+
+  useEffect(() => {
+    let active = true;
+    async function loadRestaurantIdentity() {
+      try {
+        const { data: authData } = await supabase.auth.getUser();
+        const user = authData?.user;
+        if (!user) return;
+        const { data } = await supabase
+          .from("restaurants")
+          .select("name, logo_url, created_at")
+          .eq("owner_id", user.id)
+          .order("created_at", { ascending: true })
+          .limit(1)
+          .maybeSingle();
+        if (active && data) setRestaurantIdentity(data);
+      } catch {
+        // The page module still owns its normal loading/error state.
+      }
+    }
+    loadRestaurantIdentity();
+    return () => { active = false; };
+  }, []);
 
   useEffect(() => {
     const mediaQuery = window.matchMedia("(max-width: 780px)");
@@ -84,6 +141,21 @@ export default function RestaurantDashboardLayout({ children }) {
     }
     setCollapsed((value) => !value);
   };
+
+  async function handleSignOut() {
+    if (signingOut) return;
+    setSigningOut(true);
+    setSignOutError("");
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+      setMobileOpen(false);
+      navigate("/login", { replace: true });
+    } catch (error) {
+      setSignOutError(error?.message || "Could not sign out. Please try again.");
+      setSigningOut(false);
+    }
+  }
 
   useEffect(() => {
     setMobileOpen(false);
@@ -116,11 +188,12 @@ export default function RestaurantDashboardLayout({ children }) {
         >
           {mobileOpen ? <X size={20} /> : <Menu size={20} />}
         </button>
-        <Link className="restaurant-dashboard-mobilebrand" to="/dashboard" aria-label="Khaavio dashboard">
-          <img src={khaavioIcon} alt="" />
-          <span>Khaavio</span>
+        <Link className="restaurant-dashboard-mobilebrand" to="/dashboard" aria-label={`${restaurantIdentity?.name || "Restaurant"} overview`}>
+          <RestaurantIdentityMark restaurant={restaurantIdentity} />
+          <span className="restaurant-dashboard-identity-copy">
+            <strong>{restaurantIdentity?.name || "Your restaurant"}</strong>
+          </span>
         </Link>
-        <span className="restaurant-dashboard-mobile-caption">Restaurant workspace</span>
       </div>
 
       {mobileOpen && (
@@ -138,13 +211,7 @@ export default function RestaurantDashboardLayout({ children }) {
         aria-label="Restaurant dashboard navigation"
       >
         <div className="restaurant-dashboard-sidebar-header">
-          <Link className="restaurant-dashboard-brand" to="/dashboard" aria-label="Khaavio overview">
-            <img src={khaavioIcon} alt="" />
-            <span className="restaurant-dashboard-brand-copy">
-              <strong>Khaa<span>vio</span></strong>
-              <small>RESTAURANT WORKSPACE</small>
-            </span>
-          </Link>
+          <span className="restaurant-dashboard-sidebar-title">NAVIGATION</span>
           <button
             type="button"
             className="restaurant-dashboard-collapse-button"
@@ -200,22 +267,53 @@ export default function RestaurantDashboardLayout({ children }) {
             <ExternalLink size={17} aria-hidden="true" />
             <span className="restaurant-dashboard-nav-copy">View public website</span>
           </a>
-          <a
+          <Link
             className="restaurant-dashboard-footer-link"
-            href="mailto:khaavioqr@gmail.com"
-            title={collapsed ? "Contact support" : undefined}
+            to="/dashboard/help"
+            title={collapsed ? "Help & support" : undefined}
+            onClick={() => setMobileOpen(false)}
           >
             <LifeBuoy size={17} aria-hidden="true" />
             <span className="restaurant-dashboard-nav-copy">Help & support</span>
-          </a>
-          <div className="restaurant-dashboard-footer-note">
-            <span className="restaurant-dashboard-online-dot" />
-            <span className="restaurant-dashboard-nav-copy">Every table, digitally connected.</span>
+          </Link>
+          <button
+            type="button"
+            className="restaurant-dashboard-footer-link restaurant-dashboard-signout-link"
+            title={collapsed ? "Sign out" : undefined}
+            onClick={handleSignOut}
+            disabled={signingOut}
+          >
+            <LogOut size={17} aria-hidden="true" />
+            <span className="restaurant-dashboard-nav-copy">
+              {signingOut ? "Signing out..." : "Sign out"}
+            </span>
+          </button>
+          {signOutError && (
+            <p className="restaurant-dashboard-signout-error" role="alert">
+              {signOutError}
+            </p>
+          )}
+          <div className="restaurant-dashboard-powered-by">
+            <img src={khaavioIcon} alt="" />
+            <span>
+              <small>POWERED BY</small>
+              <strong>Khaavio</strong>
+            </span>
           </div>
         </div>
       </aside>
 
-      <div className="restaurant-dashboard-content">{children}</div>
+      <div className="restaurant-dashboard-content">
+        <header className="restaurant-dashboard-workspacebar">
+          <Link className="restaurant-dashboard-workspace-identity" to="/dashboard" aria-label={`${restaurantIdentity?.name || "Restaurant"} overview`}>
+            <RestaurantIdentityMark restaurant={restaurantIdentity} />
+            <span className="restaurant-dashboard-identity-copy">
+              <strong>{restaurantIdentity?.name || "Your restaurant"}</strong>
+            </span>
+          </Link>
+        </header>
+        {children}
+      </div>
     </div>
   );
 }

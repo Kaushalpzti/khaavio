@@ -725,7 +725,8 @@
     background: #ba5c4a;
 }
 
-.orders-notification-button {
+.orders-notification-button,
+.orders-voice-button {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -741,8 +742,21 @@
     cursor: pointer;
 }
 
-.orders-notification-button:hover {
+.orders-notification-button:hover,
+.orders-voice-button:hover {
     background: #f0f4eb;
+}
+
+.orders-voice-button.is-active {
+    color: #176746;
+    border-color: #c9dfc9;
+    background: #edf7e9;
+}
+
+.orders-voice-button:focus-visible,
+.orders-notification-button:focus-visible {
+    outline: 3px solid #a9cba9;
+    outline-offset: 2px;
 }
 
 @media (max-width: 520px) {

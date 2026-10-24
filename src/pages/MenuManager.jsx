@@ -19,6 +19,7 @@ import {
 import { supabase } from "../lib/supabaseClient";
 import "./MenuManager.css";
 import "./MenuBulkImport.css";
+import "../RestaurantWorkspaceDesign.css";
 
 const emptyForm = {
   name: "",
@@ -821,10 +822,6 @@ export default function MenuManager() {
           Dashboard
         </Link>
 
-        <span className="menu-brand">
-          <UtensilsCrossed size={19} />
-          Khaavio Menu Studio
-        </span>
       </header>
 
       <div className="menu-container">

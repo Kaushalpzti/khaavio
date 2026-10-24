@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { supabase } from "../lib/supabaseClient";
 import "./KitchenDisplay.css";
+import "../RestaurantWorkspaceDesign.css";
 
 const ACTIVE_STATUSES = ["pending", "accepted", "preparing", "ready"];
 const REFRESH_INTERVAL_MS = 15000;
@@ -553,10 +554,6 @@ export default function KitchenDisplay() {
         <Link to="/dashboard" className="kitchen-back-link">
           <ArrowLeft size={17} /> Dashboard
         </Link>
-        <div className="kitchen-brand">
-          <span className="kitchen-brand-mark"><ChefHat size={19} /></span>
-          <span>Khaavio <b>Kitchen</b></span>
-        </div>
         <div className="kitchen-header-actions">
           <button
             type="button"

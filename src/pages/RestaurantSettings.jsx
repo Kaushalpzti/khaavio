@@ -14,6 +14,7 @@ import {
 import { supabase } from "../lib/supabaseClient";
 import "./RestaurantSettings.css";
 import "./RestaurantSettingsLogo.css";
+import "../RestaurantWorkspaceDesign.css";
 
 const RESTAURANT_FIELDS =
   "id, name, slug, restaurant_type, logo_url, phone, contact_email, address, city, state, postal_code, description, is_published";
@@ -397,9 +398,6 @@ export default function RestaurantSettings() {
         <Link to="/dashboard" className="restaurant-settings-back">
           <ArrowLeft size={17} />
           <span>Dashboard</span>
-        </Link>
-        <Link to="/" className="restaurant-settings-brand">
-          Khaavio<span>.</span>
         </Link>
       </header>
 

@@ -30,6 +30,7 @@ import {
 import { supabase } from "../lib/supabaseClient";
 import khaavioIcon from "../assets/icon.png";
 import "./TableQRStudio.css";
+import "../RestaurantWorkspaceDesign.css";
 
 const QR_OPTIONS = {
   width: 900,

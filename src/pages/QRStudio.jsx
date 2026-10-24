@@ -16,6 +16,7 @@ import QRCode from "qrcode";
 import { supabase } from "../lib/supabaseClient";
 import khaavioIcon from "../assets/icon.png";
 import "./QRStudio.css";
+import "../RestaurantWorkspaceDesign.css";
 
 export default function QRStudio() {
   const navigate = useNavigate();
@@ -179,10 +180,6 @@ export default function QRStudio() {
           Dashboard
         </Link>
 
-        <Link to="/" className="qr-brand">
-          <img src={khaavioIcon} alt="" />
-          Khaavio
-        </Link>
       </header>
 
       <div className="qr-container">

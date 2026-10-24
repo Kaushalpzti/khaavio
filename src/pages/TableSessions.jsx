@@ -19,6 +19,7 @@ import {
 import { supabase } from "../lib/supabaseClient";
 import khaavioIcon from "../assets/icon.png";
 import "./TableSessions.css";
+import "../RestaurantWorkspaceDesign.css";
 
 function formatPrice(value) {
   return new Intl.NumberFormat("en-IN", {
@@ -310,7 +311,6 @@ export default function TableSessions() {
     <main className="table-sessions-page">
       <header className="ts-header no-print">
         <Link to="/dashboard" className="ts-back"><ArrowLeft size={16} /> Dashboard</Link>
-        <Link to="/" className="ts-brand"><img src={khaavioIcon} alt="" /> Khaavio<span>.</span></Link>
       </header>
 
       <div className="ts-main">

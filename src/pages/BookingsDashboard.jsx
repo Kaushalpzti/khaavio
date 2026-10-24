@@ -24,8 +24,8 @@ import {
 import { supabase } from "../lib/supabaseClient";
 import { usePlanAccess } from "../context/PlanAccessContext";
 import PlanUpgradeNotice from "../components/PlanUpgradeNotice";
-import khaavioIcon from "../assets/icon.png";
 import "./BookingsDashboard.css";
+import "../RestaurantWorkspaceDesign.css";
 
 const INITIAL_TODAY = new Date();
 
@@ -642,11 +642,6 @@ export default function BookingsDashboard() {
         <Link to="/dashboard" className="bookings-back">
           <ArrowLeft size={17} />
           Dashboard
-        </Link>
-
-        <Link to="/" className="bookings-brand">
-          <img src={khaavioIcon} alt="" />
-          Khaavio
         </Link>
 
         <button

@@ -9,7 +9,6 @@ import {
   ClipboardList,
   CreditCard,
   LoaderCircle,
-  LogOut,
   QrCode,
   Receipt,
   Store,
@@ -19,11 +18,10 @@ import {
 } from "lucide-react";
 
 import { supabase } from "../lib/supabaseClient";
-import khaavioIcon from "../assets/icon.png";
 import SubscriptionExpiryBanner from "../components/SubscriptionExpiryBanner";
-import SupportHelpPanel from "../components/SupportHelpPanel";
 
 import "./Dashboard.css";
+import "../RestaurantWorkspaceDesign.css";
 
 const modules = [
   {
@@ -109,7 +107,6 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
   const [actionError, setActionError] = useState("");
-  const [signingOut, setSigningOut] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
 
   useEffect(() => {
@@ -162,21 +159,7 @@ export default function Dashboard() {
     };
   }, [navigate]);
 
-  async function handleSignOut() {
-    setSigningOut(true);
-    setActionError("");
 
-    try {
-      const { error: signOutError } = await supabase.auth.signOut();
-
-      if (signOutError) throw signOutError;
-
-      navigate("/login", { replace: true });
-    } catch (err) {
-      setActionError(err?.message || "Could not sign out. Please try again.");
-      setSigningOut(false);
-    }
-  }
 
   async function togglePublication() {
     if (!restaurant || isPublishing) return;
@@ -258,29 +241,6 @@ export default function Dashboard() {
 
   return (
     <main className="dashboard-shell">
-      <header className="dashboard-header">
-        <Link to="/" className="dashboard-brand" aria-label="Khaavio homepage">
-          <img src={khaavioIcon} alt="" />
-          <span>Khaavio</span>
-        </Link>
-
-        <div className="dashboard-header-actions">
-          <span className="workspace-indicator">
-            <span className="workspace-indicator-dot" />
-            Workspace
-          </span>
-
-          <button
-            className="signout-button"
-            onClick={handleSignOut}
-            disabled={signingOut}
-          >
-            <LogOut size={16} />
-            {signingOut ? "Signing out..." : "Sign out"}
-          </button>
-        </div>
-      </header>
-
       <div className="dashboard-main">
         <div className="dashboard-eyebrow">YOUR RESTAURANT WORKSPACE</div>
 
@@ -393,35 +353,38 @@ export default function Dashboard() {
                       ? "Customers can open your public digital menu."
                       : "Publish your menu to make it accessible to customers."}
                   </p>
+                </div>
 
+                <div className="menu-publication-actions">
                   {restaurant.is_published && (
                     <a
+                      className="menu-publication-public-button"
                       href={`/menu/${encodeURIComponent(restaurant.slug)}`}
                       target="_blank"
                       rel="noreferrer"
                     >
-                      Open public menu <ArrowUpRight size={14} />
+                      Open public menu <ArrowUpRight size={15} aria-hidden="true" />
                     </a>
                   )}
-                </div>
 
-                <button
-                  type="button"
-                  className="menu-publication-button"
-                  onClick={togglePublication}
-                  disabled={isPublishing}
-                >
-                  {isPublishing ? (
-                    <>
-                      <LoaderCircle size={15} className="dashboard-spinner" />
-                      Updating...
-                    </>
-                  ) : restaurant.is_published ? (
-                    "Unpublish menu"
-                  ) : (
-                    "Publish menu"
-                  )}
-                </button>
+                  <button
+                    type="button"
+                    className="menu-publication-button"
+                    onClick={togglePublication}
+                    disabled={isPublishing}
+                  >
+                    {isPublishing ? (
+                      <>
+                        <LoaderCircle size={15} className="dashboard-spinner" />
+                        Updating...
+                      </>
+                    ) : restaurant.is_published ? (
+                      "Unpublish menu"
+                    ) : (
+                      "Publish menu"
+                    )}
+                  </button>
+                </div>
               </div>
             </section>
 
@@ -551,8 +514,6 @@ export default function Dashboard() {
                 })}
               </div>
             </section>
-
-            <SupportHelpPanel restaurant={restaurant} accountEmail={email} />
 
             <footer className="dashboard-footer">
               <Link to="/">

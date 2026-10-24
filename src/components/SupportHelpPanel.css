@@ -1,4 +1,5 @@
 .khaavio-help-panel {
+    scroll-margin-top: 24px;
     margin-top: 28px;
     padding: clamp(20px, 3vw, 30px);
     border: 1px solid #e0e9e4;
@@ -351,5 +352,79 @@
     }
     .khaavio-help-action:hover {
         transform: none;
+    }
+}
+
+/* Layout safety: prevent FAQ answers, long URLs, and action labels from escaping cards. */
+.khaavio-help-panel,
+.khaavio-help-layout,
+.khaavio-help-faq,
+.khaavio-help-search,
+.khaavio-help-articles,
+.khaavio-help-article,
+.khaavio-help-question,
+.khaavio-help-answer,
+.khaavio-help-contact,
+.khaavio-help-contact-actions,
+.khaavio-help-shortcuts {
+    box-sizing: border-box;
+    min-width: 0;
+    max-width: 100%;
+}
+
+.khaavio-help-layout {
+    grid-template-columns: minmax(0, 1.55fr) minmax(0, 0.8fr);
+}
+
+.khaavio-help-question {
+    align-items: flex-start;
+}
+
+.khaavio-help-question > span {
+    flex: 1 1 auto;
+    min-width: 0;
+    max-width: 100%;
+    white-space: normal;
+    overflow-wrap: anywhere;
+}
+
+.khaavio-help-question strong,
+.khaavio-help-answer,
+.khaavio-help-answer p,
+.khaavio-help-article-link,
+.khaavio-help-contact > p,
+.khaavio-help-action,
+.khaavio-help-copy-status,
+.khaavio-help-draft,
+.khaavio-help-shortcuts a {
+    min-width: 0;
+    max-width: 100%;
+    white-space: normal;
+    overflow-wrap: anywhere;
+}
+
+.khaavio-help-answer {
+    padding-right: 0;
+}
+
+.khaavio-help-answer p {
+    word-break: normal;
+    line-height: 1.7;
+}
+
+.khaavio-help-action {
+    box-sizing: border-box;
+    flex-wrap: wrap;
+    text-align: left;
+}
+
+.khaavio-help-draft {
+    box-sizing: border-box;
+    resize: vertical;
+}
+
+@media (max-width: 1050px) {
+    .khaavio-help-layout {
+        grid-template-columns: minmax(0, 1fr);
     }
 }

@@ -19,7 +19,7 @@
     padding: 14px clamp(20px, 4vw, 56px);
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    justify-content: flex-end;
     gap: 20px;
     border-bottom: 1px solid var(--khaavio-border);
     background: rgba(255, 254, 250, 0.72);

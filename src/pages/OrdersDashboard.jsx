@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
   ArrowLeft,
@@ -14,12 +14,15 @@ import {
   RefreshCw,
   Store,
   UtensilsCrossed,
+  Volume2,
+  VolumeX,
   XCircle,
 } from "lucide-react";
 
 import { supabase } from "../lib/supabaseClient";
 import khaavioIcon from "../assets/icon.png";
 import "./OrdersDashboard.css";
+import "../RestaurantWorkspaceDesign.css";
 
 const STATUS_OPTIONS = [
   "all",
@@ -160,10 +163,57 @@ function getWhatsAppUrl(order, restaurant) {
   return `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
 }
 
+
+function queueOrdersVoice(messageFactory) {
+  if (
+    typeof window === "undefined" ||
+    !window.speechSynthesis ||
+    typeof window.SpeechSynthesisUtterance !== "function"
+  ) {
+    return false;
+  }
+
+  try {
+    const synthesis = window.speechSynthesis;
+    const voices = synthesis.getVoices();
+    const voice =
+      voices.find((item) => item.lang?.toLowerCase().startsWith("hi")) ||
+      voices.find((item) => item.lang?.toLowerCase() === "en-in") ||
+      voices[0] ||
+      null;
+    const isHindi = Boolean(voice?.lang?.toLowerCase().startsWith("hi"));
+    const message = messageFactory(isHindi);
+    if (!message) return false;
+
+    const utterance = new window.SpeechSynthesisUtterance(message);
+    if (voice) utterance.voice = voice;
+    utterance.lang = voice?.lang || (isHindi ? "hi-IN" : "en-IN");
+    utterance.rate = 0.94;
+    utterance.pitch = 1;
+    utterance.volume = 1;
+    synthesis.speak(utterance);
+    return true;
+  } catch (error) {
+    console.warn("Orders voice announcement could not be queued:", error);
+    return false;
+  }
+}
+
+function speakOrdersVoiceTest(restaurantName) {
+  return queueOrdersVoice((isHindi) =>
+    isHindi
+      ? `ऑर्डर की आवाज़ में घोषणा चालू है। ${restaurantName || "आपके रेस्टोरेंट"} के नए ऑर्डर की जानकारी सुनाई जाएगी।`
+      : `Order voice announcements are enabled for ${restaurantName || "your restaurant"}. New incoming orders will be announced.`,
+  );
+}
+
 export default function OrdersDashboard() {
   const navigate = useNavigate();
+  const voiceEnabledRef = useRef(false);
+  const spokenOrderIdsRef = useRef(new Set());
 
   const [restaurant, setRestaurant] = useState(null);
+  const [voiceEnabled, setVoiceEnabled] = useState(false);
   const [orders, setOrders] = useState([]);
   const [filter, setFilter] = useState("all");
 
@@ -175,6 +225,13 @@ export default function OrdersDashboard() {
   const [updatingOrderId, setUpdatingOrderId] = useState("");
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
+
+  useEffect(() => () => {
+    voiceEnabledRef.current = false;
+    if (typeof window !== "undefined" && window.speechSynthesis) {
+      window.speechSynthesis.cancel();
+    }
+  }, []);
 
   // Load the restaurant's orders from Supabase.
   useEffect(() => {
@@ -313,12 +370,33 @@ export default function OrdersDashboard() {
         (payload) => {
           if (!active) return;
 
-          const reference = getReference(payload.new?.id);
+          const insertedOrder = payload.new || {};
+          const orderId = insertedOrder.id;
+          const reference = getReference(orderId);
+          let alertMessage = `New order received · #${reference}. Order list is refreshing.`;
 
-          setNotice(
-            `New order received · #${reference}. Order list is refreshing.`,
-          );
+          const shouldAnnounce =
+            voiceEnabledRef.current &&
+            Boolean(orderId) &&
+            !spokenOrderIdsRef.current.has(orderId);
+          if (shouldAnnounce) {
+            if (spokenOrderIdsRef.current.size > 250) spokenOrderIdsRef.current.clear();
+            spokenOrderIdsRef.current.add(orderId);
+            void announceIncomingOrder(insertedOrder).then((queued) => {
+              if (!active || !voiceEnabledRef.current) return;
+              if (queued) {
+                setNotice((current) =>
+                  current.includes("Voice announcement queued")
+                    ? current
+                    : `${current || `New order received · #${reference}.`} Voice announcement queued.`,
+                );
+              } else {
+                setError("Voice announcement could not be queued. Check browser speech support.");
+              }
+            });
+          }
 
+          setNotice(alertMessage);
           setRefreshing(true);
           setRefreshKey((current) => current + 1);
 
@@ -382,7 +460,7 @@ export default function OrdersDashboard() {
       window.clearInterval(fallbackInterval);
       supabase.removeChannel(channel);
     };
-  }, [restaurant?.id]);
+  }, [restaurant?.id, restaurant?.name]);
 
   async function updateOrderStatus(order, nextStatus) {
     const permittedActions = STATUS_ACTIONS[order.status] || [];
@@ -448,6 +526,80 @@ export default function OrdersDashboard() {
     setNotice("");
     setRefreshing(true);
     setRefreshKey((current) => current + 1);
+  }
+
+  async function announceIncomingOrder(order) {
+    if (!voiceEnabledRef.current || !order?.id) return false;
+
+    let items = [];
+    let tableNumber = "";
+    try {
+      const [itemsResult, tableResult] = await Promise.all([
+        supabase
+          .from("order_items")
+          .select("item_name, quantity")
+          .eq("order_id", order.id),
+        order.table_id
+          ? supabase
+              .from("restaurant_tables")
+              .select("table_number")
+              .eq("id", order.table_id)
+              .eq("restaurant_id", order.restaurant_id)
+              .maybeSingle()
+          : Promise.resolve({ data: null, error: null }),
+      ]);
+
+      if (!itemsResult.error) items = itemsResult.data || [];
+      if (!tableResult.error) tableNumber = tableResult.data?.table_number || "";
+    } catch {
+      // Voice is an optional enhancement; the order queue remains usable if lookup fails.
+    }
+
+    if (!voiceEnabledRef.current) return false;
+
+    const itemList = items
+      .map((item) => `${Number(item.quantity) || 1} ${item.item_name}`)
+      .filter(Boolean)
+      .join(", ");
+    const total = Math.round(Number(order.total_amount) || 0);
+    const tablePhrase = tableNumber ? `Table ${tableNumber}` : "Restaurant order";
+
+    return queueOrdersVoice((isHindi) =>
+      isHindi
+        ? `नया ऑर्डर आया है। ${restaurant?.name || "रेस्टोरेंट"}। ${tableNumber ? `टेबल ${tableNumber} से` : "रेस्टोरेंट से"} ${itemList || "मेन्यू आइटम"} का ऑर्डर आया है। कुल बिल ${total} रुपये।`
+        : `New order at ${restaurant?.name || "your restaurant"}. ${tablePhrase}. ${itemList ? `Items: ${itemList}.` : "Please review the order items."} Total ${total} rupees.`,
+    );
+  }
+
+  function toggleVoiceAnnouncements() {
+    if (voiceEnabledRef.current) {
+      voiceEnabledRef.current = false;
+      setVoiceEnabled(false);
+      if (window.speechSynthesis) window.speechSynthesis.cancel();
+      setNotice("Voice announcements are off.");
+      setError("");
+      return;
+    }
+
+    if (
+      typeof window === "undefined" ||
+      !window.speechSynthesis ||
+      typeof window.SpeechSynthesisUtterance !== "function"
+    ) {
+      setError("This browser does not support spoken announcements. Try a current version of Chrome or Edge.");
+      return;
+    }
+
+    window.speechSynthesis.cancel();
+    if (!speakOrdersVoiceTest(restaurant?.name)) {
+      setError("Voice announcements could not be started in this browser.");
+      return;
+    }
+
+    voiceEnabledRef.current = true;
+    setVoiceEnabled(true);
+    setError("");
+    setNotice("Voice announcements enabled. Hindi voice is used when your browser has one installed.");
   }
 
   async function enableBrowserNotifications() {
@@ -518,11 +670,6 @@ export default function OrdersDashboard() {
         <Link to="/dashboard" className="orders-back">
           <ArrowLeft size={17} />
           Dashboard
-        </Link>
-
-        <Link to="/" className="orders-brand">
-          <img src={khaavioIcon} alt="" />
-          Khaavio
         </Link>
 
         <button
@@ -649,6 +796,17 @@ export default function OrdersDashboard() {
                         ? "Auto-refresh fallback active"
                         : "Connecting to live updates..."}
                   </span>
+
+                  <button
+                    type="button"
+                    className={`orders-voice-button${voiceEnabled ? " is-active" : ""}`}
+                    onClick={toggleVoiceAnnouncements}
+                    aria-pressed={voiceEnabled}
+                    title={voiceEnabled ? "Disable spoken new-order announcements" : "Enable spoken new-order announcements"}
+                  >
+                    {voiceEnabled ? <Volume2 size={14} /> : <VolumeX size={14} />}
+                    {voiceEnabled ? "Voice on" : "Enable voice"}
+                  </button>
 
                   <button
                     type="button"

@@ -20,6 +20,7 @@ import { supabase } from "../lib/supabaseClient";
 import { usePlanAccess } from "../context/PlanAccessContext";
 import PlanUpgradeNotice from "../components/PlanUpgradeNotice";
 import "./Analytics.css";
+import "../RestaurantWorkspaceDesign.css";
 
 const INITIAL_REFERENCE_DATE = new Date();
 
@@ -350,9 +351,6 @@ export default function Analytics() {
       <header className="analytics-header">
         <Link to="/dashboard" className="analytics-back-link">
           <ArrowLeft size={17} /> Dashboard
-        </Link>
-        <Link to="/" className="analytics-brand">
-          Khaavio<span>.</span>
         </Link>
         <button
           type="button"

@@ -10,7 +10,7 @@
   z-index: 5;
   top: 0;
   display: grid;
-  grid-template-columns: 1fr auto 1fr;
+  grid-template-columns: auto minmax(0, 1fr);
   align-items: center;
   gap: 16px;
   min-height: 68px;
@@ -37,29 +37,6 @@
 }
 
 .kitchen-back-link:hover { color: #1d6142; }
-
-.kitchen-brand {
-  justify-self: center;
-  color: #214231;
-  font-size: 16px;
-  font-weight: 800;
-  white-space: nowrap;
-}
-
-.kitchen-brand b {
-  color: #7c8c7b;
-  font-weight: 600;
-}
-
-.kitchen-brand-mark {
-  display: grid;
-  place-items: center;
-  width: 34px;
-  height: 34px;
-  border-radius: 10px;
-  background: #e8f0e5;
-  color: #316449;
-}
 
 .kitchen-refresh-button {
   justify-self: end;
@@ -451,8 +428,7 @@
 }
 
 @media (max-width: 680px) {
-  .kitchen-header { grid-template-columns: 1fr auto; min-height: 62px; padding: 0 14px; }
-  .kitchen-brand { grid-column: 1; grid-row: 1; justify-self: start; font-size: 14px; }
+  .kitchen-header { grid-template-columns: minmax(0, 1fr) auto; min-height: 62px; padding: 0 14px; }
   .kitchen-back-link { display: none; }
   .kitchen-refresh-button { grid-column: 2; grid-row: 1; }
   .kitchen-refresh-button span { display: none; }
@@ -470,7 +446,7 @@
 
 /* Kitchen display productivity controls */
 .kitchen-header-actions {
-  grid-column: 3;
+  grid-column: 2;
   justify-self: end;
   display: flex;
   align-items: center;
@@ -509,7 +485,7 @@
 }
 
 @media (max-width: 680px) {
-  .kitchen-header-actions { grid-column: 2; grid-row: 1; gap: 5px; }
+  .kitchen-header-actions { grid-column: 2; grid-row: 1; gap: 5px; justify-self: end; }
   .kitchen-tool-button,
   .kitchen-refresh-button { width: 38px; min-width: 38px; padding: 0; justify-content: center; }
   .kitchen-tool-button span,

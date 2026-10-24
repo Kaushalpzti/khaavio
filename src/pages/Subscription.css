@@ -7,7 +7,7 @@
 
 .subscription-header {
     display: grid;
-    grid-template-columns: 1fr auto 1fr;
+    grid-template-columns: 1fr auto;
     align-items: center;
     gap: 16px;
     padding: 18px clamp(18px, 4vw, 56px);

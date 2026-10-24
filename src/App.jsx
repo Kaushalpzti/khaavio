@@ -17,6 +17,7 @@ const OrderTracking = lazy(() => import("./pages/OrderTracking"));
 // Restaurant setup and dashboard
 const Onboarding = lazy(() => import("./pages/Onboarding"));
 const Dashboard = lazy(() => import("./pages/Dashboard"));
+const HelpCenter = lazy(() => import("./pages/HelpCenter"));
 const RestaurantSettings = lazy(() => import("./pages/RestaurantSettings"));
 const Subscription = lazy(() => import("./pages/Subscription"));
 const PlatformAdminSubscriptions = lazy(
@@ -151,6 +152,18 @@ export default function App() {
               <ProtectedRestaurantPage>
                 <Dashboard />
               </ProtectedRestaurantPage>
+            }
+          />
+
+          {/* Standalone Help Center: authenticated users can reach support even if their plan expires. */}
+          <Route
+            path="/dashboard/help"
+            element={
+              <ProtectedPage>
+                <RestaurantDashboardLayout>
+                  <HelpCenter />
+                </RestaurantDashboardLayout>
+              </ProtectedPage>
             }
           />
 

@@ -21,6 +21,7 @@ import {
 import { supabase } from "../lib/supabaseClient";
 import khaavioIcon from "../assets/icon.png";
 import "./Subscription.css";
+import "../RestaurantWorkspaceDesign.css";
 
 const INITIAL_NOW = new Date();
 
@@ -315,14 +316,6 @@ export default function Subscription() {
       <header className="subscription-header">
         <Link to="/dashboard" className="subscription-back">
           <ArrowLeft size={17} /> Dashboard
-        </Link>
-        <Link
-          to="/"
-          className="subscription-brand"
-          aria-label="Khaavio homepage"
-        >
-          <img src={khaavioIcon} alt="" />
-          <span>Khaavio</span>
         </Link>
         <button
           type="button"
