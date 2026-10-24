@@ -1,0 +1,705 @@
+.table-sessions-page {
+    min-height: 100vh;
+    padding-bottom: 64px;
+    color: #23372c;
+    background: #f7f8f3;
+    font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+}
+
+.ts-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-height: 68px;
+    padding: 12px clamp(18px, 4vw, 54px);
+    border-bottom: 1px solid #e4e9e0;
+    background: #fffefa;
+}
+
+.ts-back,
+.ts-brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: #315441;
+    text-decoration: none;
+    font-size: 12px;
+    font-weight: 750;
+}
+
+.ts-brand {
+    font-size: 21px;
+    letter-spacing: -0.7px;
+}
+
+.ts-brand img {
+    width: 31px;
+    height: 31px;
+    object-fit: contain;
+    border-radius: 8px;
+}
+
+.ts-brand span {
+    color: #d84a16;
+}
+
+.ts-main {
+    width: min(1080px, calc(100% - 32px));
+    margin: 0 auto;
+}
+
+.ts-eyebrow {
+    padding-top: 36px;
+    color: #879083;
+    font-size: 10px;
+    font-weight: 850;
+    letter-spacing: 1.7px;
+}
+
+.ts-title-row {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 18px;
+    margin: 9px 0 25px;
+}
+
+.ts-title-row h1 {
+    margin: 0;
+    color: #1b3829;
+    font-size: clamp(28px, 4.4vw, 41px);
+    line-height: 1.1;
+    letter-spacing: -1.5px;
+}
+
+.ts-title-row p {
+    margin: 9px 0 0;
+    color: #778176;
+    font-size: 13px;
+    line-height: 1.6;
+}
+
+.ts-refresh,
+.ts-secondary-button,
+.ts-primary-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 40px;
+    padding: 10px 13px;
+    border-radius: 10px;
+    font: inherit;
+    font-size: 12px;
+    font-weight: 750;
+    cursor: pointer;
+    transition: transform .15s ease, background .15s ease, border-color .15s ease;
+}
+
+.ts-refresh,
+.ts-secondary-button {
+    color: #315441;
+    border: 1px solid #dce5d9;
+    background: #fffefa;
+}
+
+.ts-primary-button {
+    color: #fffdf7;
+    border: 1px solid #1d4834;
+    background: #1d4834;
+}
+
+.ts-primary-button:hover:not(:disabled) {
+    background: #123b29;
+    transform: translateY(-1px);
+}
+
+.ts-secondary-button:hover:not(:disabled),
+.ts-refresh:hover:not(:disabled) {
+    background: #f2f5ed;
+    border-color: #c8d7c7;
+}
+
+.ts-primary-button:disabled,
+.ts-secondary-button:disabled,
+.ts-refresh:disabled {
+    opacity: .55;
+    cursor: wait;
+}
+
+.ts-alert {
+    display: flex;
+    align-items: flex-start;
+    gap: 9px;
+    margin: 0 0 16px;
+    padding: 12px 14px;
+    border-radius: 11px;
+    font-size: 12px;
+    line-height: 1.55;
+}
+
+.ts-alert-error {
+    color: #9e342b;
+    border: 1px solid #f0d0ca;
+    background: #fff1ee;
+}
+
+.ts-alert-success {
+    color: #266642;
+    border: 1px solid #c9e5d0;
+    background: #eff9f0;
+}
+
+.ts-stats {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+    margin-bottom: 23px;
+}
+
+.ts-stats article {
+    display: grid;
+    gap: 7px;
+    padding: 17px;
+    border: 1px solid #e4e9df;
+    border-radius: 15px;
+    background: #fffefa;
+    box-shadow: 0 5px 18px rgba(32, 55, 41, .025);
+}
+
+.ts-stats article span {
+    color: #778477;
+    font-size: 11px;
+    font-weight: 650;
+}
+
+.ts-stats article strong {
+    color: #1e4934;
+    font-size: 28px;
+    line-height: 1;
+    letter-spacing: -1px;
+}
+
+.ts-stats article small {
+    color: #899185;
+    font-size: 10px;
+    line-height: 1.5;
+}
+
+.ts-tabs {
+    display: flex;
+    gap: 6px;
+    padding: 5px;
+    margin-bottom: 17px;
+    border: 1px solid #e1e8dd;
+    border-radius: 12px;
+    background: #eef2e9;
+}
+
+.ts-tabs button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    flex: 1;
+    min-height: 39px;
+    padding: 8px 12px;
+    border: 0;
+    border-radius: 8px;
+    color: #68786b;
+    background: transparent;
+    font: inherit;
+    font-size: 12px;
+    font-weight: 750;
+    cursor: pointer;
+}
+
+.ts-tabs button.active {
+    color: #1c4934;
+    background: #fffefa;
+    box-shadow: 0 2px 8px rgba(32, 55, 41, .07);
+}
+
+.ts-tabs button span {
+    display: inline-flex;
+    min-width: 20px;
+    height: 20px;
+    align-items: center;
+    justify-content: center;
+    padding: 0 5px;
+    border-radius: 999px;
+    background: #e8eee4;
+    font-size: 10px;
+}
+
+.ts-session-list {
+    display: grid;
+    gap: 13px;
+}
+
+.ts-session-card {
+    overflow: hidden;
+    border: 1px solid #e1e8de;
+    border-radius: 16px;
+    background: #fffefa;
+    box-shadow: 0 7px 22px rgba(33, 54, 41, .035);
+}
+
+.ts-session-card-top {
+    display: flex;
+    align-items: center;
+    gap: 13px;
+    padding: 18px;
+}
+
+.ts-table-symbol {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 45px;
+    height: 45px;
+    border: 1px solid #f5d8c6;
+    border-radius: 13px;
+    color: #d64b18;
+    background: #fff2e8;
+}
+
+.ts-invoice-symbol {
+    color: #315441;
+    border-color: #d8e7d5;
+    background: #edf5e9;
+}
+
+.ts-session-summary {
+    flex: 1;
+    min-width: 0;
+}
+
+.ts-session-summary h2 {
+    margin: 5px 0 6px;
+    overflow-wrap: anywhere;
+    color: #1e3e2b;
+    font-size: 17px;
+    line-height: 1.25;
+    letter-spacing: -.35px;
+}
+
+.ts-session-summary p {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 5px;
+    margin: 0;
+    color: #829082;
+    font-size: 10px;
+    line-height: 1.6;
+}
+
+.ts-chip {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 7px;
+    border-radius: 999px;
+    font-size: 8px;
+    font-weight: 900;
+    letter-spacing: .8px;
+}
+
+.ts-chip-open {
+    color: #256443;
+    border: 1px solid #cbe5d2;
+    background: #eff9f0;
+}
+
+.ts-chip-paid {
+    color: #256443;
+    border: 1px solid #cbe5d2;
+    background: #eff9f0;
+}
+
+.ts-chip-unpaid {
+    color: #9a5c16;
+    border: 1px solid #f2dfb8;
+    background: #fff7e5;
+}
+
+.ts-session-total {
+    display: grid;
+    justify-items: end;
+    gap: 5px;
+    min-width: 115px;
+}
+
+.ts-session-total span {
+    color: #859082;
+    font-size: 10px;
+    font-weight: 650;
+}
+
+.ts-session-total strong {
+    color: #1d4834;
+    font-size: 21px;
+    letter-spacing: -.7px;
+}
+
+.ts-session-total small {
+    color: #859082;
+    font-size: 10px;
+}
+
+.ts-session-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+    padding: 12px 18px;
+    border-top: 1px solid #edf0e9;
+    background: #fcfcf7;
+}
+
+.ts-payment-select-label {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    color: #778477;
+    font-size: 10px;
+    font-weight: 700;
+}
+
+.ts-payment-select-label select {
+    min-height: 38px;
+    padding: 0 9px;
+    border: 1px solid #dce5d9;
+    border-radius: 9px;
+    color: #315441;
+    background: #fffefa;
+    font: inherit;
+    font-size: 11px;
+}
+
+.ts-session-details {
+    padding: 16px 18px 19px;
+    border-top: 1px solid #e7ece4;
+}
+
+.ts-order-list {
+    display: grid;
+    gap: 12px;
+}
+
+.ts-order-block {
+    padding: 13px;
+    border: 1px solid #e8ece5;
+    border-radius: 12px;
+    background: #fff;
+}
+
+.ts-order-heading {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    padding-bottom: 10px;
+    border-bottom: 1px dashed #e3e8df;
+}
+
+.ts-order-heading>div:first-child {
+    display: grid;
+    gap: 5px;
+}
+
+.ts-order-heading strong {
+    color: #294434;
+    font-size: 12px;
+}
+
+.ts-order-heading span {
+    color: #849083;
+    font-size: 10px;
+    line-height: 1.5;
+}
+
+.ts-order-amount {
+    display: grid;
+    justify-items: end;
+    gap: 4px;
+    white-space: nowrap;
+}
+
+.ts-status {
+    padding: 3px 6px;
+    border-radius: 999px;
+    background: #edf3e9;
+    font-size: 9px !important;
+}
+
+.ts-status-cancelled {
+    color: #9f332a !important;
+    background: #fff0ed;
+}
+
+.ts-order-items {
+    display: grid;
+    gap: 8px;
+    padding-top: 10px;
+}
+
+.ts-order-item {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    color: #5d6c60;
+    font-size: 11px;
+    line-height: 1.5;
+}
+
+.ts-order-item strong {
+    color: #294434;
+    font-size: 11px;
+    white-space: nowrap;
+}
+
+.ts-order-notes {
+    margin: 10px 0 0;
+    padding: 8px 9px;
+    border-radius: 7px;
+    color: #7d735f;
+    background: #fff8eb;
+    font-size: 10px;
+    line-height: 1.5;
+}
+
+.ts-empty-inline {
+    margin: 0;
+    color: #859082;
+    font-size: 11px;
+    line-height: 1.6;
+}
+
+.ts-empty-state,
+.ts-state {
+    display: grid;
+    justify-items: center;
+    padding: 48px 22px;
+    border: 1px dashed #d8e2d5;
+    border-radius: 16px;
+    text-align: center;
+    background: rgba(255, 254, 250, .72);
+}
+
+.ts-empty-state>div {
+    display: grid;
+    width: 47px;
+    height: 47px;
+    margin-bottom: 9px;
+    place-items: center;
+    border-radius: 14px;
+    color: #315441;
+    background: #edf4e9;
+}
+
+.ts-empty-state h2,
+.ts-state h2 {
+    margin: 8px 0;
+    color: #234632;
+    font-size: 18px;
+}
+
+.ts-empty-state p {
+    max-width: 420px;
+    margin: 0;
+    color: #829082;
+    font-size: 12px;
+    line-height: 1.7;
+}
+
+.ts-state {
+    min-height: 220px;
+    align-content: center;
+    color: #315441;
+}
+
+.ts-print-heading {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid #e1e8de;
+}
+
+.ts-print-heading img {
+    width: 43px;
+    height: 43px;
+    object-fit: contain;
+}
+
+.ts-print-heading span {
+    color: #7b8879;
+    font-size: 9px;
+    font-weight: 850;
+    letter-spacing: 1.4px;
+}
+
+.ts-print-heading h2 {
+    margin: 4px 0;
+    color: #214431;
+    font-size: 20px;
+}
+
+.ts-print-heading p {
+    margin: 0;
+    color: #738173;
+    font-size: 11px;
+}
+
+.ts-print-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px 20px;
+    padding: 14px 0;
+    color: #7a8779;
+    font-size: 10px;
+}
+
+.ts-print-meta strong {
+    color: #334c3a;
+}
+
+.ts-print-grand-total {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 16px 0 8px;
+    margin-top: 14px;
+    border-top: 1px solid #dfe7dc;
+    color: #294b35;
+    font-size: 11px;
+    font-weight: 850;
+}
+
+.ts-print-grand-total strong {
+    font-size: 24px;
+}
+
+.ts-paid-note {
+    margin: 0;
+    color: #2e7650;
+    font-size: 10px;
+}
+
+.ts-print-footer {
+    margin: 15px 0 0;
+    padding-top: 10px;
+    border-top: 1px dashed #dfe7dc;
+    color: #849082;
+    text-align: center;
+    font-size: 9px;
+}
+
+.ts-spin {
+    animation: ts-spin 1s linear infinite;
+}
+
+@keyframes ts-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@media (max-width: 640px) {
+    .ts-title-row {
+        align-items: flex-start;
+    }
+    .ts-title-row h1 {
+        font-size: 29px;
+    }
+    .ts-refresh {
+        flex: 0 0 auto;
+        min-height: 37px;
+        padding: 8px 10px;
+        font-size: 11px;
+    }
+    .ts-stats {
+        gap: 8px;
+    }
+    .ts-stats article {
+        padding: 12px;
+    }
+    .ts-stats article strong {
+        font-size: 24px;
+    }
+    .ts-stats article small {
+        font-size: 9px;
+    }
+    .ts-session-card-top {
+        align-items: flex-start;
+        gap: 10px;
+        padding: 14px;
+    }
+    .ts-table-symbol {
+        flex-basis: 37px;
+        height: 37px;
+        border-radius: 11px;
+    }
+    .ts-session-summary h2 {
+        font-size: 15px;
+    }
+    .ts-session-total {
+        min-width: 93px;
+    }
+    .ts-session-total strong {
+        font-size: 17px;
+    }
+    .ts-session-actions {
+        justify-content: stretch;
+        padding: 11px 13px;
+    }
+    .ts-session-actions>button {
+        flex: 1;
+    }
+    .ts-payment-select-label {
+        flex: 1 1 100%;
+        justify-content: space-between;
+    }
+    .ts-payment-select-label select {
+        min-width: 120px;
+    }
+    .ts-session-details {
+        padding: 13px;
+    }
+    .ts-order-block {
+        padding: 10px;
+    }
+}
+
+@media print {
+    body.khaavio-printing-session-invoice * {
+        visibility: hidden !important;
+    }
+    body.khaavio-printing-session-invoice .ts-invoice-print-surface.print-target,
+    body.khaavio-printing-session-invoice .ts-invoice-print-surface.print-target * {
+        visibility: visible !important;
+    }
+    body.khaavio-printing-session-invoice .ts-invoice-print-surface.print-target {
+        position: absolute !important;
+        inset: 0 auto auto 0 !important;
+        display: block !important;
+        width: 100% !important;
+        margin: 0 !important;
+        padding: 28px !important;
+        border: 0 !important;
+        border-radius: 0 !important;
+        background: #fff !important;
+        box-shadow: none !important;
+        color: #222 !important;
+    }
+    body.khaavio-printing-session-invoice .ts-invoice-print-surface.print-target .ts-order-block {
+        break-inside: avoid;
+    }
+    body.khaavio-printing-session-invoice .ts-invoice-print-surface.print-target .ts-print-grand-total {
+        break-inside: avoid;
+    }
+}

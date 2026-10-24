@@ -1,0 +1,10 @@
+ package-lock.json                                  | 222 [32m+++++++[m
+ package.json                                       |   1 [32m+[m
+ src/App.jsx                                        |  10 [32m+[m
+ src/pages/Dashboard.jsx                            |  18 [32m+[m
+ src/pages/TableSessions.css                        | 705 [32m+++++++++++++++++++++[m
+ src/pages/TableSessions.jsx                        | 452 [32m+++++++++++++[m
+ supabase/.gitignore                                |   8 [32m+[m
+ supabase/config.toml                               | 416 [32m++++++++++++[m
+ .../20261024130000_table_session_billing.sql       | 703 [32m++++++++++++++++++++[m
+ 9 files changed, 2535 insertions(+)

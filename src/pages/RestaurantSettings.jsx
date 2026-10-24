@@ -28,7 +28,9 @@ function getOwnedLogoObjectPath(publicUrl, restaurantId) {
     const marker = `/storage/v1/object/public/${LOGO_BUCKET}/`;
     const markerIndex = parsed.pathname.indexOf(marker);
     if (markerIndex < 0) return null;
-    const objectPath = decodeURIComponent(parsed.pathname.slice(markerIndex + marker.length));
+    const objectPath = decodeURIComponent(
+      parsed.pathname.slice(markerIndex + marker.length),
+    );
     return objectPath.startsWith(`${restaurantId}/`) ? objectPath : null;
   } catch {
     return null;
@@ -44,13 +46,17 @@ async function optimizeLogoImage(file) {
     throw new Error("Logo must be 5 MB or smaller.");
   }
   if (typeof createImageBitmap !== "function") {
-    throw new Error("This browser cannot optimise the image. Please use a recent Chrome, Edge or Safari version.");
+    throw new Error(
+      "This browser cannot optimise the image. Please use a recent Chrome, Edge or Safari version.",
+    );
   }
 
   const bitmap = await createImageBitmap(file);
   try {
     if (bitmap.width * bitmap.height > 40000000) {
-      throw new Error("This image is too large to process safely. Please choose a smaller logo file.");
+      throw new Error(
+        "This image is too large to process safely. Please choose a smaller logo file.",
+      );
     }
     const maxSide = 800;
     const scale = Math.min(1, maxSide / Math.max(bitmap.width, bitmap.height));
@@ -58,18 +64,28 @@ async function optimizeLogoImage(file) {
     canvas.width = Math.max(1, Math.round(bitmap.width * scale));
     canvas.height = Math.max(1, Math.round(bitmap.height * scale));
     const context = canvas.getContext("2d", { alpha: true });
-    if (!context) throw new Error("Could not prepare this logo image. Please try another file.");
+    if (!context)
+      throw new Error(
+        "Could not prepare this logo image. Please try another file.",
+      );
     context.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
 
     const blob = await new Promise((resolve, reject) => {
       canvas.toBlob(
-        (result) => result ? resolve(result) : reject(new Error("Could not optimise this image.")),
+        (result) =>
+          result
+            ? resolve(result)
+            : reject(new Error("Could not optimise this image.")),
         "image/webp",
         0.84,
       );
     });
     const contentType = blob.type || "image/png";
-    return { blob, contentType, extension: contentType === "image/webp" ? "webp" : "png" };
+    return {
+      blob,
+      contentType,
+      extension: contentType === "image/webp" ? "webp" : "png",
+    };
   } finally {
     bitmap.close?.();
   }
@@ -179,7 +195,8 @@ export default function RestaurantSettings() {
 
   useEffect(() => {
     return () => {
-      if (logoPreviewUrl.startsWith("blob:")) URL.revokeObjectURL(logoPreviewUrl);
+      if (logoPreviewUrl.startsWith("blob:"))
+        URL.revokeObjectURL(logoPreviewUrl);
     };
   }, [logoPreviewUrl]);
 
@@ -234,28 +251,45 @@ export default function RestaurantSettings() {
 
       // Best-effort cleanup: don't fail a successful logo save if an older
       // object cannot be removed for any reason.
-      const previousLogoPath = getOwnedLogoObjectPath(restaurant.logo_url, restaurant.id);
+      const previousLogoPath = getOwnedLogoObjectPath(
+        restaurant.logo_url,
+        restaurant.id,
+      );
       if (previousLogoPath && previousLogoPath !== uploadedPath) {
         const { error: cleanupError } = await supabase.storage
           .from(LOGO_BUCKET)
           .remove([previousLogoPath]);
-        if (cleanupError) console.warn("Could not remove previous restaurant logo:", cleanupError);
+        if (cleanupError)
+          console.warn(
+            "Could not remove previous restaurant logo:",
+            cleanupError,
+          );
       }
 
       setRestaurant(data);
       setForm(formFromRestaurant(data));
       setLogoFile(null);
-      if (logoPreviewUrl.startsWith("blob:")) URL.revokeObjectURL(logoPreviewUrl);
+      if (logoPreviewUrl.startsWith("blob:"))
+        URL.revokeObjectURL(logoPreviewUrl);
       setLogoPreviewUrl("");
       setLogoImageFailed(false);
       setNotice("Restaurant logo uploaded and optimised successfully.");
     } catch (err) {
       console.error("Restaurant logo upload failed:", err);
-      const message = err?.message || "We couldn't upload this logo. Please try again.";
+      const message =
+        err?.message || "We couldn't upload this logo. Please try again.";
       if (/bucket/i.test(message) && /not found|exist/i.test(message)) {
-        setError("Logo storage is not set up yet. Apply supabase/restaurant-logo-storage-migration.sql in the Supabase SQL Editor, then retry.");
-      } else if (/row-level security|permission|not allowed|unauthori[sz]ed/i.test(message)) {
-        setError("Supabase Storage denied this upload. Run the restaurant-logo storage migration in the same Supabase project used by this app. If it is already applied, verify that this restaurant's owner_id matches the signed-in user's ID.");
+        setError(
+          "Logo storage is not set up yet. Apply supabase/restaurant-logo-storage-migration.sql in the Supabase SQL Editor, then retry.",
+        );
+      } else if (
+        /row-level security|permission|not allowed|unauthori[sz]ed/i.test(
+          message,
+        )
+      ) {
+        setError(
+          "Supabase Storage denied this upload. Run the restaurant-logo storage migration in the same Supabase project used by this app. If it is already applied, verify that this restaurant's owner_id matches the signed-in user's ID.",
+        );
       } else {
         setError(message);
       }
@@ -408,16 +442,27 @@ export default function RestaurantSettings() {
         )}
 
         {restaurant && (
-          <section className="restaurant-logo-section" aria-labelledby="restaurant-logo-heading">
+          <section
+            className="restaurant-logo-section"
+            aria-labelledby="restaurant-logo-heading"
+          >
             <div className="restaurant-logo-copy">
               <span className="restaurant-logo-eyebrow">BRAND IDENTITY</span>
               <h2 id="restaurant-logo-heading">Your restaurant logo</h2>
-              <p>Upload a logo to personalise your public menu and branded table QR cards. The image is resized and compressed before upload.</p>
-              <div className="restaurant-logo-specs"><FileImage size={15} /> PNG, JPG or WebP · up to 5 MB</div>
+              <p>
+                Upload a logo to personalise your public menu and branded table
+                QR cards. The image is resized and compressed before upload.
+              </p>
+              <div className="restaurant-logo-specs">
+                <FileImage size={15} /> PNG, JPG or WebP · up to 5 MB
+              </div>
             </div>
             <div className="restaurant-logo-actions">
-              <div className="restaurant-logo-preview" aria-label="Restaurant logo preview">
-                {((logoPreviewUrl || restaurant.logo_url) && !logoImageFailed) ? (
+              <div
+                className="restaurant-logo-preview"
+                aria-label="Restaurant logo preview"
+              >
+                {(logoPreviewUrl || restaurant.logo_url) && !logoImageFailed ? (
                   <img
                     src={logoPreviewUrl || restaurant.logo_url}
                     alt={`${restaurant.name} logo preview`}
@@ -425,12 +470,21 @@ export default function RestaurantSettings() {
                     onLoad={() => setLogoImageFailed(false)}
                   />
                 ) : (
-                  <span>{String(restaurant.name || "R").trim().slice(0, 2).toUpperCase()}</span>
+                  <span>
+                    {String(restaurant.name || "R")
+                      .trim()
+                      .slice(0, 2)
+                      .toUpperCase()}
+                  </span>
                 )}
               </div>
               <div className="restaurant-logo-controls">
-                <label className="restaurant-logo-choose" htmlFor="restaurant-logo-file">
-                  <ImagePlus size={16} /> {restaurant.logo_url ? "Choose new logo" : "Choose logo"}
+                <label
+                  className="restaurant-logo-choose"
+                  htmlFor="restaurant-logo-file"
+                >
+                  <ImagePlus size={16} />{" "}
+                  {restaurant.logo_url ? "Choose new logo" : "Choose logo"}
                 </label>
                 <input
                   id="restaurant-logo-file"
@@ -446,10 +500,21 @@ export default function RestaurantSettings() {
                   onClick={uploadRestaurantLogo}
                   disabled={!logoFile || logoUploading}
                 >
-                  {logoUploading ? <LoaderCircle className="restaurant-settings-spinner" size={16} /> : <Upload size={16} />}
+                  {logoUploading ? (
+                    <LoaderCircle
+                      className="restaurant-settings-spinner"
+                      size={16}
+                    />
+                  ) : (
+                    <Upload size={16} />
+                  )}
                   {logoUploading ? "Optimising & uploading…" : "Upload logo"}
                 </button>
-                {logoFile && <span className="restaurant-logo-picked">Selected: {logoFile.name}</span>}
+                {logoFile && (
+                  <span className="restaurant-logo-picked">
+                    Selected: {logoFile.name}
+                  </span>
+                )}
               </div>
             </div>
           </section>
@@ -462,10 +527,7 @@ export default function RestaurantSettings() {
         )}
 
         {notice && (
-          <div
-            className="restaurant-settings-message is-success"
-            role="status"
-          >
+          <div className="restaurant-settings-message is-success" role="status">
             <CheckCircle2 size={17} />
             <span>{notice}</span>
           </div>

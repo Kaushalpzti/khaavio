@@ -11,6 +11,7 @@ import {
   LoaderCircle,
   LogOut,
   QrCode,
+  Receipt,
   Store,
   Settings,
   UtensilsCrossed,
@@ -64,6 +65,14 @@ const modules = [
     description: "Generate and download a unique menu QR for each table.",
     status: "Available",
     icon: QrCode,
+  },
+
+  {
+    title: "Table sessions & billing",
+    description:
+      "Combine each table visit into one final bill while keeping every order receipt separate.",
+    status: "Available",
+    icon: Receipt,
   },
 
   {
@@ -492,6 +501,15 @@ export default function Dashboard() {
                       {module.title === "Orders" && (
                         <Link to="/dashboard/orders" className="module-action">
                           Manage orders <ArrowUpRight size={14} />{" "}
+                        </Link>
+                      )}
+
+                      {module.title === "Table sessions & billing" && (
+                        <Link
+                          to="/dashboard/table-sessions"
+                          className="module-action"
+                        >
+                          Open table billing <ArrowUpRight size={14} />
                         </Link>
                       )}
 
