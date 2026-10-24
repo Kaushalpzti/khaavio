@@ -130,13 +130,12 @@ function getErrorMessage(error, fallback) {
 
 function getPublicAppBase() {
   const configured = import.meta.env.VITE_PUBLIC_APP_URL?.trim();
-  if (configured) return configured.replace(/\/+$/, "");
+
+  if (configured) {
+    return configured.replace(/\/+$/, "");
+  }
 
   if (typeof window !== "undefined") {
-    const host = window.location.hostname;
-    if (host === "localhost" || host === "127.0.0.1") {
-      return "https://khaavio.vercel.app";
-    }
     return window.location.origin.replace(/\/+$/, "");
   }
 

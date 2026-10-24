@@ -570,9 +570,9 @@ export default function PublicMenu() {
             )}
           </span>
           <span className="public-menu-brand-copy">
-            <strong>{restaurant.name}</strong>
+            <strong>{restaurant?.name || "Restaurant"}</strong>
             <small>
-              {restaurant.restaurant_type
+              {restaurant?.restaurant_type
                 ? restaurant.restaurant_type.replace(/_/g, " ")
                 : "Restaurant menu"}
             </small>
