@@ -289,9 +289,12 @@ function formatBookingDate(value, timeZone = DEFAULT_TIME_ZONE) {
 }
 
 function getErrorMessage(error, fallback) {
-  return typeof error?.message === "string" && error.message.trim()
-    ? error.message
-    : fallback;
+  const message =
+    typeof error?.message === "string" ? error.message.trim() : "";
+  if (message.includes("KHAAVIO_PLAN_ACCESS_REQUIRED")) {
+    return "Online booking is temporarily unavailable at this restaurant. Please contact the restaurant team.";
+  }
+  return message || fallback;
 }
 
 export default function PublicBooking() {
@@ -398,7 +401,13 @@ export default function PublicBooking() {
     // Input handlers clear the previous availability whenever date, time, or
     // party size changes. This effect only synchronizes valid selections with
     // the availability RPC, avoiding synchronous state updates in an effect.
-    if (!restaurant || !bookingDate || !bookingTime || !bookingSlot.valid) {
+    if (
+      !restaurant ||
+      subscriptionAllowsTransactions !== true ||
+      !bookingDate ||
+      !bookingTime ||
+      !bookingSlot.valid
+    ) {
       return undefined;
     }
 
@@ -458,6 +467,7 @@ export default function PublicBooking() {
     availabilityRefresh,
     bookingSlot.valid,
     bookingSlot.iso,
+    subscriptionAllowsTransactions,
   ]);
 
   function clearPreviousResult() {
@@ -498,7 +508,7 @@ export default function PublicBooking() {
     setBookingResult(null);
 
     if (submitting) return;
-    if (subscriptionAllowsTransactions === false) {
+    if (subscriptionAllowsTransactions !== true) {
       setBookingError(
         "Online bookings are temporarily unavailable at this restaurant. Please contact the restaurant team.",
       );
@@ -686,7 +696,7 @@ export default function PublicBooking() {
       </section>
 
       <div className="booking-container">
-        {subscriptionAllowsTransactions === false && (
+        {subscriptionAllowsTransactions !== true && (
           <div className="booking-subscription-unavailable" role="status">
             <strong>Online bookings are temporarily unavailable.</strong>
             <span>
@@ -841,7 +851,7 @@ export default function PublicBooking() {
                 <div className="booking-availability-empty">
                   Select a date and time to see available tables.
                 </div>
-              ) : subscriptionAllowsTransactions === false ? (
+              ) : subscriptionAllowsTransactions !== true ? (
                 <div className="booking-availability-empty" role="status">
                   Online bookings are not available right now. Please contact
                   the restaurant directly.
@@ -982,7 +992,7 @@ export default function PublicBooking() {
               className="booking-submit"
               disabled={
                 submitting ||
-                subscriptionAllowsTransactions === false ||
+                subscriptionAllowsTransactions !== true ||
                 !bookingSlot.valid ||
                 availabilityStatus !== "loaded" ||
                 !selectedTableId

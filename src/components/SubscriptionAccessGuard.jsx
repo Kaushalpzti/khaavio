@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { AlertTriangle, CreditCard, LoaderCircle, RefreshCw, ShieldCheck } from "lucide-react";
 import { supabase } from "../lib/supabaseClient";
+import { PlanAccessProvider } from "../context/PlanAccessContext";
 import "./SubscriptionAccessGuard.css";
 
 function canAccessWorkspace(subscription, now = Date.now()) {
@@ -54,20 +55,20 @@ export default function SubscriptionAccessGuard({ children }) {
 
         // Keep onboarding and empty-workspace states usable before a restaurant exists.
         if (!restaurant) {
-          if (mounted) setAccess({ state: "allowed", reason: "" });
+          if (mounted) setAccess({ state: "allowed", reason: "", subscription: null });
           return;
         }
 
         const { data: subscription, error: subscriptionError } = await supabase
           .from("restaurant_subscriptions")
-          .select("plan_key, status, starts_at, ends_at")
+          .select("plan_key, status, starts_at, ends_at, subscription_plans(plan_key, name, features, limits)")
           .eq("restaurant_id", restaurant.id)
           .maybeSingle();
         if (subscriptionError) throw subscriptionError;
 
         if (!mounted) return;
         if (canAccessWorkspace(subscription)) {
-          setAccess({ state: "allowed", reason: "" });
+          setAccess({ state: "allowed", reason: "", subscription });
         } else {
           const reason = !subscription
             ? "unassigned"
@@ -152,5 +153,9 @@ export default function SubscriptionAccessGuard({ children }) {
     );
   }
 
-  return children;
+  return (
+    <PlanAccessProvider subscription={access.subscription}>
+      {children}
+    </PlanAccessProvider>
+  );
 }

@@ -1,0 +1,79 @@
+.plan-upgrade-notice {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-width: 0;
+  padding: 16px 18px;
+  border: 1px solid #f0d4db;
+  border-radius: 16px;
+  background: linear-gradient(120deg, #fff8fa 0%, #fffdf9 100%);
+  color: #20222b;
+}
+
+.plan-upgrade-notice-compact {
+  width: auto;
+  max-width: 390px;
+  padding: 10px 12px;
+  border-radius: 12px;
+}
+
+.plan-upgrade-notice-icon {
+  display: grid;
+  flex: 0 0 36px;
+  width: 36px;
+  height: 36px;
+  place-items: center;
+  border-radius: 11px;
+  color: #d72c62;
+  background: #ffe7ef;
+}
+
+.plan-upgrade-notice-compact .plan-upgrade-notice-icon {
+  flex-basis: 30px;
+  width: 30px;
+  height: 30px;
+}
+
+.plan-upgrade-notice-copy {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.plan-upgrade-notice-copy strong {
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+.plan-upgrade-notice-copy > span {
+  color: #6d7280;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.plan-upgrade-notice-link {
+  flex: 0 0 auto;
+  color: #c91f55;
+  font-size: 12px;
+  font-weight: 700;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.plan-upgrade-notice-link:hover {
+  text-decoration: underline;
+}
+
+@media (max-width: 540px) {
+  .plan-upgrade-notice {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .plan-upgrade-notice-link {
+    margin-left: 42px;
+  }
+}

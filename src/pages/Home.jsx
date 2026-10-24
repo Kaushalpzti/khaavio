@@ -88,6 +88,7 @@ const plans = [
       "Online orders and Kitchen Display",
       "Customer order tracking and receipts",
       "Basic booking management and order analytics",
+      "Restaurant hours and pause-orders controls",
     ],
     cta: "Start 7-day free trial",
   },
@@ -101,7 +102,6 @@ const plans = [
       "Everything in Starter",
       "Booking calendar, search and date filters",
       "Booking CSV export and enhanced analytics",
-      "Restaurant hours and pause-orders controls",
       "Priority support during the pilot",
     ],
     cta: "Start 7-day free trial",
@@ -523,10 +523,11 @@ function PricingSection() {
 
         <p className="kh-pricing-disclaimer">
           During the early-access pilot, subscriptions are activated manually.
-          Online payment collection, automatic renewals and plan-based feature
-          restrictions are not enabled yet. Founding prices are for the first 10
-          restaurants for their first year; renewal is at the then-current
-          published annual price.
+          Online payment collection and automatic renewals are not enabled yet.
+          Starter and Growth feature access follows the assigned active plan; plan
+          changes and founding-offer eligibility are confirmed manually. Founding
+          prices are for the first 10 restaurants for their first year; renewal is at
+          the then-current published annual price.
         </p>
       </div>
     </section>

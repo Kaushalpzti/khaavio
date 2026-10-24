@@ -17,6 +17,8 @@ import {
   Wallet,
 } from "lucide-react";
 import { supabase } from "../lib/supabaseClient";
+import { usePlanAccess } from "../context/PlanAccessContext";
+import PlanUpgradeNotice from "../components/PlanUpgradeNotice";
 import "./Analytics.css";
 
 const INITIAL_REFERENCE_DATE = new Date();
@@ -91,6 +93,8 @@ function makeLastSevenDays(referenceDate) {
 
 export default function Analytics() {
   const navigate = useNavigate();
+  const { hasFeature } = usePlanAccess();
+  const canUseEnhancedAnalytics = hasFeature("analytics_advanced");
   const [restaurant, setRestaurant] = useState(null);
   const [orders, setOrders] = useState([]);
   const [bookings, setBookings] = useState([]);
@@ -101,6 +105,7 @@ export default function Analytics() {
   const [refreshKey, setRefreshKey] = useState(0);
   const [referenceDate, setReferenceDate] = useState(INITIAL_REFERENCE_DATE);
   const [rangeDays, setRangeDays] = useState(30);
+  const effectiveRangeDays = canUseEnhancedAnalytics ? rangeDays : 7;
 
   useEffect(() => {
     let active = true;
@@ -133,7 +138,7 @@ export default function Analytics() {
 
         const now = new Date();
         const start = new Date(now);
-        start.setDate(start.getDate() - 89);
+        start.setDate(start.getDate() - (canUseEnhancedAnalytics ? 89 : 6));
         start.setHours(0, 0, 0, 0);
         const future = new Date(now);
         future.setDate(future.getDate() + 90);
@@ -167,7 +172,7 @@ export default function Analytics() {
         const orderIds = orderData.map((order) => order.id);
 
         let itemsData = [];
-        if (orderIds.length > 0) {
+        if (canUseEnhancedAnalytics && orderIds.length > 0) {
           const { data, error: itemsError } = await supabase
             .from("order_items")
             .select("order_id, item_name, unit_price, quantity, line_total")
@@ -202,11 +207,11 @@ export default function Analytics() {
     return () => {
       active = false;
     };
-  }, [navigate, refreshKey]);
+  }, [navigate, refreshKey, canUseEnhancedAnalytics]);
 
   const rangeStart = new Date(referenceDate);
   rangeStart.setHours(0, 0, 0, 0);
-  rangeStart.setDate(rangeStart.getDate() - (rangeDays - 1));
+  rangeStart.setDate(rangeStart.getDate() - (effectiveRangeDays - 1));
   const rangeEnd = new Date(referenceDate);
   rangeEnd.setHours(23, 59, 59, 999);
   const rangeStartTime = rangeStart.getTime();
@@ -274,6 +279,7 @@ export default function Analytics() {
   );
 
   function exportOrdersCsv() {
+    if (!canUseEnhancedAnalytics) return;
     const escapeCsv = (value) => {
       let text = value == null ? "" : String(value);
       if (/^[\s]*[=+@-]/.test(text)) text = `'${text}`;
@@ -326,7 +332,7 @@ export default function Analytics() {
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.download = `khaavio-orders-${rangeDays}-days-${getDateKey(referenceDate)}.csv`;
+    link.download = `khaavio-orders-${effectiveRangeDays}-days-${getDateKey(referenceDate)}.csv`;
     document.body.appendChild(link);
     link.click();
     link.remove();
@@ -377,10 +383,12 @@ export default function Analytics() {
             </p>
           </div>
           <div className="analytics-heading-actions">
+            {canUseEnhancedAnalytics ? (
+              <>
             <label className="analytics-range-control">
               <span>Reporting period</span>
               <select
-                value={rangeDays}
+                value={effectiveRangeDays}
                 onChange={(event) => setRangeDays(Number(event.target.value))}
                 aria-label="Analytics reporting period"
               >
@@ -404,6 +412,10 @@ export default function Analytics() {
             >
               <Download size={16} /> Export CSV
             </button>
+              </>
+            ) : (
+              <PlanUpgradeNotice compact title="Unlock enhanced analytics" description="Growth adds 30/90-day reporting, CSV exports and menu performance insights." />
+            )}
           </div>
         </section>
 
@@ -440,7 +452,7 @@ export default function Analytics() {
                     </span>
                   </div>
                   <strong>{rangeOrders.length.toLocaleString("en-IN")}</strong>
-                  <p>Orders created in the last {rangeDays} days</p>
+                  <p>Orders created in the last {effectiveRangeDays} days</p>
                 </article>
 
                 <article className="analytics-stat-card">
@@ -588,7 +600,8 @@ export default function Analytics() {
                 </article>
               </section>
 
-              <section className="analytics-bottom-grid">
+              {canUseEnhancedAnalytics ? (
+<section className="analytics-bottom-grid">
                 <article className="analytics-panel analytics-best-sellers-panel">
                   <div className="analytics-panel-heading">
                     <div>
@@ -597,7 +610,7 @@ export default function Analytics() {
                       </span>
                       <h2>Popular dishes</h2>
                       <p>
-                        Top items from completed orders in the last {rangeDays}{" "}
+                        Top items from completed orders in the last {effectiveRangeDays}{" "}
                         days.
                       </p>
                     </div>
@@ -716,6 +729,9 @@ export default function Analytics() {
                   </Link>
                 </article>
               </section>
+) : (
+  <PlanUpgradeNotice title="Explore more insights with Growth" description="Unlock popular-dish performance and upcoming booking insights with your Growth plan." />
+)}
 
               <div className="analytics-footnote">
                 <CheckCircle2 size={15} />

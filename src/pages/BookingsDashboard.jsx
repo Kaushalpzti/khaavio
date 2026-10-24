@@ -22,6 +22,8 @@ import {
 } from "lucide-react";
 
 import { supabase } from "../lib/supabaseClient";
+import { usePlanAccess } from "../context/PlanAccessContext";
+import PlanUpgradeNotice from "../components/PlanUpgradeNotice";
 import khaavioIcon from "../assets/icon.png";
 import "./BookingsDashboard.css";
 
@@ -199,6 +201,9 @@ function getBookingWhatsAppUrl(booking, restaurantName) {
 
 export default function BookingsDashboard() {
   const navigate = useNavigate();
+  const { hasFeature } = usePlanAccess();
+  const canUseAdvancedBooking = hasFeature("booking_advanced");
+  const canExportBookings = hasFeature("booking_export");
 
   const [restaurant, setRestaurant] = useState(null);
   const [bookings, setBookings] = useState([]);
@@ -227,6 +232,7 @@ export default function BookingsDashboard() {
 
   // Keep today's date current without creating Date during render.
   const [today, setToday] = useState(INITIAL_TODAY);
+  const displayViewMode = canUseAdvancedBooking ? viewMode : "list";
 
   useEffect(() => {
     const intervalId = window.setInterval(() => {
@@ -477,19 +483,21 @@ export default function BookingsDashboard() {
     setSelectedCalendarDate(getLocalDateKey(nextMonth));
   }
 
-  const searchTerm = bookingSearch.trim().toLocaleLowerCase();
-  const hasSearchOrDateFilters = Boolean(
-    searchTerm || bookingDateFrom || bookingDateTo,
+  const searchTerm = (canUseAdvancedBooking ? bookingSearch : "").trim().toLocaleLowerCase();
+  const effectiveBookingDateFrom = canUseAdvancedBooking ? bookingDateFrom : "";
+  const effectiveBookingDateTo = canUseAdvancedBooking ? bookingDateTo : "";
+  const hasSearchOrDateFilters = canUseAdvancedBooking && Boolean(
+    searchTerm || effectiveBookingDateFrom || effectiveBookingDateTo,
   );
 
   const visibleBookings = bookings.filter((booking) => {
     if (filter !== "all" && booking.status !== filter) return false;
 
     const bookingDay = getLocalDateKey(booking.booking_time);
-    if (bookingDateFrom && (!bookingDay || bookingDay < bookingDateFrom)) {
+    if (effectiveBookingDateFrom && (!bookingDay || bookingDay < effectiveBookingDateFrom)) {
       return false;
     }
-    if (bookingDateTo && (!bookingDay || bookingDay > bookingDateTo)) {
+    if (effectiveBookingDateTo && (!bookingDay || bookingDay > effectiveBookingDateTo)) {
       return false;
     }
 
@@ -519,7 +527,7 @@ export default function BookingsDashboard() {
   }
 
   function exportBookingsCsv() {
-    if (visibleBookings.length === 0) return;
+    if (!canExportBookings || visibleBookings.length === 0) return;
 
     const rows = [
       [
@@ -778,8 +786,8 @@ export default function BookingsDashboard() {
               >
                 <button
                   type="button"
-                  className={viewMode === "list" ? "active" : ""}
-                  aria-pressed={viewMode === "list"}
+                  className={displayViewMode === "list" ? "active" : ""}
+                  aria-pressed={displayViewMode === "list"}
                   onClick={() => setViewMode("list")}
                 >
                   <List size={16} />
@@ -787,12 +795,14 @@ export default function BookingsDashboard() {
                 </button>
                 <button
                   type="button"
-                  className={viewMode === "calendar" ? "active" : ""}
-                  aria-pressed={viewMode === "calendar"}
+                  className={displayViewMode === "calendar" ? "active" : ""}
+                  aria-pressed={displayViewMode === "calendar"}
                   onClick={() => setViewMode("calendar")}
+                  disabled={!canUseAdvancedBooking}
+                  title={canUseAdvancedBooking ? "Show calendar view" : "Available on the Growth plan"}
                 >
                   <LayoutGrid size={16} />
-                  Calendar
+                  {canUseAdvancedBooking ? "Calendar" : "Calendar · Growth"}
                 </button>
               </div>
 
@@ -806,6 +816,7 @@ export default function BookingsDashboard() {
                   <input
                     type="search"
                     value={bookingSearch}
+                    disabled={!canUseAdvancedBooking}
                     onChange={(event) => setBookingSearch(event.target.value)}
                     placeholder="Search name, phone, email, table or reference"
                   />
@@ -816,6 +827,7 @@ export default function BookingsDashboard() {
                   <input
                     type="date"
                     value={bookingDateFrom}
+                    disabled={!canUseAdvancedBooking}
                     max={bookingDateTo || undefined}
                     onChange={(event) => setBookingDateFrom(event.target.value)}
                     aria-label="Booking date from"
@@ -827,6 +839,7 @@ export default function BookingsDashboard() {
                   <input
                     type="date"
                     value={bookingDateTo}
+                    disabled={!canUseAdvancedBooking}
                     min={bookingDateFrom || undefined}
                     onChange={(event) => setBookingDateTo(event.target.value)}
                     aria-label="Booking date to"
@@ -837,12 +850,17 @@ export default function BookingsDashboard() {
                   type="button"
                   className="bookings-export-button"
                   onClick={exportBookingsCsv}
-                  disabled={visibleBookings.length === 0}
+                  disabled={!canExportBookings || visibleBookings.length === 0}
+                  title={canExportBookings ? "Export visible bookings" : "CSV export is available on Growth"}
                 >
                   <Download size={16} />
-                  Export CSV ({visibleBookings.length})
+                  {canExportBookings ? `Export CSV (${visibleBookings.length})` : "Export CSV · Growth"}
                 </button>
               </div>
+
+              {!canUseAdvancedBooking && (
+                <PlanUpgradeNotice compact title="Unlock advanced booking tools" description="Growth adds calendar view, advanced search, date filters and CSV export." />
+              )}
 
               {(hasSearchOrDateFilters || filter !== "all") && (
                 <button
@@ -877,7 +895,7 @@ export default function BookingsDashboard() {
                 })}
               </div>
 
-              {viewMode === "list" ? (
+              {displayViewMode === "list" ? (
                 <>
                   {visibleBookings.length > 0 ? (
                     <div className="bookings-grid">

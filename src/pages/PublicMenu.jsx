@@ -32,9 +32,12 @@ function formatPrice(price) {
 }
 
 function getErrorMessage(error, fallback) {
-  return typeof error?.message === "string" && error.message.trim()
-    ? error.message
-    : fallback;
+  const message =
+    typeof error?.message === "string" ? error.message.trim() : "";
+  if (message.includes("KHAAVIO_PLAN_ACCESS_REQUIRED")) {
+    return "Online ordering is temporarily unavailable at this restaurant. Please ask the restaurant team for help.";
+  }
+  return message || fallback;
 }
 
 function getRestaurantAvailability(restaurant, timestamp) {
@@ -361,7 +364,7 @@ export default function PublicMenu() {
     availabilityNow,
   );
   const orderingAvailability =
-    subscriptionAllowsTransactions === false
+    subscriptionAllowsTransactions !== true
       ? {
           canOrder: false,
           title: "Online ordering is temporarily unavailable",
@@ -440,7 +443,7 @@ export default function PublicMenu() {
 
     if (submitting) return;
 
-    if (subscriptionAllowsTransactions === false) {
+    if (subscriptionAllowsTransactions !== true) {
       setCheckoutError(
         "Online ordering is temporarily unavailable at this restaurant. Please contact the restaurant team.",
       );
@@ -1152,6 +1155,7 @@ export default function PublicMenu() {
                         className="public-order-submit"
                         disabled={
                           submitting ||
+                          subscriptionAllowsTransactions !== true ||
                           cart.length === 0 ||
                           !tableContext ||
                           !orderingAvailability.canOrder
