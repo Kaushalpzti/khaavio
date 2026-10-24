@@ -24,6 +24,7 @@ import khaavioIcon from "../assets/icon.png";
 
 import "./Home.css";
 
+
 /* Add actual Khaavio contact details here before public launch. */
 const BRAND_CONTACT = {
   email: "khaavioqr@gmail.com",
