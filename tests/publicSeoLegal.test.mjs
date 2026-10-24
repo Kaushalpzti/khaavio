@@ -42,6 +42,13 @@ test("application routes and footer expose all legal pages", () => {
   assert.match(app, /<SeoManager\s*\/>/);
 });
 
+test("route navigation resets scroll to the top before paint", () => {
+  const app = readRoot("src/App.jsx");
+  assert.match(app, /function ScrollToTop\(\)/);
+  assert.match(app, /useLayoutEffect\(\(\) => \{\s*window\.scrollTo\(\{ top: 0, left: 0, behavior: "instant" \}\);/);
+  assert.match(app, /<ScrollToTop\s*\/>/);
+});
+
 test("legal policies cover privacy handling, subscription terms and refund requests", () => {
   const legal = readRoot("src/pages/LegalPage.jsx");
   assert.match(legal, /Information we may handle/);

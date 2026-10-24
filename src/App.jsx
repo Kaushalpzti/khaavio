@@ -1,5 +1,5 @@
-import { lazy, Suspense } from "react";
-import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
+import { lazy, Suspense, useLayoutEffect } from "react";
+import { BrowserRouter, Navigate, Route, Routes, useLocation } from "react-router-dom";
 import ProtectedRoute from "./components/ProtectedRoute";
 import SubscriptionAccessGuard from "./components/SubscriptionAccessGuard";
 import SeoManager from "./components/SeoManager";
@@ -34,6 +34,18 @@ const OrderReceipts = lazy(() => import("./pages/OrderReceipts"));
 const BookingsDashboard = lazy(() => import("./pages/BookingsDashboard"));
 const Analytics = lazy(() => import("./pages/Analytics"));
 const KitchenDisplay = lazy(() => import("./pages/KitchenDisplay"));
+
+// Reset scroll after client-side navigation so links from a page footer open
+// the destination at the top instead of preserving the previous page's offset.
+function ScrollToTop() {
+  const { pathname } = useLocation();
+
+  useLayoutEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+  }, [pathname]);
+
+  return null;
+}
 
 function PageLoader() {
   return (
@@ -95,6 +107,7 @@ function ProtectedRestaurantPage({ children }) {
 export default function App() {
   return (
     <BrowserRouter>
+      <ScrollToTop />
       <SeoManager />
       <Suspense fallback={<PageLoader />}>
         <Routes>
