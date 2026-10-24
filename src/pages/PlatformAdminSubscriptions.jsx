@@ -246,18 +246,24 @@ export default function PlatformAdminSubscriptions() {
         ? ""
         : String(request.catalog_price_inr);
       const amountInput = window.prompt(
-        `Enter the amount actually received in INR. Catalog price is ₹${request.catalog_price_inr}. For a founding discount, confirm eligibility and agreed price first.`,
+        `Enter the amount actually received in INR. Catalog price is ₹${request.catalog_price_inr}. A lower amount is allowed only for a requested founding offer after you verify eligibility.`,
         defaultAmount,
       );
       if (amountInput === null) return;
       confirmedAmount = Number(amountInput.trim());
+      const catalogAmount = Number(request.catalog_price_inr);
+      const discountedAmountNeedsOffer =
+        !request.founding_offer_requested && confirmedAmount !== catalogAmount;
       if (
         !Number.isFinite(confirmedAmount) ||
         confirmedAmount <= 0 ||
-        confirmedAmount > Number(request.catalog_price_inr)
+        confirmedAmount > catalogAmount ||
+        discountedAmountNeedsOffer
       ) {
         setError(
-          "Enter a valid received amount greater than ₹0 and no higher than the catalog price.",
+          request.founding_offer_requested
+            ? "Enter a valid received amount greater than ₹0 and no higher than the catalog price. Verify founding-offer eligibility before applying a discount."
+            : "The full catalog price is required unless the restaurant requested a founding annual offer.",
         );
         return;
       }

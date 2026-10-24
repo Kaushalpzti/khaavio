@@ -1,6 +1,6 @@
 -- Khaavio Platform Admin + Manual Subscription Assignment
 -- Apply only after reviewing. This modifies the connected Supabase database.
--- It does not enable payment processing or plan-based feature gating.
+-- It does not collect payments or enable automatic renewal; offline payments must be verified by an admin.
 
 begin;
 
@@ -169,6 +169,58 @@ revoke all on function public.platform_admin_list_subscriptions() from public, a
 revoke all on function public.platform_admin_assign_plan(uuid, text) from public, anon, authenticated;
 grant execute on function public.platform_admin_list_subscriptions() to authenticated;
 grant execute on function public.platform_admin_assign_plan(uuid, text) to authenticated;
+
+
+-- Protected read RPC used by the companion Khaavio Control PWA.
+create or replace function public.platform_admin_list_audit_logs()
+returns table (
+  id uuid,
+  admin_user_id uuid,
+  restaurant_id uuid,
+  restaurant_name text,
+  previous_plan_key text,
+  previous_status text,
+  new_plan_key text,
+  new_status text,
+  starts_at timestamptz,
+  ends_at timestamptz,
+  created_at timestamptz
+)
+language plpgsql
+stable
+security definer
+set search_path = ''
+as $function$
+declare
+  v_user_id uuid := auth.uid();
+begin
+  if v_user_id is null or not exists (
+    select 1 from public.platform_admins as pa where pa.user_id = v_user_id
+  ) then
+    raise exception 'Platform admin access required.' using errcode = '42501';
+  end if;
+
+  return query
+  select
+    a.id,
+    a.admin_user_id,
+    a.restaurant_id,
+    r.name::text,
+    a.previous_plan_key,
+    a.previous_status,
+    a.new_plan_key,
+    a.new_status,
+    a.starts_at,
+    a.ends_at,
+    a.created_at
+  from public.platform_admin_audit_logs as a
+  join public.restaurants as r on r.id = a.restaurant_id
+  order by a.created_at desc
+  limit 100;
+end;
+$function$;
+revoke all on function public.platform_admin_list_audit_logs() from public, anon, authenticated;
+grant execute on function public.platform_admin_list_audit_logs() to authenticated;
 
 commit;
 

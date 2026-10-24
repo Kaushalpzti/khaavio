@@ -1,7 +1,8 @@
 -- Khaavio Subscription MVP
 -- Safe rollout: existing restaurants retain access under the Pilot plan.
--- New restaurants receive a 14-day Trial record automatically.
--- Plan prices and feature limits are informational only in this MVP; no billing or feature gating is enabled.
+-- New restaurants receive a 7-day Trial record automatically.
+-- Legacy baseline for the subscription catalog/tables. Newer timestamped migrations add feature gating.
+-- Khaavio does not collect payments or enable automatic renewal in this flow.
 
 begin;
 
@@ -51,8 +52,8 @@ values
   ),
   (
     'trial', 'Free Trial',
-    'A 14-day trial for newly onboarded restaurants.',
-    0, 'none', 14,
+    'A 7-day trial for newly onboarded restaurants.',
+    0, 'none', 7,
     '["Digital menu and menu management", "Menu QR and table QR codes", "Online ordering and Kitchen Display", "Table bookings", "Order tracking, receipts and basic analytics"]'::jsonb,
     '{}'::jsonb, true, 1
   ),
@@ -133,12 +134,25 @@ language plpgsql
 security definer
 set search_path = ''
 as $function$
+declare
+  v_trial_days integer;
+  v_now timestamptz := pg_catalog.now();
 begin
+  select sp.duration_days
+    into v_trial_days
+  from public.subscription_plans sp
+  where sp.plan_key = 'trial' and sp.is_active is true;
+
+  if v_trial_days is null or v_trial_days < 1 then
+    raise exception 'Khaavio trial duration is not configured';
+  end if;
+
   insert into public.restaurant_subscriptions
     (restaurant_id, plan_key, status, starts_at, ends_at)
   values
-    (new.id, 'trial', 'trialing', pg_catalog.now(), pg_catalog.now() + interval '14 days')
+    (new.id, 'trial', 'trialing', v_now, v_now + pg_catalog.make_interval(days => v_trial_days))
   on conflict (restaurant_id) do nothing;
+
   return new;
 end;
 $function$;
