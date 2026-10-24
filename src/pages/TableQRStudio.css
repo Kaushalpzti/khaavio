@@ -1267,8 +1267,8 @@
     font-weight: 700;
     line-height: 1.1;
     overflow-wrap: anywhere;
-    line-clamp: 2;
     -webkit-box-orient: vertical;
+    line-clamp: 2;
     -webkit-line-clamp: 2;
 }
 
@@ -1293,8 +1293,8 @@
     font-size: clamp(6px, 1.6vw, 8px);
     line-height: 1.3;
     overflow-wrap: anywhere;
-    line-clamp: 1;
     -webkit-box-orient: vertical;
+    line-clamp: 1;
     -webkit-line-clamp: 1;
 }
 
@@ -2038,442 +2038,127 @@
 }
 
 
-/* --------------------------------------------------------------------------
-   Khaavio product theme alignment
-   The dashboard uses deep green, sage and warm ivory. The four printable QR
-   card templates below intentionally keep their own individual palettes.
--------------------------------------------------------------------------- */
+/* Table Management restoration: create tables directly from Table QR Studio. */
 
-.tqr-page {
-    --tqr-ink: #19372d;
-    --tqr-muted: #7d877d;
-    --tqr-paper: #faf9f4;
-    --tqr-card: #fffefa;
-    --tqr-line: #e6e8df;
-    --tqr-accent: #19372d;
-    --tqr-accent-dark: #102a21;
-    color: var(--tqr-ink);
-    background: #faf9f4;
+.tqr-panel-heading-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: 8px;
 }
-
-.tqr-back-link {
-    color: #647468;
-}
-
-.tqr-back-link:hover {
-    color: #102a21;
-}
-
-.tqr-heading-icon {
-    border-color: #dbe5d8;
-    color: #19372d;
-    background: #e9f0e7;
-}
-
-.tqr-eyebrow {
-    color: #66806a;
-}
-
-.tqr-heading-row h1,
-.tqr-panel-heading h2,
-.tqr-stat-card strong,
-.tqr-preview-heading h3,
-.tqr-state h1,
-.tqr-modal-heading h2 {
-    color: #19372d;
-}
-
-.tqr-selected-restaurant,
-.tqr-restaurant-picker {
-    border-color: #e1e7dd;
-    background: #fffefa;
-    box-shadow: 0 4px 15px rgba(25, 55, 45, 0.035);
-}
-
-.tqr-selected-restaurant strong,
-.tqr-table-copy strong {
-    color: #19372d;
-}
-
-.tqr-selected-restaurant small,
-.tqr-restaurant-picker>span:first-child {
-    color: #7d877d;
-}
-
-.tqr-restaurant-avatar {
-    color: #fffefa;
-    background: linear-gradient(145deg, #19372d, #102a21);
-}
-
-.tqr-select-wrap {
-    color: #19372d;
-}
-
-.tqr-select-wrap select {
-    color: #19372d;
-}
-
-.tqr-stat-card,
-.tqr-panel {
-    border-color: #e1e7dd;
-    background: #fffefa;
-    box-shadow: 0 6px 22px rgba(25, 55, 45, 0.035);
-}
-
-.tqr-stat-icon {
-    color: #19372d;
-    background: #e9f0e7;
-}
-
-.tqr-stat-icon--green {
-    color: #2d7756;
-    background: #e6f1e7;
-}
-
-.tqr-stat-icon--amber {
-    color: #8c713b;
-    background: #f5f0df;
-}
-
-.tqr-stat-icon--rose {
-    color: #9c5754;
-    background: #f8eeee;
-}
-
-.tqr-stat-card small,
-.tqr-panel-heading p,
-.tqr-select-all-row,
-.tqr-table-copy small {
-    color: #7d877d;
-}
-
-.tqr-count-pill {
-    border-color: #e1e7dd;
-    color: #536b5c;
-    background: #f4f6ef;
-}
-
-.tqr-live-pill {
-    border-color: #d3e3d2;
-    color: #276448;
-    background: #edf5e9;
-}
-
-.tqr-live-pill>span {
-    background: #39815b;
-}
-
-.tqr-search,
-.tqr-filter,
-.tqr-row-actions button,
-.tqr-download-options>button:not(.tqr-full-preview-button),
-.tqr-icon-button {
-    border-color: #dfe6db;
-    color: #536c5e;
-    background: #fffefa;
-}
-
-.tqr-search input {
-    color: #19372d;
-}
-
-.tqr-search input::placeholder {
-    color: #89958a;
-}
-
-.tqr-filter select {
-    color: #45604f;
-}
-
-.tqr-select-all-row input,
-.tqr-table-checkbox input {
-    accent-color: #19372d;
-}
-
-.tqr-select-all-row>span {
-    color: #456a52;
-}
-
-.tqr-table-list,
-.tqr-table-row {
-    border-color: #e8ede4;
-}
-
-.tqr-table-row.is-preview::before {
-    background: #19372d;
-}
-
-.tqr-mini-qr {
-    border-color: #dbe5d8;
-    color: #19372d;
-    background: #e9f0e7;
-}
-
-.tqr-row-actions button:hover:not(:disabled),
-.tqr-download-options>button:hover:not(:disabled),
-.tqr-icon-button:hover:not(:disabled) {
-    border-color: #9bb39c;
-    color: #102a21;
-    background: #eef3e9;
-}
-
-.tqr-bulk-card {
-    border-top-color: #e2e9df;
-    background: linear-gradient(115deg, #edf3e9, #f8f9f3);
-}
-
-.tqr-bulk-icon {
-    border-color: #d5e2d1;
-    color: #19372d;
-    background: #e3ecdf;
-}
-
-.tqr-bulk-copy strong {
-    color: #19372d;
-}
-
-.tqr-bulk-copy span {
-    color: #6d7f70;
-}
-
-.tqr-button--primary {
-    color: #fffefa;
-    background: linear-gradient(135deg, #19372d, #102a21);
-    box-shadow: 0 4px 10px rgba(16, 42, 33, 0.14);
-}
-
-.tqr-button--primary:hover:not(:disabled) {
-    background: #102a21;
-}
-
-.tqr-button--secondary {
-    border-color: #dfe6db;
-    color: #365342;
-    background: #fffefa;
-}
-
-.tqr-progress-label {
-    color: #6e8170;
-}
-
-.tqr-progress-label strong {
-    color: #19372d;
-}
-
-.tqr-progress {
-    background: #e5ece1;
-}
-
-.tqr-progress span {
-    background: linear-gradient(90deg, #19372d, #7b9479);
-}
-
-.tqr-template-option {
-    border-color: #dfe6db;
-    color: #294638;
-    background: #fffefa;
-}
-
-.tqr-template-option.is-selected {
-    border-color: #19372d;
-    box-shadow: 0 0 0 2px rgba(25, 55, 45, 0.12);
-}
-
-.tqr-template-option small {
-    color: #7d877d;
-}
-
-.tqr-template-check {
-    border-color: #fffefa;
-    background: #19372d;
-}
-
-
-/* Template swatches remain illustrative, so each still previews its own card palette. */
-
-.tqr-customize-card {
-    border-color: #e1e7dd;
-    background: #fffefa;
-}
-
-.tqr-subheading {
-    color: #19372d;
-}
-
-.tqr-subheading h3 {
-    color: #19372d;
-}
-
-.tqr-toggle-row {
-    border-bottom-color: #e8ede4;
-}
-
-.tqr-toggle-copy {
-    color: #405b49;
-}
-
-.tqr-toggle-copy small {
-    color: #7d877d;
-}
-
-.tqr-switch {
-    border-color: #d7e0d4;
-    background: #e7ece3;
-}
-
-.tqr-toggle-row input:checked+.tqr-switch {
-    border-color: #19372d;
-    background: #19372d;
-}
-
-.tqr-toggle-row input:focus-visible+.tqr-switch {
-    outline-color: rgba(25, 55, 45, 0.22);
-}
-
-.tqr-field {
-    color: #536b5c;
-}
-
-.tqr-field input,
-.tqr-field select {
-    border-color: #dfe6db;
-    color: #19372d;
-    background: #fffefa;
-}
-
-.tqr-field input:focus,
-.tqr-field select:focus {
-    border-color: #7b9479;
-    box-shadow: 0 0 0 3px rgba(123, 148, 121, 0.18);
-}
-
-.tqr-export-note {
-    border-color: #dbe5d6;
-    color: #456b51;
-    background: #f1f6ed;
-}
-
-.tqr-format-pills span {
-    border-color: #e1e7dd;
-    color: #637666;
-    background: #f8f9f4;
-}
-
-.tqr-preview-heading p {
-    color: #7d877d;
-}
-
-.tqr-preview-stage {
-    border-color: #dfe6db;
-    background: radial-gradient(circle at 50% 0%, #fffefa 0, #f5f7ef 65%, #eaf0e6 100%);
-}
-
-.tqr-download-copy strong {
-    color: #294638;
-}
-
-.tqr-download-copy small {
-    color: #7d877d;
-}
-
-.tqr-download-option-icon,
-.tqr-download-option-icon--pdf,
-.tqr-download-option-icon--print,
-.tqr-download-option-icon--link {
-    border-color: #dbe5d8;
-    color: #19372d;
-    background: #e9f0e7;
-}
-
-.tqr-full-preview-button {
-    border-color: #dfe6db;
-    color: #365342;
-    background: #fffefa;
-}
-
-.tqr-full-preview-button:hover:not(:disabled) {
-    border-color: #9bb39c;
-    background: #eef3e9;
-}
-
-.tqr-open-menu-link {
-    color: #276448;
-}
-
-.tqr-open-menu-link:hover {
-    color: #102a21;
-}
-
-.tqr-export-disabled-note {
-    color: #7d877d;
-}
-
-.tqr-page-footer {
-    border-top-color: #e1e7dd;
-    color: #7d877d;
-}
-
-.tqr-page-footer strong {
-    color: #19372d;
-}
-
-.tqr-footer-separator {
-    color: #aab7a8;
-}
-
-.tqr-state {
-    color: #647668;
-}
-
-.tqr-state h1 {
-    color: #19372d;
-}
-
-.tqr-state-icon {
-    border-color: #dbe5d8;
-    color: #19372d;
-    background: #e9f0e7;
-}
-
-.tqr-inline-state {
-    color: #7d877d;
-}
-
-.tqr-inline-state--empty strong {
-    color: #294638;
-}
-
-.tqr-inline-state--empty a {
-    color: #276448;
-}
-
-.tqr-modal-backdrop {
-    background: rgba(16, 42, 33, 0.68);
-}
-
-.tqr-preview-modal {
-    border-color: #dfe6db;
-    background: #fffefa;
-    box-shadow: 0 24px 90px rgba(16, 42, 33, 0.24);
-}
-
-.tqr-modal-heading h2 {
-    color: #19372d;
-}
-
-.tqr-modal-heading p {
-    color: #7d877d;
-}
-
-.tqr-large-card-stage {
-    border-color: #dfe6db;
-    background: #f1f5ed;
+
+.tqr-add-table-button {
+    min-height: 36px;
+    padding: 8px 11px;
+    white-space: nowrap;
+}
+
+.tqr-create-table-panel {
+    display: grid;
+    gap: 13px;
+    margin: 0 0 16px;
+    padding: 15px;
+    border: 1px solid #d8e7d8;
+    border-radius: 14px;
+    background: linear-gradient(135deg, #f5faf3, #fffdf8);
+}
+
+.tqr-create-table-heading strong {
+    display: block;
+    color: #2e4d3a;
+    font-size: 13px;
+    font-weight: 850;
+}
+
+.tqr-create-table-heading p,
+.tqr-create-table-hint {
+    margin: 5px 0 0;
+    color: #798579;
+    font-size: 10px;
+    line-height: 1.55;
+}
+
+.tqr-create-table-fields {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 105px;
+    gap: 10px;
+}
+
+.tqr-create-table-field {
+    display: grid;
+    gap: 6px;
+    min-width: 0;
+    color: #6d796d;
+    font-size: 10px;
+    font-weight: 750;
+}
+
+.tqr-create-table-field input {
+    width: 100%;
+    min-width: 0;
+    height: 42px;
+    padding: 0 11px;
+    border: 1px solid #dce5d8;
+    border-radius: 10px;
+    outline: none;
+    color: #2f4434;
+    background: #fff;
+    font-size: 12px;
+}
+
+.tqr-create-table-field input:focus {
+    border-color: #719b7b;
+    box-shadow: 0 0 0 3px rgba(87, 143, 98, .12);
+}
+
+.tqr-create-table-field input:disabled {
+    opacity: .65;
+}
+
+.tqr-create-table-actions {
+    display: flex;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.tqr-create-table-hint {
+    margin-top: -4px;
+}
+
+.tqr-inline-state--empty .tqr-button {
+    margin-top: 8px;
+}
+
+@media (max-width: 620px) {
+    .tqr-panel-heading-actions {
+        width: 100%;
+        justify-content: space-between;
+    }
+    .tqr-add-table-button {
+        min-height: 40px;
+    }
+    .tqr-create-table-panel {
+        padding: 13px;
+    }
+    .tqr-create-table-fields {
+        grid-template-columns: minmax(0, 1fr) 88px;
+        gap: 8px;
+    }
+    .tqr-create-table-actions {
+        display: grid;
+        grid-template-columns: 1fr 1.2fr;
+    }
+    .tqr-create-table-actions .tqr-button {
+        justify-content: center;
+    }
 }
 
 .tqr-page a:focus-visible,
 .tqr-page button:focus-visible,
 .tqr-page input:focus-visible,
 .tqr-page select:focus-visible {
-    outline: 3px solid rgba(123, 148, 121, 0.55);
+    outline: 3px solid rgba(220, 76, 18, 0.65);
     outline-offset: 3px;
 }
