@@ -2,6 +2,7 @@ import { lazy, Suspense, useLayoutEffect } from "react";
 import { BrowserRouter, Navigate, Route, Routes, useLocation } from "react-router-dom";
 import ProtectedRoute from "./components/ProtectedRoute";
 import SubscriptionAccessGuard from "./components/SubscriptionAccessGuard";
+import RestaurantDashboardLayout from "./components/RestaurantDashboardLayout";
 import SeoManager from "./components/SeoManager";
 import LegalPage from "./pages/LegalPage";
 import "./PageLoader.css";
@@ -99,7 +100,9 @@ function ProtectedPage({ children }) {
 function ProtectedRestaurantPage({ children }) {
   return (
     <ProtectedPage>
-      <SubscriptionAccessGuard>{children}</SubscriptionAccessGuard>
+      <SubscriptionAccessGuard>
+        <RestaurantDashboardLayout>{children}</RestaurantDashboardLayout>
+      </SubscriptionAccessGuard>
     </ProtectedPage>
   );
 }
@@ -164,7 +167,9 @@ export default function App() {
             path="/dashboard/subscription"
             element={
               <ProtectedPage>
-                <Subscription />
+                <RestaurantDashboardLayout>
+                  <Subscription />
+                </RestaurantDashboardLayout>
               </ProtectedPage>
             }
           />
