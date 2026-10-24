@@ -111,10 +111,10 @@ set is_active = false,
     updated_at = pg_catalog.now()
 where plan_key = 'pro';
 
--- 2) Trial assignment is already installed in this database and has been
--- verified to grant a 7-day trial with ON CONFLICT DO NOTHING.
--- Preserve the existing trigger/function rather than dropping and recreating it.
--- This avoids changing live onboarding behavior during the entitlement rollout.
+-- 2) Preserve the already-installed 7-day trial assignment trigger.
+-- The live database was inspected before preparing this migration: the
+-- existing trigger assigns a 7-day trial and uses ON CONFLICT DO NOTHING.
+-- Do not drop/recreate it here, so existing onboarding behavior is retained.
 
 -- 3) Single feature-resolution function. It requires an active subscription,
 -- keeps the legacy Pilot / Pro behavior, and fails closed for unknown plan keys.
@@ -237,6 +237,44 @@ begin
     where table_schema = 'public' and table_name = 'bookings' and column_name = 'restaurant_id'
   ) then
     raise exception 'Khaavio plan migration stopped: public.bookings.restaurant_id was not found';
+  end if;
+
+  -- Fail closed if the known production safeguards inspected before this
+  -- migration are missing. Never replace these existing triggers here.
+  if not exists (
+    select 1 from pg_catalog.pg_trigger
+    where tgrelid = 'public.restaurants'::pg_catalog.regclass
+      and tgname = 'trg_khaavio_assign_trial_subscription'
+      and not tgisinternal
+  ) then
+    raise exception 'Khaavio plan migration stopped: existing 7-day trial trigger was not found';
+  end if;
+
+  if not exists (
+    select 1 from pg_catalog.pg_trigger
+    where tgrelid = 'public.bookings'::pg_catalog.regclass
+      and tgname = 'khaavio_prevent_booking_conflicts_before_write'
+      and not tgisinternal
+  ) then
+    raise exception 'Khaavio plan migration stopped: booking-conflict safeguard was not found';
+  end if;
+
+  if not exists (
+    select 1 from pg_catalog.pg_trigger
+    where tgrelid = 'public.bookings'::pg_catalog.regclass
+      and tgname = 'khaavio_validate_booking_hours_before_write'
+      and not tgisinternal
+  ) then
+    raise exception 'Khaavio plan migration stopped: booking-hours safeguard was not found';
+  end if;
+
+  if not exists (
+    select 1 from pg_catalog.pg_trigger
+    where tgrelid = 'public.orders'::pg_catalog.regclass
+      and tgname = 'khaavio_guard_session_order_updates'
+      and not tgisinternal
+  ) then
+    raise exception 'Khaavio plan migration stopped: table-session order-update safeguard was not found';
   end if;
 
   execute 'drop trigger if exists trg_khaavio_plan_entitlement on public.orders';
