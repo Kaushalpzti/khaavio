@@ -32,6 +32,7 @@ const QRStudio = lazy(() => import("./pages/QRStudio"));
 const TableQRStudio = lazy(() => import("./pages/TableQRStudio"));
 const TableSessions = lazy(() => import("./pages/TableSessions"));
 const ServiceRequestsDashboard = lazy(() => import("./pages/ServiceRequestsDashboard"));
+const LoyaltyDashboard = lazy(() => import("./pages/LoyaltyDashboard"));
 const ReviewFeedbackDashboard = lazy(() => import("./pages/ReviewFeedbackDashboard"));
 
 // Orders, receipts, bookings and analytics
@@ -304,6 +305,15 @@ export default function App() {
             element={
               <ProtectedRestaurantPage>
                 <ReviewFeedbackDashboard />
+              </ProtectedRestaurantPage>
+            }
+          />
+          {/* Khaavio Perks and loyalty rewards */}
+          <Route
+            path="/dashboard/loyalty"
+            element={
+              <ProtectedRestaurantPage>
+                <LoyaltyDashboard />
               </ProtectedRestaurantPage>
             }
           />

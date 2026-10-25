@@ -1,0 +1,80 @@
+.public-perks {
+  width: min(1180px, calc(100% - 36px));
+  margin: 0 auto 30px;
+  color: #254735;
+  animation: public-perks-rise .55s cubic-bezier(.2,.8,.2,1) both;
+}
+.public-perks-card {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 190px;
+  gap: 22px;
+  overflow: hidden;
+  border: 1px solid #dce9d9;
+  border-radius: 26px;
+  padding: clamp(20px, 3vw, 32px);
+  background: radial-gradient(circle at 88% 12%, rgba(255,255,255,.85), transparent 28%), linear-gradient(115deg,#f3f8ef 0%,#fff3e9 100%);
+  box-shadow: 0 14px 38px rgba(50,83,57,.08);
+}
+.public-perks-copy { position: relative; z-index: 1; min-width: 0; }
+.public-perks-card-topline { display:flex; align-items:center; justify-content:space-between; gap:10px; }
+.public-perks-inline-refresh { display:inline-flex; align-items:center; justify-content:center; gap:5px; border:1px solid #e0e9dc; border-radius:999px; padding:6px 9px; background:rgba(255,255,255,.62); color:#638167; font-size:10px; font-weight:750; cursor:pointer; }
+.public-perks-inline-refresh:disabled { opacity:.6; cursor:wait; }
+.public-perks-kicker { display: inline-flex; align-items: center; gap: 7px; color: #64816a; font-size: 10px; font-weight: 850; letter-spacing: .13em; }
+.public-perks-copy h2 { margin: 10px 0 7px; color: #244832; font-size: clamp(25px,3vw,34px); line-height: 1.08; letter-spacing: -.045em; }
+.public-perks-copy h2 span { display: inline-block; color: #d58d63; font-size: .72em; transform: rotate(10deg); }
+.public-perks-copy > p { max-width: 490px; margin: 0; color: #6f7f71; font-size: 13px; line-height: 1.65; }
+.public-perks-progress-line { display: flex; align-items: baseline; flex-wrap: wrap; gap: 10px; margin-top: 20px; }
+.public-perks-progress-line strong { color: #2b6847; font-size: 14px; }
+.public-perks-progress-line span { color: #869285; font-size: 11px; }
+.public-perks-stamps { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.public-perks-stamp { display: inline-flex; width: 29px; height: 29px; align-items: center; justify-content: center; border: 1px dashed #bfceb9; border-radius: 50%; background: rgba(255,255,255,.7); color: #a0ad9c; font-size: 10px; font-weight: 800; }
+.public-perks-stamp.is-earned { border: 1px solid #4e8a60; background: #4e8a60; color: #fff; box-shadow: 0 4px 10px rgba(58,114,72,.18); animation: public-perks-stamp-in .35s ease both; }
+.public-perks-footnote { display: block; max-width: 550px; margin-top: 12px; color: #879186; font-size: 10px; line-height: 1.55; }
+.public-perks-decoration { position: relative; display: grid; min-height: 155px; place-items: center; color: #d58d63; }
+.public-perks-gift { position: relative; z-index: 1; display: grid; width: 91px; height: 91px; place-items: center; border: 1px solid rgba(213,141,99,.22); border-radius: 28px; background: rgba(255,255,255,.65); box-shadow: 0 14px 34px rgba(176,122,78,.1); transform: rotate(-8deg); animation: public-perks-float 4.5s ease-in-out infinite; }
+.public-perks-sunburst { position: absolute; top: 3px; right: 25px; color: #dba06b; font-size: 31px; animation: public-perks-spin-slow 18s linear infinite; }
+.public-perks-orbit { position: absolute; width: 155px; height: 105px; border: 1px dashed rgba(99,139,102,.32); border-radius: 50%; transform: rotate(-22deg); }
+.public-perks-rewards { margin-top: 16px; border: 1px solid #e9e5d9; border-radius: 22px; padding: 20px; background: #fffdf8; }
+.public-perks-rewards-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
+.public-perks-rewards-heading h3 { margin: 5px 0 0; color: #294936; font-size: 18px; letter-spacing: -.025em; }
+.public-perks-refresh { display: grid; width: 36px; height: 36px; place-items: center; border: 1px solid #e0e9dc; border-radius: 12px; background: #fff; color: #4a7254; cursor: pointer; }
+.public-perks-refresh:disabled { opacity: .55; cursor: wait; }
+.public-perks-reward-grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(min(100%,240px),1fr)); gap: 12px; }
+.public-perks-reward-card { min-width: 0; min-height: 165px; overflow: hidden; border: 1px solid #e3e8dc; border-radius: 18px; background: linear-gradient(145deg,#f7f5e7,#e9f2e6); }
+.public-perks-revealed { display: flex; min-height: 165px; flex-direction: column; align-items: center; justify-content: center; gap: 6px; padding: 18px; background: radial-gradient(circle at top,#fffdf4,#e8f4e8); text-align: center; }
+.public-perks-reward-icon { display: grid; width: 40px; height: 40px; place-items: center; border-radius: 14px; background: #4d805b; color: #fff; }
+.public-perks-reward-eyebrow { margin-top: 2px; color: #759078; font-size: 9px; font-weight: 900; letter-spacing: .13em; }
+.public-perks-revealed strong { color: #28543a; font-size: 17px; }
+.public-perks-redemption-label { color: #788678; font-size: 10px; }
+.public-perks-revealed code { border: 1px dashed #86a68b; border-radius: 8px; padding: 6px 10px; background: #fff; color: #28543a; font-size: 14px; font-weight: 900; letter-spacing: .14em; }
+.public-perks-revealed small { max-width: 260px; color: #849183; font-size: 10px; line-height: 1.5; }
+.public-perks-message { margin: 10px 2px 0; font-size: 12px; line-height: 1.55; }
+.public-perks-message.is-error { color: #aa3d33; }
+.public-perks-message.is-success { color: #367348; }
+.public-perks-spin { animation: public-perks-rotate 1s linear infinite; }
+@keyframes public-perks-rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes public-perks-stamp-in { from { opacity: .35; transform: scale(.75) rotate(-12deg); } to { opacity: 1; transform: scale(1) rotate(0); } }
+@keyframes public-perks-float { 0%,100% { transform: translateY(0) rotate(-8deg); } 50% { transform: translateY(-7px) rotate(-3deg); } }
+@keyframes public-perks-spin-slow { to { transform: rotate(370deg); } }
+@keyframes public-perks-rotate { to { transform: rotate(360deg); } }
+@media (max-width: 620px) {
+  .public-perks { width: calc(100% - 24px); margin-bottom: 23px; }
+  .public-perks-card { grid-template-columns: minmax(0,1fr) 76px; gap: 6px; border-radius: 22px; padding: 19px 16px; }
+  .public-perks-card-topline { align-items:flex-start; gap:4px; }
+  .public-perks-inline-refresh { padding:5px 7px; font-size:9px; }
+  .public-perks-copy h2 { font-size: 25px; }
+  .public-perks-copy > p { font-size: 12px; }
+  .public-perks-decoration { min-height: 85px; }
+  .public-perks-gift { width: 60px; height: 60px; border-radius: 19px; }
+  .public-perks-gift svg { width: 27px; height: 27px; }
+  .public-perks-orbit { width: 74px; height: 62px; }
+  .public-perks-sunburst { top: 1px; right: -1px; font-size: 22px; }
+  .public-perks-stamps { gap: 5px; }
+  .public-perks-stamp { width: 25px; height: 25px; font-size: 9px; }
+  .public-perks-footnote { max-width: 100%; font-size: 9px; }
+  .public-perks-rewards { padding: 14px; border-radius: 18px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .public-perks, .public-perks-stamp.is-earned, .public-perks-gift, .public-perks-sunburst, .public-perks-spin { animation: none !important; }
+}

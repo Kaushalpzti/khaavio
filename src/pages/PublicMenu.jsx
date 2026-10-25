@@ -20,7 +20,9 @@ import {
 } from "lucide-react";
 
 import { supabase } from "../lib/supabaseClient";
+import { getOrCreateKhaavioLoyaltyToken } from "../lib/loyaltyToken";
 import PublicTableService from "../components/PublicTableService";
+import PublicLoyaltyClub from "../components/PublicLoyaltyClub";
 import PublicReviewsFeedback from "../components/PublicReviewsFeedback";
 import AskKhaavio from "../components/AskKhaavio";
 import khaavioIcon from "../assets/icon.png";
@@ -542,10 +544,11 @@ export default function PublicMenu() {
           item_id: entry.id,
           quantity: entry.quantity,
         })),
+        p_loyalty_member_token: getOrCreateKhaavioLoyaltyToken(slug),
       };
 
       const { data, error: orderError } = await supabase.rpc(
-        "place_public_order",
+        "place_public_order_with_loyalty",
         payload,
       );
 
@@ -747,6 +750,7 @@ export default function PublicMenu() {
             </div>
           </section>
 
+          <PublicLoyaltyClub slug={slug} />
           <section className="public-menu-content" id="menu">
             <div className="public-menu-heading">
               <div>
