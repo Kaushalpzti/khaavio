@@ -139,7 +139,7 @@ function getPublicAppBase() {
     return window.location.origin.replace(/\/+$/, "");
   }
 
-  return "https://khaavio.vercel.app";
+  return "https://khaavio.in";
 }
 
 function getPublicMenuUrl(restaurant, table) {

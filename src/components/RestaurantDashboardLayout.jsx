@@ -4,6 +4,7 @@ import {
   ArrowUpRight,
   BarChart3,
   CalendarDays,
+  BellRing,
   ChefHat,
   ChevronLeft,
   ChevronRight,
@@ -46,6 +47,7 @@ const NAV_GROUPS = [
     label: "Operations",
     items: [
       { label: "Orders", to: "/dashboard/orders", icon: ClipboardList },
+      { label: "Service requests", to: "/dashboard/service-requests", icon: BellRing },
       { label: "Kitchen display", to: "/dashboard/kitchen", icon: ChefHat },
       { label: "Table sessions & billing", to: "/dashboard/table-sessions", icon: Receipt },
       { label: "Order receipts", to: "/dashboard/receipts", icon: Receipt },

@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 
 import { supabase } from "../lib/supabaseClient";
+import PublicTableService from "../components/PublicTableService";
 import khaavioIcon from "../assets/icon.png";
 import "./PublicMenu.css";
 import "./PublicMenuExperience.css";
@@ -1239,6 +1240,8 @@ export default function PublicMenu() {
               </div>
             </a>
           </footer>
+
+          <PublicTableService slug={slug} tableToken={tableToken} tableContext={tableContext} />
 
           {cart.length > 0 && !orderResult && !isCartOpen && (
             <button

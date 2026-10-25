@@ -29,6 +29,7 @@ const MenuManager = lazy(() => import("./pages/MenuManager"));
 const QRStudio = lazy(() => import("./pages/QRStudio"));
 const TableQRStudio = lazy(() => import("./pages/TableQRStudio"));
 const TableSessions = lazy(() => import("./pages/TableSessions"));
+const ServiceRequestsDashboard = lazy(() => import("./pages/ServiceRequestsDashboard"));
 
 // Orders, receipts, bookings and analytics
 const OrdersDashboard = lazy(() => import("./pages/OrdersDashboard"));
@@ -278,6 +279,15 @@ export default function App() {
             }
           />
 
+          {/* Table service requests */}
+          <Route
+            path="/dashboard/service-requests"
+            element={
+              <ProtectedRestaurantPage>
+                <ServiceRequestsDashboard />
+              </ProtectedRestaurantPage>
+            }
+          />
           {/* Unknown routes */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
