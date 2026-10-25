@@ -22,6 +22,7 @@ import {
 import { supabase } from "../lib/supabaseClient";
 import khaavioIcon from "../assets/icon.png";
 import "./PublicMenu.css";
+import "./PublicMenuExperience.css";
 
 function formatPrice(price) {
   return new Intl.NumberFormat("en-IN", {
@@ -717,14 +718,12 @@ export default function PublicMenu() {
               <div className="public-menu-feature-floating">
                 <span className="public-menu-feature-label">
                   <Sparkles size={12} />
-                  ON THE MENU
+                  MADE WITH LOVE
                 </span>
-                <strong>{featuredItem?.name || "Something delicious"}</strong>
-                {featuredItem && (
-                  <span className="public-menu-feature-price">
-                    {formatPrice(featuredItem.price)}
-                  </span>
-                )}
+                <strong>Good food, happy moments.</strong>
+                <span className="public-menu-feature-subtitle">
+                  Freshly made, just for you.
+                </span>
               </div>
               <div className="public-menu-hero-orb public-menu-hero-orb-one" />
               <div className="public-menu-hero-orb public-menu-hero-orb-two" />
@@ -1226,7 +1225,7 @@ export default function PublicMenu() {
           <footer className="public-menu-footer">
             <a
               className="public-menu-footer-brand"
-              href="https://khaavio.vercel.app/"
+              href="https://khaavio.in/"
               target="_blank"
               rel="noopener noreferrer"
               aria-label="Khaavio — restaurant ordering platform"
