@@ -11,12 +11,18 @@ const MAX_MESSAGE_LENGTH = 500;
 const MAX_BODY_LENGTH = 32_000;
 const MAX_MENU_ITEMS = 80;
 const MAX_REQUESTS_PER_MINUTE = 10;
+const RATE_LIMIT_WINDOW_SECONDS = 60;
+const RATE_LIMIT_TIMEOUT_MS = 3_000;
 
-// Prototype-level, per-runtime limiter only. Add durable shared rate limiting before public launch.
-const requests = new Map<string, { count: number; reset: number }>();
-
-function respond(data: Record<string, unknown>, status = 200): Response {
-  return new Response(JSON.stringify(data), { status, headers: corsHeaders });
+function respond(
+  data: Record<string, unknown>,
+  status = 200,
+  extraHeaders: Record<string, string> = {},
+): Response {
+  return new Response(JSON.stringify(data), {
+    status,
+    headers: { ...corsHeaders, ...extraHeaders },
+  });
 }
 
 function clean(value: unknown, max = 200): string {
@@ -44,35 +50,128 @@ function responseMatchesLanguage(reply: string, language: string): boolean {
   return ROMAN_HINDI_MARKERS.test(reply);
 }
 
-function rateLimit(ip: string): boolean {
-  const now = Date.now();
-  for (const [key, value] of requests) {
-    if (value.reset <= now) requests.delete(key);
+type RateLimitDecision = {
+  allowed: boolean;
+  remaining: number;
+  resetAt: string;
+};
+
+function getRateLimitIdentity(req: Request): string {
+  // On hosted Supabase, prefer the edge-populated CF-Connecting-IP header.
+  // Do not trust caller-supplied X-Forwarded-For / X-Real-IP as a fallback.
+  const clientIp = req.headers.get("cf-connecting-ip")?.trim();
+  if (clientIp && clientIp.length <= 64) return clientIp.toLowerCase();
+
+  // Fail closed into one shared bucket if a trusted client IP is unavailable.
+  // This is safer than allowing callers to rotate spoofed forwarding headers.
+  return "missing-trusted-client-ip";
+}
+
+async function hashRateLimitIdentity(identity: string, secret: string): Promise<string> {
+  // HMAC avoids storing raw IP addresses or a trivially reversible plain hash.
+  const key = await crypto.subtle.importKey(
+    "raw",
+    new TextEncoder().encode(secret),
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign"],
+  );
+  const digest = await crypto.subtle.sign(
+    "HMAC",
+    key,
+    new TextEncoder().encode(`khaavio-ai-chat:v1:${identity}`),
+  );
+  return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, "0")).join("");
+}
+
+async function consumeRateLimit(req: Request): Promise<RateLimitDecision | null> {
+  const supabaseUrl = Deno.env.get("SUPABASE_URL")?.replace(/\/+$/, "");
+  const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+
+  if (!supabaseUrl || !serviceRoleKey) {
+    console.error("AI rate limiter is not configured: missing Supabase server credentials.");
+    return null;
   }
-  const current = requests.get(ip);
-  if (!current || current.reset <= now) {
-    requests.set(ip, { count: 1, reset: now + 60_000 });
-    return true;
+
+  try {
+    const keyHash = await hashRateLimitIdentity(getRateLimitIdentity(req), serviceRoleKey);
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), RATE_LIMIT_TIMEOUT_MS);
+
+    let response: Response;
+    try {
+      response = await fetch(`${supabaseUrl}/rest/v1/rpc/consume_khaavio_ai_rate_limit`, {
+        method: "POST",
+        headers: {
+          apikey: serviceRoleKey,
+          Authorization: `Bearer ${serviceRoleKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          p_key_hash: keyHash,
+          p_limit: MAX_REQUESTS_PER_MINUTE,
+          p_window_seconds: RATE_LIMIT_WINDOW_SECONDS,
+        }),
+        signal: controller.signal,
+      });
+    } finally {
+      clearTimeout(timeout);
+    }
+
+    if (!response.ok) {
+      console.error("AI rate limiter RPC returned status:", response.status);
+      return null;
+    }
+
+    const payload = await response.json();
+    const result = Array.isArray(payload) ? payload[0] : payload;
+    if (
+      !result ||
+      typeof result.allowed !== "boolean" ||
+      typeof result.remaining !== "number" ||
+      typeof result.reset_at !== "string" ||
+      !Number.isFinite(Date.parse(result.reset_at))
+    ) {
+      console.error("AI rate limiter RPC returned an invalid response.");
+      return null;
+    }
+
+    return {
+      allowed: result.allowed,
+      remaining: result.remaining,
+      resetAt: result.reset_at,
+    };
+  } catch (error) {
+    console.error(
+      "AI rate limiter request failed:",
+      error instanceof Error ? error.message : "Unknown error",
+    );
+    return null;
   }
-  if (current.count >= MAX_REQUESTS_PER_MINUTE) return false;
-  current.count += 1;
-  return true;
 }
 
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   if (req.method !== "POST") return respond({ error: "METHOD_NOT_ALLOWED" }, 405);
 
-  const ip = req.headers.get("cf-connecting-ip") ||
-    req.headers.get("x-real-ip") ||
-    req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
-    "unknown";
+  const rateLimit = await consumeRateLimit(req);
+  if (!rateLimit) {
+    // Fail closed: never spend Groq tokens if the shared limiter is unavailable.
+    return respond({
+      error: "RATE_LIMIT_UNAVAILABLE",
+      message: "The assistant is temporarily unavailable. Please try again shortly.",
+    }, 503);
+  }
 
-  if (!rateLimit(ip)) {
+  if (!rateLimit.allowed) {
+    const retryAfter = Math.max(
+      1,
+      Math.ceil((Date.parse(rateLimit.resetAt) - Date.now()) / 1_000),
+    );
     return respond({
       error: "RATE_LIMITED",
       message: "Too many requests. Please try again shortly.",
-    }, 429);
+    }, 429, { "Retry-After": String(retryAfter) });
   }
 
   try {

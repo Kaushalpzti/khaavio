@@ -6,9 +6,9 @@ const SOCIAL_IMAGE = `${SITE_URL}/khaavio-social-preview.png`;
 
 const STATIC_PAGES = {
   "/": {
-    title: "Khaavio | QR Menus, Table Ordering & Restaurant Bookings",
+    title: "Khaavio | QR Ordering, Menus & Restaurant Operations",
     description:
-      "Give your restaurant a branded digital menu, table-wise QR ordering, kitchen updates and table bookings in one simple workspace. Start with a 7-day free trial.",
+      "Manage digital menus, table QR orders, bookings, kitchen workflows, table billing, loyalty rewards, guest feedback and AI menu help in one workspace.",
     indexable: true,
   },
   "/privacy": {

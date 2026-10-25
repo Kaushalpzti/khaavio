@@ -934,7 +934,7 @@
 
 .kh-feature-grid {
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 14px;
 }
 
@@ -989,6 +989,31 @@
 .kh-feature-card:nth-child(4) .kh-feature-icon {
     color: #816e50;
     background: #eee9dc;
+}
+
+.kh-feature-card:nth-child(5) .kh-feature-icon {
+    color: #4d7470;
+    background: #e4efed;
+}
+
+.kh-feature-card:nth-child(6) .kh-feature-icon {
+    color: #816e50;
+    background: #eee9dc;
+}
+
+.kh-feature-card:nth-child(7) .kh-feature-icon {
+    color: #59784f;
+    background: #e8efe4;
+}
+
+.kh-feature-card:nth-child(8) .kh-feature-icon {
+    color: #8d6c59;
+    background: #f3e7de;
+}
+
+.kh-feature-card:nth-child(9) .kh-feature-icon {
+    color: #6d7291;
+    background: #ebeaf4;
 }
 
 .kh-feature-label {

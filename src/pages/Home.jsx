@@ -4,16 +4,22 @@ import {
   ArrowRight,
   ArrowUpRight,
   BarChart3,
+  BellRing,
+  Bot,
   CalendarCheck,
   Check,
+  ChefHat,
   ChevronDown,
   ChevronLeft,
   ChevronRight,
   CreditCard,
+  Gift,
   LayoutDashboard,
   Mail,
   Menu,
+  MessageSquareText,
   QrCode,
+  ReceiptText,
   ShieldCheck,
   Sparkles,
   Store,
@@ -44,35 +50,75 @@ const socialProfiles = [
 const features = [
   {
     number: "01",
-    label: "DIGITAL MENU",
-    title: "Your menu, always up to date.",
+    label: "MENU + QR STUDIO",
+    title: "A menu that feels like your restaurant.",
     description:
-      "Show dishes, photos, prices and categories in a mobile-friendly menu you can manage from your restaurant workspace.",
+      "Organise dishes, categories, prices and photos, then generate shareable restaurant and table QR codes from one workspace.",
     icon: UtensilsCrossed,
   },
   {
     number: "02",
-    label: "QR ORDERING",
-    title: "From table scan to kitchen.",
+    label: "QR ORDERING + TRACKING",
+    title: "From table scan to order updates.",
     description:
-      "Give every table its own QR code so guests can browse the menu and place orders without downloading an app.",
+      "Guests browse and order from their phone browser, then follow order progress and view their order details without downloading an app.",
     icon: QrCode,
   },
   {
     number: "03",
-    label: "TABLE BOOKINGS",
-    title: "Keep every reservation organised.",
+    label: "BOOKINGS",
+    title: "Keep reservations in one place.",
     description:
-      "Receive booking requests, review guest details, manage confirmations and see reservations in one clear workspace.",
+      "Receive and manage table-booking requests from the dashboard. Growth adds an advanced calendar, search, date filters and CSV export.",
     icon: CalendarCheck,
   },
   {
     number: "04",
-    label: "KITCHEN + INSIGHTS",
-    title: "Know what needs attention.",
+    label: "ORDERS + INSIGHTS",
+    title: "Stay close to every order.",
     description:
-      "Follow order progress in the Kitchen Display and use receipts and basic analytics to keep daily operations moving.",
-    icon: BarChart3,
+      "Follow incoming orders in the Orders workspace and Kitchen Display, issue receipts, and review basic order analytics. Growth adds enhanced insights.",
+    icon: ChefHat,
+  },
+  {
+    number: "05",
+    label: "TABLE-SIDE SERVICE",
+    title: "Help is one tap away.",
+    description:
+      "From an active table QR, guests can ask for a waiter, water, cutlery or the bill. Staff can manage requests from the dashboard.",
+    icon: BellRing,
+  },
+  {
+    number: "06",
+    label: "TABLE SESSIONS + BILLING",
+    title: "Bring each table’s bill together.",
+    description:
+      "Track open table sessions, combine eligible orders into a final bill, create a numbered invoice and print it for the guest.",
+    icon: ReceiptText,
+  },
+  {
+    number: "07",
+    label: "LOYALTY + REWARDS",
+    title: "Give guests a reason to return.",
+    description:
+      "Offer digital stamp tracking and rewards that guests can view from the restaurant menu, helping make repeat visits more rewarding.",
+    icon: Gift,
+  },
+  {
+    number: "08",
+    label: "GUEST REVIEWS + FEEDBACK",
+    title: "Keep the conversation going.",
+    description:
+      "Collect private guest ratings and feedback, and offer an optional Google review link when the restaurant has configured one.",
+    icon: MessageSquareText,
+  },
+  {
+    number: "09",
+    label: "ASK KHAAVIO AI",
+    title: "A menu assistant for every guest.",
+    description:
+      "Guests can ask about dishes and prices or get menu suggestions in English, Hindi or Hinglish, based on the menu available to them.",
+    icon: Bot,
   },
 ];
 
@@ -82,14 +128,18 @@ const plans = [
     monthlyPrice: "499",
     yearlyPrice: "4,990",
     foundingPrice: "3,999",
-    description: "The essentials for bringing a single restaurant online.",
+    description: "Everyday ordering, guest tools and table operations for independent restaurants.",
     features: [
-      "Mobile-friendly digital menu",
-      "Restaurant and table QR codes",
-      "Online orders and Kitchen Display",
-      "Customer order tracking and receipts",
-      "Basic booking management and order analytics",
-      "Restaurant hours and pause-orders controls",
+      "Digital menu management and restaurant/table QR codes",
+      "QR ordering, customer order tracking and receipts",
+      "Orders workspace and Kitchen Display",
+      "Basic table-booking management",
+      "Table-side service requests: waiter, water, cutlery and bill",
+      "Table sessions, final bills and printable invoices",
+      "Digital loyalty stamps and rewards",
+      "Guest feedback and optional Google review links",
+      "Ask Khaavio AI menu assistant in English, Hindi and Hinglish",
+      "Basic order analytics, business hours and pause-orders controls",
     ],
     cta: "Start 7-day free trial",
   },
@@ -98,12 +148,13 @@ const plans = [
     monthlyPrice: "899",
     yearlyPrice: "8,990",
     foundingPrice: "6,999",
-    description: "More visibility and control for busy restaurants.",
+    description: "Everything in Starter, plus deeper booking tools and business insights.",
     features: [
       "Everything in Starter",
-      "Booking calendar, search and date filters",
-      "Booking CSV export and enhanced analytics",
-      "Priority support during the pilot",
+      "Advanced booking calendar, search and date filters",
+      "Booking CSV export",
+      "Enhanced analytics and menu performance insights",
+      "Priority support during the founding pilot",
     ],
     cta: "Start 7-day free trial",
     popular: true,
@@ -114,7 +165,7 @@ const faqs = [
   {
     question: "Who can use Khaavio?",
     answer:
-      "Independent cafés, restaurants, bakeries, dessert shops and cloud kitchens can use Khaavio to manage their digital menu, QR ordering and guest reservations.",
+      "Independent cafés, restaurants, bakeries, dessert shops and cloud kitchens can use Khaavio for digital menus, QR ordering, bookings, kitchen workflows, table-side requests and guest engagement.",
   },
   {
     question: "Do my customers need to download an app?",
@@ -124,12 +175,12 @@ const faqs = [
   {
     question: "Can I update my menu and availability?",
     answer:
-      "Yes. Restaurant owners can manage menu items and availability from their workspace. They can also configure business hours and pause online orders when needed.",
+      "Yes. Restaurant owners can manage menu items, availability, prices and photos from their workspace, configure business hours, and pause online orders when needed.",
   },
   {
     question: "Can customers place orders and reserve tables?",
     answer:
-      "Published restaurants can offer QR-based table ordering and online table booking. Restaurants can manage incoming orders and booking requests from their dashboard.",
+      "Published restaurants can offer QR-based table ordering and online table booking. The team can manage orders, kitchen progress, table-side service requests and booking requests from the workspace.",
   },
   {
     question: "How does pricing work?",
@@ -137,9 +188,19 @@ const faqs = [
       "Every new restaurant starts with a 7-day free trial. Starter is ₹499 per month or ₹4,990 per year; Growth is ₹899 per month or ₹8,990 per year. The first 10 restaurants can request a founding annual price. During the pilot, plan activation is handled manually and online payments or automatic renewals are not enabled yet.",
   },
   {
+    question: "What guest-facing tools are available?",
+    answer:
+      "Depending on the restaurant setup and how a guest opens the menu, customers can use Ask Khaavio AI for menu suggestions, view loyalty stamps and rewards, share private feedback, open a configured Google review link, and send requests such as calling a waiter from a valid table QR.",
+  },
+  {
+    question: "What is included in Starter and Growth?",
+    answer:
+      "Both plans include the current core guest and restaurant tools: digital menus and QR codes, QR ordering, Kitchen Display, receipts, basic bookings and analytics, table-side requests, table sessions and bills, loyalty stamps and rewards, guest feedback, and Ask Khaavio AI. Growth adds advanced booking tools, CSV export, enhanced analytics and priority pilot support.",
+  },
+  {
     question: "Can I try Khaavio before paying?",
     answer:
-      "Yes. The 7-day trial is designed for you to set up your menu, try QR ordering, review the Kitchen Display and test booking workflows before choosing a paid plan.",
+      "Yes. The 7-day trial is designed for you to set up your menu, try QR ordering, explore table-side requests, table billing, loyalty and Ask Khaavio AI, and test booking workflows before choosing a paid plan.",
   },
 ];
 
@@ -623,9 +684,9 @@ export default function Home() {
             </h1>
 
             <p>
-              Digital menus, table-by-table QR ordering, kitchen updates and
-              guest bookings—all connected in one calm workspace built around
-              your restaurant and its own identity.
+              Digital menus, QR ordering, reservations, kitchen workflows and
+              guest tools—all connected in one workspace built around your
+              restaurant and its own identity.
             </p>
 
             <div className="kh-hero-actions">
@@ -657,7 +718,7 @@ export default function Home() {
               </div>
               <div>
                 <strong>Made for independent food businesses</strong>
-                <p>From your first café to multiple locations.</p>
+                <p>From the first menu upload to everyday service.</p>
               </div>
             </div>
 
@@ -666,13 +727,13 @@ export default function Home() {
               aria-label="Khaavio essentials"
             >
               <span>
-                <Check size={13} /> Restaurant-branded menus
+                <Check size={13} /> Digital menu + QR studio
               </span>
               <span>
-                <Check size={13} /> Unique table QR codes
+                <Check size={13} /> Orders, kitchen + table billing
               </span>
               <span>
-                <Check size={13} /> Orders and bookings together
+                <Check size={13} /> Bookings + guest engagement tools
               </span>
             </div>
           </div>
@@ -740,8 +801,8 @@ export default function Home() {
               </h2>
             </div>
             <p>
-              From the first QR scan to the final order update, manage the
-              essentials of your restaurant in one connected workspace.
+              From the first QR scan to the final bill, service request or repeat-visit
+              reward, manage restaurant operations and guest touchpoints in one workspace.
             </p>
           </div>
 
