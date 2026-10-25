@@ -87,55 +87,14 @@ export default function LoyaltyDashboard() {
         return;
       }
 
-      const [
-        programResult,
-        memberCount,
-        stampCount,
-        availableCount,
-        redeemedCount,
-        memberRows,
-        rewardRows,
-      ] = await Promise.all([
-        supabase
-          .from("restaurant_loyalty_programs")
-          .select(
-            "restaurant_id, enabled, stamps_required, min_order_amount, reward_name",
-          )
-          .eq("restaurant_id", chosenId)
-          .maybeSingle(),
-        supabase
-          .from("restaurant_loyalty_members")
-          .select("id", { count: "exact", head: true })
-          .eq("restaurant_id", chosenId),
-        supabase
-          .from("restaurant_loyalty_ledger")
-          .select("id", { count: "exact", head: true })
-          .eq("restaurant_id", chosenId)
-          .eq("entry_type", "stamp_earned"),
-        supabase
-          .from("restaurant_loyalty_rewards")
-          .select("id", { count: "exact", head: true })
-          .eq("restaurant_id", chosenId)
-          .eq("status", "available"),
-        supabase
-          .from("restaurant_loyalty_rewards")
-          .select("id", { count: "exact", head: true })
-          .eq("restaurant_id", chosenId)
-          .eq("status", "redeemed"),
-        supabase
-          .from("restaurant_loyalty_members")
-          .select("id, created_at, last_seen_at")
-          .eq("restaurant_id", chosenId)
-          .order("last_seen_at", { ascending: false })
-          .limit(12),
-        supabase
-          .from("restaurant_loyalty_rewards")
-          .select(
-            "id, member_id, unlock_order_id, reward_name, redemption_code, status, created_at, revealed_at, redeemed_at",
-          )
-          .eq("restaurant_id", chosenId)
-          .order("created_at", { ascending: false })
-          .limit(30),
+      const [programResult, memberCount, stampCount, availableCount, redeemedCount, memberRows, rewardRows] = await Promise.all([
+        supabase.from("restaurant_loyalty_programs").select("restaurant_id, enabled, stamps_required, min_order_amount, reward_name").eq("restaurant_id", chosenId).maybeSingle(),
+        supabase.from("restaurant_loyalty_members").select("id", { count: "exact", head: true }).eq("restaurant_id", chosenId),
+        supabase.from("restaurant_loyalty_ledger").select("id", { count: "exact", head: true }).eq("restaurant_id", chosenId).eq("entry_type", "stamp_earned"),
+        supabase.from("restaurant_loyalty_rewards").select("id", { count: "exact", head: true }).eq("restaurant_id", chosenId).eq("status", "available"),
+        supabase.from("restaurant_loyalty_rewards").select("id", { count: "exact", head: true }).eq("restaurant_id", chosenId).eq("status", "redeemed"),
+        supabase.from("restaurant_loyalty_members").select("id, created_at, last_seen_at, phone_number, phone_consent_at, marketing_opt_in, marketing_opt_in_at, marketing_opt_out_at").eq("restaurant_id", chosenId).order("last_seen_at", { ascending: false }).limit(50),
+        supabase.from("restaurant_loyalty_rewards").select("id, member_id, unlock_order_id, reward_name, redemption_code, status, created_at, revealed_at, redeemed_at").eq("restaurant_id", chosenId).order("created_at", { ascending: false }).limit(30),
       ]);
 
       for (const result of [programResult, memberCount, stampCount, availableCount, redeemedCount, memberRows, rewardRows]) {
@@ -312,21 +271,21 @@ export default function LoyaltyDashboard() {
         </section>
 
         <section className="loyalty-panel loyalty-members-panel">
-          <div className="loyalty-panel-heading"><div><span className="loyalty-dashboard-eyebrow">YOUR COMMUNITY</span><h2>Recent Perks cards</h2></div><span className="loyalty-count-pill">{members.length} shown</span></div>
-          {members.length === 0 ? <div className="loyalty-empty"><UsersRound size={25} /><strong>No members yet</strong><p>Once a guest places an order with Perks enabled, their private browser card will appear here.</p></div> : (
+          <div className="loyalty-panel-heading"><div><span className="loyalty-dashboard-eyebrow">YOUR COMMUNITY</span><h2>Customer leads & Perks cards</h2></div><span className="loyalty-count-pill">{members.length} shown</span></div>
+          {members.length === 0 ? <div className="loyalty-empty"><UsersRound size={25} /><strong>No members yet</strong><p>Customers who join Khaavio Perks with a mobile number will appear here. Numbers are customer-provided and not OTP-verified.</p></div> : (
             <div className="loyalty-member-list">
-              {members.map((member) => <article className="loyalty-member-row" key={member.id}><span className="loyalty-member-avatar"><Gift size={17} /></span><span className="loyalty-member-copy"><strong>Perks member · {member.id.replace(/-/g, "").slice(0, 6).toUpperCase()}</strong><small>First seen {formatDate(member.created_at)}</small></span><span className="loyalty-member-last-seen">Seen {formatDate(member.last_seen_at)}</span></article>)}
+              {members.map((member) => <article className="loyalty-member-row" key={member.id}><span className="loyalty-member-avatar"><Gift size={17} /></span><span className="loyalty-member-copy"><strong>{member.phone_number || `Legacy Perks member · ${member.id.replace(/-/g, "").slice(0, 6).toUpperCase()}`}</strong><small>Joined {formatDate(member.created_at)} · Mobile not OTP-verified</small><small className={`loyalty-marketing-status${member.marketing_opt_in ? " is-opted-in" : ""}`}>{member.marketing_opt_in ? "Offers: opted in (self-reported)" : "No promotional consent"}</small></span><span className="loyalty-member-last-seen">Seen {formatDate(member.last_seen_at)}</span></article>)}
             </div>
           )}
-          <p className="loyalty-muted-note">V1 cards are saved to the guest's browser. Phone verification and cross-device recovery can be added later.</p>
+          <p className="loyalty-muted-note">Mobile numbers and offer preferences are customer-provided, not OTP-verified. Treat this list as unverified until confirmed in person; send promotional offers only to customers who explicitly opted in. Staff must confirm the customer/order context before handing over a reward.</p>
         </section>
       </div>
 
       <section className="loyalty-panel loyalty-rewards-panel">
         <div className="loyalty-panel-heading"><div><span className="loyalty-dashboard-eyebrow">REDEMPTION DESK</span><h2>Rewards to redeem</h2><p>Check the customer's code and mark it redeemed only when the reward is handed over.</p></div><span className="loyalty-count-pill">{rewards.length} recent</span></div>
         {rewards.length === 0 ? <div className="loyalty-empty compact"><TicketCheck size={25} /><strong>No rewards unlocked yet</strong><p>Rewards appear here when eligible completed and paid orders unlock them.</p></div> : (
-          <div className="loyalty-rewards-table-wrap"><table className="loyalty-rewards-table"><thead><tr><th>Reward</th><th>Member</th><th>Code</th><th>Status</th><th>Unlocked</th><th>Action</th></tr></thead><tbody>
-            {rewards.map((reward) => <tr key={reward.id}><td><strong>{reward.reward_name}</strong></td><td><span className="loyalty-code-muted">{reward.member_id.replace(/-/g, "").slice(0, 6).toUpperCase()}</span></td><td><code>{reward.redemption_code}</code></td><td><span className={`loyalty-reward-status is-${reward.status}`}>{reward.status === "available" ? "Available" : "Redeemed"}</span></td><td>{formatDate(reward.created_at)}</td><td>{reward.status === "available" ? <button type="button" className="loyalty-redeem-button" onClick={() => void redeemReward(reward)} disabled={redeemingId === reward.id}>{redeemingId === reward.id ? <LoaderCircle size={14} className="loyalty-spin" /> : <BadgeCheck size={14} />} Mark redeemed</button> : <span className="loyalty-redeemed-date">{formatDate(reward.redeemed_at)}</span>}</td></tr>)}
+          <div className="loyalty-rewards-table-wrap"><table className="loyalty-rewards-table"><thead><tr><th>Reward</th><th>Customer mobile / member</th><th>Code</th><th>Status</th><th>Unlocked</th><th>Action</th></tr></thead><tbody>
+            {rewards.map((reward) => <tr key={reward.id}><td><strong>{reward.reward_name}</strong></td><td><strong>{members.find((member) => member.id === reward.member_id)?.phone_number || `Member ${reward.member_id.replace(/-/g, "").slice(0, 6).toUpperCase()}`}</strong><small className="loyalty-member-unverified">Mobile is not OTP-verified</small></td><td><code>{reward.redemption_code}</code></td><td><span className={`loyalty-reward-status is-${reward.status}`}>{reward.status === "available" ? "Available" : "Redeemed"}</span></td><td>{formatDate(reward.created_at)}</td><td>{reward.status === "available" ? <button type="button" className="loyalty-redeem-button" onClick={() => void redeemReward(reward)} disabled={redeemingId === reward.id}>{redeemingId === reward.id ? <LoaderCircle size={14} className="loyalty-spin" /> : <BadgeCheck size={14} />} Mark redeemed</button> : <span className="loyalty-redeemed-date">{formatDate(reward.redeemed_at)}</span>}</td></tr>)}
           </tbody></table></div>
         )}
       </section>

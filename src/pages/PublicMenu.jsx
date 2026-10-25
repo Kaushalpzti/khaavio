@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+﻿import { useEffect, useState } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import {
   ArrowLeft,
@@ -13,7 +13,8 @@ import {
   Plus,
   Search,
   ShoppingBag,
-  Sparkles,
+  Gift,
+  House,
   Trash2,
   UtensilsCrossed,
   X,
@@ -21,6 +22,7 @@ import {
 
 import { supabase } from "../lib/supabaseClient";
 import { getOrCreateKhaavioLoyaltyToken } from "../lib/loyaltyToken";
+import { getStoredKhaavioLoyaltyPhone, setStoredKhaavioLoyaltyPhone } from "../lib/loyaltyPhone";
 import PublicTableService from "../components/PublicTableService";
 import PublicLoyaltyClub from "../components/PublicLoyaltyClub";
 import PublicReviewsFeedback from "../components/PublicReviewsFeedback";
@@ -162,8 +164,11 @@ export default function PublicMenu() {
 
   const [cart, setCart] = useState([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
+  const [isRewardsOpen, setIsRewardsOpen] = useState(false);
+  const [activeBottomTab, setActiveBottomTab] = useState("home");
   const [customerName, setCustomerName] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
+  const [loyaltyPhone, setLoyaltyPhone] = useState(() => getStoredKhaavioLoyaltyPhone(slug));
   const [orderNotes, setOrderNotes] = useState("");
 
   const [loading, setLoading] = useState(true);
@@ -174,6 +179,11 @@ export default function PublicMenu() {
   const [availabilityNow, setAvailabilityNow] = useState(0);
   const [subscriptionAllowsTransactions, setSubscriptionAllowsTransactions] =
     useState(null);
+
+  function handleLoyaltyPhoneChange(value) {
+    setLoyaltyPhone(value);
+    setStoredKhaavioLoyaltyPhone(slug, value);
+  }
 
   // Give each published restaurant menu a useful, restaurant-specific title.
   useEffect(() => {
@@ -381,6 +391,25 @@ export default function PublicMenu() {
     };
   }, [isCartOpen, submitting]);
 
+  useEffect(() => {
+    if (!isRewardsOpen) return undefined;
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const handleEscape = (event) => {
+      if (event.key === "Escape") {
+        setIsRewardsOpen(false);
+        setActiveBottomTab("home");
+      }
+    };
+
+    window.addEventListener("keydown", handleEscape);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", handleEscape);
+    };
+  }, [isRewardsOpen]);
+
   const visibleItems = items.filter((item) => {
     const matchesCategory =
       categoryId === "all" || item.category_id === categoryId;
@@ -399,8 +428,6 @@ export default function PublicMenu() {
   );
 
   const cartQuantity = cart.reduce((total, entry) => total + entry.quantity, 0);
-
-  const featuredItem = items.find((item) => item.image_url) || items[0] || null;
 
   const baseOrderingAvailability = getRestaurantAvailability(
     restaurant,
@@ -545,6 +572,7 @@ export default function PublicMenu() {
           quantity: entry.quantity,
         })),
         p_loyalty_member_token: getOrCreateKhaavioLoyaltyToken(slug),
+        p_loyalty_phone: loyaltyPhone || null,
       };
 
       const { data, error: orderError } = await supabase.rpc(
@@ -708,32 +736,6 @@ export default function PublicMenu() {
               </div>
             </div>
 
-            <div className="public-menu-hero-visual">
-              {featuredItem?.image_url ? (
-                <img
-                  src={featuredItem.image_url}
-                  alt={featuredItem.name}
-                  className="public-menu-feature-image"
-                />
-              ) : (
-                <div className="public-menu-feature-placeholder">
-                  <UtensilsCrossed size={42} />
-                  <span>Fresh moments start here</span>
-                </div>
-              )}
-              <div className="public-menu-feature-floating">
-                <span className="public-menu-feature-label">
-                  <Sparkles size={12} />
-                  MADE WITH LOVE
-                </span>
-                <strong>Good food, happy moments.</strong>
-                <span className="public-menu-feature-subtitle">
-                  Freshly made, just for you.
-                </span>
-              </div>
-              <div className="public-menu-hero-orb public-menu-hero-orb-one" />
-              <div className="public-menu-hero-orb public-menu-hero-orb-two" />
-            </div>
 
             <div className="public-menu-hero-status">
               <div
@@ -750,7 +752,6 @@ export default function PublicMenu() {
             </div>
           </section>
 
-          <PublicLoyaltyClub slug={slug} />
           <section className="public-menu-content" id="menu">
             <div className="public-menu-heading">
               <div>
@@ -786,7 +787,7 @@ export default function PublicMenu() {
                     onClick={() => setSearch("")}
                     aria-label="Clear search"
                   >
-                    ×
+                    Ã—
                   </button>
                 )}
               </label>
@@ -1224,7 +1225,7 @@ export default function PublicMenu() {
                         )}
                         {submitting
                           ? "Submitting order..."
-                          : `Place order · ${formatPrice(cartTotal)}`}
+                          : `Place order Â· ${formatPrice(cartTotal)}`}
                       </button>
 
                       <p className="public-order-disclaimer">
@@ -1252,7 +1253,7 @@ export default function PublicMenu() {
               href="https://khaavio.in/"
               target="_blank"
               rel="noopener noreferrer"
-              aria-label="Khaavio — restaurant ordering platform"
+              aria-label="Khaavio â€” restaurant ordering platform"
             >
               <img src={khaavioIcon} alt="" />
               <div>
@@ -1263,6 +1264,106 @@ export default function PublicMenu() {
               </div>
             </a>
           </footer>
+
+          <nav className="public-menu-bottom-navigation" aria-label="Menu navigation">
+            <button
+              type="button"
+              className={activeBottomTab === "home" ? "is-active" : ""}
+              aria-pressed={activeBottomTab === "home"}
+              onClick={() => {
+                setIsRewardsOpen(false);
+                setActiveBottomTab("home");
+                window.scrollTo({ top: 0, behavior: "smooth" });
+              }}
+            >
+              <House size={19} strokeWidth={2.1} />
+              <span>Home</span>
+            </button>
+            <button
+              type="button"
+              className={activeBottomTab === "menu" ? "is-active" : ""}
+              aria-pressed={activeBottomTab === "menu"}
+              onClick={() => {
+                setIsRewardsOpen(false);
+                setActiveBottomTab("menu");
+                document.getElementById("menu")?.scrollIntoView({
+                  behavior: "smooth",
+                  block: "start",
+                });
+              }}
+            >
+              <UtensilsCrossed size={19} strokeWidth={2.1} />
+              <span>Menu</span>
+            </button>
+            <button
+              type="button"
+              className={activeBottomTab === "rewards" ? "is-active" : ""}
+              aria-pressed={activeBottomTab === "rewards"}
+              onClick={() => {
+                setActiveBottomTab("rewards");
+                setIsRewardsOpen(true);
+              }}
+            >
+              <Gift size={19} strokeWidth={2.1} />
+              <span>Rewards</span>
+            </button>
+            <Link
+              to={`/book/${encodeURIComponent(restaurant.slug)}`}
+              className={activeBottomTab === "book" ? "is-active" : ""}
+              aria-label="Book a table"
+              onClick={() => {
+                setIsRewardsOpen(false);
+                setActiveBottomTab("book");
+              }}
+            >
+              <CalendarDays size={19} strokeWidth={2.1} />
+              <span>Book table</span>
+            </Link>
+          </nav>
+
+          {isRewardsOpen && (
+            <div
+              className="public-menu-rewards-sheet-backdrop"
+              role="presentation"
+              onClick={(event) => {
+                if (event.target === event.currentTarget) {
+                  setIsRewardsOpen(false);
+                  setActiveBottomTab("home");
+                }
+              }}
+            >
+              <section
+                className="public-menu-rewards-sheet"
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="public-menu-rewards-sheet-title"
+              >
+                <div className="public-menu-rewards-sheet-grabber" aria-hidden="true" />
+                <header className="public-menu-rewards-sheet-header">
+                  <div>
+                    <span className="public-menu-rewards-sheet-eyebrow"><Gift size={13} /> YOUR REWARDS</span>
+                    <h2 id="public-menu-rewards-sheet-title">Khaavio Perks</h2>
+                    <p>Keep track of your stamps and unlocked treats.</p>
+                  </div>
+                  <button
+                    type="button"
+                    className="public-menu-rewards-sheet-close"
+                    aria-label="Close rewards"
+                    onClick={() => {
+                      setIsRewardsOpen(false);
+                      setActiveBottomTab("home");
+                    }}
+                  >
+                    <X size={18} />
+                  </button>
+                </header>
+                <div className="public-menu-rewards-sheet-content">
+                  <p className="public-menu-rewards-empty">This restaurant has not enabled Khaavio Perks yet. Ask the restaurant team about current rewards.</p>
+                  <PublicLoyaltyClub slug={slug} phone={loyaltyPhone} onPhoneChange={handleLoyaltyPhoneChange} />
+                </div>
+              </section>
+            </div>
+          )}
 
           <PublicTableService slug={slug} tableToken={tableToken} tableContext={tableContext} />
 
@@ -1304,3 +1405,4 @@ export default function PublicMenu() {
     </main>
   );
 }
+

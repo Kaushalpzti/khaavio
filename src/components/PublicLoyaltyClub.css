@@ -78,3 +78,36 @@
 @media (prefers-reduced-motion: reduce) {
   .public-perks, .public-perks-stamp.is-earned, .public-perks-gift, .public-perks-sunburst, .public-perks-spin { animation: none !important; }
 }
+
+
+/* Phone-based loyalty enrollment and privacy/consent controls */
+.public-perks-phone-form { display:flex; flex-direction:column; gap:11px; margin-top:16px; }
+.public-perks-phone-field { display:flex; flex-direction:column; gap:7px; color:#365542; font-size:11px; font-weight:800; }
+.public-perks-phone-field > span { display:flex; align-items:center; gap:7px; }
+.public-perks-phone-field input { width:100%; min-height:44px; border:1px solid #d8e4d6; border-radius:12px; padding:10px 12px; color:#243f2e; background:#fffdf8; font:inherit; font-size:14px; outline:none; }
+.public-perks-phone-field input:focus { border-color:#4d8b60; box-shadow:0 0 0 3px rgba(77,139,96,.13); }
+.public-perks-phone-field small { color:#7d8a7d; font-size:10px; font-weight:500; line-height:1.5; }
+.public-perks-consent-row { display:flex; align-items:flex-start; gap:8px; color:#5f725f; font-size:10px; font-weight:500; line-height:1.5; }
+.public-perks-consent-row input, .public-perks-marketing-preference input { flex:0 0 auto; margin-top:2px; accent-color:#28774e; }
+.public-perks-consent-row.is-marketing { color:#7c8478; }
+.public-perks-join-button { display:inline-flex; align-items:center; justify-content:center; gap:8px; min-height:42px; border:0; border-radius:12px; padding:10px 14px; color:#fff; background:linear-gradient(135deg,#177c53,#08623f); font-weight:800; font-size:12px; cursor:pointer; }
+.public-perks-join-button:disabled { opacity:.65; cursor:wait; }
+.public-perks-mobile-identity { display:flex; align-items:center; gap:9px; margin-top:14px; border:1px solid #e1e8dc; border-radius:12px; background:rgba(255,255,255,.66); padding:9px 10px; }
+.public-perks-phone-icon { display:grid; place-items:center; flex:0 0 31px; width:31px; height:31px; border-radius:10px; background:#e6f2e4; color:#27724c; }
+.public-perks-mobile-identity > span:nth-child(2) { display:flex; flex:1; min-width:0; flex-direction:column; gap:3px; }
+.public-perks-mobile-identity strong { color:#244832; font-size:12px; }
+.public-perks-mobile-identity small { color:#7b897a; font-size:9px; }
+.public-perks-mobile-identity button, .public-perks-marketing-preference button { border:1px solid #dce7d9; border-radius:9px; padding:6px 8px; color:#286846; background:#fff; font-size:10px; font-weight:800; cursor:pointer; }
+.public-perks-marketing-preference { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:9px; margin-top:13px; border-top:1px solid #e6eadf; padding-top:11px; }
+.public-perks-marketing-preference label { display:flex; align-items:flex-start; gap:7px; color:#748175; font-size:10px; line-height:1.5; }
+.public-perks-privacy-note { display:flex; align-items:flex-start; gap:6px; margin:10px 2px 0; color:#899187; font-size:9px; line-height:1.5; }
+.public-perks-privacy-note svg { flex:0 0 auto; margin-top:1px; }
+.public-perks-loading { display:flex; align-items:center; gap:9px; color:#6e806e; font-size:12px; }
+@media (max-width:620px) {
+ .public-perks-phone-card { grid-template-columns:minmax(0,1fr) 46px; gap:4px; }
+ .public-perks-phone-field input { min-height:42px; font-size:13px; }
+ .public-perks-join-button { width:100%; }
+ .public-perks-mobile-identity { gap:7px; padding:8px; }
+ .public-perks-mobile-identity strong { font-size:11px; }
+ .public-perks-mobile-identity button { padding:6px; }
+}
