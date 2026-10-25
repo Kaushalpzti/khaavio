@@ -22,6 +22,7 @@ import {
 import { supabase } from "../lib/supabaseClient";
 import PublicTableService from "../components/PublicTableService";
 import PublicReviewsFeedback from "../components/PublicReviewsFeedback";
+import AskKhaavio from "../components/AskKhaavio";
 import khaavioIcon from "../assets/icon.png";
 import "./PublicMenu.css";
 import "./PublicMenuExperience.css";
@@ -1260,6 +1261,14 @@ export default function PublicMenu() {
           </footer>
 
           <PublicTableService slug={slug} tableToken={tableToken} tableContext={tableContext} />
+
+          <AskKhaavio
+            restaurant={restaurant}
+            menuItems={items}
+            categories={categories}
+            onAddToCart={addToCart}
+            hasStickyCart={cart.length > 0 && !orderResult && !isCartOpen}
+          />
 
           {cart.length > 0 && !orderResult && !isCartOpen && (
             <button
