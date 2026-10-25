@@ -16,8 +16,25 @@ import "./RestaurantSettings.css";
 import "./RestaurantSettingsLogo.css";
 
 const RESTAURANT_FIELDS =
-  "id, name, slug, restaurant_type, logo_url, phone, contact_email, address, city, state, postal_code, description, is_published";
+  "id, name, slug, restaurant_type, logo_url, phone, contact_email, address, city, state, postal_code, description, google_review_url, is_published";
 
+const GOOGLE_REVIEW_HOSTS = new Set([
+  "g.page",
+  "search.google.com",
+  "www.google.com",
+  "maps.google.com",
+  "maps.app.goo.gl",
+]);
+
+function isAllowedGoogleReviewUrl(value) {
+  if (!value) return true;
+  try {
+    const url = new URL(value.trim());
+    return url.protocol === "https:" && GOOGLE_REVIEW_HOSTS.has(url.hostname.toLowerCase());
+  } catch {
+    return false;
+  }
+}
 const LOGO_BUCKET = "restaurant-logos";
 const MAX_LOGO_FILE_BYTES = 5 * 1024 * 1024;
 
@@ -101,6 +118,7 @@ const INITIAL_FORM = {
   state: "",
   postal_code: "",
   description: "",
+  google_review_url: "",
 };
 
 const BUSINESS_TYPES = [
@@ -122,6 +140,7 @@ function formFromRestaurant(restaurant) {
     state: restaurant.state || "",
     postal_code: restaurant.postal_code || "",
     description: restaurant.description || "",
+    google_review_url: restaurant.google_review_url || "",
   };
 }
 
@@ -311,6 +330,7 @@ export default function RestaurantSettings() {
 
     const name = form.name.trim();
     const email = form.contact_email.trim();
+    const googleReviewUrl = form.google_review_url.trim();
 
     if (name.length < 2) {
       setError("Restaurant name must contain at least 2 characters.");
@@ -324,6 +344,10 @@ export default function RestaurantSettings() {
 
     if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       setError("Please enter a valid business email address.");
+      return;
+    }
+    if (googleReviewUrl && !isAllowedGoogleReviewUrl(googleReviewUrl)) {
+      setError("Use a valid HTTPS Google review link (for example, a g.page or Google Maps review URL).");
       return;
     }
 
@@ -342,6 +366,7 @@ export default function RestaurantSettings() {
         state: form.state.trim() || null,
         postal_code: form.postal_code.trim() || null,
         description: form.description.trim(),
+        google_review_url: googleReviewUrl || null,
       };
 
       const { data, error: updateError } = await supabase
@@ -679,6 +704,23 @@ export default function RestaurantSettings() {
                     />
                     <span className="restaurant-settings-field-hint">
                       {form.description.length}/1000 characters
+                    </span>
+                  </div>
+                  <div className="restaurant-settings-field full-width">
+                    <label htmlFor="settings-google-review-url">Google review link <span className="restaurant-settings-field-hint">(optional)</span></label>
+                    <input
+                      id="settings-google-review-url"
+                      name="google_review_url"
+                      type="url"
+                      inputMode="url"
+                      autoComplete="url"
+                      value={form.google_review_url}
+                      onChange={updateField}
+                      placeholder="https://g.page/r/.../review"
+                      maxLength={500}
+                    />
+                    <span className="restaurant-settings-field-hint">
+                      Add your Google Business Profile review link. It appears to all customers, regardless of their private feedback rating.
                     </span>
                   </div>
                 </div>

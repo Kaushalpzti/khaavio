@@ -30,6 +30,7 @@ const QRStudio = lazy(() => import("./pages/QRStudio"));
 const TableQRStudio = lazy(() => import("./pages/TableQRStudio"));
 const TableSessions = lazy(() => import("./pages/TableSessions"));
 const ServiceRequestsDashboard = lazy(() => import("./pages/ServiceRequestsDashboard"));
+const ReviewFeedbackDashboard = lazy(() => import("./pages/ReviewFeedbackDashboard"));
 
 // Orders, receipts, bookings and analytics
 const OrdersDashboard = lazy(() => import("./pages/OrdersDashboard"));
@@ -285,6 +286,15 @@ export default function App() {
             element={
               <ProtectedRestaurantPage>
                 <ServiceRequestsDashboard />
+              </ProtectedRestaurantPage>
+            }
+          />
+          {/* Private customer feedback inbox */}
+          <Route
+            path="/dashboard/feedback"
+            element={
+              <ProtectedRestaurantPage>
+                <ReviewFeedbackDashboard />
               </ProtectedRestaurantPage>
             }
           />

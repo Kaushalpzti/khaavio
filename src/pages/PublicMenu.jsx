@@ -21,6 +21,7 @@ import {
 
 import { supabase } from "../lib/supabaseClient";
 import PublicTableService from "../components/PublicTableService";
+import PublicReviewsFeedback from "../components/PublicReviewsFeedback";
 import khaavioIcon from "../assets/icon.png";
 import "./PublicMenu.css";
 import "./PublicMenuExperience.css";
@@ -229,7 +230,7 @@ export default function PublicMenu() {
         const { data: restaurantData, error: restaurantError } = await supabase
           .from("restaurants")
           .select(
-            "id, name, slug, restaurant_type, address, is_published, is_accepting_orders, business_hours, timezone",
+            "id, name, slug, restaurant_type, address, google_review_url, is_published, is_accepting_orders, business_hours, timezone",
           )
           .eq("slug", slug)
           .eq("is_published", true)
@@ -928,6 +929,16 @@ export default function PublicMenu() {
             )}
           </section>
 
+          {restaurant?.id && tableContext && (
+            <div className="public-reviews-table-placement">
+              <PublicReviewsFeedback
+                restaurantSlug={slug}
+                restaurantName={restaurant.name}
+                googleReviewUrl={restaurant.google_review_url}
+              />
+            </div>
+          )}
+
           {isCartOpen && (
             <div
               className="public-cart-backdrop"
@@ -1223,6 +1234,13 @@ export default function PublicMenu() {
             </div>
           )}
 
+          {restaurant?.id && !tableContext && (
+            <PublicReviewsFeedback
+              restaurantSlug={slug}
+              restaurantName={restaurant.name}
+              googleReviewUrl={restaurant.google_review_url}
+            />
+          )}
           <footer className="public-menu-footer">
             <a
               className="public-menu-footer-brand"

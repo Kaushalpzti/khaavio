@@ -5,6 +5,7 @@ import {
   BarChart3,
   CalendarDays,
   BellRing,
+  MessageSquareText,
   ChefHat,
   ChevronLeft,
   ChevronRight,
@@ -58,6 +59,7 @@ const NAV_GROUPS = [
     label: "Insights",
     items: [
       { label: "Analytics", to: "/dashboard/analytics", icon: BarChart3 },
+      { label: "Reviews & feedback", to: "/dashboard/feedback", icon: MessageSquareText },
     ],
   },
   {
