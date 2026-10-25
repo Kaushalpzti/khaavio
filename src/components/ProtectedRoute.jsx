@@ -1,63 +1,15 @@
-import { useEffect, useState } from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import { LoaderCircle } from "lucide-react";
-import { supabase } from "../lib/supabaseClient";
 import RouteErrorBoundary from "./RouteErrorBoundary";
+import { useAuthSession } from "../context/AuthSessionContext";
 
 export default function ProtectedRoute({ children }) {
   const location = useLocation();
-
-  const [authStatus, setAuthStatus] = useState("checking");
-  const [authError, setAuthError] = useState("");
-
-  useEffect(() => {
-    let active = true;
-    let authEventReceived = false;
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      authEventReceived = true;
-
-      if (!active) return;
-
-      setAuthError("");
-      setAuthStatus(session ? "authenticated" : "unauthenticated");
-    });
-
-    async function checkSession() {
-      try {
-        const { data, error } = await supabase.auth.getSession();
-
-        if (!active || authEventReceived) return;
-
-        if (error) throw error;
-
-        setAuthStatus(data.session ? "authenticated" : "unauthenticated");
-      } catch (error) {
-        if (!active) return;
-
-        setAuthError(
-          typeof error?.message === "string"
-            ? error.message
-            : "Unable to verify your login session.",
-        );
-
-        setAuthStatus("error");
-      }
-    }
-
-    checkSession();
-
-    return () => {
-      active = false;
-      subscription.unsubscribe();
-    };
-  }, []);
+  const { status: authStatus, error: authError, refreshSession } = useAuthSession();
 
   if (authStatus === "checking") {
     return (
-      <main style={styles.container}>
+      <main style={styles.container} role="status" aria-live="polite">
         <LoaderCircle size={30} style={styles.spinner} />
         <p style={styles.text}>Verifying your session...</p>
       </main>
@@ -70,14 +22,10 @@ export default function ProtectedRoute({ children }) {
 
   if (authStatus === "error") {
     return (
-      <main style={styles.container}>
+      <main style={styles.container} role="alert">
         <h2 style={styles.heading}>Unable to verify your session</h2>
         <p style={styles.text}>{authError}</p>
-        <button
-          type="button"
-          style={styles.button}
-          onClick={() => window.location.reload()}
-        >
+        <button type="button" style={styles.button} onClick={refreshSession}>
           Try again
         </button>
       </main>

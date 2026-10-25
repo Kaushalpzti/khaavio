@@ -1,6 +1,8 @@
 import { lazy, Suspense, useLayoutEffect } from "react";
 import { BrowserRouter, Navigate, Route, Routes, useLocation } from "react-router-dom";
 import ProtectedRoute from "./components/ProtectedRoute";
+import RouteErrorBoundary from "./components/RouteErrorBoundary";
+import { AuthSessionProvider } from "./context/AuthSessionContext";
 import SubscriptionAccessGuard from "./components/SubscriptionAccessGuard";
 import RestaurantDashboardLayout from "./components/RestaurantDashboardLayout";
 import SeoManager from "./components/SeoManager";
@@ -96,6 +98,11 @@ function PageLoader() {
   );
 }
 
+function LocationAwareRouteBoundary({ children }) {
+  const location = useLocation();
+  const resetKey = `${location.pathname}${location.search}${location.hash}`;
+  return <RouteErrorBoundary key={resetKey}>{children}</RouteErrorBoundary>;
+}
 function ProtectedPage({ children }) {
   return <ProtectedRoute>{children}</ProtectedRoute>;
 }
@@ -113,10 +120,12 @@ function ProtectedRestaurantPage({ children }) {
 export default function App() {
   return (
     <BrowserRouter>
-      <ScrollToTop />
-      <SeoManager />
-      <Suspense fallback={<PageLoader />}>
-        <Routes>
+      <AuthSessionProvider>
+        <ScrollToTop />
+        <SeoManager />
+        <LocationAwareRouteBoundary>
+          <Suspense fallback={<PageLoader />}>
+            <Routes>
           {/* Public marketing and legal pages */}
           <Route path="/" element={<Home />} />
           <Route path="/privacy" element={<LegalPage type="privacy" />} />
@@ -300,8 +309,10 @@ export default function App() {
           />
           {/* Unknown routes */}
           <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </Suspense>
+                    </Routes>
+          </Suspense>
+        </LocationAwareRouteBoundary>
+      </AuthSessionProvider>
     </BrowserRouter>
   );
 }

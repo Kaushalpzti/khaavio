@@ -2,8 +2,32 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { AlertTriangle, CreditCard, LoaderCircle, RefreshCw, ShieldCheck } from "lucide-react";
 import { supabase } from "../lib/supabaseClient";
+import { useAuthSession } from "../context/AuthSessionContext";
 import { PlanAccessProvider } from "../context/PlanAccessContext";
 import "./SubscriptionAccessGuard.css";
+
+const ACCESS_CACHE_TTL_MS = 90_000;
+const workspaceAccessCache = new Map();
+const workspaceAccessRequests = new Map();
+
+function readCachedAccess(userId) {
+  if (!userId) return null;
+  const cached = workspaceAccessCache.get(userId);
+  if (!cached || cached.expiresAt <= Date.now()) {
+    workspaceAccessCache.delete(userId);
+    return null;
+  }
+  return cached.value;
+}
+
+function cacheAccess(userId, value) {
+  if (!userId || value.state === "error" || value.state === "login") return value;
+  workspaceAccessCache.set(userId, {
+    value,
+    expiresAt: Date.now() + ACCESS_CACHE_TTL_MS,
+  });
+  return value;
+}
 
 function canAccessWorkspace(subscription, now = Date.now()) {
   if (!subscription) return false;
@@ -27,76 +51,118 @@ function canAccessWorkspace(subscription, now = Date.now()) {
   );
 }
 
+async function fetchWorkspaceAccess(userId) {
+  const { data: restaurant, error: restaurantError } = await supabase
+    .from("restaurants")
+    .select("id")
+    .eq("owner_id", userId)
+    .maybeSingle();
+  if (restaurantError) throw restaurantError;
+
+  // Keep onboarding and empty-workspace states usable before a restaurant exists.
+  if (!restaurant) return { state: "allowed", reason: "", subscription: null };
+
+  const { data: subscription, error: subscriptionError } = await supabase
+    .from("restaurant_subscriptions")
+    .select("plan_key, status, starts_at, ends_at, subscription_plans(plan_key, name, features, limits)")
+    .eq("restaurant_id", restaurant.id)
+    .maybeSingle();
+  if (subscriptionError) throw subscriptionError;
+
+  if (canAccessWorkspace(subscription)) {
+    return { state: "allowed", reason: "", subscription };
+  }
+
+  const reason = !subscription
+    ? "unassigned"
+    : subscription.ends_at && new Date(subscription.ends_at).getTime() <= Date.now()
+      ? "expired"
+      : subscription.status || "inactive";
+  return { state: "blocked", reason, subscription: subscription || null };
+}
+
+async function resolveWorkspaceAccess(userId, force = false) {
+  if (!force) {
+    const cached = readCachedAccess(userId);
+    if (cached) return cached;
+  }
+
+  const pending = workspaceAccessRequests.get(userId);
+  if (pending) return pending;
+
+  const request = fetchWorkspaceAccess(userId)
+    .then((value) => cacheAccess(userId, value))
+    .finally(() => {
+      if (workspaceAccessRequests.get(userId) === request) {
+        workspaceAccessRequests.delete(userId);
+      }
+    });
+
+  workspaceAccessRequests.set(userId, request);
+  return request;
+}
+
+function getErrorMessage(error) {
+  return typeof error?.message === "string" && error.message.trim()
+    ? error.message
+    : "Subscription access could not be verified.";
+}
+
 export default function SubscriptionAccessGuard({ children }) {
-  const [access, setAccess] = useState({ state: "loading", reason: "" });
+  const {
+    status: authStatus,
+    userId,
+    error: authError,
+  } = useAuthSession();
+  const [access, setAccess] = useState(
+    () => readCachedAccess(userId) || { state: "loading", reason: "" },
+  );
   const [retryKey, setRetryKey] = useState(0);
 
   useEffect(() => {
     let mounted = true;
 
-    async function checkAccess() {
+    async function checkAccess(force = false) {
+      if (authStatus === "checking") {
+        if (mounted) setAccess({ state: "loading", reason: "" });
+        return;
+      }
+      if (authStatus === "error") {
+        if (mounted) setAccess({ state: "error", reason: authError || "Unable to verify login." });
+        return;
+      }
+      if (authStatus !== "authenticated" || !userId) {
+        if (mounted) setAccess({ state: "login", reason: "" });
+        return;
+      }
+
+      const cached = !force ? readCachedAccess(userId) : null;
+      if (cached) {
+        if (mounted) setAccess(cached);
+        return;
+      }
+
       try {
-        const {
-          data: { user },
-          error: authError,
-        } = await supabase.auth.getUser();
-        if (authError) throw authError;
-        if (!user) {
-          if (mounted) setAccess({ state: "login", reason: "" });
-          return;
-        }
-
-        const { data: restaurant, error: restaurantError } = await supabase
-          .from("restaurants")
-          .select("id")
-          .eq("owner_id", user.id)
-          .maybeSingle();
-        if (restaurantError) throw restaurantError;
-
-        // Keep onboarding and empty-workspace states usable before a restaurant exists.
-        if (!restaurant) {
-          if (mounted) setAccess({ state: "allowed", reason: "", subscription: null });
-          return;
-        }
-
-        const { data: subscription, error: subscriptionError } = await supabase
-          .from("restaurant_subscriptions")
-          .select("plan_key, status, starts_at, ends_at, subscription_plans(plan_key, name, features, limits)")
-          .eq("restaurant_id", restaurant.id)
-          .maybeSingle();
-        if (subscriptionError) throw subscriptionError;
-
-        if (!mounted) return;
-        if (canAccessWorkspace(subscription)) {
-          setAccess({ state: "allowed", reason: "", subscription });
-        } else {
-          const reason = !subscription
-            ? "unassigned"
-            : subscription.ends_at && new Date(subscription.ends_at).getTime() <= Date.now()
-              ? "expired"
-              : subscription.status || "inactive";
-          setAccess({ state: "blocked", reason });
-        }
+        const result = await resolveWorkspaceAccess(userId, force);
+        if (mounted) setAccess(result);
       } catch (error) {
         if (mounted) {
-          setAccess({
-            state: "error",
-            reason: typeof error?.message === "string" ? error.message : "Subscription access could not be verified.",
-          });
+          setAccess({ state: "error", reason: getErrorMessage(error) });
         }
       }
     }
 
-    checkAccess();
-    // Re-check active sessions periodically so a workspace is locked when its term expires.
-    const intervalId = window.setInterval(checkAccess, 60_000);
+    checkAccess(retryKey > 0);
+    // Revalidate periodically while a workspace is open, but share the result
+    // across route remounts to avoid repeating sequential auth/DB requests per click.
+    const intervalId = window.setInterval(() => checkAccess(true), 60_000);
     return () => {
       mounted = false;
       window.clearInterval(intervalId);
     };
-  }, [retryKey]);
+  }, [retryKey, userId, authStatus, authError]);
 
-  if (access.state === "login") {
+  if (access.state === "login" || authStatus === "unauthenticated") {
     return (
       <main className="subscription-guard-state">
         <ShieldCheck size={30} />
@@ -107,7 +173,7 @@ export default function SubscriptionAccessGuard({ children }) {
     );
   }
 
-  if (access.state === "loading") {
+  if (access.state === "loading" || authStatus === "checking") {
     return (
       <main className="subscription-guard-state" role="status" aria-live="polite">
         <LoaderCircle size={30} className="subscription-guard-spinner" />
@@ -117,12 +183,12 @@ export default function SubscriptionAccessGuard({ children }) {
     );
   }
 
-  if (access.state === "error") {
+  if (access.state === "error" || authStatus === "error") {
     return (
       <main className="subscription-guard-state">
         <AlertTriangle size={32} />
         <h1>We couldn’t verify subscription access</h1>
-        <p>{access.reason || "Please check your connection and try again."}</p>
+        <p>{access.reason || authError || "Please check your connection and try again."}</p>
         <button type="button" className="subscription-guard-primary" onClick={() => setRetryKey((key) => key + 1)}>
           <RefreshCw size={16} /> Try again
         </button>
