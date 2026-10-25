@@ -1,0 +1,442 @@
+/*
+ * Khaavio workspace polish
+ * Keeps the original page layouts and color language. This file only adds
+ * restrained responsive safeguards, focus states and subtle interaction polish.
+ */
+
+.restaurant-dashboard-layout {
+  --workspace-ink: #173c2f;
+  --workspace-ink-strong: #0d3428;
+  --workspace-muted: #718078;
+  --workspace-line: #e4e9e1;
+  --workspace-canvas: #f7f8f4;
+  --workspace-paper: #fffefa;
+  color: var(--workspace-ink);
+  background: var(--workspace-canvas);
+}
+
+.restaurant-dashboard-workspacebar {
+  position: sticky;
+  top: 0;
+  z-index: 80;
+  display: flex;
+  align-items: center;
+  min-height: 64px;
+  padding: 10px clamp(20px, 3vw, 36px);
+  border-bottom: 1px solid var(--workspace-line);
+  background: rgb(255 254 250 / 94%);
+  backdrop-filter: blur(14px);
+}
+
+.restaurant-dashboard-workspace-identity {
+  display: inline-flex;
+  align-items: center;
+  gap: 11px;
+  min-width: 0;
+  color: var(--workspace-ink-strong);
+  text-decoration: none;
+}
+
+.restaurant-dashboard-identity-mark {
+  display: inline-grid;
+  flex: 0 0 auto;
+  width: 36px;
+  height: 36px;
+  place-items: center;
+  overflow: hidden;
+  border: 1px solid #e0e8dc;
+  border-radius: 11px;
+  background: #edf3e9;
+  color: #1d6344;
+  font-size: 12px;
+  font-weight: 850;
+  letter-spacing: -.3px;
+}
+
+.restaurant-dashboard-identity-mark img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.restaurant-dashboard-identity-copy {
+  display: block;
+  min-width: 0;
+  max-width: min(52vw, 420px);
+}
+
+.restaurant-dashboard-identity-copy strong {
+  display: block;
+  overflow: hidden;
+  color: var(--workspace-ink-strong);
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: -.25px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.restaurant-dashboard-sidebar-title {
+  min-width: 0;
+  color: #8a978d;
+  font-size: 9px;
+  font-weight: 850;
+  letter-spacing: 1.3px;
+}
+
+.restaurant-dashboard-sidebar-header {
+  align-items: center;
+}
+
+.is-collapsed .restaurant-dashboard-sidebar-title { display: none; }
+.is-collapsed .restaurant-dashboard-powered-by { justify-content: center; padding-right: 0; padding-left: 0; }
+.is-collapsed .restaurant-dashboard-powered-by span { display: none; }
+.is-collapsed .restaurant-dashboard-powered-by img { width: 31px; height: 31px; }
+
+.restaurant-dashboard-powered-by {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-top: 7px;
+  padding: 12px 10px 3px;
+  border-top: 1px solid var(--workspace-line);
+}
+
+.restaurant-dashboard-powered-by img {
+  width: 28px;
+  height: 28px;
+  flex: 0 0 auto;
+  border: 1px solid #e4e9e1;
+  border-radius: 8px;
+  background: #fffefa;
+  object-fit: contain;
+}
+
+.restaurant-dashboard-powered-by span {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.restaurant-dashboard-powered-by small {
+  color: #8a978d;
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: 1.1px;
+}
+
+.restaurant-dashboard-powered-by strong {
+  color: #174632;
+  font-size: 12px;
+  font-weight: 850;
+}
+
+.restaurant-dashboard-signout-link:disabled {
+  cursor: wait;
+  opacity: .65;
+}
+
+.restaurant-dashboard-signout-error {
+  margin: 5px 8px;
+  color: #a33c32;
+  font-size: 11px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+/* Let page headings read as content toolbars rather than extra site nav bars. */
+.restaurant-dashboard-content .restaurant-settings-header,
+.restaurant-dashboard-content .menu-topbar,
+.restaurant-dashboard-content .qr-header,
+.restaurant-dashboard-content .tqr-page-header,
+.restaurant-dashboard-content .orders-header,
+.restaurant-dashboard-content .kitchen-header,
+.restaurant-dashboard-content .ts-header,
+.restaurant-dashboard-content .order-receipts-header,
+.restaurant-dashboard-content .bookings-header,
+.restaurant-dashboard-content .analytics-header,
+.restaurant-dashboard-content .subscription-header {
+  position: static;
+  top: auto;
+  z-index: auto;
+  width: min(1320px, calc(100% - 64px));
+  min-height: 0;
+  margin: 24px auto 0;
+  padding: 0 0 15px;
+  border-bottom: 1px solid #e7ebe4;
+  background: transparent;
+  backdrop-filter: none;
+  box-sizing: border-box;
+}
+
+.restaurant-dashboard-content .kitchen-header {
+  position: static;
+}
+
+/* Ensure long restaurant names, item names and support copy never widen a page. */
+.restaurant-dashboard-content,
+.restaurant-dashboard-content :where(main, section, article, header, footer, form, fieldset, label),
+.restaurant-dashboard-content :where(.dashboard-main, .restaurant-settings-content, .menu-container, .qr-container, .tqr-container, .orders-container, .kitchen-main, .ts-main, .order-receipts-main, .bookings-container, .analytics-content, .subscription-container, .help-center-main) {
+  box-sizing: border-box;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.restaurant-dashboard-content :where(h1, h2, h3, h4, p, strong, small, label, a, button, span) {
+  overflow-wrap: anywhere;
+}
+
+.restaurant-dashboard-content :where(input, select, textarea, button) {
+  font: inherit;
+}
+
+.restaurant-dashboard-content :where(input, select, textarea) {
+  max-width: 100%;
+}
+
+/* Subtle polish only: preserve existing sizes, composition, and page-specific colors. */
+.restaurant-dashboard-content :where(
+  .restaurant-summary,
+  .dashboard-module,
+  .restaurant-settings-public-card,
+  .restaurant-settings-section,
+  .restaurant-logo-section,
+  .menu-category-panel,
+  .menu-editor-panel,
+  .menu-publication-panel,
+  .menu-import-panel,
+  .qr-workspace,
+  .qr-preview-column,
+  .qr-details-column,
+  .tqr-panel,
+  .tqr-bulk-card,
+  .orders-stat,
+  .order-card,
+  .kitchen-order-card,
+  .kitchen-summary-strip,
+  .ts-session-card,
+  .ts-invoice-card,
+  .order-receipt-row,
+  .booking-card,
+  .bookings-stat,
+  .bookings-calendar,
+  .analytics-panel,
+  .analytics-stat-card,
+  .subscription-current-card,
+  .subscription-plan-card,
+  .subscription-pricing-card,
+  .subscription-request-history-card,
+  .khaavio-help-panel,
+  .help-center-state
+) {
+  transition: border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
+}
+
+.restaurant-dashboard-content :where(
+  .dashboard-module,
+  .restaurant-settings-public-card,
+  .restaurant-settings-section,
+  .menu-category-panel,
+  .menu-editor-panel,
+  .menu-import-panel,
+  .qr-workspace,
+  .qr-preview-column,
+  .qr-details-column,
+  .tqr-panel,
+  .tqr-bulk-card,
+  .orders-stat,
+  .order-card,
+  .kitchen-order-card,
+  .ts-session-card,
+  .ts-invoice-card,
+  .booking-card,
+  .bookings-stat,
+  .analytics-panel,
+  .analytics-stat-card,
+  .subscription-plan-card,
+  .subscription-pricing-card
+):hover {
+  border-color: #d4e0d2;
+  box-shadow: 0 7px 22px rgb(20 55 36 / 5%);
+}
+
+.restaurant-dashboard-content :where(button, .dashboard-primary-button, .menu-publication-button, .module-action, .menu-publication-public-button, .restaurant-settings-save, .orders-voice-button):not(:disabled) {
+  transition: transform 150ms ease, box-shadow 150ms ease, background-color 150ms ease, border-color 150ms ease;
+}
+
+.restaurant-dashboard-content :where(button, .dashboard-primary-button, .menu-publication-button, .module-action, .menu-publication-public-button, .restaurant-settings-save, .orders-voice-button):not(:disabled):hover {
+  transform: translateY(-1px);
+}
+
+.restaurant-dashboard-content :where(a, button, input, select, textarea):focus-visible {
+  outline: 3px solid rgb(38 126 79 / 25%);
+  outline-offset: 2px;
+}
+
+.restaurant-dashboard-content .menu-publication-panel {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+  flex-wrap: wrap;
+}
+
+.restaurant-dashboard-content .menu-publication-copy {
+  flex: 1 1 220px;
+  min-width: 0;
+}
+
+.restaurant-dashboard-content .menu-publication-actions {
+  display: flex;
+  flex: 0 1 auto;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 9px;
+  min-width: 0;
+  max-width: 100%;
+  flex-wrap: wrap;
+}
+
+.restaurant-dashboard-content .menu-publication-public-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 40px;
+  max-width: 100%;
+  padding: 10px 14px;
+  border: 1px solid #cdddcf;
+  border-radius: 999px;
+  background: #f7faf5;
+  color: #145338;
+  font-size: 12px;
+  font-weight: 750;
+  line-height: 1.35;
+  text-align: center;
+  text-decoration: none;
+}
+
+.restaurant-dashboard-content .menu-publication-public-button:hover {
+  border-color: #aecbb5;
+  background: #edf5ed;
+}
+
+@media (max-width: 1050px) {
+  .restaurant-dashboard-content .restaurant-settings-header,
+  .restaurant-dashboard-content .menu-topbar,
+  .restaurant-dashboard-content .qr-header,
+  .restaurant-dashboard-content .tqr-page-header,
+  .restaurant-dashboard-content .orders-header,
+  .restaurant-dashboard-content .kitchen-header,
+  .restaurant-dashboard-content .ts-header,
+  .restaurant-dashboard-content .order-receipts-header,
+  .restaurant-dashboard-content .bookings-header,
+  .restaurant-dashboard-content .analytics-header,
+  .restaurant-dashboard-content .subscription-header {
+    width: calc(100% - 42px);
+  }
+}
+
+@media (max-width: 780px) {
+  .restaurant-dashboard-workspacebar { display: none; }
+
+  .restaurant-dashboard-mobilebar {
+    background: rgb(255 254 250 / 96%);
+    border-bottom-color: #e2e8df;
+    backdrop-filter: blur(14px);
+  }
+
+  .restaurant-dashboard-mobilebrand {
+    flex: 1 1 auto;
+    min-width: 0;
+    gap: 9px;
+    font-size: 14px;
+  }
+
+  .restaurant-dashboard-mobilebrand .restaurant-dashboard-identity-mark {
+    width: 32px;
+    height: 32px;
+    border-radius: 9px;
+  }
+
+  .restaurant-dashboard-mobilebrand .restaurant-dashboard-identity-copy { max-width: min(62vw, 360px); }
+  .restaurant-dashboard-mobilebrand .restaurant-dashboard-identity-copy strong { font-size: 13px; }
+  .restaurant-dashboard-mobile-caption { display: none; }
+
+  .restaurant-dashboard-sidebar-title { display: block; }
+  .restaurant-dashboard-powered-by { margin-top: 7px; }
+
+  .restaurant-dashboard-content .restaurant-settings-header,
+  .restaurant-dashboard-content .menu-topbar,
+  .restaurant-dashboard-content .qr-header,
+  .restaurant-dashboard-content .tqr-page-header,
+  .restaurant-dashboard-content .orders-header,
+  .restaurant-dashboard-content .kitchen-header,
+  .restaurant-dashboard-content .ts-header,
+  .restaurant-dashboard-content .order-receipts-header,
+  .restaurant-dashboard-content .bookings-header,
+  .restaurant-dashboard-content .analytics-header,
+  .restaurant-dashboard-content .subscription-header {
+    width: calc(100% - 24px);
+    margin-top: 17px;
+    padding-bottom: 12px;
+  }
+
+  .restaurant-dashboard-content .menu-publication-actions {
+    width: 100%;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 8px;
+  }
+
+  .restaurant-dashboard-content .menu-publication-public-button,
+  .restaurant-dashboard-content .menu-publication-button {
+    width: 100%;
+    min-height: 42px;
+    white-space: normal;
+  }
+
+  .restaurant-dashboard-content .dashboard-module,
+  .restaurant-dashboard-content .order-card,
+  .restaurant-dashboard-content .booking-card,
+  .restaurant-dashboard-content .kitchen-order-card,
+  .restaurant-dashboard-content .ts-session-card,
+  .restaurant-dashboard-content .subscription-plan-card {
+    min-width: 0;
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 380px) {
+  .restaurant-dashboard-mobilebar { gap: 8px; padding-right: 10px; padding-left: 10px; }
+  .restaurant-dashboard-mobilebrand .restaurant-dashboard-identity-copy { max-width: calc(100vw - 100px); }
+  .restaurant-dashboard-content .menu-publication-panel { gap: 12px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .restaurant-dashboard-content *,
+  .restaurant-dashboard-content *::before,
+  .restaurant-dashboard-content *::after {
+    scroll-behavior: auto !important;
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+  }
+}
+
+.restaurant-dashboard-signout-link {
+  appearance: none;
+  background: transparent;
+  color: #66776b;
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.restaurant-dashboard-signout-link:hover:not(:disabled) {
+  border-color: transparent;
+  background: #f1f5ed;
+  color: #143e2f;
+}
