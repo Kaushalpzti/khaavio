@@ -14,7 +14,6 @@ import {
 import { supabase } from "../lib/supabaseClient";
 import "./RestaurantSettings.css";
 import "./RestaurantSettingsLogo.css";
-import "../RestaurantWorkspaceDesign.css";
 
 const RESTAURANT_FIELDS =
   "id, name, slug, restaurant_type, logo_url, phone, contact_email, address, city, state, postal_code, description, is_published";

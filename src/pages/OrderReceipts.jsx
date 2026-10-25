@@ -12,7 +12,6 @@ import {
 } from "lucide-react";
 import { supabase } from "../lib/supabaseClient";
 import "./OrderReceipts.css";
-import "../RestaurantWorkspaceDesign.css";
 
 function formatPrice(value) {
   return new Intl.NumberFormat("en-IN", {

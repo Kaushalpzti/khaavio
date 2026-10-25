@@ -21,7 +21,6 @@ import {
 import { supabase } from "../lib/supabaseClient";
 import khaavioIcon from "../assets/icon.png";
 import "./Subscription.css";
-import "../RestaurantWorkspaceDesign.css";
 
 const INITIAL_NOW = new Date();
 

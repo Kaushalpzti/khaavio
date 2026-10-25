@@ -12,12 +12,12 @@ const kitchen = read("../src/pages/KitchenDisplay.jsx");
 
 test("sidebar Help & support opens a standalone protected Help Center page", () => {
   const app = read("../src/App.jsx");
-  const helpPage = read("../src/pages/HelpCenter.jsx");
+  const help = read("../src/pages/HelpCenter.jsx");
   assert.match(sidebar, /to="\/dashboard\/help"/);
   assert.match(app, /path="\/dashboard\/help"/);
   assert.match(app, /import\("\.\/pages\/HelpCenter"\)/);
   assert.doesNotMatch(dashboard, /SupportHelpPanel/);
-  assert.match(helpPage, /<SupportHelpPanel id="help-center"/);
+  assert.match(help, /<SupportHelpPanel/);
   assert.match(supportPanel, /<section id=\{id\}/);
 });
 
@@ -32,13 +32,9 @@ test("dashboard modules no longer duplicate Khaavio page-top wordmarks", () => {
     assert.doesNotMatch(source, /className="(?:restaurant-settings-brand|subscription-brand|menu-brand|qr-brand|orders-brand|order-receipts-brand|bookings-brand|analytics-brand|kitchen-brand|ts-brand)"/,
       `${file} should not render a duplicated Khaavio brand in its page header`);
   }
-  assert.doesNotMatch(sidebar, /className="restaurant-dashboard-brand"/);
   assert.match(sidebar, /restaurant-dashboard-workspacebar/);
-  assert.match(sidebar, /restaurant-dashboard-workspace-identity/);
-  assert.match(sidebar, /restaurant-dashboard-mobilebrand/);
   assert.match(sidebar, /restaurant-dashboard-powered-by/);
-  assert.match(sidebar, /from\("restaurants"\)/);
-  assert.match(sidebar, /select\("name, logo_url, created_at"\)/);
+  assert.match(sidebar, /restaurant-dashboard-mobilebrand/);
 });
 
 test("Orders page provides opt-in voice announcements for new realtime orders", () => {

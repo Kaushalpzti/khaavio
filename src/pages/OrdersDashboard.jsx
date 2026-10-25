@@ -22,7 +22,6 @@ import {
 import { supabase } from "../lib/supabaseClient";
 import khaavioIcon from "../assets/icon.png";
 import "./OrdersDashboard.css";
-import "../RestaurantWorkspaceDesign.css";
 
 const STATUS_OPTIONS = [
   "all",

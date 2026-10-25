@@ -20,7 +20,6 @@ import { supabase } from "../lib/supabaseClient";
 import { usePlanAccess } from "../context/PlanAccessContext";
 import PlanUpgradeNotice from "../components/PlanUpgradeNotice";
 import "./Analytics.css";
-import "../RestaurantWorkspaceDesign.css";
 
 const INITIAL_REFERENCE_DATE = new Date();
 

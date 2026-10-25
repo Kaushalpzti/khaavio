@@ -25,7 +25,6 @@ import { supabase } from "../lib/supabaseClient";
 import { usePlanAccess } from "../context/PlanAccessContext";
 import PlanUpgradeNotice from "../components/PlanUpgradeNotice";
 import "./BookingsDashboard.css";
-import "../RestaurantWorkspaceDesign.css";
 
 const INITIAL_TODAY = new Date();
 

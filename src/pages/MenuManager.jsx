@@ -19,7 +19,6 @@ import {
 import { supabase } from "../lib/supabaseClient";
 import "./MenuManager.css";
 import "./MenuBulkImport.css";
-import "../RestaurantWorkspaceDesign.css";
 
 const emptyForm = {
   name: "",

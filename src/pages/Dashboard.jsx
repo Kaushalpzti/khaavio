@@ -21,7 +21,6 @@ import { supabase } from "../lib/supabaseClient";
 import SubscriptionExpiryBanner from "../components/SubscriptionExpiryBanner";
 
 import "./Dashboard.css";
-import "../RestaurantWorkspaceDesign.css";
 
 const modules = [
   {
@@ -158,7 +157,6 @@ export default function Dashboard() {
       active = false;
     };
   }, [navigate]);
-
 
 
   async function togglePublication() {

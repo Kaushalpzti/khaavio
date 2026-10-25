@@ -24,7 +24,7 @@ import {
 import khaavioIcon from "../assets/icon.png";
 import { supabase } from "../lib/supabaseClient";
 import "./RestaurantDashboardLayout.css";
-import "../RestaurantWorkspaceDesign.css";
+import "./RestaurantWorkspacePolish.css";
 
 const NAV_GROUPS = [
   {

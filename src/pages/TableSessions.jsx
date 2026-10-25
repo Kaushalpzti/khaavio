@@ -19,7 +19,6 @@ import {
 import { supabase } from "../lib/supabaseClient";
 import khaavioIcon from "../assets/icon.png";
 import "./TableSessions.css";
-import "../RestaurantWorkspaceDesign.css";
 
 function formatPrice(value) {
   return new Intl.NumberFormat("en-IN", {

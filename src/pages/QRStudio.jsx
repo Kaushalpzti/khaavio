@@ -16,7 +16,6 @@ import QRCode from "qrcode";
 import { supabase } from "../lib/supabaseClient";
 import khaavioIcon from "../assets/icon.png";
 import "./QRStudio.css";
-import "../RestaurantWorkspaceDesign.css";
 
 export default function QRStudio() {
   const navigate = useNavigate();

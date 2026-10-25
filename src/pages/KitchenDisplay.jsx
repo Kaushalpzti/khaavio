@@ -18,7 +18,6 @@ import {
 } from "lucide-react";
 import { supabase } from "../lib/supabaseClient";
 import "./KitchenDisplay.css";
-import "../RestaurantWorkspaceDesign.css";
 
 const ACTIVE_STATUSES = ["pending", "accepted", "preparing", "ready"];
 const REFRESH_INTERVAL_MS = 15000;
