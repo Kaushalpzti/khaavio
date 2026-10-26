@@ -17,6 +17,7 @@ import {
   VolumeX,
 } from "lucide-react";
 import { supabase } from "../lib/supabaseClient";
+import { normalizeTableNumber } from "../lib/tableNumber";
 import { useKhaavioOperationalAlerts } from "../context/KhaavioOperationalAlertsContext";
 import { activateKhaavioAlertSound, cancelKhaavioVoice } from "../lib/khaavioVoiceAlerts";
 import "./KitchenDisplay.css";
