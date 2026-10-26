@@ -37,13 +37,15 @@ test("dashboard modules no longer duplicate Khaavio page-top wordmarks", () => {
   assert.match(sidebar, /restaurant-dashboard-mobilebrand/);
 });
 
-test("Orders page provides opt-in voice announcements for new realtime orders", () => {
+test("Orders and Kitchen use shared persistent voice announcements", () => {
   assert.match(orders, /function toggleVoiceAnnouncements\(\)/);
-  assert.match(orders, /announceIncomingOrder\(insertedOrder\)/);
-  assert.match(orders, /from\("order_items"\)/);
-  assert.match(orders, /from\("restaurant_tables"\)/);
+  assert.match(orders, /useKhaavioOperationalAlerts/);
+  assert.match(orders, /setPreference\("voiceEnabled"/);
   assert.match(orders, /event: "INSERT"/);
   assert.match(orders, /aria-pressed=\{voiceEnabled\}/);
-  assert.match(orders, /className=\{`orders-voice-button/);
+  assert.match(orders, /orders-voice-button/);
   assert.match(kitchen, /function toggleVoiceAnnouncements\(\)/);
+  assert.match(kitchen, /useKhaavioOperationalAlerts/);
+  assert.match(kitchen, /activateKhaavioAlertSound/);
+
 });
