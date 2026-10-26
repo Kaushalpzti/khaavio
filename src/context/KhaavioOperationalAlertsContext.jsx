@@ -16,6 +16,14 @@ import {
 
 const KhaavioOperationalAlertsContext = createContext(null);
 
+const REQUEST_VOICE_META = {
+  waiter: { en: "a waiter", hi: "वेटर" },
+  water: { en: "water", hi: "पानी" },
+  bill: { en: "the bill", hi: "बिल" },
+  cutlery: { en: "plates or cutlery", hi: "प्लेट या कटलरी" },
+  other: { en: "assistance", hi: "मदद" },
+};
+
 export function useKhaavioOperationalAlerts() {
   const value = useContext(KhaavioOperationalAlertsContext);
   if (!value) {
@@ -81,6 +89,7 @@ export function KhaavioOperationalAlertsProvider({ children }) {
         if (!active || restaurantError || !restaurant?.id) return;
 
         let bookingVoiceAllowed = false;
+        let privateFeedbackAllowed = false;
         try {
           const { data: subscription, error: subscriptionError } = await supabase
             .from("restaurant_subscriptions")
@@ -90,12 +99,14 @@ export function KhaavioOperationalAlertsProvider({ children }) {
           if (!subscriptionError && subscription) {
             const notExpired = !subscription.ends_at ||
               new Date(subscription.ends_at).getTime() > Date.now();
-            bookingVoiceAllowed = notExpired &&
-              ["active", "trialing"].includes(subscription.status) &&
-              resolvePlanFeatureFlags(subscription).voice_alerts_advanced === true;
+            const activeStatus = ["active", "trialing"].includes(subscription.status);
+            const flags = resolvePlanFeatureFlags(subscription);
+            bookingVoiceAllowed = notExpired && activeStatus && flags.voice_alerts_advanced === true;
+            privateFeedbackAllowed = notExpired && activeStatus && flags.private_feedback === true;
           }
         } catch {
           bookingVoiceAllowed = false;
+          privateFeedbackAllowed = false;
         }
 
         if (!active) return;
@@ -157,8 +168,46 @@ export function KhaavioOperationalAlertsProvider({ children }) {
             : `New table booking request for ${guests} guests at ${time}.`);
         };
 
+        const speakServiceRequest = (request) => {
+          const settings = preferencesRef.current;
+          if (settings.soundEnabled) playKhaavioAlertSound();
+          if (!settings.voiceEnabled || !isKhaavioVoiceSupported()) return;
+          const meta = REQUEST_VOICE_META[request?.request_type] || REQUEST_VOICE_META.other;
+          void (async () => {
+            let tableNumber = "";
+            try {
+              if (request?.table_id) {
+                const { data, error } = await supabase
+                  .from("restaurant_tables")
+                  .select("table_number")
+                  .eq("restaurant_id", restaurant.id)
+                  .eq("id", request.table_id)
+                  .maybeSingle();
+                if (!error) tableNumber = data?.table_number || "";
+              }
+            } catch {
+              // The request can still be announced without a table number.
+            }
+            if (!active || !preferencesRef.current.voiceEnabled) return;
+            queueKhaavioVoice((isHindi) => isHindi
+              ? `टेबल ${tableNumber || "अनजान"} पर ${meta.hi} का अनुरोध आया है।`
+              : `Table ${tableNumber || "unknown"} is requesting ${meta.en}.`);
+          })();
+        };
+
+        const speakFeedback = (feedback) => {
+          if (!privateFeedbackAllowed || feedback?.status !== "new") return;
+          const settings = preferencesRef.current;
+          if (settings.soundEnabled) playKhaavioAlertSound();
+          if (!settings.voiceEnabled || !isKhaavioVoiceSupported()) return;
+          const rating = Math.max(0, Math.min(5, Number(feedback?.rating) || 0));
+          queueKhaavioVoice((isHindi) => isHindi
+            ? `नई ग्राहक प्रतिक्रिया मिली है। पाँच में से ${rating} स्टार की रेटिंग है।`
+            : `New customer feedback received. The rating is ${rating} out of five stars.`);
+        };
+
         const startedAt = new Date().toISOString();
-        const [initialOrders, initialBookings] = await Promise.all([
+        const [initialOrders, initialBookings, initialServiceRequests, initialFeedback] = await Promise.all([
           supabase.from("orders")
             .select("id")
             .eq("restaurant_id", restaurant.id)
@@ -169,10 +218,24 @@ export function KhaavioOperationalAlertsProvider({ children }) {
             .eq("restaurant_id", restaurant.id)
             .order("created_at", { ascending: false })
             .limit(100),
+          supabase.from("table_service_requests")
+            .select("id")
+            .eq("restaurant_id", restaurant.id)
+            .order("created_at", { ascending: false })
+            .limit(150),
+          privateFeedbackAllowed
+            ? supabase.from("restaurant_feedback")
+                .select("id")
+                .eq("restaurant_id", restaurant.id)
+                .order("created_at", { ascending: false })
+                .limit(250)
+            : Promise.resolve({ data: [], error: null }),
         ]);
         if (!active) return;
         const seenOrderIds = new Set((initialOrders.data || []).map((row) => row.id));
         const seenBookingIds = new Set((initialBookings.data || []).map((row) => row.id));
+        const seenServiceRequestIds = new Set((initialServiceRequests.data || []).map((row) => row.id));
+        const seenFeedbackIds = new Set((initialFeedback.data || []).map((row) => row.id));
 
         const remember = (seen, id) => {
           if (!id || seen.has(id)) return false;
@@ -187,6 +250,14 @@ export function KhaavioOperationalAlertsProvider({ children }) {
         const processBooking = (booking) => {
           if (!active || !remember(seenBookingIds, booking?.id)) return;
           if (booking.status === "pending") speakBooking(booking);
+        };
+        const processServiceRequest = (request) => {
+          if (!active || request?.status !== "pending" || !remember(seenServiceRequestIds, request?.id)) return;
+          speakServiceRequest(request);
+        };
+        const processFeedback = (feedback) => {
+          if (!active || !privateFeedbackAllowed || feedback?.status !== "new" || !remember(seenFeedbackIds, feedback?.id)) return;
+          speakFeedback(feedback);
         };
 
         channel = supabase
@@ -203,14 +274,28 @@ export function KhaavioOperationalAlertsProvider({ children }) {
             table: "bookings",
             filter: `restaurant_id=eq.${restaurant.id}`,
           }, (payload) => processBooking(payload.new || {}))
-          .subscribe();
+          .on("postgres_changes", {
+            event: "INSERT",
+            schema: "public",
+            table: "table_service_requests",
+            filter: `restaurant_id=eq.${restaurant.id}`,
+          }, (payload) => processServiceRequest(payload.new || {}));
+        if (privateFeedbackAllowed) {
+          channel = channel.on("postgres_changes", {
+            event: "INSERT",
+            schema: "public",
+            table: "restaurant_feedback",
+            filter: `restaurant_id=eq.${restaurant.id}`,
+          }, (payload) => processFeedback(payload.new || {}));
+        }
+        channel = channel.subscribe();
 
         // Polling is a fallback for projects where either table is absent from
         // the Realtime publication. ID tracking prevents repeated announcements.
         pollIntervalId = window.setInterval(async () => {
           if (!active) return;
           try {
-            const [ordersResult, bookingsResult] = await Promise.all([
+            const [ordersResult, bookingsResult, serviceResult, feedbackResult] = await Promise.all([
               supabase.from("orders")
                 .select("id, restaurant_id, table_id, total_amount, created_at")
                 .eq("restaurant_id", restaurant.id)
@@ -223,10 +308,26 @@ export function KhaavioOperationalAlertsProvider({ children }) {
                 .gte("created_at", startedAt)
                 .order("created_at", { ascending: false })
                 .limit(100),
+              supabase.from("table_service_requests")
+                .select("id, restaurant_id, table_id, request_type, status, created_at")
+                .eq("restaurant_id", restaurant.id)
+                .gte("created_at", startedAt)
+                .order("created_at", { ascending: false })
+                .limit(150),
+              privateFeedbackAllowed
+                ? supabase.from("restaurant_feedback")
+                    .select("id, restaurant_id, rating, status, created_at")
+                    .eq("restaurant_id", restaurant.id)
+                    .gte("created_at", startedAt)
+                    .order("created_at", { ascending: false })
+                    .limit(250)
+                : Promise.resolve({ data: [], error: null }),
             ]);
             if (!active) return;
             if (!ordersResult.error) (ordersResult.data || []).forEach(processOrder);
             if (!bookingsResult.error) (bookingsResult.data || []).forEach(processBooking);
+            if (!serviceResult.error) (serviceResult.data || []).forEach(processServiceRequest);
+            if (!feedbackResult.error) (feedbackResult.data || []).forEach(processFeedback);
           } catch {
             // Transient polling errors don't stop the Realtime channel.
           }
