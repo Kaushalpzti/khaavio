@@ -197,7 +197,7 @@ export function KhaavioOperationalAlertsProvider({ children }) {
             filter: `restaurant_id=eq.${restaurant.id}`,
           }, (payload) => processOrder(payload.new || {}))
           .on("postgres_changes", {
-            event: "postgres_changes",
+            event: "INSERT",
             schema: "public",
             table: "bookings",
             filter: `restaurant_id=eq.${restaurant.id}`,
