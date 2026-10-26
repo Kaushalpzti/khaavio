@@ -1,6 +1,7 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { CheckCheck, Clock3, LoaderCircle, MessageSquareText, RefreshCw, Star, ThumbsUp } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { CheckCheck, Clock3, LoaderCircle, MessageSquareText, RefreshCw, Star, ThumbsUp, Volume2, VolumeX } from "lucide-react";
 import { supabase } from "../lib/supabaseClient";
+import { cancelKhaavioVoice, isKhaavioVoiceSupported, queueKhaavioVoice } from "../lib/khaavioVoiceAlerts";
 import "./ReviewFeedbackDashboard.css";
 
 const FILTERS = [
@@ -23,6 +24,9 @@ function formatDate(value) {
 }
 
 export default function ReviewFeedbackDashboard() {
+  const voiceEnabledRef = useRef(false);
+  const knownFeedbackIdsRef = useRef(null);
+  const [voiceEnabled, setVoiceEnabled] = useState(false);
   const [restaurant, setRestaurant] = useState(null);
   const [feedback, setFeedback] = useState([]);
   const [filter, setFilter] = useState("all");
@@ -56,13 +60,41 @@ export default function ReviewFeedbackDashboard() {
         .order("created_at", { ascending: false })
         .limit(250);
       if (feedbackError) throw feedbackError;
-      setFeedback(data || []);
+
+      const nextFeedback = data || [];
+      const currentFeedbackIds = new Set(nextFeedback.map((item) => item.id));
+      const previousFeedbackIds = knownFeedbackIdsRef.current;
+      const newlyAddedFeedback = previousFeedbackIds
+        ? nextFeedback.filter((item) => !previousFeedbackIds.has(item.id) && item.status === "new")
+        : [];
+
+      // Announce only new submissions, never status edits. Feedback text is kept private
+      // and is deliberately not spoken aloud.
+      if (voiceEnabledRef.current && newlyAddedFeedback.length === 1) {
+        const rating = Math.max(0, Math.min(5, Number(newlyAddedFeedback[0].rating) || 0));
+        queueKhaavioVoice((isHindi) => isHindi
+          ? `नई ग्राहक प्रतिक्रिया मिली है। पाँच में से ${rating} स्टार की रेटिंग है।`
+          : `New customer feedback received. The rating is ${rating} out of five stars.`);
+      } else if (voiceEnabledRef.current && newlyAddedFeedback.length > 1) {
+        const count = newlyAddedFeedback.length;
+        queueKhaavioVoice((isHindi) => isHindi
+          ? `${count} नई ग्राहक प्रतिक्रियाएँ मिली हैं।`
+          : `You have ${count} new customer feedback submissions.`);
+      }
+
+      knownFeedbackIdsRef.current = currentFeedbackIds;
+      setFeedback(nextFeedback);
     } catch (loadError) {
       console.error("Could not load customer feedback:", loadError);
       setError(loadError?.message || "We couldn't load feedback right now.");
     } finally {
       if (!quiet) setLoading(false);
     }
+  }, []);
+
+  useEffect(() => () => {
+    voiceEnabledRef.current = false;
+    cancelKhaavioVoice();
   }, []);
 
   useEffect(() => {
@@ -98,6 +130,35 @@ export default function ReviewFeedbackDashboard() {
     ? (feedback.reduce((sum, item) => sum + Number(item.rating || 0), 0) / feedback.length).toFixed(1)
     : "—";
 
+  function toggleVoiceAnnouncements() {
+    if (voiceEnabledRef.current) {
+      voiceEnabledRef.current = false;
+      setVoiceEnabled(false);
+      cancelKhaavioVoice();
+      setNotice("Feedback voice announcements are off.");
+      return;
+    }
+
+    if (!isKhaavioVoiceSupported()) {
+      setError("This browser does not support voice announcements. Try a current version of Chrome or Edge.");
+      return;
+    }
+
+    cancelKhaavioVoice();
+    const queued = queueKhaavioVoice((isHindi) => isHindi
+      ? "ग्राहक प्रतिक्रिया अलर्ट चालू हैं। नई प्रतिक्रिया आने पर सूचना दी जाएगी।"
+      : "Customer feedback voice alerts are enabled. New feedback will be announced.");
+    if (!queued) {
+      setError("Voice announcements could not be started in this browser.");
+      return;
+    }
+
+    voiceEnabledRef.current = true;
+    setVoiceEnabled(true);
+    setError("");
+    setNotice("Feedback voice announcements are on.");
+  }
+
   async function updateStatus(item, status) {
     if (!restaurant || updatingId) return;
     setUpdatingId(item.id);
@@ -131,10 +192,22 @@ export default function ReviewFeedbackDashboard() {
             <h1>Reviews & feedback</h1>
             <p>Private notes from your customers, all in one place.</p>
           </div>
-          <button type="button" className="review-feedback-refresh" onClick={() => loadFeedback()} disabled={loading}>
-            {loading ? <LoaderCircle size={17} className="review-feedback-spin" /> : <RefreshCw size={17} />}
-            Refresh
-          </button>
+          <div className="review-feedback-heading-actions">
+            <button
+              type="button"
+              className={`review-feedback-voice${voiceEnabled ? " is-active" : ""}`}
+              onClick={toggleVoiceAnnouncements}
+              aria-pressed={voiceEnabled}
+              title={voiceEnabled ? "Disable new feedback voice announcements" : "Enable new feedback voice announcements"}
+            >
+              {voiceEnabled ? <Volume2 size={16} /> : <VolumeX size={16} />}
+              {voiceEnabled ? "Voice on" : "Enable voice"}
+            </button>
+            <button type="button" className="review-feedback-refresh" onClick={() => loadFeedback()} disabled={loading}>
+              {loading ? <LoaderCircle size={17} className="review-feedback-spin" /> : <RefreshCw size={17} />}
+              Refresh
+            </button>
+          </div>
         </div>
       </header>
 

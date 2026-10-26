@@ -7,6 +7,9 @@
 .service-requests-header-actions { display:flex; align-items:flex-end; justify-content:flex-end; gap:10px; flex-wrap:wrap; }
 .service-requests-restaurant-select { display:grid; gap:5px; min-width:180px; color:#7c8a7e; font-size:10px; font-weight:750; }
 .service-requests-restaurant-select select { min-height:41px; max-width:260px; padding:0 12px; border:1px solid var(--sr-line); border-radius:12px; background:var(--sr-paper); color:#254935; font:inherit; font-size:12px; }
+.service-requests-voice { display:inline-flex; align-items:center; justify-content:center; gap:8px; min-height:41px; padding:0 14px; border:1px solid #dfe8dc; border-radius:12px; background:#fffefa; color:#456a50; font:inherit; font-size:11px; font-weight:800; cursor:pointer; }
+.service-requests-voice.is-active { border-color:#c6ddc4; background:#edf6e9; color:#28633f; }
+.service-requests-voice:focus-visible, .service-requests-refresh:focus-visible { outline:2px solid #5e9068; outline-offset:2px; }
 .service-requests-refresh { display:inline-flex; align-items:center; justify-content:center; gap:8px; min-height:41px; padding:0 14px; border:1px solid #dfe8dc; border-radius:12px; background:#fffefa; color:#456a50; font:inherit; font-size:11px; font-weight:800; cursor:pointer; }
 .service-requests-refresh:hover:not(:disabled) { border-color:#bfd5bd; background:#f3f7ef; }
 .service-requests-refresh:disabled { opacity:.65; cursor:wait; }

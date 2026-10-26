@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   BellRing,
   Check,
@@ -11,9 +11,12 @@ import {
   ReceiptText,
   Utensils,
   UserRound,
+  Volume2,
+  VolumeX,
   X,
 } from "lucide-react";
 import { supabase } from "../lib/supabaseClient";
+import { cancelKhaavioVoice, isKhaavioVoiceSupported, queueKhaavioVoice } from "../lib/khaavioVoiceAlerts";
 import "./ServiceRequestsDashboard.css";
 
 const REQUEST_META = {
@@ -22,6 +25,14 @@ const REQUEST_META = {
   bill: { label: "Request bill", Icon: ReceiptText },
   cutlery: { label: "Plates or cutlery", Icon: Utensils },
   other: { label: "Other request", Icon: UserRound },
+};
+
+const REQUEST_VOICE_META = {
+  waiter: { en: "a waiter", hi: "वेटर" },
+  water: { en: "water", hi: "पानी" },
+  bill: { en: "the bill", hi: "बिल" },
+  cutlery: { en: "plates or cutlery", hi: "प्लेट या कटलरी" },
+  other: { en: "assistance", hi: "मदद" },
 };
 
 const STATUS_META = {
@@ -58,6 +69,10 @@ function filterMatches(request, filter) {
 }
 
 export default function ServiceRequestsDashboard() {
+  const voiceEnabledRef = useRef(false);
+  const knownRequestIdsRef = useRef(null);
+  const knownRequestRestaurantIdRef = useRef("");
+  const [voiceEnabled, setVoiceEnabled] = useState(false);
   const [restaurants, setRestaurants] = useState([]);
   const [selectedRestaurantId, setSelectedRestaurantId] = useState("");
   const [requests, setRequests] = useState([]);
@@ -70,6 +85,11 @@ export default function ServiceRequestsDashboard() {
   const [notice, setNotice] = useState("");
 
   const selectedRestaurant = restaurants.find((item) => item.id === selectedRestaurantId) || null;
+
+  useEffect(() => () => {
+    voiceEnabledRef.current = false;
+    cancelKhaavioVoice();
+  }, []);
 
   useEffect(() => {
     let active = true;
@@ -113,6 +133,11 @@ export default function ServiceRequestsDashboard() {
       return undefined;
     }
 
+    if (knownRequestRestaurantIdRef.current !== selectedRestaurantId) {
+      knownRequestRestaurantIdRef.current = selectedRestaurantId;
+      knownRequestIdsRef.current = null;
+    }
+
     let active = true;
     setRequestsLoading(true);
     setError("");
@@ -139,10 +164,33 @@ export default function ServiceRequestsDashboard() {
         const nextTableNumbers = Object.fromEntries(
           (tableResult.data || []).map((table) => [table.id, table.table_number]),
         );
-        setRequests((requestResult.data || []).map((request) => ({
+        const nextRequests = (requestResult.data || []).map((request) => ({
           ...request,
           table_number: nextTableNumbers[request.table_id] || "Unknown table",
-        })));
+        }));
+        const previousRequestIds = knownRequestIdsRef.current;
+        const currentRequestIds = new Set(nextRequests.map((request) => request.id));
+        const newlyAddedRequests = previousRequestIds
+          ? nextRequests.filter((request) => !previousRequestIds.has(request.id) && request.status === "pending")
+          : [];
+
+        // IDs are tracked across Realtime and polling so each request is spoken once.
+        if (voiceEnabledRef.current && newlyAddedRequests.length === 1) {
+          const request = newlyAddedRequests[0];
+          const voiceMeta = REQUEST_VOICE_META[request.request_type] || REQUEST_VOICE_META.other;
+          const tableNumber = request.table_number || "unknown";
+          queueKhaavioVoice((isHindi) => isHindi
+            ? `टेबल ${tableNumber} पर ${voiceMeta.hi} का अनुरोध आया है।`
+            : `Table ${tableNumber} is requesting ${voiceMeta.en}.`);
+        } else if (voiceEnabledRef.current && newlyAddedRequests.length > 1) {
+          const count = newlyAddedRequests.length;
+          queueKhaavioVoice((isHindi) => isHindi
+            ? `${count} नई टेबल सर्विस रिक्वेस्ट आई हैं।`
+            : `You have ${count} new table service requests.`);
+        }
+
+        knownRequestIdsRef.current = currentRequestIds;
+        setRequests(nextRequests);
       } catch (loadError) {
         if (active) setError(loadError?.message || "Unable to load service requests.");
       } finally {
@@ -171,6 +219,15 @@ export default function ServiceRequestsDashboard() {
       .subscribe();
 
     return () => { void supabase.removeChannel(channel); };
+  }, [selectedRestaurantId]);
+
+  // Polling fallback catches new requests if Realtime disconnects or the browser reconnects late.
+  useEffect(() => {
+    if (!selectedRestaurantId) return undefined;
+    const intervalId = window.setInterval(() => {
+      setRefreshTick((value) => value + 1);
+    }, 30_000);
+    return () => window.clearInterval(intervalId);
   }, [selectedRestaurantId]);
 
   const counts = useMemo(() => ({
@@ -210,6 +267,35 @@ export default function ServiceRequestsDashboard() {
     } finally {
       setUpdatingId("");
     }
+  }
+
+  function toggleVoiceAnnouncements() {
+    if (voiceEnabledRef.current) {
+      voiceEnabledRef.current = false;
+      setVoiceEnabled(false);
+      cancelKhaavioVoice();
+      setNotice("Service request voice announcements are off.");
+      return;
+    }
+
+    if (!isKhaavioVoiceSupported()) {
+      setError("This browser does not support voice announcements. Try a current version of Chrome or Edge.");
+      return;
+    }
+
+    cancelKhaavioVoice();
+    const queued = queueKhaavioVoice((isHindi) => isHindi
+      ? `टेबल सर्विस अलर्ट चालू हैं। नए अनुरोधों की आवाज़ में सूचना दी जाएगी।`
+      : `Table service voice alerts are enabled. New guest requests will be announced.`);
+    if (!queued) {
+      setError("Voice announcements could not be started in this browser.");
+      return;
+    }
+
+    voiceEnabledRef.current = true;
+    setVoiceEnabled(true);
+    setError("");
+    setNotice("Service request voice announcements are on.");
   }
 
   if (initialLoading) {
@@ -255,6 +341,16 @@ export default function ServiceRequestsDashboard() {
               </select>
             </label>
           )}
+          <button
+            type="button"
+            className={`service-requests-voice${voiceEnabled ? " is-active" : ""}`}
+            onClick={toggleVoiceAnnouncements}
+            aria-pressed={voiceEnabled}
+            title={voiceEnabled ? "Disable spoken table service requests" : "Enable spoken table service requests"}
+          >
+            {voiceEnabled ? <Volume2 size={16} /> : <VolumeX size={16} />}
+            {voiceEnabled ? "Voice on" : "Enable voice"}
+          </button>
           <button type="button" className="service-requests-refresh" onClick={() => setRefreshTick((value) => value + 1)} disabled={requestsLoading}>
             {requestsLoading ? <LoaderCircle className="service-requests-spinner" size={16} /> : <RefreshCw size={16} />}
             Refresh

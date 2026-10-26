@@ -19,9 +19,12 @@ import {
   Store,
   Users,
   XCircle,
+  Volume2,
+  VolumeX,
 } from "lucide-react";
 
 import { supabase } from "../lib/supabaseClient";
+import { cancelKhaavioVoice, isKhaavioVoiceSupported, queueKhaavioVoice } from "../lib/khaavioVoiceAlerts";
 import { usePlanAccess } from "../context/PlanAccessContext";
 import PlanUpgradeNotice from "../components/PlanUpgradeNotice";
 import "./BookingsDashboard.css";
@@ -227,11 +230,18 @@ export default function BookingsDashboard() {
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [realtimeStatus, setRealtimeStatus] = useState("CONNECTING");
+  const [voiceEnabled, setVoiceEnabled] = useState(false);
+  const voiceEnabledRef = useRef(false);
   const knownBookingIdsRef = useRef(null);
 
   // Keep today's date current without creating Date during render.
   const [today, setToday] = useState(INITIAL_TODAY);
   const displayViewMode = canUseAdvancedBooking ? viewMode : "list";
+
+  useEffect(() => () => {
+    voiceEnabledRef.current = false;
+    cancelKhaavioVoice();
+  }, []);
 
   useEffect(() => {
     const intervalId = window.setInterval(() => {
@@ -315,17 +325,38 @@ export default function BookingsDashboard() {
           enrichedBookings.map((booking) => booking.id),
         );
         const previousBookingIds = knownBookingIdsRef.current;
+        const newlyAddedBookings = previousBookingIds
+          ? enrichedBookings.filter((booking) => !previousBookingIds.has(booking.id))
+          : [];
+        const newPendingBookings = newlyAddedBookings.filter(
+          (booking) => booking.status === "pending",
+        );
 
         if (previousBookingIds) {
-          const newBookingCount = enrichedBookings.filter(
-            (booking) => !previousBookingIds.has(booking.id),
-          ).length;
-
-          if (newBookingCount === 1) {
+          if (newlyAddedBookings.length === 1) {
             setNotice("A new booking request has arrived.");
-          } else if (newBookingCount > 1) {
-            setNotice(`${newBookingCount} new booking requests have arrived.`);
+          } else if (newlyAddedBookings.length > 1) {
+            setNotice(`${newlyAddedBookings.length} new booking requests have arrived.`);
           }
+        }
+
+        // Speak only newly inserted pending requests. The ID snapshot makes this
+        // work for Realtime and 30-second polling without announcing duplicates.
+        if (voiceEnabledRef.current && newPendingBookings.length === 1) {
+          const booking = newPendingBookings[0];
+          const guests = Math.max(1, Number(booking.party_size) || 1);
+          const bookingDate = new Date(booking.booking_time);
+          const time = Number.isNaN(bookingDate.getTime())
+            ? "the scheduled time"
+            : new Intl.DateTimeFormat("en-IN", { hour: "numeric", minute: "2-digit" }).format(bookingDate);
+          queueKhaavioVoice((isHindi) => isHindi
+            ? `${time} पर ${guests} लोगों की नई टेबल बुकिंग है।`
+            : `New table booking request for ${guests} guests at ${time}.`);
+        } else if (voiceEnabledRef.current && newPendingBookings.length > 1) {
+          const count = newPendingBookings.length;
+          queueKhaavioVoice((isHindi) => isHindi
+            ? `${count} नई टेबल बुकिंग रिक्वेस्ट आई हैं।`
+            : `You have ${count} new table booking requests.`);
         }
 
         knownBookingIdsRef.current = currentBookingIds;
@@ -392,6 +423,35 @@ export default function BookingsDashboard() {
       window.clearInterval(intervalId);
     };
   }, [restaurant?.id]);
+
+  function toggleVoiceAnnouncements() {
+    if (voiceEnabledRef.current) {
+      voiceEnabledRef.current = false;
+      setVoiceEnabled(false);
+      cancelKhaavioVoice();
+      setNotice("Booking voice announcements are off.");
+      return;
+    }
+
+    if (!isKhaavioVoiceSupported()) {
+      setError("This browser does not support voice announcements. Try a current version of Chrome or Edge.");
+      return;
+    }
+
+    cancelKhaavioVoice();
+    const queued = queueKhaavioVoice((isHindi) => isHindi
+      ? `बुकिंग अलर्ट चालू हैं। ${restaurant?.name || "आपके रेस्टोरेंट"} की नई टेबल बुकिंग की आवाज़ में सूचना दी जाएगी।`
+      : `Booking voice alerts are enabled for ${restaurant?.name || "your restaurant"}. New booking requests will be announced.`);
+    if (!queued) {
+      setError("Voice announcements could not be started in this browser.");
+      return;
+    }
+
+    voiceEnabledRef.current = true;
+    setVoiceEnabled(true);
+    setError("");
+    setNotice("Booking voice announcements are on. New bookings will be spoken.");
+  }
 
   async function updateBookingStatus(booking, nextStatus) {
     const allowedActions = ACTIONS[booking.status] || [];
@@ -643,19 +703,31 @@ export default function BookingsDashboard() {
           Dashboard
         </Link>
 
-        <button
-          type="button"
-          className="bookings-refresh"
-          onClick={refreshBookings}
-          disabled={refreshing}
-        >
-          {refreshing ? (
-            <LoaderCircle size={16} className="bookings-spinner" />
-          ) : (
-            <RefreshCw size={16} />
-          )}
-          Refresh
-        </button>
+        <div className="bookings-header-actions">
+          <button
+            type="button"
+            className={`bookings-voice-button${voiceEnabled ? " is-active" : ""}`}
+            onClick={toggleVoiceAnnouncements}
+            aria-pressed={voiceEnabled}
+            title={voiceEnabled ? "Disable booking voice announcements" : "Enable booking voice announcements"}
+          >
+            {voiceEnabled ? <Volume2 size={15} /> : <VolumeX size={15} />}
+            {voiceEnabled ? "Voice on" : "Enable voice"}
+          </button>
+          <button
+            type="button"
+            className="bookings-refresh"
+            onClick={refreshBookings}
+            disabled={refreshing}
+          >
+            {refreshing ? (
+              <LoaderCircle size={16} className="bookings-spinner" />
+            ) : (
+              <RefreshCw size={16} />
+            )}
+            Refresh
+          </button>
+        </div>
       </header>
 
       <div className="bookings-container">
