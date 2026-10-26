@@ -22,9 +22,17 @@ test("Starter includes daily restaurant operations", () => {
 
 test("Starter does not include Growth-only tools", () => {
   const starter = subscription("starter_yearly");
-  for (const feature of ["booking_advanced", "booking_export", "analytics_advanced", "priority_support"]) {
+  for (const feature of ["booking_advanced", "booking_export", "analytics_advanced", "priority_support", "loyalty_rewards", "private_feedback", "ai_menu_assistant", "voice_alerts_advanced"]) {
     assert.equal(planHasFeature(starter, feature), false, `${feature} should be locked on Starter`);
   }
+});
+
+test("Starter can show a configured Google review link without enabling private feedback", () => {
+  const starter = subscription("starter");
+  assert.equal(planHasFeature(starter, "google_review_link"), true);
+  assert.equal(planHasFeature(starter, "private_feedback"), false);
+  assert.equal(planHasFeature(starter, "loyalty_rewards"), false);
+  assert.equal(planHasFeature(starter, "ai_menu_assistant"), false);
 });
 
 test("Trial, Growth and legacy Pilot/Pro retain full feature access", () => {

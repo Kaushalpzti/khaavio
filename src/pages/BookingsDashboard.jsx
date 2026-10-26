@@ -206,6 +206,7 @@ export default function BookingsDashboard() {
   const { hasFeature } = usePlanAccess();
   const canUseAdvancedBooking = hasFeature("booking_advanced");
   const canExportBookings = hasFeature("booking_export");
+  const canUseAdvancedVoiceAlerts = hasFeature("voice_alerts_advanced");
 
   const [restaurant, setRestaurant] = useState(null);
   const [bookings, setBookings] = useState([]);
@@ -242,6 +243,13 @@ export default function BookingsDashboard() {
     voiceEnabledRef.current = false;
     cancelKhaavioVoice();
   }, []);
+
+  useEffect(() => {
+    if (canUseAdvancedVoiceAlerts) return;
+    voiceEnabledRef.current = false;
+    setVoiceEnabled(false);
+    cancelKhaavioVoice();
+  }, [canUseAdvancedVoiceAlerts]);
 
   useEffect(() => {
     const intervalId = window.setInterval(() => {
@@ -704,16 +712,18 @@ export default function BookingsDashboard() {
         </Link>
 
         <div className="bookings-header-actions">
-          <button
-            type="button"
-            className={`bookings-voice-button${voiceEnabled ? " is-active" : ""}`}
-            onClick={toggleVoiceAnnouncements}
-            aria-pressed={voiceEnabled}
-            title={voiceEnabled ? "Disable booking voice announcements" : "Enable booking voice announcements"}
-          >
-            {voiceEnabled ? <Volume2 size={15} /> : <VolumeX size={15} />}
-            {voiceEnabled ? "Voice on" : "Enable voice"}
-          </button>
+          {canUseAdvancedVoiceAlerts && (
+            <button
+              type="button"
+              className={`bookings-voice-button${voiceEnabled ? " is-active" : ""}`}
+              onClick={toggleVoiceAnnouncements}
+              aria-pressed={voiceEnabled}
+              title={voiceEnabled ? "Disable booking voice announcements" : "Enable booking voice announcements"}
+            >
+              {voiceEnabled ? <Volume2 size={15} /> : <VolumeX size={15} />}
+              {voiceEnabled ? "Voice on" : "Enable voice"}
+            </button>
+          )}
           <button
             type="button"
             className="bookings-refresh"
@@ -925,7 +935,7 @@ export default function BookingsDashboard() {
               </div>
 
               {!canUseAdvancedBooking && (
-                <PlanUpgradeNotice compact title="Unlock advanced booking tools" description="Growth adds calendar view, advanced search, date filters and CSV export." />
+                <PlanUpgradeNotice compact title="Unlock advanced booking tools" description="Growth adds calendar view, advanced search, date filters, CSV export and booking voice alerts." />
               )}
 
               {(hasSearchOrDateFilters || filter !== "all") && (

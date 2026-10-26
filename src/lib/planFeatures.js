@@ -1,8 +1,7 @@
 /**
  * Khaavio plan feature defaults.
  * Database `subscription_plans.limits.feature_flags` overrides these defaults.
- * Unknown plan keys fail closed; legacy pilot/pro plans retain their existing
- * broad access so this rollout does not unexpectedly break existing customers.
+ * Unknown plan keys fail closed; legacy Pilot / Pro and trial access remain full.
  */
 export const PLAN_FEATURE_KEYS = [
   "menu_management",
@@ -20,6 +19,11 @@ export const PLAN_FEATURE_KEYS = [
   "business_hours",
   "pause_orders",
   "priority_support",
+  "loyalty_rewards",
+  "private_feedback",
+  "google_review_link",
+  "ai_menu_assistant",
+  "voice_alerts_advanced",
 ];
 
 const CORE_FLAGS = Object.freeze({
@@ -38,6 +42,12 @@ const CORE_FLAGS = Object.freeze({
   business_hours: true,
   pause_orders: true,
   priority_support: false,
+  loyalty_rewards: false,
+  private_feedback: false,
+  // A configured Google review URL remains available to Starter restaurants.
+  google_review_link: true,
+  ai_menu_assistant: false,
+  voice_alerts_advanced: false,
 });
 
 const FULL_FLAGS = Object.freeze(
@@ -47,8 +57,7 @@ const FULL_FLAGS = Object.freeze(
 const PLAN_DEFAULTS = Object.freeze({
   pilot: FULL_FLAGS,
   trial: FULL_FLAGS,
-  // `pro` is retired from new sales, but existing Pro subscribers must not be
-  // unexpectedly downgraded as part of a safe migration.
+  // `pro` is retired from new sales, but existing Pro subscribers keep access.
   pro: FULL_FLAGS,
   starter: CORE_FLAGS,
   starter_yearly: CORE_FLAGS,

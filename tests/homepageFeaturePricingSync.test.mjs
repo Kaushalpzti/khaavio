@@ -6,6 +6,7 @@ const read = (path) => readFileSync(new URL(path, import.meta.url), "utf8");
 const home = read("../src/pages/Home.jsx");
 const homeCss = read("../src/pages/Home.css");
 const catalogMigration = read("../supabase/migrations/20261026030000_refresh_public_plan_feature_catalog.sql");
+const gatingMigration = read("../supabase/migrations/20261026040000_khaavio_growth_feature_gating.sql");
 const layout = read("../src/components/RestaurantDashboardLayout.jsx");
 const publicMenu = read("../src/pages/PublicMenu.jsx");
 const seoManager = read("../src/components/SeoManager.jsx");
@@ -36,7 +37,7 @@ test("homepage advertises the current shipped restaurant and guest modules", () 
   }
   assert.match(publicMenu, /import AskKhaavio from "\.\.\/components\/AskKhaavio"/);
   assert.match(publicMenu, /import PublicLoyaltyClub from "\.\.\/components\/PublicLoyaltyClub"/);
-  assert.match(publicMenu, /import PublicReviewsFeedback from "\.\.\/components\/PublicReviewsFeedback"/);
+  assert.match(publicMenu, /import PublicReviewsFeedback(?:, \{[^}]+\})? from "\.\.\/components\/PublicReviewsFeedback"/);
   assert.match(seoManager, /Khaavio \| QR Ordering, Menus & Restaurant Operations/);
   assert.match(seoManager, /table billing, loyalty rewards, guest feedback and AI menu help/);
   assert.match(indexHtml, /og:title.*QR Ordering, Menus &amp; Restaurant Operations/);
@@ -48,8 +49,10 @@ test("homepage Starter and Growth plan copy reflects the current product and tie
     "Table-side service requests: waiter, water, cutlery and bill",
     "Table sessions, final bills and printable invoices",
     "Digital loyalty stamps and rewards",
-    "Guest feedback and optional Google review links",
-    "Ask Khaavio AI menu assistant in English, Hindi and Hinglish",
+    "Operational voice alerts for orders, kitchen and service requests",
+    "Google Business review link on the public menu (when configured)",
+    "Private guest ratings, feedback inbox and review follow-up tools",
+    "Ask Khaavio AI menu assistant in English, Hindi and Hinglish (usage limits apply)",
   ]) {
     assert.ok(home.includes(phrase), `homepage plan copy should include ${phrase}`);
   }
@@ -83,6 +86,26 @@ test("database plan catalog migration refreshes only plan descriptions and featu
   }
   assert.doesNotMatch(catalogMigration, /price_inr\s*=/i, "catalog copy update must not change pricing");
   assert.doesNotMatch(catalogMigration, /limits\s*=/i, "catalog copy update must not change plan entitlements");
+});
+
+test("forward gating migration aligns the live catalog with Starter/Growth entitlements", () => {
+  for (const phrase of [
+    "Core menu, QR ordering and everyday restaurant operations",
+    "Optional Google Business review link on the public menu",
+    "Advanced booking calendar, search and date filters",
+    "Booking CSV export",
+    "Enhanced analytics and menu performance insights",
+    "Digital loyalty stamps and rewards",
+    "Private guest ratings, feedback inbox and review follow-up tools",
+    "Ask Khaavio AI menu assistant in English, Hindi and Hinglish (usage limits apply)",
+  ]) {
+    assert.ok(gatingMigration.includes(phrase), `forward catalog migration should include ${phrase}`);
+  }
+  assert.match(gatingMigration, /'loyalty_rewards', false/);
+  assert.match(gatingMigration, /'private_feedback', false/);
+  assert.match(gatingMigration, /'google_review_link', true/);
+  assert.match(gatingMigration, /'ai_menu_assistant', false/);
+  assert.doesNotMatch(gatingMigration, /price_inr\s*=/i, "feature gating must not change plan pricing");
 });
 
 test("expanded homepage feature grid remains responsive", () => {

@@ -150,6 +150,56 @@ async function consumeRateLimit(req: Request): Promise<RateLimitDecision | null>
   }
 }
 
+const PUBLIC_FEATURE_LOOKUP_TIMEOUT_MS = 3_000;
+
+type PublicFeatureDecision = true | false | null;
+
+async function hasPublicRestaurantFeature(
+  restaurantSlug: string,
+  featureKey: string,
+): Promise<PublicFeatureDecision> {
+  const supabaseUrl = Deno.env.get("SUPABASE_URL")?.replace(/\/+$/, "");
+  const publicKey = Deno.env.get("SUPABASE_ANON_KEY") || Deno.env.get("SUPABASE_PUBLISHABLE_KEY");
+  if (!supabaseUrl || !publicKey) {
+    console.error("AI feature entitlement check is not configured: missing public Supabase credentials.");
+    return null;
+  }
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), PUBLIC_FEATURE_LOOKUP_TIMEOUT_MS);
+  try {
+    const response = await fetch(`${supabaseUrl}/rest/v1/rpc/khaavio_public_restaurant_feature_flags`, {
+      method: "POST",
+      headers: {
+        apikey: publicKey,
+        Authorization: `Bearer ${publicKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ p_slug: restaurantSlug }),
+      signal: controller.signal,
+    });
+    if (!response.ok) {
+      console.error("AI feature entitlement RPC returned status:", response.status);
+      return null;
+    }
+    const payload = await response.json();
+    if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
+      console.error("AI feature entitlement RPC returned an invalid response.");
+      return null;
+    }
+    const enabled = (payload as Record<string, unknown>)[featureKey];
+    return typeof enabled === "boolean" ? enabled : null;
+  } catch (error) {
+    console.error(
+      "AI feature entitlement lookup failed:",
+      error instanceof Error ? error.message : "Unknown error",
+    );
+    return null;
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   if (req.method !== "POST") return respond({ error: "METHOD_NOT_ALLOWED" }, 405);
@@ -191,6 +241,24 @@ Deno.serve(async (req: Request) => {
       return respond({ error: "MESSAGE_REQUIRED" }, 400);
     }
     if (body.message.length > MAX_MESSAGE_LENGTH) return respond({ error: "MESSAGE_TOO_LONG" }, 400);
+
+    const restaurantSlug = clean(body.restaurantSlug, 120);
+    if (!restaurantSlug) {
+      return respond({ error: "RESTAURANT_REQUIRED", message: "A published restaurant is required." }, 400);
+    }
+    const aiFeatureEnabled = await hasPublicRestaurantFeature(restaurantSlug, "ai_menu_assistant");
+    if (aiFeatureEnabled === null) {
+      return respond({
+        error: "FEATURE_ACCESS_UNAVAILABLE",
+        message: "The assistant is temporarily unavailable. Please try again shortly.",
+      }, 503);
+    }
+    if (!aiFeatureEnabled) {
+      return respond({
+        error: "FEATURE_NOT_IN_PLAN",
+        message: "Ask Khaavio AI is available on the Growth plan or during the full-access trial.",
+      }, 403);
+    }
 
     const language = body.language === "hi" || body.language === "en" || body.language === "hinglish"
       ? body.language

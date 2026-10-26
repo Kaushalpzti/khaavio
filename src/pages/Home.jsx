@@ -101,7 +101,7 @@ const features = [
     label: "LOYALTY + REWARDS",
     title: "Give guests a reason to return.",
     description:
-      "Offer digital stamp tracking and rewards that guests can view from the restaurant menu, helping make repeat visits more rewarding.",
+      "Growth restaurants can offer digital stamp tracking and rewards from the public menu, helping make repeat visits more rewarding.",
     icon: Gift,
   },
   {
@@ -109,7 +109,7 @@ const features = [
     label: "GUEST REVIEWS + FEEDBACK",
     title: "Keep the conversation going.",
     description:
-      "Collect private guest ratings and feedback, and offer an optional Google review link when the restaurant has configured one.",
+      "Growth includes private guest ratings and feedback tools. A configured Google review link remains available to Starter and Growth restaurants.",
     icon: MessageSquareText,
   },
   {
@@ -117,7 +117,7 @@ const features = [
     label: "ASK KHAAVIO AI",
     title: "A menu assistant for every guest.",
     description:
-      "Guests can ask about dishes and prices or get menu suggestions in English, Hindi or Hinglish, based on the menu available to them.",
+      "Available with Growth: guests can ask about dishes and prices or get menu suggestions in English, Hindi or Hinglish, based on the restaurant menu (usage limits apply).",
     icon: Bot,
   },
 ];
@@ -136,9 +136,8 @@ const plans = [
       "Basic table-booking management",
       "Table-side service requests: waiter, water, cutlery and bill",
       "Table sessions, final bills and printable invoices",
-      "Digital loyalty stamps and rewards",
-      "Guest feedback and optional Google review links",
-      "Ask Khaavio AI menu assistant in English, Hindi and Hinglish",
+      "Operational voice alerts for orders, kitchen and service requests",
+      "Google Business review link on the public menu (when configured)",
       "Basic order analytics, business hours and pause-orders controls",
     ],
     cta: "Start 7-day free trial",
@@ -154,6 +153,10 @@ const plans = [
       "Advanced booking calendar, search and date filters",
       "Booking CSV export",
       "Enhanced analytics and menu performance insights",
+      "Digital loyalty stamps and rewards",
+      "Private guest ratings, feedback inbox and review follow-up tools",
+      "Ask Khaavio AI menu assistant in English, Hindi and Hinglish (usage limits apply)",
+      "Advanced voice alerts for Growth-specific workflows",
       "Priority support during the founding pilot",
     ],
     cta: "Start 7-day free trial",
@@ -190,12 +193,12 @@ const faqs = [
   {
     question: "What guest-facing tools are available?",
     answer:
-      "Depending on the restaurant setup and how a guest opens the menu, customers can use Ask Khaavio AI for menu suggestions, view loyalty stamps and rewards, share private feedback, open a configured Google review link, and send requests such as calling a waiter from a valid table QR.",
+      "All active plans can show a configured Google review link and support table-side requests from a valid table QR. Growth additionally unlocks loyalty stamps and rewards, private feedback, and Ask Khaavio AI for menu suggestions (subject to usage limits).",
   },
   {
     question: "What is included in Starter and Growth?",
     answer:
-      "Both plans include the current core guest and restaurant tools: digital menus and QR codes, QR ordering, Kitchen Display, receipts, basic bookings and analytics, table-side requests, table sessions and bills, loyalty stamps and rewards, guest feedback, and Ask Khaavio AI. Growth adds advanced booking tools, CSV export, enhanced analytics and priority pilot support.",
+      "Both plans include the core restaurant workflow: digital menus and QR codes, QR ordering, Kitchen Display, receipts, basic bookings and analytics, table-side requests, table sessions and bills, and a configurable Google review link. Growth adds advanced booking tools, CSV export, enhanced analytics, loyalty stamps and rewards, private guest feedback, Ask Khaavio AI (usage limits apply), advanced voice alerts and priority pilot support.",
   },
   {
     question: "Can I try Khaavio before paying?",

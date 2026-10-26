@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { CheckCheck, Clock3, LoaderCircle, MessageSquareText, RefreshCw, Star, ThumbsUp, Volume2, VolumeX } from "lucide-react";
 import { supabase } from "../lib/supabaseClient";
+import { usePlanAccess } from "../context/PlanAccessContext";
+import PlanUpgradeNotice from "../components/PlanUpgradeNotice";
 import { cancelKhaavioVoice, isKhaavioVoiceSupported, queueKhaavioVoice } from "../lib/khaavioVoiceAlerts";
 import "./ReviewFeedbackDashboard.css";
 
@@ -24,6 +26,8 @@ function formatDate(value) {
 }
 
 export default function ReviewFeedbackDashboard() {
+  const { hasFeature } = usePlanAccess();
+  const canManagePrivateFeedback = hasFeature("private_feedback");
   const voiceEnabledRef = useRef(false);
   const knownFeedbackIdsRef = useRef(null);
   const [voiceEnabled, setVoiceEnabled] = useState(false);
@@ -36,6 +40,12 @@ export default function ReviewFeedbackDashboard() {
   const [notice, setNotice] = useState("");
 
   const loadFeedback = useCallback(async ({ quiet = false } = {}) => {
+    if (!canManagePrivateFeedback) {
+      setRestaurant(null);
+      setFeedback([]);
+      setLoading(false);
+      return;
+    }
     if (!quiet) setLoading(true);
     setError("");
     try {
@@ -90,7 +100,7 @@ export default function ReviewFeedbackDashboard() {
     } finally {
       if (!quiet) setLoading(false);
     }
-  }, []);
+  }, [canManagePrivateFeedback]);
 
   useEffect(() => () => {
     voiceEnabledRef.current = false;
@@ -98,11 +108,18 @@ export default function ReviewFeedbackDashboard() {
   }, []);
 
   useEffect(() => {
+    if (canManagePrivateFeedback) return;
+    voiceEnabledRef.current = false;
+    setVoiceEnabled(false);
+    cancelKhaavioVoice();
+  }, [canManagePrivateFeedback]);
+
+  useEffect(() => {
     loadFeedback();
   }, [loadFeedback]);
 
   useEffect(() => {
-    if (!restaurant?.id) return undefined;
+    if (!canManagePrivateFeedback || !restaurant?.id) return undefined;
     const channel = supabase
       .channel(`restaurant-feedback-${restaurant.id}`)
       .on(
@@ -119,7 +136,7 @@ export default function ReviewFeedbackDashboard() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [restaurant?.id, loadFeedback]);
+  }, [canManagePrivateFeedback, restaurant?.id, loadFeedback]);
 
   const visibleFeedback = useMemo(
     () => filter === "all" ? feedback : feedback.filter((item) => item.status === filter),
@@ -181,6 +198,17 @@ export default function ReviewFeedbackDashboard() {
     } finally {
       setUpdatingId("");
     }
+  }
+
+  if (!canManagePrivateFeedback) {
+    return (
+      <main className="review-feedback-page">
+        <PlanUpgradeNotice
+          title="Unlock private guest feedback"
+          description="The private feedback inbox, rating summaries and staff follow-up tools are included with Growth. Your existing feedback records remain preserved."
+        />
+      </main>
+    );
   }
 
   return (

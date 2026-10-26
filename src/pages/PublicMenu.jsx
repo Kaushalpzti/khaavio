@@ -21,9 +21,10 @@ import {
 import { supabase } from "../lib/supabaseClient";
 import { getOrCreateKhaavioLoyaltyToken } from "../lib/loyaltyToken";
 import { getStoredKhaavioLoyaltyPhone, setStoredKhaavioLoyaltyPhone } from "../lib/loyaltyPhone";
+import { DEFAULT_PUBLIC_FEATURES, normalizePublicFeatureFlags, shouldShowPublicReviewsTab } from "../lib/publicPlanFeatures";
 import PublicTableService from "../components/PublicTableService";
 import PublicLoyaltyClub from "../components/PublicLoyaltyClub";
-import PublicReviewsFeedback from "../components/PublicReviewsFeedback";
+import PublicReviewsFeedback, { isValidGoogleReviewUrl } from "../components/PublicReviewsFeedback";
 import PublicBooking from "./PublicBooking";
 import AskKhaavio from "../components/AskKhaavio";
 import khaavioIcon from "../assets/icon.png";
@@ -157,6 +158,7 @@ export default function PublicMenu() {
   const [categories, setCategories] = useState([]);
   const [items, setItems] = useState([]);
   const [tableContext, setTableContext] = useState(null);
+  const [publicFeatures, setPublicFeatures] = useState({ ...DEFAULT_PUBLIC_FEATURES });
 
   const [search, setSearch] = useState("");
   const [categoryId, setCategoryId] = useState("all");
@@ -179,6 +181,16 @@ export default function PublicMenu() {
   const [subscriptionAllowsTransactions, setSubscriptionAllowsTransactions] =
     useState(null);
 
+  const canUseLoyaltyRewards = publicFeatures.loyalty_rewards === true;
+  const canUsePrivateFeedback = publicFeatures.private_feedback === true;
+  const canShowGoogleReviewLink = publicFeatures.google_review_link === true
+    && isValidGoogleReviewUrl(restaurant?.google_review_url);
+  const canShowReviewsTab = shouldShowPublicReviewsTab(
+    publicFeatures,
+    canShowGoogleReviewLink,
+  );
+  const canUseAskKhaavio = publicFeatures.ai_menu_assistant === true;
+
   function handleLoyaltyPhoneChange(value) {
     setLoyaltyPhone(value);
     setStoredKhaavioLoyaltyPhone(slug, value);
@@ -189,6 +201,14 @@ export default function PublicMenu() {
     setActiveBottomTab(tab);
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
+
+  useEffect(() => {
+    if (activeBottomTab === "rewards" && !canUseLoyaltyRewards) {
+      setActiveBottomTab("menu");
+    } else if (activeBottomTab === "reviews" && !canShowReviewsTab) {
+      setActiveBottomTab("menu");
+    }
+  }, [activeBottomTab, canUseLoyaltyRewards, canShowReviewsTab]);
 
   // Give each published restaurant menu a useful, restaurant-specific title.
   useEffect(() => {
@@ -243,6 +263,8 @@ export default function PublicMenu() {
       setOrderResult(null);
       setCheckoutError("");
       setSubscriptionAllowsTransactions(null);
+      setPublicFeatures({ ...DEFAULT_PUBLIC_FEATURES });
+      setActiveBottomTab("menu");
 
       try {
         const { data: restaurantData, error: restaurantError } = await supabase
@@ -260,6 +282,22 @@ export default function PublicMenu() {
           throw new Error(
             "This menu is not published yet, or the link is incorrect.",
           );
+        }
+
+        // Public menus receive only a small, non-sensitive set of plan entitlements.
+        // If the RPC is unavailable, Growth-only public features fail closed while
+        // core menu browsing remains available.
+        let resolvedPublicFeatures = { ...DEFAULT_PUBLIC_FEATURES };
+        try {
+          const { data: featureData, error: featureError } = await supabase.rpc(
+            "khaavio_public_restaurant_feature_flags",
+            { p_slug: slug },
+          );
+          if (!featureError) {
+            resolvedPublicFeatures = normalizePublicFeatureFlags(featureData);
+          }
+        } catch {
+          resolvedPublicFeatures = { ...DEFAULT_PUBLIC_FEATURES };
         }
 
         // Restaurant logo is optional. If column access/storage is unavailable,
@@ -338,6 +376,7 @@ export default function PublicMenu() {
         if (cancelled) return;
 
         setRestaurant({ ...restaurantData, logo_url: restaurantLogoUrl });
+        setPublicFeatures(resolvedPublicFeatures);
         setSubscriptionAllowsTransactions(transactionAccess);
         setAvailabilityNow(Date.now());
 
@@ -946,7 +985,7 @@ export default function PublicMenu() {
             </>
           )}
 
-          {activeBottomTab === "rewards" && (
+          {activeBottomTab === "rewards" && canUseLoyaltyRewards && (
             <section className="public-menu-tab-view public-menu-rewards-view" aria-labelledby="public-menu-rewards-title">
               <div className="public-menu-tab-hero public-menu-tab-hero-rewards">
                 <span className="public-menu-tab-eyebrow"><Gift size={15} /> YOUR REWARDS</span>
@@ -973,18 +1012,22 @@ export default function PublicMenu() {
             </div>
           )}
 
-          {activeBottomTab === "reviews" && (
+          {activeBottomTab === "reviews" && canShowReviewsTab && (
             <section className="public-menu-tab-view public-menu-reviews-view" aria-labelledby="public-menu-reviews-heading">
               <div className="public-menu-tab-hero public-menu-tab-hero-reviews">
                 <span className="public-menu-tab-eyebrow"><Star size={15} /> RATINGS & REVIEW</span>
-                <h1 id="public-menu-reviews-heading">Your feedback means a lot.</h1>
-                <p>Tell {restaurant.name} how your experience went, or leave an honest Google review.</p>
+                <h1 id="public-menu-reviews-heading">{canUsePrivateFeedback ? "Your feedback means a lot." : "Enjoyed your visit?"}</h1>
+                <p>{canUsePrivateFeedback
+                  ? `Tell ${restaurant.name} how your experience went, or leave an honest Google review.`
+                  : `Leave an honest Google review to help other guests discover ${restaurant.name}.`}</p>
               </div>
               <div className="public-menu-tab-content">
                 <PublicReviewsFeedback
                   restaurantSlug={slug}
                   restaurantName={restaurant.name}
                   googleReviewUrl={restaurant.google_review_url}
+                  allowGoogleReviewLink={publicFeatures.google_review_link}
+                  allowPrivateFeedback={canUsePrivateFeedback}
                 />
               </div>
             </section>
@@ -1315,15 +1358,17 @@ export default function PublicMenu() {
               <UtensilsCrossed size={19} strokeWidth={2.1} />
               <span>Menu</span>
             </button>
-            <button
-              type="button"
-              className={activeBottomTab === "rewards" ? "is-active" : ""}
-              aria-pressed={activeBottomTab === "rewards"}
-              onClick={() => switchBottomTab("rewards")}
-            >
-              <Gift size={19} strokeWidth={2.1} />
-              <span>Rewards</span>
-            </button>
+            {canUseLoyaltyRewards && (
+              <button
+                type="button"
+                className={activeBottomTab === "rewards" ? "is-active" : ""}
+                aria-pressed={activeBottomTab === "rewards"}
+                onClick={() => switchBottomTab("rewards")}
+              >
+                <Gift size={19} strokeWidth={2.1} />
+                <span>Rewards</span>
+              </button>
+            )}
             <button
               type="button"
               className={activeBottomTab === "book" ? "is-active" : ""}
@@ -1333,15 +1378,17 @@ export default function PublicMenu() {
               <CalendarDays size={19} strokeWidth={2.1} />
               <span>Book table</span>
             </button>
-            <button
-              type="button"
-              className={activeBottomTab === "reviews" ? "is-active" : ""}
-              aria-pressed={activeBottomTab === "reviews"}
-              onClick={() => switchBottomTab("reviews")}
-            >
-              <Star size={19} strokeWidth={2.1} />
-              <span>Ratings & Review</span>
-            </button>
+            {canShowReviewsTab && (
+              <button
+                type="button"
+                className={activeBottomTab === "reviews" ? "is-active" : ""}
+                aria-pressed={activeBottomTab === "reviews"}
+                onClick={() => switchBottomTab("reviews")}
+              >
+                <Star size={19} strokeWidth={2.1} />
+                <span>Ratings & Review</span>
+              </button>
+            )}
           </nav>
 
           <PublicTableService
@@ -1351,13 +1398,15 @@ export default function PublicMenu() {
             hasStickyCart={activeBottomTab === "menu" && cart.length > 0 && !orderResult && !isCartOpen}
           />
 
-          <AskKhaavio
-            restaurant={restaurant}
-            menuItems={items}
-            categories={categories}
-            onAddToCart={addToCart}
-            hasStickyCart={activeBottomTab === "menu" && cart.length > 0 && !orderResult && !isCartOpen}
-          />
+          {canUseAskKhaavio && (
+            <AskKhaavio
+              restaurant={restaurant}
+              menuItems={items}
+              categories={categories}
+              onAddToCart={addToCart}
+              hasStickyCart={activeBottomTab === "menu" && cart.length > 0 && !orderResult && !isCartOpen}
+            />
+          )}
 
           {activeBottomTab === "menu" && cart.length > 0 && !orderResult && !isCartOpen && (
             <button

@@ -32,6 +32,8 @@ export default function PublicReviewsFeedback({
   restaurantSlug,
   restaurantName,
   googleReviewUrl,
+  allowGoogleReviewLink = true,
+  allowPrivateFeedback = true,
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const [rating, setRating] = useState(0);
@@ -41,7 +43,7 @@ export default function PublicReviewsFeedback({
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState("");
 
-  const showGoogleReview = isValidGoogleReviewUrl(googleReviewUrl);
+  const showGoogleReview = allowGoogleReviewLink === true && isValidGoogleReviewUrl(googleReviewUrl);
 
   async function submitFeedback(event) {
     event.preventDefault();
@@ -83,8 +85,10 @@ export default function PublicReviewsFeedback({
     <section className="public-reviews" aria-labelledby="public-reviews-title">
       <div className="public-reviews-intro">
         <span className="public-reviews-eyebrow">A LITTLE NOTE FROM YOU</span>
-        <h2 id="public-reviews-title">How was your experience?</h2>
-        <p>Your feedback helps {restaurantName || "our team"} make every visit better.</p>
+        <h2 id="public-reviews-title">{allowPrivateFeedback ? "How was your experience?" : "Enjoyed your visit?"}</h2>
+        <p>{allowPrivateFeedback
+          ? `Your feedback helps ${restaurantName || "our team"} make every visit better.`
+          : `Leave an honest Google review to help other guests discover ${restaurantName || "this restaurant"}.`}</p>
       </div>
 
       <div className="public-reviews-actions">
@@ -101,21 +105,23 @@ export default function PublicReviewsFeedback({
             <ExternalLink size={16} aria-hidden="true" />
           </a>
         )}
-        <button
-          type="button"
-          className="public-reviews-private"
-          onClick={() => {
-            setIsOpen((value) => !value);
-            setError("");
-          }}
-          aria-expanded={isOpen}
-        >
-          {isOpen ? <X size={17} /> : <MessageCircle size={17} />}
-          {isOpen ? "Close feedback" : "Share private feedback"}
-        </button>
+        {allowPrivateFeedback && (
+          <button
+            type="button"
+            className="public-reviews-private"
+            onClick={() => {
+              setIsOpen((value) => !value);
+              setError("");
+            }}
+            aria-expanded={isOpen}
+          >
+            {isOpen ? <X size={17} /> : <MessageCircle size={17} />}
+            {isOpen ? "Close feedback" : "Share private feedback"}
+          </button>
+        )}
       </div>
 
-      {isOpen && (
+      {allowPrivateFeedback && isOpen && (
         <div className="public-reviews-form-wrap">
           {submitted ? (
             <div className="public-reviews-success" role="status">

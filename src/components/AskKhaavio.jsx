@@ -147,6 +147,7 @@ export default function AskKhaavio({
     const body = {
       message: messageText,
       language,
+      restaurantSlug: restaurant?.slug || "",
       restaurant: {
         name: restaurant?.name || "Restaurant",
         cuisine: restaurant?.restaurant_type || "",

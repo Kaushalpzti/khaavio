@@ -10,6 +10,8 @@ import {
   UsersRound,
 } from "lucide-react";
 import { supabase } from "../lib/supabaseClient";
+import { usePlanAccess } from "../context/PlanAccessContext";
+import PlanUpgradeNotice from "../components/PlanUpgradeNotice";
 import "./LoyaltyDashboard.css";
 
 const DEFAULT_FORM = {
@@ -37,6 +39,8 @@ function formatDate(value) {
 }
 
 export default function LoyaltyDashboard() {
+  const { hasFeature } = usePlanAccess();
+  const canManageLoyalty = hasFeature("loyalty_rewards");
   const [restaurants, setRestaurants] = useState([]);
   const [restaurantId, setRestaurantId] = useState("");
   const [form, setForm] = useState(DEFAULT_FORM);
@@ -56,6 +60,17 @@ export default function LoyaltyDashboard() {
   );
 
   const loadDashboard = useCallback(async (quiet = false) => {
+    if (!canManageLoyalty) {
+      setRestaurants([]);
+      setRestaurantId("");
+      setMembers([]);
+      setRewards([]);
+      setStats({ members: 0, stamps: 0, available: 0, redeemed: 0 });
+      setForm(DEFAULT_FORM);
+      setLoading(false);
+      setRefreshing(false);
+      return;
+    }
     if (quiet) setRefreshing(true);
     else setLoading(true);
     setError("");
@@ -123,13 +138,14 @@ export default function LoyaltyDashboard() {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [restaurantId]);
+  }, [restaurantId, canManageLoyalty]);
 
   useEffect(() => {
     void loadDashboard(false);
-    // Initial load only; restaurant changes are handled by the select below.
+    // The callback also depends on the selected restaurant; reload only when the
+    // entitlement itself changes here. Selected restaurant changes use the effect below.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [canManageLoyalty]);
 
   useEffect(() => {
     if (!restaurantId || loading) return;
@@ -207,6 +223,17 @@ export default function LoyaltyDashboard() {
     } finally {
       setRedeemingId("");
     }
+  }
+
+  if (!canManageLoyalty) {
+    return (
+      <main className="loyalty-dashboard-page">
+        <PlanUpgradeNotice
+          title="Unlock Khaavio Perks"
+          description="Digital stamp cards, loyalty rewards and redemption management are included with Growth. Existing loyalty data is preserved if your plan changes."
+        />
+      </main>
+    );
   }
 
   if (loading) {
