@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { supabase } from "../lib/supabaseClient";
+import { resetKhaavioAlertPreferences } from "../lib/khaavioAlertPreferences";
 
 const AuthSessionContext = createContext(null);
 
@@ -55,9 +56,12 @@ export function AuthSessionProvider({ children }) {
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    } = supabase.auth.onAuthStateChange((event, session) => {
       authEventReceived = true;
       if (!active) return;
+      if (event === "SIGNED_IN" && session?.user?.id) {
+        resetKhaavioAlertPreferences(session.user.id);
+      }
       setAuthState(stateFromSession(session || null));
     });
 

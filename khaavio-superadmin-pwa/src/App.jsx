@@ -64,6 +64,7 @@ const NAV_ITEMS = [
   { id: "overview", label: "Overview", icon: LayoutDashboard },
   { id: "restaurants", label: "Restaurants", icon: Store },
   { id: "renewals", label: "Renewal queue", icon: CreditCard },
+  { id: "billing", label: "Razorpay billing", icon: CreditCard },
   { id: "audit", label: "Audit trail", icon: History },
   { id: "security", label: "Security", icon: ShieldCheck },
 ];
@@ -1595,6 +1596,154 @@ function ResolutionModal({
   );
 }
 
+function RazorpayBilling({ snapshot, error, onRefresh, refreshing }) {
+  const [searchText, setSearchText] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const payments = Array.isArray(snapshot?.payments) ? snapshot.payments : [];
+  const webhooks = Array.isArray(snapshot?.webhooks) ? snapshot.webhooks : [];
+  const failedWebhooks = webhooks.filter((event) => event.processing_status === "failed").length;
+  const captured = payments.filter((item) => item.payment_status === "captured");
+  const capturedTotal = captured.reduce((total, item) => total + (Number(item.payment_amount_inr) || 0), 0);
+  const filteredPayments = payments.filter((item) => {
+    const query = searchText.trim().toLowerCase();
+    const matchesSearch = !query || [
+      item.restaurant_name,
+      item.restaurant_slug,
+      item.razorpay_subscription_id,
+      item.razorpay_payment_id,
+      item.plan_name,
+      item.plan_key,
+    ].some((value) => String(value || "").toLowerCase().includes(query));
+    const state = statusFilter === "all" ||
+      (statusFilter === "paid" && item.payment_status === "captured") ||
+      (statusFilter === "unpaid" && !item.payment_status) ||
+      (statusFilter === "failed" && ["failed", "cancelled", "expired"].includes(item.attempt_status)) ||
+      (statusFilter === "refunded" && ["refunded", "partially_refunded"].includes(item.payment_status));
+    return matchesSearch && state;
+  });
+
+  return (
+    <div className="billing-workspace">
+      <div className="section-heading">
+        <div>
+          <span className="eyebrow">RECURRING BILLING</span>
+          <h1>Razorpay billing</h1>
+          <p>Verified subscription attempts and payment records from the server-side billing ledger.</p>
+        </div>
+        <button type="button" className="button button-secondary" onClick={onRefresh} disabled={refreshing}>
+          {refreshing ? <LoaderCircle size={15} className="spin" /> : <RefreshCw size={15} />}
+          Refresh records
+        </button>
+      </div>
+
+      {error ? (
+        <div className="callout callout-error">
+          <AlertTriangle size={17} />
+          <div><strong>Billing data unavailable</strong><p>{error}</p></div>
+        </div>
+      ) : null}
+
+      <div className="billing-summary-grid">
+        <StatCard icon={CreditCard} label="Subscription attempts" value={payments.length} detail="Latest 100 attempts" tone="green" />
+        <StatCard icon={CheckCircle2} label="Captured payment records" value={captured.length} detail={`Ledger total: ${money(capturedTotal)}`} tone="green" />
+        <StatCard icon={AlertTriangle} label="Failed webhook events" value={failedWebhooks} detail="Latest 50 webhook deliveries" tone={failedWebhooks ? "red" : "green"} />
+      </div>
+
+      <section className="panel billing-panel">
+        <div className="panel-heading billing-panel-heading">
+          <div>
+            <h2>Subscription and payment ledger</h2>
+            <p>Only webhook-verified payment records appear as captured.</p>
+          </div>
+          <div className="billing-sync">
+            <Clock3 size={14} />
+            Synced {snapshot?.generated_at ? dateTime(snapshot.generated_at) : "not yet"}
+          </div>
+        </div>
+        <div className="billing-toolbar">
+          <label className="search-box">
+            <Search size={16} />
+            <input value={searchText} onChange={(event) => setSearchText(event.target.value)} placeholder="Search restaurant, plan or Razorpay ID" />
+          </label>
+          <div className="segmented-filter" aria-label="Filter billing records">
+            {[
+              ["all", "All"],
+              ["paid", "Captured"],
+              ["unpaid", "Awaiting payment"],
+              ["failed", "Failed"],
+              ["refunded", "Refunded"],
+            ].map(([value, label]) => (
+              <button key={value} type="button" className={statusFilter === value ? "selected" : ""} onClick={() => setStatusFilter(value)}>{label}</button>
+            ))}
+          </div>
+        </div>
+
+        {filteredPayments.length ? (
+          <div className="billing-record-list">
+            {filteredPayments.map((item, index) => {
+              const paymentState = item.payment_status || item.attempt_status || "pending";
+              return (
+                <article className="billing-record" key={item.razorpay_subscription_id || item.razorpay_payment_id || `${item.restaurant_id}-${index}`}>
+                  <div className="billing-record-top">
+                    <div className="billing-restaurant">
+                      <span className="billing-record-icon"><Store size={17} /></span>
+                      <div>
+                        <strong>{item.restaurant_name || "Unknown restaurant"}</strong>
+                        <small>{item.restaurant_slug ? `/${item.restaurant_slug}` : item.restaurant_id}</small>
+                      </div>
+                    </div>
+                    <Badge status={paymentState}>{String(paymentState).replaceAll("_", " ")}</Badge>
+                  </div>
+                  <div className="billing-record-facts">
+                    <div><span>Plan</span><strong>{item.plan_name || item.plan_key || "Not set"}</strong><small>{item.billing_interval || "Interval unavailable"}</small></div>
+                    <div><span>Plan price</span><strong>{money(item.amount_inr)}</strong><small>{item.currency || "INR"}</small></div>
+                    <div><span>Payment recorded</span><strong>{item.payment_status ? money(item.payment_amount_inr) : "Not captured"}</strong><small>{item.paid_at ? dateTime(item.paid_at) : "No verified charge"}</small></div>
+                    <div><span>Subscription status</span><strong>{item.subscription_status || item.attempt_status || "Not set"}</strong><small>{item.subscription_ends_at ? `Valid until ${dateTime(item.subscription_ends_at)}` : "No expiry recorded"}</small></div>
+                  </div>
+                  <div className="billing-identifiers">
+                    <div><span>Razorpay subscription</span><code>{item.razorpay_subscription_id || "Not created"}</code></div>
+                    <div><span>Razorpay payment</span><code>{item.razorpay_payment_id || "No payment ID"}</code></div>
+                  </div>
+                  {item.cancel_at_period_end ? <p className="billing-notice">Cancellation is scheduled at the end of the current period.</p> : null}
+                  <div className="billing-record-footer">
+                    <span>Attempt updated {dateTime(item.attempt_updated_at || item.attempt_created_at)}</span>
+                    {item.verified_at ? <span>Verified {dateTime(item.verified_at)}</span> : <span>Awaiting verified payment</span>}
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+        ) : (
+          <EmptyState icon={CreditCard} title={error ? "Billing data could not be loaded" : "No billing records match"} description={error ? "Check the admin billing RPC migration and refresh." : "Once an attempt has been created, it will appear here. Manual renewals stay in the separate renewal queue."} />
+        )}
+        <div className="panel-foot">
+          <span>Private ledger · Admin allowlist required</span>
+          <span>{filteredPayments.length} shown / {payments.length} attempts</span>
+        </div>
+      </section>
+
+      <section className="panel billing-panel">
+        <div className="panel-heading billing-panel-heading">
+          <div><h2>Webhook health</h2><p>Recent event processing status without exposing raw payloads or secrets.</p></div>
+          <Badge status={failedWebhooks ? "failed" : "captured"}>{failedWebhooks ? `${failedWebhooks} failed` : "No recent failures"}</Badge>
+        </div>
+        {webhooks.length ? (
+          <div className="billing-webhook-list">
+            {webhooks.slice(0, 15).map((event, index) => (
+              <div className="billing-webhook-row" key={`${event.event_type}-${event.received_at}-${index}`}>
+                <div><strong>{event.event_type}</strong><small>Received {dateTime(event.received_at)}</small></div>
+                <Badge status={event.processing_status}>{event.processing_status}</Badge>
+                <small>{event.processed_at ? `Processed ${dateTime(event.processed_at)}` : event.error_summary || "Not marked processed yet"}</small>
+              </div>
+            ))}
+          </div>
+        ) : <EmptyState icon={Activity} title="No webhook events yet" description="Webhook events appear after Razorpay sends subscription updates." />}
+      </section>
+      <p className="billing-safety-note">This is a read-only view. It does not capture payments, activate subscriptions manually, retry webhooks, or call Razorpay.</p>
+    </div>
+  );
+}
+
 export default function App() {
   const [nowMs, setNowMs] = useState(0);
 
@@ -1617,6 +1766,8 @@ export default function App() {
   const [rows, setRows] = useState([]);
   const [plans, setPlans] = useState([]);
   const [renewalRequests, setRenewalRequests] = useState([]);
+  const [billingSnapshot, setBillingSnapshot] = useState(null);
+  const [billingError, setBillingError] = useState("");
   const [auditLogs, setAuditLogs] = useState([]);
   const [auditError, setAuditError] = useState("");
   const [renewalError, setRenewalError] = useState("");
@@ -1685,7 +1836,7 @@ export default function App() {
       }
       if (thisOperation !== operationId.current) return false;
 
-      const [planResult, renewalResult, auditResult] = await Promise.all([
+      const [planResult, renewalResult, auditResult, billingResult] = await Promise.all([
         supabase
           .from("subscription_plans")
           .select(
@@ -1695,6 +1846,7 @@ export default function App() {
           .order("sort_order", { ascending: true }),
         supabase.rpc("platform_admin_list_renewal_requests"),
         supabase.rpc("platform_admin_list_audit_logs"),
+        supabase.rpc("platform_admin_razorpay_billing_snapshot"),
       ]);
       if (thisOperation !== operationId.current) return false;
       if (planResult.error) throw planResult.error;
@@ -1715,6 +1867,14 @@ export default function App() {
                 : nextPlans[0]?.plan_key || "",
           ]),
         ),
+      );
+      setBillingSnapshot(
+        billingResult.error ? null : (billingResult.data || { payments: [], webhooks: [], generated_at: null }),
+      );
+      setBillingError(
+        billingResult.error
+          ? messageFor(billingResult.error, "Could not load Razorpay billing records.")
+          : "",
       );
       setRenewalRequests(
         Array.isArray(renewalResult.data) && !renewalResult.error
@@ -1849,6 +2009,8 @@ export default function App() {
     setRows([]);
     setPlans([]);
     setRenewalRequests([]);
+    setBillingSnapshot(null);
+    setBillingError("");
     setAuditLogs([]);
     await supabase?.auth.signOut();
     setAuthError("");
@@ -2072,6 +2234,14 @@ export default function App() {
                 resolvingRequestId={resolvingRequestId}
                 onResolve={openResolution}
                 onRefresh={doRefresh}
+              />
+            ) : null}
+            {activeTab === "billing" ? (
+              <RazorpayBilling
+                snapshot={billingSnapshot}
+                error={billingError}
+                onRefresh={doRefresh}
+                refreshing={refreshing}
               />
             ) : null}
             {activeTab === "audit" ? (

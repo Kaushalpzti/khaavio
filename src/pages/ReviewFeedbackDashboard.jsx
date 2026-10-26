@@ -1,6 +1,7 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { CheckCheck, Clock3, LoaderCircle, MessageSquareText, RefreshCw, Star, ThumbsUp, Volume2, VolumeX } from "lucide-react";
 import { supabase } from "../lib/supabaseClient";
+import { useKhaavioOperationalAlerts } from "../context/KhaavioOperationalAlertsContext";
 import { usePlanAccess } from "../context/PlanAccessContext";
 import PlanUpgradeNotice from "../components/PlanUpgradeNotice";
 import { cancelKhaavioVoice, isKhaavioVoiceSupported, queueKhaavioVoice } from "../lib/khaavioVoiceAlerts";
@@ -28,9 +29,8 @@ function formatDate(value) {
 export default function ReviewFeedbackDashboard() {
   const { hasFeature } = usePlanAccess();
   const canManagePrivateFeedback = hasFeature("private_feedback");
-  const voiceEnabledRef = useRef(false);
-  const knownFeedbackIdsRef = useRef(null);
-  const [voiceEnabled, setVoiceEnabled] = useState(false);
+  const { preferences, setPreference } = useKhaavioOperationalAlerts();
+  const voiceEnabled = preferences.voiceEnabled;
   const [restaurant, setRestaurant] = useState(null);
   const [feedback, setFeedback] = useState([]);
   const [filter, setFilter] = useState("all");
@@ -71,28 +71,7 @@ export default function ReviewFeedbackDashboard() {
         .limit(250);
       if (feedbackError) throw feedbackError;
 
-      const nextFeedback = data || [];
-      const currentFeedbackIds = new Set(nextFeedback.map((item) => item.id));
-      const previousFeedbackIds = knownFeedbackIdsRef.current;
-      const newlyAddedFeedback = previousFeedbackIds
-        ? nextFeedback.filter((item) => !previousFeedbackIds.has(item.id) && item.status === "new")
-        : [];
-
-      // Announce only new submissions, never status edits. Feedback text is kept private
-      // and is deliberately not spoken aloud.
-      if (voiceEnabledRef.current && newlyAddedFeedback.length === 1) {
-        const rating = Math.max(0, Math.min(5, Number(newlyAddedFeedback[0].rating) || 0));
-        queueKhaavioVoice((isHindi) => isHindi
-          ? `नई ग्राहक प्रतिक्रिया मिली है। पाँच में से ${rating} स्टार की रेटिंग है।`
-          : `New customer feedback received. The rating is ${rating} out of five stars.`);
-      } else if (voiceEnabledRef.current && newlyAddedFeedback.length > 1) {
-        const count = newlyAddedFeedback.length;
-        queueKhaavioVoice((isHindi) => isHindi
-          ? `${count} नई ग्राहक प्रतिक्रियाएँ मिली हैं।`
-          : `You have ${count} new customer feedback submissions.`);
-      }
-
-      knownFeedbackIdsRef.current = currentFeedbackIds;
+      // The app-level alert manager announces only the rating, never private feedback text.
       setFeedback(nextFeedback);
     } catch (loadError) {
       console.error("Could not load customer feedback:", loadError);
@@ -100,18 +79,6 @@ export default function ReviewFeedbackDashboard() {
     } finally {
       if (!quiet) setLoading(false);
     }
-  }, [canManagePrivateFeedback]);
-
-  useEffect(() => () => {
-    voiceEnabledRef.current = false;
-    cancelKhaavioVoice();
-  }, []);
-
-  useEffect(() => {
-    if (canManagePrivateFeedback) return;
-    voiceEnabledRef.current = false;
-    setVoiceEnabled(false);
-    cancelKhaavioVoice();
   }, [canManagePrivateFeedback]);
 
   useEffect(() => {
@@ -148,11 +115,10 @@ export default function ReviewFeedbackDashboard() {
     : "—";
 
   function toggleVoiceAnnouncements() {
-    if (voiceEnabledRef.current) {
-      voiceEnabledRef.current = false;
-      setVoiceEnabled(false);
+    if (voiceEnabled) {
+      setPreference("voiceEnabled", false);
       cancelKhaavioVoice();
-      setNotice("Feedback voice announcements are off.");
+      setNotice("Voice alerts are off across the restaurant workspace.");
       return;
     }
 
@@ -164,16 +130,15 @@ export default function ReviewFeedbackDashboard() {
     cancelKhaavioVoice();
     const queued = queueKhaavioVoice((isHindi) => isHindi
       ? "ग्राहक प्रतिक्रिया अलर्ट चालू हैं। नई प्रतिक्रिया आने पर सूचना दी जाएगी।"
-      : "Customer feedback voice alerts are enabled. New feedback will be announced.");
+      : "Customer feedback voice alerts are enabled. New feedback ratings will be announced.");
     if (!queued) {
       setError("Voice announcements could not be started in this browser.");
       return;
     }
 
-    voiceEnabledRef.current = true;
-    setVoiceEnabled(true);
+    setPreference("voiceEnabled", true);
     setError("");
-    setNotice("Feedback voice announcements are on.");
+    setNotice("Voice alerts are on across the restaurant workspace.");
   }
 
   async function updateStatus(item, status) {

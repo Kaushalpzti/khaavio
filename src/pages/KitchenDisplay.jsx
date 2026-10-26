@@ -17,6 +17,8 @@ import {
   VolumeX,
 } from "lucide-react";
 import { supabase } from "../lib/supabaseClient";
+import { useKhaavioOperationalAlerts } from "../context/KhaavioOperationalAlertsContext";
+import { activateKhaavioAlertSound, cancelKhaavioVoice } from "../lib/khaavioVoiceAlerts";
 import "./KitchenDisplay.css";
 
 const ACTIVE_STATUSES = ["pending", "accepted", "preparing", "ready"];
@@ -96,11 +98,6 @@ function getReference(id) {
     .toUpperCase();
 }
 
-function normalizeTableNumber(value) {
-  if (value == null) return "";
-  return String(value).replace(/^table\s*/i, "").trim();
-}
-
 function queueKitchenSpeech(messageFactory) {
   if (
     typeof window === "undefined" ||
@@ -146,81 +143,12 @@ function speakKitchenTest(restaurantName) {
   ]);
 }
 
-function speakNewKitchenOrders(orders, restaurantName) {
-  const ordersToSpeak = orders.slice(0, 5);
-
-  return queueKitchenSpeech((isHindi) => {
-    const messages = ordersToSpeak.map((order) => {
-      const itemList = (order.items || [])
-        .map((item) => `${item.quantity} ${item.item_name}`)
-        .join(", ");
-      const total = Math.round(Number(order.total_amount) || 0);
-      const tableNumber = normalizeTableNumber(order.tableNumber);
-
-      if (isHindi) {
-        const tablePhrase = tableNumber
-          ? `टेबल ${tableNumber} से`
-          : "रेस्टोरेंट से";
-        return `नया ऑर्डर आया है। ${restaurantName || "रेस्टोरेंट"}। ${tablePhrase} ${itemList || "मेन्यू आइटम"} का ऑर्डर आया है। कुल बिल ${total} रुपये।`;
-      }
-
-      const tablePhrase = tableNumber
-        ? `Table ${tableNumber}`
-        : "Restaurant order";
-      return `New order at ${restaurantName || "your restaurant"}. ${tablePhrase}. Items: ${itemList || "menu items"}. Total ${total} rupees.`;
-    });
-
-    if (orders.length > ordersToSpeak.length) {
-      const remaining = orders.length - ordersToSpeak.length;
-      messages.push(
-        isHindi
-          ? `इसके अलावा ${remaining} और नए ऑर्डर आए हैं।`
-          : `There are ${remaining} additional new orders.`,
-      );
-    }
-
-    return messages;
-  });
-}
-
-function playKitchenAlert(context, numberOfOrders = 1) {
-  if (!context) return;
-
-  try {
-    const now = context.currentTime;
-    const tones = Math.min(Math.max(numberOfOrders, 1), 3);
-
-    for (let index = 0; index < tones; index += 1) {
-      const startAt = now + index * 0.28;
-      const oscillator = context.createOscillator();
-      const gain = context.createGain();
-
-      oscillator.type = "sine";
-      oscillator.frequency.setValueAtTime(index % 2 === 0 ? 880 : 660, startAt);
-      gain.gain.setValueAtTime(0.0001, startAt);
-      gain.gain.exponentialRampToValueAtTime(0.16, startAt + 0.025);
-      gain.gain.exponentialRampToValueAtTime(0.0001, startAt + 0.22);
-
-      oscillator.connect(gain);
-      gain.connect(context.destination);
-      oscillator.start(startAt);
-      oscillator.stop(startAt + 0.24);
-    }
-  } catch (error) {
-    // Keep the kitchen queue usable even if browser audio is unavailable.
-    console.warn("Kitchen sound alert could not play:", error);
-  }
-}
-
 export default function KitchenDisplay() {
   const navigate = useNavigate();
   const displayRef = useRef(null);
-  const audioContextRef = useRef(null);
-  const knownOrderIdsRef = useRef(null);
-  const soundEnabledRef = useRef(false);
-  const voiceEnabledRef = useRef(false);
-  const [soundEnabled, setSoundEnabled] = useState(false);
-  const [voiceEnabled, setVoiceEnabled] = useState(false);
+  const { preferences, setPreference } = useKhaavioOperationalAlerts();
+  const soundEnabled = preferences.soundEnabled;
+  const voiceEnabled = preferences.voiceEnabled;
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [restaurant, setRestaurant] = useState(null);
   const [orders, setOrders] = useState([]);
@@ -244,21 +172,10 @@ export default function KitchenDisplay() {
     };
   }, []);
 
-  useEffect(() => () => {
-    const audioContext = audioContextRef.current;
-    if (audioContext && audioContext.state !== "closed") {
-      audioContext.close().catch(() => {});
-    }
-    if (typeof window !== "undefined" && window.speechSynthesis) {
-      window.speechSynthesis.cancel();
-    }
-  }, []);
-
   useEffect(() => {
     let active = true;
     let running = false;
     let restaurantId = "";
-    let restaurantInfo = null;
 
     async function loadKitchen({ initial = false } = {}) {
       if (running) return;
@@ -291,7 +208,6 @@ export default function KitchenDisplay() {
           }
 
           restaurantId = restaurantData.id;
-          restaurantInfo = restaurantData;
           if (active) setRestaurant(restaurantData);
         }
 
@@ -307,7 +223,6 @@ export default function KitchenDisplay() {
         if (ordersError) throw ordersError;
 
         const currentOrders = orderData || [];
-        const previouslyKnownOrderIds = knownOrderIdsRef.current;
         const orderIds = currentOrders.map((order) => order.id);
         const tableIds = [
           ...new Set(currentOrders.map((order) => order.table_id).filter(Boolean)),
@@ -349,41 +264,7 @@ export default function KitchenDisplay() {
           tableNumber: tableById.get(order.table_id) || null,
         }));
 
-        // Only announce orders after the initial successful load, so old active
-        // orders don't speak when the kitchen screen first opens.
-        const newOrders =
-          previouslyKnownOrderIds === null
-            ? []
-            : enrichedOrders.filter(
-                (order) => !previouslyKnownOrderIds.has(order.id),
-              );
-
-        const seenIds = previouslyKnownOrderIds || new Set();
-        for (const order of currentOrders) seenIds.add(order.id);
-        knownOrderIdsRef.current = seenIds;
-
-        if (newOrders.length > 0) {
-          let alertMethod = "";
-
-          if (soundEnabledRef.current) {
-            playKitchenAlert(audioContextRef.current, newOrders.length);
-            alertMethod = "Sound alert played.";
-          }
-
-          if (voiceEnabledRef.current) {
-            const queued = speakNewKitchenOrders(
-              newOrders,
-              restaurantInfo?.name,
-            );
-            if (queued) alertMethod = "Voice announcement queued.";
-          }
-
-          if (active && alertMethod) {
-            setNotice(
-              `${newOrders.length} new order${newOrders.length === 1 ? "" : "s"} received. ${alertMethod}`,
-            );
-          }
-        }
+        // The shared operational alert manager announces new orders across routes.
 
         if (!active) return;
         setOrders(enrichedOrders);
@@ -413,70 +294,45 @@ export default function KitchenDisplay() {
   }, [navigate, refreshKey]);
 
   async function toggleSoundAlerts() {
-    if (soundEnabledRef.current) {
-      soundEnabledRef.current = false;
-      setSoundEnabled(false);
-      setNotice("New-order sound alerts are off.");
+    if (soundEnabled) {
+      setPreference("soundEnabled", false);
+      setNotice("New-order sound alerts are off across the restaurant workspace.");
       return;
     }
 
-    try {
-      const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-      if (!AudioContextClass) {
-        setError("This browser does not support sound alerts. The kitchen queue will still refresh normally.");
-        return;
-      }
-
-      if (!audioContextRef.current || audioContextRef.current.state === "closed") {
-        audioContextRef.current = new AudioContextClass();
-      }
-
-      if (audioContextRef.current.state === "suspended") {
-        await audioContextRef.current.resume();
-      }
-
-      soundEnabledRef.current = true;
-      setSoundEnabled(true);
-      setError("");
-      setNotice("Sound alerts enabled. A test tone has played.");
-      playKitchenAlert(audioContextRef.current, 1);
-    } catch (soundError) {
-      setError(soundError?.message || "Could not enable sound alerts in this browser.");
+    const activated = await activateKhaavioAlertSound();
+    if (!activated) {
+      setError("Sound alerts need browser audio support and one user interaction. Check this site's sound settings and try again.");
+      return;
     }
+
+    setPreference("soundEnabled", true);
+    setError("");
+    setNotice("Louder, longer sound alerts are on across the restaurant workspace.");
   }
 
   function toggleVoiceAnnouncements() {
-    if (voiceEnabledRef.current) {
-      voiceEnabledRef.current = false;
-      setVoiceEnabled(false);
-      if (window.speechSynthesis) window.speechSynthesis.cancel();
-      setNotice("Voice announcements are off.");
+    if (voiceEnabled) {
+      setPreference("voiceEnabled", false);
+      cancelKhaavioVoice();
+      setNotice("Voice alerts are off across the restaurant workspace.");
       return;
     }
 
-    if (
-      !window.speechSynthesis ||
-      typeof window.SpeechSynthesisUtterance !== "function"
-    ) {
-      setError(
-        "This browser does not support spoken announcements. Try a current version of Chrome or Edge.",
-      );
+    if (!window.speechSynthesis || typeof window.SpeechSynthesisUtterance !== "function") {
+      setError("This browser does not support spoken announcements. Try a current version of Chrome or Edge.");
       return;
     }
 
-    if (window.speechSynthesis) window.speechSynthesis.cancel();
-    const queued = speakKitchenTest(restaurant?.name);
-    if (!queued) {
+    window.speechSynthesis.cancel();
+    if (!speakKitchenTest(restaurant?.name)) {
       setError("Voice announcements could not be started in this browser.");
       return;
     }
 
-    voiceEnabledRef.current = true;
-    setVoiceEnabled(true);
+    setPreference("voiceEnabled", true);
     setError("");
-    setNotice(
-      "Voice announcements enabled. Hindi voice is used when your browser has one installed.",
-    );
+    setNotice("Voice alerts are on across the restaurant workspace.");
   }
 
   async function toggleFullscreen() {

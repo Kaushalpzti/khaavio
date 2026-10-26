@@ -75,7 +75,8 @@ test("Growth dashboard modules avoid reading restricted data for Starter", () =>
   assert.match(feedbackDashboard, /if \(!canManagePrivateFeedback\)/);
   assert.match(feedbackDashboard, /PlanUpgradeNotice/);
   assert.match(feedbackDashboard, /if \(!canManagePrivateFeedback\) \{/);
-  assert.match(feedbackDashboard, /cancelKhaavioVoice\(\)/);
+  assert.match(feedbackDashboard, /useKhaavioOperationalAlerts/);
+  assert.match(read("../src/context/KhaavioOperationalAlertsContext.jsx"), /privateFeedbackAllowed/);
   assert.match(loyaltyDashboard, /\}, \[canManageLoyalty\]\)/);
 });
 
@@ -113,5 +114,5 @@ test("Starter page shows core voice alerts; booking voice announcements are Grow
   assert.match(homepage, /Operational voice alerts for orders, kitchen and service requests/);
   assert.match(bookingsDashboard, /hasFeature\("voice_alerts_advanced"\)/);
   assert.match(bookingsDashboard, /\{canUseAdvancedVoiceAlerts && \(/);
-  assert.match(bookingsDashboard, /if \(canUseAdvancedVoiceAlerts\) return/);
+  assert.match(read("../src/context/KhaavioOperationalAlertsContext.jsx"), /bookingVoiceAllowed/);
 });
