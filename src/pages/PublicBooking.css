@@ -575,3 +575,19 @@
 .booking-subscription-unavailable strong {
     font-size: 14px;
 }
+
+.booking-state-embedded {
+    min-height: 250px;
+    width: min(780px, calc(100% - 32px));
+    margin: 24px auto;
+    padding: 28px;
+    border-radius: 22px;
+    background: #fffefa;
+}
+.booking-page-embedded .booking-menu-link-button {
+    border: 0;
+    color: #145640;
+    background: transparent;
+    text-decoration: underline;
+    cursor: pointer;
+}

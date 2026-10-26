@@ -155,9 +155,15 @@ export default function AskKhaavio({
       history,
     };
 
-    // Local-only override lets the browser talk to the Deno test server.
-    // In production, leave VITE_KHAAVIO_AI_CHAT_URL unset to use Supabase.
-    const localEndpoint = import.meta.env.VITE_KHAAVIO_AI_CHAT_URL?.trim();
+    // The optional local endpoint is only for an explicitly opted-in Vite dev session.
+    // Without VITE_KHAAVIO_AI_CHAT_USE_LOCAL=true, use the deployed Supabase Edge Function
+    // even if an old .env.local still contains VITE_KHAAVIO_AI_CHAT_URL=http://localhost:8000.
+    const useLocalEndpoint =
+      import.meta.env.DEV &&
+      import.meta.env.VITE_KHAAVIO_AI_CHAT_USE_LOCAL === "true";
+    const localEndpoint = useLocalEndpoint
+      ? import.meta.env.VITE_KHAAVIO_AI_CHAT_URL?.trim()
+      : "";
     if (localEndpoint) {
       const response = await fetch(localEndpoint, {
         method: "POST",
@@ -403,17 +409,19 @@ export default function AskKhaavio({
         </section>
       )}
 
-      <button
-        type="button"
-        className={`ask-khaavio-launcher ${isOpen ? "is-open" : ""}`}
-        onClick={() => setIsOpen((open) => !open)}
-        aria-expanded={isOpen}
-        aria-label={isOpen ? copy.close : copy.open}
-      >
-        {isOpen ? <X size={20} /> : <MessageCircle size={21} />}
-        {!isOpen && <span>Ask Khaavio</span>}
-        {!isOpen && <span className="ask-khaavio-launcher-sparkle"><Sparkles size={12} /></span>}
-      </button>
+      {!isOpen && (
+        <button
+          type="button"
+          className="ask-khaavio-launcher"
+          onClick={() => setIsOpen(true)}
+          aria-expanded={false}
+          aria-label={copy.open}
+        >
+          <MessageCircle size={18} />
+          <span>Ask Khaavio</span>
+          <span className="ask-khaavio-launcher-sparkle"><Sparkles size={11} /></span>
+        </button>
+      )}
     </div>
   );
 }

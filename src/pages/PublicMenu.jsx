@@ -1,20 +1,18 @@
-﻿import { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import {
   ArrowLeft,
   CalendarDays,
   CheckCircle2,
   ChevronRight,
-  Clock3,
   Leaf,
   LoaderCircle,
-  MapPin,
   Minus,
   Plus,
   Search,
   ShoppingBag,
   Gift,
-  House,
+  Star,
   Trash2,
   UtensilsCrossed,
   X,
@@ -26,6 +24,7 @@ import { getStoredKhaavioLoyaltyPhone, setStoredKhaavioLoyaltyPhone } from "../l
 import PublicTableService from "../components/PublicTableService";
 import PublicLoyaltyClub from "../components/PublicLoyaltyClub";
 import PublicReviewsFeedback from "../components/PublicReviewsFeedback";
+import PublicBooking from "./PublicBooking";
 import AskKhaavio from "../components/AskKhaavio";
 import khaavioIcon from "../assets/icon.png";
 import "./PublicMenu.css";
@@ -164,8 +163,8 @@ export default function PublicMenu() {
 
   const [cart, setCart] = useState([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
-  const [isRewardsOpen, setIsRewardsOpen] = useState(false);
-  const [activeBottomTab, setActiveBottomTab] = useState("home");
+  const [activeBottomTab, setActiveBottomTab] = useState("menu");
+  const [activePromoSlide, setActivePromoSlide] = useState(0);
   const [customerName, setCustomerName] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
   const [loyaltyPhone, setLoyaltyPhone] = useState(() => getStoredKhaavioLoyaltyPhone(slug));
@@ -183,6 +182,12 @@ export default function PublicMenu() {
   function handleLoyaltyPhoneChange(value) {
     setLoyaltyPhone(value);
     setStoredKhaavioLoyaltyPhone(slug, value);
+  }
+
+  function switchBottomTab(tab) {
+    setIsCartOpen(false);
+    setActiveBottomTab(tab);
+    window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   // Give each published restaurant menu a useful, restaurant-specific title.
@@ -374,6 +379,20 @@ export default function PublicMenu() {
     return () => window.clearInterval(intervalId);
   }, []);
 
+  // Keep the compact food-highlight slider moving only while the Menu tab is visible.
+  useEffect(() => {
+    if (activeBottomTab !== "menu") return undefined;
+    if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) {
+      return undefined;
+    }
+
+    const intervalId = window.setInterval(() => {
+      setActivePromoSlide((current) => (current + 1) % 3);
+    }, 5200);
+
+    return () => window.clearInterval(intervalId);
+  }, [activeBottomTab]);
+
   useEffect(() => {
     if (!isCartOpen) return undefined;
 
@@ -391,24 +410,7 @@ export default function PublicMenu() {
     };
   }, [isCartOpen, submitting]);
 
-  useEffect(() => {
-    if (!isRewardsOpen) return undefined;
 
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    const handleEscape = (event) => {
-      if (event.key === "Escape") {
-        setIsRewardsOpen(false);
-        setActiveBottomTab("home");
-      }
-    };
-
-    window.addEventListener("keydown", handleEscape);
-    return () => {
-      document.body.style.overflow = previousOverflow;
-      window.removeEventListener("keydown", handleEscape);
-    };
-  }, [isRewardsOpen]);
 
   const visibleItems = items.filter((item) => {
     const matchesCategory =
@@ -421,6 +423,32 @@ export default function PublicMenu() {
       matchesCategory && searchableText.includes(search.trim().toLowerCase())
     );
   });
+
+  const promoImageItems = items.filter((item) => Boolean(item.image_url));
+  const promoSlides = [
+    {
+      eyebrow: "FRESH FAVOURITES",
+      titleStart: "Good food,",
+      titleAccent: "better moments.",
+      description: "Fresh favourites, right at your table.",
+      imageItem: promoImageItems[0],
+    },
+    {
+      eyebrow: "FROM OUR KITCHEN",
+      titleStart: "Find your next",
+      titleAccent: "favourite.",
+      description: "Explore the dishes made for your table.",
+      imageItem: promoImageItems[1] || promoImageItems[0],
+    },
+    {
+      eyebrow: "ORDER WITH EASE",
+      titleStart: "Your favourites,",
+      titleAccent: "just a tap away.",
+      description: "Browse the menu and add dishes to your order.",
+      imageItem: promoImageItems[2] || promoImageItems[0],
+    },
+  ];
+  const currentPromoSlide = promoSlides[activePromoSlide] || promoSlides[0];
 
   const cartTotal = cart.reduce(
     (total, entry) => total + Number(entry.price) * entry.quantity,
@@ -655,6 +683,15 @@ export default function PublicMenu() {
         </div>
 
         <div className="public-menu-header-actions">
+          {tableContext && (
+            <span
+              className="public-menu-table-badge"
+              aria-label={`Ordering at table ${tableContext.table_number}`}
+            >
+              <UtensilsCrossed size={17} aria-hidden="true" />
+              <span>Table {tableContext.table_number}</span>
+            </span>
+          )}
           <button
             type="button"
             className="public-menu-header-cart"
@@ -683,99 +720,57 @@ export default function PublicMenu() {
         </section>
       ) : restaurant ? (
         <>
-          <section className="public-menu-hero">
-            <div className="public-menu-hero-copy">
-              <div className="public-menu-hero-kicker">
-                <span className="public-menu-kicker-dot" />
-                {restaurant.restaurant_type
-                  ? restaurant.restaurant_type.replace(/_/g, " ")
-                  : "A PLACE FOR GOOD FOOD"}
-              </div>
-
-              <h1>Good food, better moments.</h1>
-
-              <p className="public-menu-hero-description">
-                Discover something delicious. Browse the menu, choose your
-                favourites, and let the good food moments begin.
-              </p>
-
-              <div className="public-menu-hero-facts">
-                {restaurant.address && (
-                  <span>
-                    <MapPin size={15} />
-                    {restaurant.address}
-                  </span>
-                )}
-                {tableContext && (
-                  <span className="public-menu-hero-table">
-                    <UtensilsCrossed size={15} />
-                    Ordering at table {tableContext.table_number}
-                  </span>
-                )}
-              </div>
-
-              <div className="public-menu-hero-actions">
-                <a href="#menu" className="public-menu-primary-link">
-                  Explore menu
-                  <ChevronRight size={17} />
-                </a>
-                <Link
-                  to={`/book/${encodeURIComponent(restaurant.slug)}`}
-                  className="public-menu-secondary-link"
-                >
-                  <CalendarDays size={16} />
-                  Book a table
-                </Link>
-              </div>
-
-              <div className="public-menu-hero-trust">
-                <span className="public-menu-trust-icon">
-                  <CheckCircle2 size={15} />
-                </span>
-                <span>Directly from the restaurant</span>
-              </div>
+          {activeBottomTab === "menu" && (
+            <>
+          <section className="public-menu-promo-slider" aria-label="Restaurant food highlights">
+            <div className="public-menu-promo-image" aria-hidden="true">
+              {currentPromoSlide.imageItem?.image_url ? (
+                <img
+                  key={currentPromoSlide.imageItem.id}
+                  src={currentPromoSlide.imageItem.image_url}
+                  alt=""
+                  fetchPriority={activePromoSlide === 0 ? "high" : "auto"}
+                />
+              ) : (
+                <div className="public-menu-promo-image-placeholder">
+                  <UtensilsCrossed size={38} aria-hidden="true" />
+                </div>
+              )}
             </div>
 
+            <div className="public-menu-promo-copy" key={activePromoSlide}>
+              <span className="public-menu-promo-eyebrow">
+                <span aria-hidden="true" />
+                {currentPromoSlide.eyebrow}
+              </span>
+              <h1>
+                <span>{currentPromoSlide.titleStart}</span>
+                <strong>{currentPromoSlide.titleAccent}</strong>
+              </h1>
+              <p>{currentPromoSlide.description}</p>
+            </div>
 
-            <div className="public-menu-hero-status">
-              <div
-                className={`public-menu-order-availability ${orderingAvailability.canOrder ? "is-open" : "is-closed"}`}
-                role="status"
-              >
-                <span className="public-menu-order-availability-dot" />
-                <div className="public-menu-availability-copy">
-                  <strong>{orderingAvailability.title}</strong>
-                  <p>{orderingAvailability.message}</p>
-                </div>
-                <Clock3 size={17} className="public-menu-status-clock" />
-              </div>
+            <div className="public-menu-promo-dots" aria-label="Choose banner">
+              {promoSlides.map((slide, index) => (
+                <button
+                  key={slide.eyebrow}
+                  type="button"
+                  className={index === activePromoSlide ? "is-active" : ""}
+                  aria-label={`Show banner ${index + 1}`}
+                  aria-pressed={index === activePromoSlide}
+                  onClick={() => setActivePromoSlide(index)}
+                />
+              ))}
             </div>
           </section>
 
           <section className="public-menu-content" id="menu">
-            <div className="public-menu-heading">
-              <div>
-                <span className="public-menu-eyebrow">
-                  A LITTLE SOMETHING FOR EVERYONE
-                </span>
-                <h2>What are you craving?</h2>
-                <p>Good food starts with a good choice.</p>
-              </div>
-
-              <div className="public-menu-count-card">
-                <span>{items.length}</span>
-                <small>
-                  {items.length === 1 ? "dish available" : "dishes available"}
-                </small>
-              </div>
-            </div>
-
             <div className="public-menu-tools">
               <label className="public-menu-search">
                 <Search size={18} />
                 <input
                   type="search"
-                  placeholder="Search dishes..."
+                  placeholder="Search dishes, cuisine..."
                   value={search}
                   onChange={(event) => setSearch(event.target.value)}
                   aria-label="Search menu items"
@@ -787,7 +782,7 @@ export default function PublicMenu() {
                     onClick={() => setSearch("")}
                     aria-label="Clear search"
                   >
-                    Ã—
+                    ×
                   </button>
                 )}
               </label>
@@ -807,7 +802,7 @@ export default function PublicMenu() {
                 onClick={() => setCategoryId("all")}
                 aria-pressed={categoryId === "all"}
               >
-                All dishes
+                All
               </button>
 
               {categories.map((category) => (
@@ -821,6 +816,20 @@ export default function PublicMenu() {
                   {category.name}
                 </button>
               ))}
+            </div>
+
+            <div className="public-menu-section-heading">
+              <h2>Popular dishes</h2>
+              <button
+                type="button"
+                onClick={() => {
+                  setSearch("");
+                  setCategoryId("all");
+                }}
+                aria-label="See all dishes"
+              >
+                See all <ChevronRight size={17} aria-hidden="true" />
+              </button>
             </div>
 
             {visibleItems.length > 0 ? (
@@ -934,15 +943,51 @@ export default function PublicMenu() {
               </div>
             )}
           </section>
+            </>
+          )}
 
-          {restaurant?.id && tableContext && (
-            <div className="public-reviews-table-placement">
-              <PublicReviewsFeedback
-                restaurantSlug={slug}
-                restaurantName={restaurant.name}
-                googleReviewUrl={restaurant.google_review_url}
+          {activeBottomTab === "rewards" && (
+            <section className="public-menu-tab-view public-menu-rewards-view" aria-labelledby="public-menu-rewards-title">
+              <div className="public-menu-tab-hero public-menu-tab-hero-rewards">
+                <span className="public-menu-tab-eyebrow"><Gift size={15} /> YOUR REWARDS</span>
+                <h1 id="public-menu-rewards-title">Dine more, get rewarded.</h1>
+                <p>Collect stamps on eligible orders and unlock treats from {restaurant.name}.</p>
+              </div>
+              <div className="public-menu-tab-content">
+                <PublicLoyaltyClub
+                  slug={slug}
+                  phone={loyaltyPhone}
+                  onPhoneChange={handleLoyaltyPhoneChange}
+                />
+              </div>
+            </section>
+          )}
+
+          {activeBottomTab === "book" && (
+            <div className="public-menu-tab-view public-menu-booking-view">
+              <PublicBooking
+                slugOverride={slug}
+                embedded
+                onReturnToMenu={() => switchBottomTab("menu")}
               />
             </div>
+          )}
+
+          {activeBottomTab === "reviews" && (
+            <section className="public-menu-tab-view public-menu-reviews-view" aria-labelledby="public-menu-reviews-heading">
+              <div className="public-menu-tab-hero public-menu-tab-hero-reviews">
+                <span className="public-menu-tab-eyebrow"><Star size={15} /> RATINGS & REVIEW</span>
+                <h1 id="public-menu-reviews-heading">Your feedback means a lot.</h1>
+                <p>Tell {restaurant.name} how your experience went, or leave an honest Google review.</p>
+              </div>
+              <div className="public-menu-tab-content">
+                <PublicReviewsFeedback
+                  restaurantSlug={slug}
+                  restaurantName={restaurant.name}
+                  googleReviewUrl={restaurant.google_review_url}
+                />
+              </div>
+            </section>
           )}
 
           {isCartOpen && (
@@ -1240,13 +1285,7 @@ export default function PublicMenu() {
             </div>
           )}
 
-          {restaurant?.id && !tableContext && (
-            <PublicReviewsFeedback
-              restaurantSlug={slug}
-              restaurantName={restaurant.name}
-              googleReviewUrl={restaurant.google_review_url}
-            />
-          )}
+          {activeBottomTab === "menu" && (
           <footer className="public-menu-footer">
             <a
               className="public-menu-footer-brand"
@@ -1264,33 +1303,14 @@ export default function PublicMenu() {
               </div>
             </a>
           </footer>
+          )}
 
-          <nav className="public-menu-bottom-navigation" aria-label="Menu navigation">
-            <button
-              type="button"
-              className={activeBottomTab === "home" ? "is-active" : ""}
-              aria-pressed={activeBottomTab === "home"}
-              onClick={() => {
-                setIsRewardsOpen(false);
-                setActiveBottomTab("home");
-                window.scrollTo({ top: 0, behavior: "smooth" });
-              }}
-            >
-              <House size={19} strokeWidth={2.1} />
-              <span>Home</span>
-            </button>
+          <nav className="public-menu-bottom-navigation" aria-label="Public menu navigation">
             <button
               type="button"
               className={activeBottomTab === "menu" ? "is-active" : ""}
               aria-pressed={activeBottomTab === "menu"}
-              onClick={() => {
-                setIsRewardsOpen(false);
-                setActiveBottomTab("menu");
-                document.getElementById("menu")?.scrollIntoView({
-                  behavior: "smooth",
-                  block: "start",
-                });
-              }}
+              onClick={() => switchBottomTab("menu")}
             >
               <UtensilsCrossed size={19} strokeWidth={2.1} />
               <span>Menu</span>
@@ -1299,83 +1319,47 @@ export default function PublicMenu() {
               type="button"
               className={activeBottomTab === "rewards" ? "is-active" : ""}
               aria-pressed={activeBottomTab === "rewards"}
-              onClick={() => {
-                setActiveBottomTab("rewards");
-                setIsRewardsOpen(true);
-              }}
+              onClick={() => switchBottomTab("rewards")}
             >
               <Gift size={19} strokeWidth={2.1} />
               <span>Rewards</span>
             </button>
-            <Link
-              to={`/book/${encodeURIComponent(restaurant.slug)}`}
+            <button
+              type="button"
               className={activeBottomTab === "book" ? "is-active" : ""}
-              aria-label="Book a table"
-              onClick={() => {
-                setIsRewardsOpen(false);
-                setActiveBottomTab("book");
-              }}
+              aria-pressed={activeBottomTab === "book"}
+              onClick={() => switchBottomTab("book")}
             >
               <CalendarDays size={19} strokeWidth={2.1} />
               <span>Book table</span>
-            </Link>
+            </button>
+            <button
+              type="button"
+              className={activeBottomTab === "reviews" ? "is-active" : ""}
+              aria-pressed={activeBottomTab === "reviews"}
+              onClick={() => switchBottomTab("reviews")}
+            >
+              <Star size={19} strokeWidth={2.1} />
+              <span>Ratings & Review</span>
+            </button>
           </nav>
 
-          {isRewardsOpen && (
-            <div
-              className="public-menu-rewards-sheet-backdrop"
-              role="presentation"
-              onClick={(event) => {
-                if (event.target === event.currentTarget) {
-                  setIsRewardsOpen(false);
-                  setActiveBottomTab("home");
-                }
-              }}
-            >
-              <section
-                className="public-menu-rewards-sheet"
-                role="dialog"
-                aria-modal="true"
-                aria-labelledby="public-menu-rewards-sheet-title"
-              >
-                <div className="public-menu-rewards-sheet-grabber" aria-hidden="true" />
-                <header className="public-menu-rewards-sheet-header">
-                  <div>
-                    <span className="public-menu-rewards-sheet-eyebrow"><Gift size={13} /> YOUR REWARDS</span>
-                    <h2 id="public-menu-rewards-sheet-title">Khaavio Perks</h2>
-                    <p>Keep track of your stamps and unlocked treats.</p>
-                  </div>
-                  <button
-                    type="button"
-                    className="public-menu-rewards-sheet-close"
-                    aria-label="Close rewards"
-                    onClick={() => {
-                      setIsRewardsOpen(false);
-                      setActiveBottomTab("home");
-                    }}
-                  >
-                    <X size={18} />
-                  </button>
-                </header>
-                <div className="public-menu-rewards-sheet-content">
-                  <p className="public-menu-rewards-empty">This restaurant has not enabled Khaavio Perks yet. Ask the restaurant team about current rewards.</p>
-                  <PublicLoyaltyClub slug={slug} phone={loyaltyPhone} onPhoneChange={handleLoyaltyPhoneChange} />
-                </div>
-              </section>
-            </div>
-          )}
-
-          <PublicTableService slug={slug} tableToken={tableToken} tableContext={tableContext} />
+          <PublicTableService
+            slug={slug}
+            tableToken={tableToken}
+            tableContext={tableContext}
+            hasStickyCart={activeBottomTab === "menu" && cart.length > 0 && !orderResult && !isCartOpen}
+          />
 
           <AskKhaavio
             restaurant={restaurant}
             menuItems={items}
             categories={categories}
             onAddToCart={addToCart}
-            hasStickyCart={cart.length > 0 && !orderResult && !isCartOpen}
+            hasStickyCart={activeBottomTab === "menu" && cart.length > 0 && !orderResult && !isCartOpen}
           />
 
-          {cart.length > 0 && !orderResult && !isCartOpen && (
+          {activeBottomTab === "menu" && cart.length > 0 && !orderResult && !isCartOpen && (
             <button
               type="button"
               className="public-menu-sticky-cart"

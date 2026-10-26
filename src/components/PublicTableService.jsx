@@ -58,7 +58,7 @@ function readableError(error) {
   return "We couldn't send that request right now. Please try again or ask a team member directly.";
 }
 
-export default function PublicTableService({ slug, tableToken, tableContext }) {
+export default function PublicTableService({ slug, tableToken, tableContext, hasStickyCart = false }) {
   const [isOpen, setIsOpen] = useState(false);
   const [requestType, setRequestType] = useState("waiter");
   const [note, setNote] = useState("");
@@ -132,7 +132,7 @@ export default function PublicTableService({ slug, tableToken, tableContext }) {
   const chosenOption = REQUEST_OPTIONS.find((option) => option.value === requestType);
 
   return (
-    <div className="public-table-service">
+    <div className={`public-table-service${hasStickyCart ? " is-raised" : ""}`}>
       <button
         type="button"
         className="public-table-service-fab"

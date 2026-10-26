@@ -38,7 +38,7 @@ test("only restaurant owners can read and transition requests", () => {
 
 test("Public Menu shows Call Waiter actions only for a validated table QR context", () => {
   assert.match(publicMenu, /import PublicTableService from "\.\.\/components\/PublicTableService"/);
-  assert.match(publicMenu, /<PublicTableService slug=\{slug\} tableToken=\{tableToken\} tableContext=\{tableContext\} \/>/);
+  assert.match(publicMenu, /<PublicTableService[\s\S]*?slug=\{slug\}[\s\S]*?tableToken=\{tableToken\}[\s\S]*?tableContext=\{tableContext\}[\s\S]*?hasStickyCart=/);
   assert.match(publicWidget, /create_public_table_service_request/);
   assert.match(publicWidget, /if \(!hasValidTableContext\) return null/);
   assert.match(publicWidget, /"waiter"[\s\S]*"water"[\s\S]*"bill"[\s\S]*"cutlery"[\s\S]*"other"/);

@@ -297,8 +297,9 @@ function getErrorMessage(error, fallback) {
   return message || fallback;
 }
 
-export default function PublicBooking() {
-  const { slug } = useParams();
+export default function PublicBooking({ slugOverride, embedded = false, onReturnToMenu }) {
+  const routeParams = useParams();
+  const slug = slugOverride || routeParams.slug;
 
   const [restaurant, setRestaurant] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -644,34 +645,44 @@ export default function PublicBooking() {
     setAvailabilityError("");
   }
 
+  const StateWrapper = embedded ? "section" : "main";
+  const PageWrapper = embedded ? "section" : "main";
+
   if (loading) {
     return (
-      <main className="booking-state">
+      <StateWrapper className={`booking-state${embedded ? " booking-state-embedded" : ""}`}>
         <LoaderCircle className="booking-spinner" size={30} />
         <p>Loading restaurant...</p>
-      </main>
+      </StateWrapper>
     );
   }
 
   if (pageError || !restaurant) {
     return (
-      <main className="booking-state">
+      <StateWrapper className={`booking-state${embedded ? " booking-state-embedded" : ""}`}>
         <CalendarDays size={34} />
         <h1>Booking unavailable</h1>
         <p>{pageError || "This restaurant could not be found."}</p>
-        <Link className="booking-button" to="/">
-          <ArrowLeft size={16} />
-          Back to Khaavio
-        </Link>
-      </main>
+        {embedded ? (
+          <button className="booking-button" type="button" onClick={onReturnToMenu}>
+            <ArrowLeft size={16} />
+            Back to menu
+          </button>
+        ) : (
+          <Link className="booking-button" to="/">
+            <ArrowLeft size={16} />
+            Back to Khaavio
+          </Link>
+        )}
+      </StateWrapper>
     );
   }
 
   return (
-    <main className="booking-page">
+    <PageWrapper className={`booking-page${embedded ? " booking-page-embedded" : ""}`}>
+      {!embedded && (
       <header className="booking-header">
         <Link to={`/menu/${encodeURIComponent(restaurant.slug)}`}>
-          {" "}
           <ArrowLeft size={16} />
           View menu
         </Link>
@@ -681,6 +692,7 @@ export default function PublicBooking() {
           Khaavio
         </Link>
       </header>
+      )}
 
       <section className="booking-hero">
         <span className="booking-eyebrow">PLAN YOUR VISIT</span>
@@ -757,12 +769,22 @@ export default function PublicBooking() {
               Make another reservation
             </button>
 
-            <Link
-              to={`/menu/${encodeURIComponent(restaurant.slug)}`}
-              className="booking-menu-link"
-            >
-              Return to menu
-            </Link>
+            {embedded ? (
+              <button
+                type="button"
+                className="booking-menu-link booking-menu-link-button"
+                onClick={onReturnToMenu}
+              >
+                Return to menu
+              </button>
+            ) : (
+              <Link
+                to={`/menu/${encodeURIComponent(restaurant.slug)}`}
+                className="booking-menu-link"
+              >
+                Return to menu
+              </Link>
+            )}
           </section>
         ) : (
           <form className="booking-form" onSubmit={submitBooking}>
@@ -1021,6 +1043,6 @@ export default function PublicBooking() {
           </span>
         </footer>
       </div>
-    </main>
+    </PageWrapper>
   );
 }

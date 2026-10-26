@@ -8,23 +8,13 @@ const here = dirname(fileURLToPath(import.meta.url));
 const menuPath = resolve(here, "../src/pages/PublicMenu.jsx");
 const menu = readFileSync(menuPath, "utf8");
 
-test("regular public menu keeps reviews in the footer", () => {
-  assert.match(
-    menu,
-    /\{restaurant\?\.id && !tableContext && \(\s*<PublicReviewsFeedback[\s\S]*?googleReviewUrl=\{restaurant\.google_review_url\}/,
-  );
+test("reviews are removed from the menu screen and shown in the dedicated review tab", () => {
+  assert.match(menu, /activeBottomTab === "reviews"[\s\S]*?<PublicReviewsFeedback/);
+  assert.doesNotMatch(menu, /public-reviews-table-placement/);
+  assert.doesNotMatch(menu, /restaurant\?\.id && !tableContext && \(\s*<PublicReviewsFeedback/);
 });
 
-test("validated table QR menu displays reviews directly after menu items", () => {
-  assert.match(
-    menu,
-    /\{restaurant\?\.id && tableContext && \(\s*<div className="public-reviews-table-placement">\s*<PublicReviewsFeedback[\s\S]*?googleReviewUrl=\{restaurant\.google_review_url\}/,
-  );
-  const tableReviewIndex = menu.indexOf('className="public-reviews-table-placement"');
-  const cartIndex = menu.indexOf("{isCartOpen && (");
-  assert.ok(tableReviewIndex > -1 && tableReviewIndex < cartIndex);
-});
-
-test("one feedback widget is rendered for each menu mode", () => {
-  assert.equal((menu.match(/<PublicReviewsFeedback/g) || []).length, 2);
+test("only one feedback widget is mounted in the dedicated review screen", () => {
+  assert.equal((menu.match(/<PublicReviewsFeedback/g) || []).length, 1);
+  assert.match(menu, /className="public-menu-tab-view public-menu-reviews-view"[\s\S]*?<PublicReviewsFeedback/);
 });
