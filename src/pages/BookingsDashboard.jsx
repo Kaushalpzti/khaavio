@@ -326,10 +326,6 @@ export default function BookingsDashboard() {
         const newlyAddedBookings = previousBookingIds
           ? enrichedBookings.filter((booking) => !previousBookingIds.has(booking.id))
           : [];
-        const newPendingBookings = newlyAddedBookings.filter(
-          (booking) => booking.status === "pending",
-        );
-
         if (previousBookingIds) {
           if (newlyAddedBookings.length === 1) {
             setNotice("A new booking request has arrived.");
