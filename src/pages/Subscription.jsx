@@ -146,6 +146,7 @@ export default function Subscription() {
   const [renewalRequests, setRenewalRequests] = useState([]);
   const [receiptRequest, setReceiptRequest] = useState(null);
   const [requestingPlanKey, setRequestingPlanKey] = useState("");
+  const [checkoutPlan, setCheckoutPlan] = useState(null);
   const [foundingOfferRequested, setFoundingOfferRequested] = useState(false);
   const [requestNotice, setRequestNotice] = useState("");
   const [billingInterval, setBillingInterval] = useState("yearly");
@@ -240,10 +241,7 @@ export default function Subscription() {
 
   async function requestPlan(availablePlan) {
     if (!availablePlan || requestingPlanKey) return;
-    const confirmed = window.confirm(
-      `Continue to secure Razorpay checkout for ${availablePlan.name} (${formatPrice(availablePlan.price_inr, availablePlan.billing_interval)})? This is a recurring subscription. The selected plan will be activated only after Razorpay confirms a captured payment.`,
-    );
-    if (!confirmed) return;
+    setCheckoutPlan(null);
     setError("");
     setRequestNotice("");
     setRequestingPlanKey(availablePlan.plan_key);
@@ -710,7 +708,7 @@ export default function Subscription() {
                             <button
                               type="button"
                               className="subscription-request-button"
-                              onClick={() => requestPlan(availablePlan)}
+                              onClick={() => setCheckoutPlan(availablePlan)}
                               disabled={
                                 Boolean(requestingPlanKey)
                               }
@@ -997,6 +995,97 @@ export default function Subscription() {
           <span>Every Table, Digitally Connected.</span>
         </footer>
       </div>
+      {checkoutPlan && (
+        <div
+          className="subscription-checkout-backdrop"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) setCheckoutPlan(null);
+          }}
+          onKeyDown={(event) => {
+            if (event.key === "Escape") setCheckoutPlan(null);
+          }}
+        >
+          <section
+            className="subscription-checkout-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="subscription-checkout-title"
+            aria-describedby="subscription-checkout-description"
+            onMouseDown={(event) => event.stopPropagation()}
+          >
+            <div className="subscription-checkout-modal-topline">
+              <div className="subscription-checkout-brand-mark">
+                <ShieldCheck size={22} />
+              </div>
+              <button
+                type="button"
+                className="subscription-checkout-close"
+                aria-label="Close checkout confirmation"
+                onClick={() => setCheckoutPlan(null)}
+                disabled={Boolean(requestingPlanKey)}
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <span className="subscription-checkout-eyebrow">SECURE CHECKOUT</span>
+            <h2 id="subscription-checkout-title">Review your subscription</h2>
+            <p id="subscription-checkout-description" className="subscription-checkout-intro">
+              Confirm your plan before continuing to Razorpay's secure checkout.
+            </p>
+
+            <div className="subscription-checkout-summary">
+              <div className="subscription-checkout-summary-row">
+                <span>Selected plan</span>
+                <strong>{checkoutPlan.name}</strong>
+              </div>
+              <div className="subscription-checkout-summary-row">
+                <span>Recurring amount</span>
+                <strong>{formatPrice(checkoutPlan.price_inr, checkoutPlan.billing_interval)}</strong>
+              </div>
+              <div className="subscription-checkout-summary-row">
+                <span>Billing frequency</span>
+                <strong>{checkoutPlan.billing_interval === "monthly" ? "Every month" : "Every year"}</strong>
+              </div>
+            </div>
+
+            <div className="subscription-checkout-security-note">
+              <ShieldCheck size={18} />
+              <p>
+                This is a recurring subscription. Razorpay will show the payment and authorization details before you confirm. Khaavio activates paid access only after server-side verification of a captured payment.
+              </p>
+            </div>
+
+            <div className="subscription-checkout-actions">
+              <button
+                type="button"
+                className="subscription-checkout-cancel"
+                onClick={() => setCheckoutPlan(null)}
+                disabled={Boolean(requestingPlanKey)}
+                autoFocus
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="subscription-checkout-continue"
+                onClick={() => requestPlan(checkoutPlan)}
+                disabled={Boolean(requestingPlanKey)}
+              >
+                {requestingPlanKey ? (
+                  <LoaderCircle size={16} className="subscription-spinner" />
+                ) : (
+                  <CreditCard size={16} />
+                )}
+                Continue to secure checkout
+              </button>
+            </div>
+            <p className="subscription-checkout-trust-line">
+              <ShieldCheck size={13} /> Secure checkout powered by Razorpay
+            </p>
+          </section>
+        </div>
+      )}
     </main>
   );
 }

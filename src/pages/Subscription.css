@@ -1369,3 +1369,279 @@
         break-inside: avoid;
     }
 }
+/* Branded recurring-subscription confirmation (replaces native browser confirm). */
+.subscription-checkout-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  overflow-y: auto;
+  background: rgb(8 24 17 / 64%);
+  backdrop-filter: blur(7px);
+  animation: subscription-checkout-fade-in 160ms ease-out;
+}
+
+.subscription-checkout-modal {
+  width: min(510px, 100%);
+  max-height: min(90vh, 820px);
+  overflow-y: auto;
+  padding: clamp(20px, 4vw, 30px);
+  color: #183b2b;
+  background: #fffefa;
+  border: 1px solid #dce8df;
+  border-radius: 24px;
+  box-shadow: 0 30px 90px rgb(4 22 15 / 36%);
+  animation: subscription-checkout-rise-in 190ms ease-out;
+}
+
+.subscription-checkout-modal-topline {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 22px;
+}
+
+.subscription-checkout-brand-mark {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  color: #086344;
+  background: #e5f4eb;
+  border: 1px solid #cde8d8;
+  border-radius: 15px;
+}
+
+.subscription-checkout-close {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  color: #607168;
+  background: #f4f6f0;
+  border: 1px solid #e2e8df;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.subscription-checkout-close:hover:not(:disabled) {
+  color: #173b2b;
+  background: #e9f0e8;
+}
+
+.subscription-checkout-eyebrow {
+  display: block;
+  margin-bottom: 8px;
+  color: #167653;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 1.35px;
+}
+
+.subscription-checkout-modal h2 {
+  margin: 0;
+  color: #102f22;
+  font-size: clamp(23px, 4vw, 29px);
+  font-weight: 800;
+  letter-spacing: -0.8px;
+  line-height: 1.18;
+}
+
+.subscription-checkout-intro {
+  margin: 10px 0 20px;
+  color: #708075;
+  font-size: 13px;
+  line-height: 1.65;
+}
+
+.subscription-checkout-summary {
+  display: grid;
+  gap: 0;
+  margin-bottom: 16px;
+  padding: 4px 16px;
+  background: #f5f8f2;
+  border: 1px solid #e3eadf;
+  border-radius: 16px;
+}
+
+.subscription-checkout-summary-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 13px 0;
+  border-bottom: 1px solid #e5ebe1;
+}
+
+.subscription-checkout-summary-row:last-child {
+  border-bottom: 0;
+}
+
+.subscription-checkout-summary-row span {
+  color: #758378;
+  font-size: 12px;
+}
+
+.subscription-checkout-summary-row strong {
+  max-width: 62%;
+  color: #1c4330;
+  font-size: 12px;
+  font-weight: 800;
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+
+.subscription-checkout-security-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 22px;
+  padding: 13px 14px;
+  color: #35624a;
+  background: #eef8f1;
+  border: 1px solid #d8eddf;
+  border-radius: 14px;
+}
+
+.subscription-checkout-security-note > svg {
+  flex: 0 0 auto;
+  margin-top: 1px;
+  color: #167653;
+}
+
+.subscription-checkout-security-note p {
+  margin: 0;
+  color: #53715d;
+  font-size: 11px;
+  line-height: 1.6;
+}
+
+.subscription-checkout-actions {
+  display: grid;
+  grid-template-columns: minmax(105px, 0.75fr) minmax(0, 1.7fr);
+  gap: 10px;
+}
+
+.subscription-checkout-actions button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 46px;
+  padding: 11px 14px;
+  border-radius: 12px;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: transform 150ms ease, background 150ms ease, border-color 150ms ease;
+}
+
+.subscription-checkout-actions button:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.subscription-checkout-actions button:focus-visible,
+.subscription-checkout-close:focus-visible {
+  outline: 3px solid #83c8a4;
+  outline-offset: 3px;
+}
+
+.subscription-checkout-cancel {
+  color: #294b39;
+  background: #fffefa;
+  border: 1px solid #d9e4d9;
+}
+
+.subscription-checkout-cancel:hover:not(:disabled) {
+  background: #f1f6ee;
+  border-color: #c6d9c9;
+}
+
+.subscription-checkout-continue {
+  color: #fff;
+  background: #064b38;
+  border: 1px solid #064b38;
+  box-shadow: 0 7px 16px rgb(6 75 56 / 15%);
+}
+
+.subscription-checkout-continue:hover:not(:disabled) {
+  background: #086447;
+  border-color: #086447;
+}
+
+.subscription-checkout-actions button:disabled,
+.subscription-checkout-close:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.subscription-checkout-trust-line {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin: 15px 0 0;
+  color: #89968b;
+  font-size: 10px;
+}
+
+.subscription-checkout-trust-line svg {
+  color: #39835f;
+}
+
+@keyframes subscription-checkout-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes subscription-checkout-rise-in {
+  from { opacity: 0; transform: translateY(8px) scale(0.99); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@media (max-width: 520px) {
+  .subscription-checkout-backdrop {
+    align-items: flex-end;
+    padding: 10px;
+  }
+
+  .subscription-checkout-modal {
+    width: 100%;
+    max-height: 92vh;
+    padding: 20px 17px 18px;
+    border-radius: 22px;
+  }
+
+  .subscription-checkout-modal-topline {
+    margin-bottom: 16px;
+  }
+
+  .subscription-checkout-summary-row {
+    gap: 12px;
+  }
+
+  .subscription-checkout-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .subscription-checkout-actions button {
+    width: 100%;
+    min-height: 48px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .subscription-checkout-backdrop,
+  .subscription-checkout-modal {
+    animation: none;
+  }
+
+  .subscription-checkout-actions button {
+    transition: none;
+  }
+}
