@@ -274,8 +274,6 @@ export default function PublicMenu() {
         if (restaurantError) throw restaurantError;
         const restaurantData = menuSnapshot?.restaurant;
 
-        if (restaurantError) throw restaurantError;
-
         if (!restaurantData) {
           throw new Error(
             "This menu is not published yet, or the link is incorrect.",
@@ -299,7 +297,8 @@ export default function PublicMenu() {
         }
 
         // Branding is included in the least-privilege public menu snapshot.
-        // This public RPC returns only a boolean. The order RPC independently enforces access server-side.
+        // The transaction-access RPC below returns only a boolean; order RPCs
+        // continue to enforce transaction access independently on the server.
         let transactionAccess = null;
         const { data: accessData, error: accessError } = await supabase.rpc(
           "khaavio_public_restaurant_can_transact",
