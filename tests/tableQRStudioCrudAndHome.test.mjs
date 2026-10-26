@@ -13,7 +13,7 @@ test("table QR workspace supports editing while preserving the saved QR token", 
   assert.match(studio, /function handleUpdateTable/);
   assert.match(studio, /\.update\(\{ table_number: tableNumber, capacity \}\)/);
   assert.ok(studio.includes("The existing QR token is kept"));
-  assert.ok(studio.includes('aria-label={`Edit ${table.table_number}`}'));
+  assert.ok(studio.includes("aria-label={`Edit ${table.table_number}`}"));
 });
 
 test("table QR workspace supports activation and history-safe deletion", () => {
@@ -22,7 +22,7 @@ test("table QR workspace supports activation and history-safe deletion", () => {
   assert.ok(studio.includes('.from("table_sessions")'));
   assert.ok(studio.includes('.from("table_session_invoices")'));
   assert.match(studio, /order or billing history/);
-  assert.ok(studio.includes('aria-label={`Delete ${table.table_number}`}'));
+  assert.ok(studio.includes("aria-label={`Delete ${table.table_number}`}"));
 });
 
 test("table QR editor has accessible edit dialog and responsive management actions", () => {
