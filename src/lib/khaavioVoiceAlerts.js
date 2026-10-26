@@ -52,3 +52,68 @@ export function cancelKhaavioVoice() {
     // Voice is optional; UI workflows must continue if the browser rejects it.
   }
 }
+
+
+let sharedAlertAudioContext = null;
+
+function getSharedAlertAudioContext() {
+  if (typeof window === "undefined") return null;
+  const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+  if (!AudioContextClass) return null;
+  if (!sharedAlertAudioContext || sharedAlertAudioContext.state === "closed") {
+    sharedAlertAudioContext = new AudioContextClass();
+  }
+  return sharedAlertAudioContext;
+}
+
+/**
+ * Must be called from a user gesture at least once in browsers that restrict
+ * autoplay. After activation the shared context survives React route changes.
+ */
+export async function activateKhaavioAlertSound() {
+  try {
+    const context = getSharedAlertAudioContext();
+    if (!context) return false;
+    if (context.state === "suspended") await context.resume();
+    if (context.state !== "running") return false;
+    playKhaavioAlertSound();
+    return true;
+  } catch (error) {
+    console.warn("Khaavio alert sound could not be activated:", error);
+    return false;
+  }
+}
+
+/** Longer, more prominent three-tone chime for operational alerts. */
+export function playKhaavioAlertSound() {
+  try {
+    const context = getSharedAlertAudioContext();
+    if (!context || context.state !== "running") return false;
+
+    const now = context.currentTime;
+    const tones = [
+      { at: 0, frequency: 880, duration: 0.34 },
+      { at: 0.24, frequency: 660, duration: 0.34 },
+      { at: 0.48, frequency: 990, duration: 0.46 },
+    ];
+
+    for (const tone of tones) {
+      const oscillator = context.createOscillator();
+      const gain = context.createGain();
+      oscillator.type = "triangle";
+      oscillator.frequency.setValueAtTime(tone.frequency, now + tone.at);
+      gain.gain.setValueAtTime(0.0001, now + tone.at);
+      gain.gain.exponentialRampToValueAtTime(0.24, now + tone.at + 0.025);
+      gain.gain.setValueAtTime(0.24, now + tone.at + tone.duration - 0.08);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + tone.at + tone.duration);
+      oscillator.connect(gain);
+      gain.connect(context.destination);
+      oscillator.start(now + tone.at);
+      oscillator.stop(now + tone.at + tone.duration + 0.01);
+    }
+    return true;
+  } catch (error) {
+    console.warn("Khaavio alert sound could not play:", error);
+    return false;
+  }
+}
