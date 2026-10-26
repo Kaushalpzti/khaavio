@@ -75,7 +75,8 @@ test("Growth dashboard modules avoid reading restricted data for Starter", () =>
   assert.match(feedbackDashboard, /if \(!canManagePrivateFeedback\)/);
   assert.match(feedbackDashboard, /PlanUpgradeNotice/);
   assert.match(feedbackDashboard, /if \(!canManagePrivateFeedback\) \{/);
-  assert.match(feedbackDashboard, /cancelKhaavioVoice\(\)/);
+  assert.match(feedbackDashboard, /useKhaavioOperationalAlerts/);
+  assert.match(read("../src/context/KhaavioOperationalAlertsContext.jsx"), /privateFeedbackAllowed/);
   assert.match(loyaltyDashboard, /\}, \[canManageLoyalty\]\)/);
 });
 
