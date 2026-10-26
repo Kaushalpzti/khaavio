@@ -376,8 +376,8 @@ allow_dynamic_registration = false
 [edge_runtime]
 enabled = true
 # Supported request policies: `oneshot`, `per_worker`.
-# `per_worker` (default) — enables hot reload during local development.
-# `oneshot` — fallback mode if hot reload causes issues (e.g. in large repos or with symlinks).
+# `per_worker` (default) â€” enables hot reload during local development.
+# `oneshot` â€” fallback mode if hot reload causes issues (e.g. in large repos or with symlinks).
 policy = "per_worker"
 # Port to attach the Chrome inspector for debugging edge functions.
 inspector_port = 8083
@@ -425,3 +425,19 @@ entrypoint = "./functions/khaavio-ai-chat/index.ts"
 # Specifies static files to be bundled with the function. Supports glob patterns.
 # For example, if you want to serve static HTML pages in your function:
 # static_files = [ "./functions/khaavio-ai-chat/*.html" ]
+
+[functions.razorpay-create-subscription]
+enabled = true
+verify_jwt = true
+
+[functions.razorpay-verify-subscription]
+enabled = true
+verify_jwt = true
+
+[functions.razorpay-cancel-pending-subscription]
+enabled = true
+verify_jwt = true
+
+[functions.razorpay-webhook]
+enabled = true
+verify_jwt = false

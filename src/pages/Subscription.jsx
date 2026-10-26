@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 
 import { supabase } from "../lib/supabaseClient";
+import { loadRazorpayCheckout } from "../lib/razorpayCheckout";
 import khaavioIcon from "../assets/icon.png";
 import "./Subscription.css";
 
@@ -26,10 +27,7 @@ const INITIAL_NOW = new Date();
 
 // Launch offers are informational until checkout and offer eligibility are implemented.
 // The founding offer must be confirmed manually by Khaavio; the UI does not count customers.
-const FOUNDING_OFFERS = {
-  starter_yearly: { offerPrice: 3999, regularPrice: 4990 },
-  growth_yearly: { offerPrice: 6999, regularPrice: 8990 },
-};
+const FOUNDING_OFFERS = {};
 
 function formatCurrency(value) {
   return new Intl.NumberFormat("en-IN", {
@@ -130,6 +128,16 @@ function getErrorMessage(error, fallback) {
     : fallback;
 }
 
+async function getCheckoutFunctionError(error, fallback) {
+  const context = error?.context;
+  if (context && typeof context.clone === "function") {
+    try {
+      const payload = await context.clone().json();
+      if (typeof payload?.message === "string" && payload.message.trim()) return payload.message;
+    } catch { /* Use the generic error below. */ }
+  }
+  return getErrorMessage(error, fallback);
+}
 export default function Subscription() {
   const navigate = useNavigate();
   const [restaurant, setRestaurant] = useState(null);
@@ -231,50 +239,97 @@ export default function Subscription() {
   }, [navigate, refreshKey]);
 
   async function requestPlan(availablePlan) {
-    if (
-      !availablePlan ||
-      requestingPlanKey ||
-      renewalRequests.some((request) => request.status === "pending")
-    )
-      return;
-    const isYearly = availablePlan.billing_interval === "yearly";
-    const askFoundingOffer = isYearly && foundingOfferRequested;
+    if (!availablePlan || requestingPlanKey) return;
     const confirmed = window.confirm(
-      `Request ${availablePlan.name} (${formatPrice(availablePlan.price_inr, availablePlan.billing_interval)}) for ${restaurant?.name || "your restaurant"}?\n\nThis does not make a payment or activate access. Khaavio will confirm the final amount/payment instructions manually${askFoundingOffer ? ", including founding-offer eligibility" : ""}.`,
+      `Continue to secure Razorpay checkout for ${availablePlan.name} (${formatPrice(availablePlan.price_inr, availablePlan.billing_interval)})? This is a recurring subscription. The selected plan will be activated only after Razorpay confirms a captured payment.`,
     );
     if (!confirmed) return;
-
     setError("");
     setRequestNotice("");
     setRequestingPlanKey(availablePlan.plan_key);
+    let checkoutData = null;
+    let checkoutCompleted = false;
     try {
-      const { data, error: requestError } = await supabase.rpc(
-        "request_subscription_renewal",
-        {
-          p_plan_key: availablePlan.plan_key,
-          p_founding_offer_requested: askFoundingOffer,
-          p_request_note: null,
-        },
-      );
-      if (requestError) throw requestError;
-      const result = Array.isArray(data) ? data[0] : data;
-      if (!result?.request_id) {
-        throw new Error(
-          "Khaavio did not confirm the renewal request. Refresh before trying again.",
-        );
+      const checkoutLoaded = await loadRazorpayCheckout();
+      if (!checkoutLoaded || !window.Razorpay) {
+        throw new Error("Razorpay Checkout could not be loaded. Check your connection and try again.");
       }
-      setRequestNotice(
-        "Request sent to Khaavio. No payment has been collected and your plan has not changed. Wait for the final quote and payment instructions.",
+      const { data, error: createError } = await supabase.functions.invoke(
+        "razorpay-create-subscription",
+        { body: { plan_key: availablePlan.plan_key } },
       );
-      setRefreshKey((current) => current + 1);
-    } catch (requestError) {
-      setError(
-        getErrorMessage(
-          requestError,
-          "Could not submit the subscription request.",
-        ),
-      );
-    } finally {
+      if (createError) throw new Error(await getCheckoutFunctionError(createError, "Could not create the Razorpay subscription."));
+      if (!data?.subscription_id || !data?.attempt_id || !data?.key_id) {
+        throw new Error("The billing server did not return a valid checkout session. Please contact Khaavio support.");
+      }
+      checkoutData = data;
+      const Checkout = window.Razorpay;
+      const checkout = new Checkout({
+        key: data.key_id,
+        subscription_id: data.subscription_id,
+        name: "Khaavio",
+        description: `${availablePlan.name} recurring subscription`,
+        image: new URL(khaavioIcon, window.location.origin).toString(),
+        prefill: {
+          name: data.restaurant_name || restaurant?.name || "",
+          email: data.customer_email || "",
+        },
+        notes: { khaavio_attempt_id: data.attempt_id, khaavio_plan_key: availablePlan.plan_key },
+        theme: { color: "#216e52" },
+        handler: async (response) => {
+          checkoutCompleted = true;
+          setError("");
+          setRequestNotice("Checkout returned. Verifying the payment securely with Khaavioâ€¦");
+          try {
+            const { data: verification, error: verifyError } = await supabase.functions.invoke(
+              "razorpay-verify-subscription",
+              {
+                body: {
+                  attempt_id: data.attempt_id,
+                  razorpay_payment_id: response?.razorpay_payment_id,
+                  razorpay_subscription_id: response?.razorpay_subscription_id,
+                  razorpay_signature: response?.razorpay_signature,
+                },
+              },
+            );
+            if (verifyError) throw new Error(await getCheckoutFunctionError(verifyError, "Checkout signature verification failed."));
+            if (!verification?.verified) throw new Error("The checkout could not be verified. If you were charged, do not pay again; contact Khaavio support.");
+            if (verification.access_active) {
+              setRequestNotice("Payment verified and your subscription is active. Welcome to Khaavio!");
+            } else {
+              setRequestNotice("Checkout signature verified. Your plan will activate automatically after Razorpay confirms the captured payment. Refresh this page in a few seconds if it does not update.");
+            }
+            setRefreshKey((current) => current + 1);
+          } catch (verifyError) {
+            setError(getErrorMessage(verifyError, "Payment returned, but the verification response could not be confirmed. If money was deducted, do not retry payment; contact Khaavio support."));
+          } finally {
+            setRequestingPlanKey("");
+          }
+        },
+        modal: {
+          ondismiss: async () => {
+            if (!checkoutCompleted && checkoutData?.attempt_id) {
+              try {
+                await supabase.functions.invoke("razorpay-cancel-pending-subscription", {
+                  body: { attempt_id: checkoutData.attempt_id },
+                });
+              } catch { /* The server expires abandoned attempts after a short timeout. */ }
+              setRequestNotice("Checkout closed. No plan change was made. You can start checkout again.");
+            }
+            setRequestingPlanKey("");
+          },
+        },
+      });
+      checkout.on("payment.failed", (event) => {
+        const description = event?.error?.description;
+        setError(typeof description === "string" && description.trim()
+          ? `Razorpay reported a payment issue: ${description}`
+          : "Razorpay could not complete this payment. Please try again or contact Khaavio support.");
+        setRequestingPlanKey("");
+      });
+      checkout.open();
+    } catch (checkoutError) {
+      setError(getErrorMessage(checkoutError, "Could not start Razorpay checkout. Please try again."));
       setRequestingPlanKey("");
     }
   }
@@ -462,10 +517,9 @@ export default function Subscription() {
             <div className="subscription-notice" role="note">
               <Info size={19} />
               <p>
-                Manual billing during the pilot: requesting a plan does not
-                collect payment or activate access. Khaavio will confirm the
-                final quote and payment instructions; access changes only after
-                an authorised admin verifies payment.
+                Secure recurring billing is handled through Razorpay Checkout. Your
+                plan changes only after Khaavio verifies the checkout response and
+                receives a server-verified captured-payment webhook from Razorpay.
               </p>
             </div>
 
@@ -480,7 +534,7 @@ export default function Subscription() {
                   </p>
                 </div>
                 <span className="subscription-manual-label">
-                  <ShieldCheck size={14} /> Manual activation during pilot
+                  <ShieldCheck size={14} /> Secure Razorpay checkout
                 </span>
               </div>
 
@@ -508,7 +562,7 @@ export default function Subscription() {
                 </button>
               </div>
 
-              {billingInterval === "yearly" && (
+              {false && billingInterval === "yearly" && (
                 <div className="subscription-founding-banner" role="note">
                   <div className="subscription-founding-banner-icon">
                     <Tag size={18} />
@@ -530,10 +584,7 @@ export default function Subscription() {
                           setFoundingOfferRequested(event.target.checked)
                         }
                         disabled={
-                          Boolean(requestingPlanKey) ||
-                          renewalRequests.some(
-                            (request) => request.status === "pending",
-                          )
+                          Boolean(requestingPlanKey)
                         }
                       />
                       <span>
@@ -577,7 +628,7 @@ export default function Subscription() {
                             </span>
                           ) : isGrowth ? (
                             <span className="subscription-popular-label">
-                              Best for growing cafés
+                              Best for growing cafes
                             </span>
                           ) : null}
                         </div>
@@ -594,7 +645,7 @@ export default function Subscription() {
                         {isTrial ? (
                           <div className="subscription-price-block">
                             <div className="subscription-plan-price">
-                              ₹0 <span>/ 7 days</span>
+                              {formatCurrency(0)} <span>/ 7 days</span>
                             </div>
                             <span className="subscription-price-caption">
                               No card required
@@ -661,10 +712,7 @@ export default function Subscription() {
                               className="subscription-request-button"
                               onClick={() => requestPlan(availablePlan)}
                               disabled={
-                                Boolean(requestingPlanKey) ||
-                                renewalRequests.some(
-                                  (request) => request.status === "pending",
-                                )
+                                Boolean(requestingPlanKey)
                               }
                             >
                               {requestingPlanKey === availablePlan.plan_key ? (
@@ -678,10 +726,10 @@ export default function Subscription() {
                               {renewalRequests.some(
                                 (request) => request.status === "pending",
                               )
-                                ? "Request pending"
+                                ? "Processingâ€¦"
                                 : isCurrent
-                                  ? "Request renewal"
-                                  : "Request this plan"}
+                                  ? "Subscribe & pay"
+                                  : "Subscribe & pay"}
                             </button>
                           )}
                         </div>
@@ -697,21 +745,17 @@ export default function Subscription() {
               )}
 
               <p className="subscription-pricing-footnote">
-                Prices are catalog prices for the pilot. Plan requests are
-                recorded here; payments are handled outside Khaavio and
-                activation is manual. Founding discounts must be approved by
-                Khaavio before payment.
+                Choose monthly or yearly billing above. Razorpay handles recurring checkout; Khaavio activates a paid plan only after server-side verification of a captured payment. The listed catalog price is charged; founding discounts are not applied in online checkout.
               </p>
             </section>
 
             <section className="subscription-renewal-history">
               <div className="subscription-section-heading">
                 <div>
-                  <span className="subscription-eyebrow">REQUEST HISTORY</span>
-                  <h2>Plan requests</h2>
+                  <span className="subscription-eyebrow">PREVIOUS REQUESTS</span>
+                  <h2>Previous manual requests</h2>
                   <p>
-                    Requests are reviewed manually. Your access changes only
-                    when an authorised admin activates a plan.
+                    Older manually reviewed requests remain visible here. New subscriptions use Razorpay Checkout and activate only after server-side verification of a captured payment.
                   </p>
                 </div>
               </div>
@@ -940,10 +984,7 @@ export default function Subscription() {
               <CalendarClock size={21} />
               <div>
                 <h3>Need to change your plan?</h3>
-                <p>
-                  Plan changes are handled manually during the pilot. Khaavio
-                  does not collect payments from this screen.
-                </p>
+                <p>Switching between active paid subscriptions is not automated yet. Contact Khaavio support before starting a second paid subscription.</p>
               </div>
             </section>
           </>
