@@ -17,6 +17,9 @@ import {
   LoaderCircle,
   Printer,
   Plus,
+  Pencil,
+  Power,
+  Trash2,
   QrCode,
   RefreshCw,
   Search,
@@ -431,15 +434,22 @@ async function drawBrandedCard(restaurant, table, settings, qrDataUrl) {
     );
   }
 
-  roundedRect(ctx, 135, 455, 810, 690, 32, colors.qr, colors.border, 3);
+  // Give the scannable code a generous, high-contrast print-safe frame.
+  roundedRect(ctx, 150, 420, 780, 730, 38, colors.qr, colors.border, 4);
+  roundedRect(ctx, 165, 435, 750, 700, 28, null, colors.border, 1);
   const qrImage = await safeLoadImage(qrDataUrl);
   if (!qrImage)
     throw new Error(
       "The QR code could not be loaded for export. Please retry.",
     );
   ctx.imageSmoothingEnabled = false;
-  ctx.drawImage(qrImage, 225, 485, 630, 630);
+  ctx.drawImage(qrImage, 235, 470, 610, 610);
   ctx.imageSmoothingEnabled = true;
+  ctx.fillStyle = colors.muted;
+  ctx.font = "700 18px Arial, sans-serif";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText("SCAN  •  EXPLORE  •  ORDER", center, 1118);
 
   roundedRect(ctx, 180, 1175, 720, 82, 28, colors.accent, null);
   ctx.fillStyle = colors.accentText;
@@ -803,6 +813,10 @@ export default function TableQRStudio() {
   const [creatingTable, setCreatingTable] = useState(false);
   const [newTableNumber, setNewTableNumber] = useState("");
   const [newTableCapacity, setNewTableCapacity] = useState("4");
+  const [editingTable, setEditingTable] = useState(null);
+  const [editTableNumber, setEditTableNumber] = useState("");
+  const [editTableCapacity, setEditTableCapacity] = useState("4");
+  const [updatingTable, setUpdatingTable] = useState(false);
 
   const restaurant = useMemo(
     () => restaurants.find((item) => item.id === restaurantId) || null,
@@ -1135,6 +1149,189 @@ export default function TableQRStudio() {
       });
     } finally {
       setCreatingTable(false);
+    }
+  }
+
+  function beginEditTable(table) {
+    setEditingTable(table);
+    setEditTableNumber(String(table.table_number ?? ""));
+    setEditTableCapacity(String(table.capacity ?? 4));
+    setNotice(null);
+  }
+
+  async function handleUpdateTable(event) {
+    event.preventDefault();
+    if (!restaurant || !editingTable || updatingTable) return;
+
+    const tableNumber = editTableNumber.trim();
+    const capacity = Number(editTableCapacity);
+
+    if (!tableNumber) {
+      setNotice({ type: "error", text: "Enter a table name or number." });
+      return;
+    }
+    if (tableNumber.length > 80) {
+      setNotice({ type: "error", text: "Table name must be 80 characters or fewer." });
+      return;
+    }
+    if (!Number.isInteger(capacity) || capacity < 1 || capacity > 50) {
+      setNotice({ type: "error", text: "Seating capacity must be a whole number from 1 to 50." });
+      return;
+    }
+    if (tables.some((table) =>
+      table.id !== editingTable.id &&
+      String(table.table_number || "").trim().toLowerCase() === tableNumber.toLowerCase()
+    )) {
+      setNotice({ type: "error", text: `A table named “${tableNumber}” already exists. Choose a unique name.` });
+      return;
+    }
+
+    setUpdatingTable(true);
+    setActionBusy(`update:${editingTable.id}`);
+    setNotice(null);
+    try {
+      // Deliberately update only the display name and capacity. The existing
+      // QR token remains unchanged, so already-printed QR codes keep working.
+      const { data: updatedTable, error } = await supabase
+        .from("restaurant_tables")
+        .update({ table_number: tableNumber, capacity })
+        .eq("id", editingTable.id)
+        .eq("restaurant_id", restaurant.id)
+        .select("id, restaurant_id, table_number, capacity, is_active, qr_token")
+        .single();
+
+      if (error) throw error;
+      if (!updatedTable?.id) throw new Error("The table update could not be confirmed. Refresh and try again.");
+
+      setTables((current) => current
+        .map((table) => table.id === updatedTable.id ? updatedTable : table)
+        .sort((a, b) => String(a.table_number || "").localeCompare(
+          String(b.table_number || ""),
+          undefined,
+          { numeric: true, sensitivity: "base" },
+        )));
+      setEditingTable(null);
+      setNotice({ type: "success", text: `${updatedTable.table_number} updated. Its existing QR link is unchanged.` });
+    } catch (error) {
+      const message = getErrorMessage(error, "Could not update this table.");
+      setNotice({
+        type: "error",
+        text: /duplicate key|unique constraint/i.test(message)
+          ? `A table named “${tableNumber}” already exists. Choose a unique name.`
+          : message,
+      });
+    } finally {
+      setUpdatingTable(false);
+      setActionBusy("");
+    }
+  }
+
+  async function handleToggleTableActive(table) {
+    if (!restaurant || !table?.id || actionBusy) return;
+    const nextActive = table.is_active !== true;
+
+    setActionBusy(`active:${table.id}`);
+    setNotice(null);
+    try {
+      const { data: updatedTable, error } = await supabase
+        .from("restaurant_tables")
+        .update({ is_active: nextActive })
+        .eq("id", table.id)
+        .eq("restaurant_id", restaurant.id)
+        .select("id, restaurant_id, table_number, capacity, is_active, qr_token")
+        .single();
+
+      if (error) throw error;
+      if (!updatedTable?.id) throw new Error("The table status update could not be confirmed.");
+
+      setTables((current) => current.map((row) => row.id === updatedTable.id ? updatedTable : row));
+      setNotice({
+        type: "success",
+        text: nextActive
+          ? `${table.table_number} is active again. Its saved QR token has been kept.`
+          : `${table.table_number} is inactive. Existing order and billing history is preserved.`,
+      });
+    } catch (error) {
+      setNotice({ type: "error", text: getErrorMessage(error, "Could not update this table's status.") });
+    } finally {
+      setActionBusy("");
+    }
+  }
+
+  async function handleDeleteTable(table) {
+    if (!restaurant || !table?.id || actionBusy) return;
+    const confirmed = window.confirm(
+      `Permanently delete ${table.table_number}? This is only allowed when the table has no order or billing history. If it has history, you can deactivate it instead.`,
+    );
+    if (!confirmed) return;
+
+    setActionBusy(`delete:${table.id}`);
+    setNotice(null);
+    try {
+      // Keep financial history intact: only physically delete an unused table.
+      const [ordersResult, sessionsResult, invoicesResult] = await Promise.all([
+        supabase
+          .from("orders")
+          .select("id", { count: "exact", head: true })
+          .eq("restaurant_id", restaurant.id)
+          .eq("table_id", table.id),
+        supabase
+          .from("table_sessions")
+          .select("id", { count: "exact", head: true })
+          .eq("restaurant_id", restaurant.id)
+          .eq("table_id", table.id),
+        supabase
+          .from("table_session_invoices")
+          .select("id", { count: "exact", head: true })
+          .eq("restaurant_id", restaurant.id)
+          .eq("table_id", table.id),
+      ]);
+
+      const queryError = [ordersResult, sessionsResult, invoicesResult].find((result) => result.error)?.error;
+      if (queryError) throw queryError;
+
+      const hasHistory = [ordersResult.count, sessionsResult.count, invoicesResult.count]
+        .some((count) => Number(count || 0) > 0);
+      if (hasHistory) {
+        setNotice({
+          type: "error",
+          text: `${table.table_number} has order or billing history, so it cannot be permanently deleted. Deactivate it instead to keep old orders and invoices intact.`,
+        });
+        return;
+      }
+
+      const { data: deletedRows, error } = await supabase
+        .from("restaurant_tables")
+        .delete()
+        .eq("id", table.id)
+        .eq("restaurant_id", restaurant.id)
+        .select("id");
+      if (error) throw error;
+      if (!deletedRows?.some((row) => row.id === table.id)) {
+        throw new Error("The table was not deleted. Refresh the list and check your permissions.");
+      }
+
+      const remainingTables = tables.filter((row) => row.id !== table.id);
+      setTables(remainingTables);
+      setSelectedTableIds((current) => {
+        const next = new Set(current);
+        next.delete(table.id);
+        return next;
+      });
+      if (activeTableId === table.id) {
+        setActiveTableId((remainingTables.find((row) => canExport(row)) || remainingTables[0])?.id || "");
+      }
+      setNotice({ type: "success", text: `${table.table_number} deleted.` });
+    } catch (error) {
+      const message = getErrorMessage(error, "Could not delete this table.");
+      setNotice({
+        type: "error",
+        text: /foreign key|constraint|referenced/i.test(message)
+          ? `${table.table_number} is linked to existing records and cannot be deleted safely. Deactivate it instead to preserve history.`
+          : message,
+      });
+    } finally {
+      setActionBusy("");
     }
   }
 
@@ -1782,7 +1979,38 @@ export default function TableQRStudio() {
                     <div className="tqr-row-actions">
                       <button
                         type="button"
-                        onClick={() => handleDownloadPng(table)}
+                        onClick={() => beginEditTable(table)}
+                        disabled={Boolean(actionBusy)}
+                        aria-label={`Edit ${table.table_number}`}
+                        title="Edit table"
+                      >
+                        <Pencil size={15} />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleToggleTableActive(table)}
+                        disabled={Boolean(actionBusy)}
+                        aria-label={`${isActive ? "Deactivate" : "Activate"} ${table.table_number}`}
+                        title={isActive ? "Deactivate table" : "Activate table"}
+                      >
+                        <Power size={15} />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteTable(table)}
+                        disabled={Boolean(actionBusy)}
+                        aria-label={`Delete ${table.table_number}`}
+                        title="Delete table"
+                      >
+                        {actionBusy === `delete:${table.id}` ? (
+                          <LoaderCircle className="tqr-spinner" size={15} />
+                        ) : (
+                          <Trash2 size={15} />
+                        )}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleDownloadPng(table)
                         disabled={!isReady || Boolean(actionBusy)}
                         aria-label={`Download PNG for ${table.table_number}`}
                         title="Download PNG"
@@ -2225,6 +2453,95 @@ export default function TableQRStudio() {
                 <Download size={16} /> Download PNG
               </button>
             </div>
+          </section>
+        </div>
+      ) : null}
+      {editingTable ? (
+        <div
+          className="tqr-modal-backdrop"
+          role="presentation"
+          onMouseDown={(event) => {
+            if (!updatingTable && event.target === event.currentTarget) setEditingTable(null);
+          }}
+        >
+          <section
+            className="tqr-preview-modal tqr-edit-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="tqr-edit-title"
+          >
+            <div className="tqr-modal-heading">
+              <div>
+                <span className="tqr-edit-eyebrow">TABLE SETTINGS</span>
+                <h2 id="tqr-edit-title">Edit table</h2>
+                <p>Update the name or seating capacity for {editingTable.table_number}.</p>
+              </div>
+              <button
+                type="button"
+                className="tqr-icon-button"
+                onClick={() => setEditingTable(null)}
+                disabled={updatingTable}
+                aria-label="Close edit table"
+              >
+                <X size={18} />
+              </button>
+            </div>
+            <form className="tqr-edit-form" onSubmit={handleUpdateTable}>
+              <label className="tqr-edit-field">
+                <span>Table name / number</span>
+                <input
+                  autoFocus
+                  value={editTableNumber}
+                  onChange={(event) => setEditTableNumber(event.target.value)}
+                  maxLength={80}
+                  required
+                  disabled={updatingTable}
+                />
+              </label>
+              <label className="tqr-edit-field">
+                <span>Seating capacity</span>
+                <input
+                  type="number"
+                  inputMode="numeric"
+                  min="1"
+                  max="50"
+                  step="1"
+                  value={editTableCapacity}
+                  onChange={(event) => setEditTableCapacity(event.target.value)}
+                  required
+                  disabled={updatingTable}
+                />
+              </label>
+              <div className="tqr-edit-safety-note">
+                <ShieldCheck size={16} />
+                <span>The existing QR token is kept, so printed QR codes continue to point to this table.</span>
+              </div>
+              <div className="tqr-edit-actions">
+                <button
+                  type="button"
+                  className="tqr-button tqr-button--secondary"
+                  onClick={() => setEditingTable(null)}
+                  disabled={updatingTable}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="tqr-button tqr-button--primary"
+                  disabled={updatingTable || Boolean(actionBusy && !actionBusy.startsWith("update:"))}
+                >
+                  {updatingTable ? (
+                    <>
+                      <LoaderCircle className="tqr-spinner" size={15} /> Saving…
+                    </>
+                  ) : (
+                    <>
+                      <Check size={15} /> Save changes
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
           </section>
         </div>
       ) : null}
