@@ -16,6 +16,7 @@ import {
   X,
 } from "lucide-react";
 import { supabase } from "../lib/supabaseClient";
+import { useKhaavioOperationalAlerts } from "../context/KhaavioOperationalAlertsContext";
 import { cancelKhaavioVoice, isKhaavioVoiceSupported, queueKhaavioVoice } from "../lib/khaavioVoiceAlerts";
 import "./ServiceRequestsDashboard.css";
 
@@ -69,10 +70,8 @@ function filterMatches(request, filter) {
 }
 
 export default function ServiceRequestsDashboard() {
-  const voiceEnabledRef = useRef(false);
-  const knownRequestIdsRef = useRef(null);
-  const knownRequestRestaurantIdRef = useRef("");
-  const [voiceEnabled, setVoiceEnabled] = useState(false);
+  const { preferences, setPreference } = useKhaavioOperationalAlerts();
+  const voiceEnabled = preferences.voiceEnabled;
   const [restaurants, setRestaurants] = useState([]);
   const [selectedRestaurantId, setSelectedRestaurantId] = useState("");
   const [requests, setRequests] = useState([]);
@@ -85,11 +84,6 @@ export default function ServiceRequestsDashboard() {
   const [notice, setNotice] = useState("");
 
   const selectedRestaurant = restaurants.find((item) => item.id === selectedRestaurantId) || null;
-
-  useEffect(() => () => {
-    voiceEnabledRef.current = false;
-    cancelKhaavioVoice();
-  }, []);
 
   useEffect(() => {
     let active = true;
@@ -133,11 +127,6 @@ export default function ServiceRequestsDashboard() {
       return undefined;
     }
 
-    if (knownRequestRestaurantIdRef.current !== selectedRestaurantId) {
-      knownRequestRestaurantIdRef.current = selectedRestaurantId;
-      knownRequestIdsRef.current = null;
-    }
-
     let active = true;
     setRequestsLoading(true);
     setError("");
@@ -168,28 +157,7 @@ export default function ServiceRequestsDashboard() {
           ...request,
           table_number: nextTableNumbers[request.table_id] || "Unknown table",
         }));
-        const previousRequestIds = knownRequestIdsRef.current;
-        const currentRequestIds = new Set(nextRequests.map((request) => request.id));
-        const newlyAddedRequests = previousRequestIds
-          ? nextRequests.filter((request) => !previousRequestIds.has(request.id) && request.status === "pending")
-          : [];
-
-        // IDs are tracked across Realtime and polling so each request is spoken once.
-        if (voiceEnabledRef.current && newlyAddedRequests.length === 1) {
-          const request = newlyAddedRequests[0];
-          const voiceMeta = REQUEST_VOICE_META[request.request_type] || REQUEST_VOICE_META.other;
-          const tableNumber = request.table_number || "unknown";
-          queueKhaavioVoice((isHindi) => isHindi
-            ? `टेबल ${tableNumber} पर ${voiceMeta.hi} का अनुरोध आया है।`
-            : `Table ${tableNumber} is requesting ${voiceMeta.en}.`);
-        } else if (voiceEnabledRef.current && newlyAddedRequests.length > 1) {
-          const count = newlyAddedRequests.length;
-          queueKhaavioVoice((isHindi) => isHindi
-            ? `${count} नई टेबल सर्विस रिक्वेस्ट आई हैं।`
-            : `You have ${count} new table service requests.`);
-        }
-
-        knownRequestIdsRef.current = currentRequestIds;
+        // The app-level alert manager announces new requests across routes.
         setRequests(nextRequests);
       } catch (loadError) {
         if (active) setError(loadError?.message || "Unable to load service requests.");
@@ -270,11 +238,10 @@ export default function ServiceRequestsDashboard() {
   }
 
   function toggleVoiceAnnouncements() {
-    if (voiceEnabledRef.current) {
-      voiceEnabledRef.current = false;
-      setVoiceEnabled(false);
+    if (voiceEnabled) {
+      setPreference("voiceEnabled", false);
       cancelKhaavioVoice();
-      setNotice("Service request voice announcements are off.");
+      setNotice("Voice alerts are off across the restaurant workspace.");
       return;
     }
 
@@ -285,17 +252,16 @@ export default function ServiceRequestsDashboard() {
 
     cancelKhaavioVoice();
     const queued = queueKhaavioVoice((isHindi) => isHindi
-      ? `टेबल सर्विस अलर्ट चालू हैं। नए अनुरोधों की आवाज़ में सूचना दी जाएगी।`
-      : `Table service voice alerts are enabled. New guest requests will be announced.`);
+      ? "टेबल सर्विस अलर्ट चालू हैं। नए अनुरोधों की आवाज़ में सूचना दी जाएगी।"
+      : "Table service voice alerts are enabled. New guest requests will be announced.");
     if (!queued) {
       setError("Voice announcements could not be started in this browser.");
       return;
     }
 
-    voiceEnabledRef.current = true;
-    setVoiceEnabled(true);
+    setPreference("voiceEnabled", true);
     setError("");
-    setNotice("Service request voice announcements are on.");
+    setNotice("Voice alerts are on across the restaurant workspace.");
   }
 
   if (initialLoading) {
