@@ -267,14 +267,12 @@ export default function PublicMenu() {
       setActiveBottomTab("menu");
 
       try {
-        const { data: restaurantData, error: restaurantError } = await supabase
-          .from("restaurants")
-          .select(
-            "id, name, slug, restaurant_type, address, google_review_url, is_published, is_accepting_orders, business_hours, timezone",
-          )
-          .eq("slug", slug)
-          .eq("is_published", true)
-          .maybeSingle();
+        const { data: menuSnapshot, error: restaurantError } = await supabase.rpc(
+          "khaavio_public_restaurant_menu",
+          { p_slug: slug },
+        );
+        if (restaurantError) throw restaurantError;
+        const restaurantData = menuSnapshot?.restaurant;
 
         if (restaurantError) throw restaurantError;
 
@@ -300,20 +298,7 @@ export default function PublicMenu() {
           resolvedPublicFeatures = { ...DEFAULT_PUBLIC_FEATURES };
         }
 
-        // Restaurant logo is optional. If column access/storage is unavailable,
-        // the menu continues to work with a restaurant-name fallback mark.
-        let restaurantLogoUrl = null;
-        try {
-          const { data: logoData, error: logoError } = await supabase
-            .from("restaurants")
-            .select("logo_url")
-            .eq("id", restaurantData.id)
-            .maybeSingle();
-          if (!logoError) restaurantLogoUrl = logoData?.logo_url || null;
-        } catch {
-          // Optional branding must never block ordering or menu browsing.
-        }
-
+        // Branding is included in the least-privilege public menu snapshot.
         // This public RPC returns only a boolean. The order RPC independently enforces access server-side.
         let transactionAccess = null;
         const { data: accessData, error: accessError } = await supabase.rpc(
@@ -355,39 +340,28 @@ export default function PublicMenu() {
           }
         }
 
-        const [categoryResult, itemResult] = await Promise.all([
-          supabase
-            .from("menu_categories")
-            .select("id, name, restaurant_id")
-            .eq("restaurant_id", restaurantData.id),
-
-          supabase
-            .from("menu_items")
-            .select(
-              "id, name, description, price, image_url, is_available, category_id",
-            )
-            .eq("restaurant_id", restaurantData.id)
-            .eq("is_available", true),
-        ]);
-
-        if (categoryResult.error) throw categoryResult.error;
-        if (itemResult.error) throw itemResult.error;
+        const publicCategories = Array.isArray(menuSnapshot?.categories)
+          ? menuSnapshot.categories
+          : [];
+        const publicItems = Array.isArray(menuSnapshot?.items)
+          ? menuSnapshot.items
+          : [];
 
         if (cancelled) return;
 
-        setRestaurant({ ...restaurantData, logo_url: restaurantLogoUrl });
+        setRestaurant(restaurantData);
         setPublicFeatures(resolvedPublicFeatures);
         setSubscriptionAllowsTransactions(transactionAccess);
         setAvailabilityNow(Date.now());
 
         setCategories(
-          [...(categoryResult.data || [])].sort((a, b) =>
+          [...publicCategories].sort((a, b) =>
             a.name.localeCompare(b.name),
           ),
         );
 
         setItems(
-          [...(itemResult.data || [])].sort((a, b) =>
+          [...publicItems].sort((a, b) =>
             a.name.localeCompare(b.name),
           ),
         );
