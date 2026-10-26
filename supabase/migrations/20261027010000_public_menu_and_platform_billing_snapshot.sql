@@ -12,7 +12,8 @@ SECURITY DEFINER
 SET search_path = ''
 AS $function$
 DECLARE
-  v_restaurant record;
+  v_restaurant jsonb;
+  v_restaurant_id uuid;
   v_categories jsonb;
   v_items jsonb;
 BEGIN
@@ -22,27 +23,21 @@ BEGIN
     RETURN NULL;
   END IF;
 
-  SELECT
-    r.id,
-    r.name,
-    r.slug,
-    r.restaurant_type,
-    r.address,
-    r.google_review_url,
-    r.is_published,
-    r.is_accepting_orders,
-    r.business_hours,
-    r.timezone,
-    r.logo_url
+  -- Convert the source row to JSON so the public function remains compatible
+  -- if an optional branding column is absent in an older schema. The returned
+  -- payload below is still explicitly allowlisted field-by-field.
+  SELECT pg_catalog.to_jsonb(r)
   INTO v_restaurant
   FROM public.restaurants AS r
   WHERE r.slug = pg_catalog.btrim(p_slug)
     AND r.is_published IS TRUE
   LIMIT 1;
 
-  IF NOT FOUND THEN
+  IF v_restaurant IS NULL THEN
     RETURN NULL;
   END IF;
+
+  v_restaurant_id := (v_restaurant ->> 'id')::uuid;
 
   SELECT COALESCE(
     pg_catalog.jsonb_agg(
@@ -56,7 +51,7 @@ BEGIN
   )
   INTO v_categories
   FROM public.menu_categories AS c
-  WHERE c.restaurant_id = v_restaurant.id;
+  WHERE c.restaurant_id = v_restaurant_id;
 
   SELECT COALESCE(
     pg_catalog.jsonb_agg(
@@ -74,22 +69,22 @@ BEGIN
   )
   INTO v_items
   FROM public.menu_items AS m
-  WHERE m.restaurant_id = v_restaurant.id
+  WHERE m.restaurant_id = v_restaurant_id
     AND m.is_available IS TRUE;
 
   RETURN pg_catalog.jsonb_build_object(
     'restaurant',
     pg_catalog.jsonb_build_object(
-      'id', v_restaurant.id,
-      'name', v_restaurant.name,
-      'slug', v_restaurant.slug,
-      'restaurant_type', v_restaurant.restaurant_type,
-      'address', v_restaurant.address,
-      'google_review_url', v_restaurant.google_review_url,
-      'is_published', v_restaurant.is_published,
-      'is_accepting_orders', v_restaurant.is_accepting_orders,
-      'business_hours', v_restaurant.business_hours,
-      'timezone', v_restaurant.timezone,
+      'id', v_restaurant -> 'id',
+      'name', v_restaurant -> 'name',
+      'slug', v_restaurant -> 'slug',
+      'restaurant_type', v_restaurant -> 'restaurant_type',
+      'address', v_restaurant -> 'address',
+      'google_review_url', v_restaurant -> 'google_review_url',
+      'is_published', v_restaurant -> 'is_published',
+      'is_accepting_orders', v_restaurant -> 'is_accepting_orders',
+      'business_hours', v_restaurant -> 'business_hours',
+      'timezone', v_restaurant -> 'timezone',
       'logo_url', v_restaurant.logo_url
     ),
     'categories', COALESCE(v_categories, '[]'::jsonb),
