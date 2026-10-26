@@ -98,11 +98,6 @@ function getReference(id) {
     .toUpperCase();
 }
 
-function normalizeTableNumber(value) {
-  if (value == null) return "";
-  return String(value).replace(/^table\s*/i, "").trim();
-}
-
 function queueKitchenSpeech(messageFactory) {
   if (
     typeof window === "undefined" ||
@@ -148,48 +143,9 @@ function speakKitchenTest(restaurantName) {
   ]);
 }
 
-function speakNewKitchenOrders(orders, restaurantName) {
-  const ordersToSpeak = orders.slice(0, 5);
-
-  return queueKitchenSpeech((isHindi) => {
-    const messages = ordersToSpeak.map((order) => {
-      const itemList = (order.items || [])
-        .map((item) => `${item.quantity} ${item.item_name}`)
-        .join(", ");
-      const total = Math.round(Number(order.total_amount) || 0);
-      const tableNumber = normalizeTableNumber(order.tableNumber);
-
-      if (isHindi) {
-        const tablePhrase = tableNumber
-          ? `टेबल ${tableNumber} से`
-          : "रेस्टोरेंट से";
-        return `नया ऑर्डर आया है। ${restaurantName || "रेस्टोरेंट"}। ${tablePhrase} ${itemList || "मेन्यू आइटम"} का ऑर्डर आया है। कुल बिल ${total} रुपये।`;
-      }
-
-      const tablePhrase = tableNumber
-        ? `Table ${tableNumber}`
-        : "Restaurant order";
-      return `New order at ${restaurantName || "your restaurant"}. ${tablePhrase}. Items: ${itemList || "menu items"}. Total ${total} rupees.`;
-    });
-
-    if (orders.length > ordersToSpeak.length) {
-      const remaining = orders.length - ordersToSpeak.length;
-      messages.push(
-        isHindi
-          ? `इसके अलावा ${remaining} और नए ऑर्डर आए हैं।`
-          : `There are ${remaining} additional new orders.`,
-      );
-    }
-
-    return messages;
-  });
-}
-
-
 export default function KitchenDisplay() {
   const navigate = useNavigate();
   const displayRef = useRef(null);
-  const knownOrderIdsRef = useRef(null);
   const { preferences, setPreference } = useKhaavioOperationalAlerts();
   const soundEnabled = preferences.soundEnabled;
   const voiceEnabled = preferences.voiceEnabled;
@@ -220,7 +176,6 @@ export default function KitchenDisplay() {
     let active = true;
     let running = false;
     let restaurantId = "";
-    let restaurantInfo = null;
 
     async function loadKitchen({ initial = false } = {}) {
       if (running) return;
@@ -253,7 +208,6 @@ export default function KitchenDisplay() {
           }
 
           restaurantId = restaurantData.id;
-          restaurantInfo = restaurantData;
           if (active) setRestaurant(restaurantData);
         }
 
@@ -269,7 +223,6 @@ export default function KitchenDisplay() {
         if (ordersError) throw ordersError;
 
         const currentOrders = orderData || [];
-        const previouslyKnownOrderIds = knownOrderIdsRef.current;
         const orderIds = currentOrders.map((order) => order.id);
         const tableIds = [
           ...new Set(currentOrders.map((order) => order.table_id).filter(Boolean)),
@@ -310,19 +263,6 @@ export default function KitchenDisplay() {
           items: itemsByOrder.get(order.id) || [],
           tableNumber: tableById.get(order.table_id) || null,
         }));
-
-        // Only announce orders after the initial successful load, so old active
-        // orders don't speak when the kitchen screen first opens.
-        const newOrders =
-          previouslyKnownOrderIds === null
-            ? []
-            : enrichedOrders.filter(
-                (order) => !previouslyKnownOrderIds.has(order.id),
-              );
-
-        const seenIds = previouslyKnownOrderIds || new Set();
-        for (const order of currentOrders) seenIds.add(order.id);
-        knownOrderIdsRef.current = seenIds;
 
         // The shared operational alert manager announces new orders across routes.
 
