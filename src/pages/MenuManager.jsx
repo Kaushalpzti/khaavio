@@ -1,3 +1,4 @@
+import { confirmKhaavio } from "../components/KhaavioDialogSystem.jsx";
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
@@ -307,7 +308,7 @@ export default function MenuManager() {
       return;
     }
 
-    if (!window.confirm(`Delete "${category.name}"?`)) return;
+    if (!await confirmKhaavio(`Delete "${category.name}"?`)) return;
 
     setBusy(true);
     setError("");
@@ -459,7 +460,7 @@ export default function MenuManager() {
   }
 
   async function deleteItem(item) {
-    if (!window.confirm(`Delete "${item.name}" from your menu?`)) return;
+    if (!await confirmKhaavio(`Delete "${item.name}" from your menu?`)) return;
 
     setBusy(true);
     setError("");

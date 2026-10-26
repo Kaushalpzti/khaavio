@@ -1,3 +1,4 @@
+import { confirmKhaavio } from "../components/KhaavioDialogSystem.jsx";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
@@ -209,7 +210,7 @@ export default function TableSessions() {
       return;
     }
     const tableNumber = tableNames.get(session.table_id) || "this table";
-    const confirmed = window.confirm(
+    const confirmed = await confirmKhaavio(
       `Generate the final bill and close ${tableNumber}? New QR orders after closing will start a new bill session.`,
     );
     if (!confirmed) return;
@@ -239,7 +240,7 @@ export default function TableSessions() {
 
   async function markInvoicePaid(invoice) {
     if (invoice.payment_status === "paid") return;
-    const confirmed = window.confirm(
+    const confirmed = await confirmKhaavio(
       `Mark invoice ${invoice.invoice_number} (${formatPrice(invoice.total_amount)}) as paid via ${paymentMethod}?`,
     );
     if (!confirmed) return;

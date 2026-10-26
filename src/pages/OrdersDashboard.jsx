@@ -1,3 +1,4 @@
+import { confirmKhaavio } from "../components/KhaavioDialogSystem.jsx";
 import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
@@ -474,7 +475,7 @@ export default function OrdersDashboard() {
 
     if (
       nextStatus === "cancelled" &&
-      !window.confirm(`Cancel order ${getReference(order.id)}?`)
+      !await confirmKhaavio(`Cancel order ${getReference(order.id)}?`)
     ) {
       return;
     }

@@ -1,3 +1,4 @@
+import { confirmKhaavio } from "../components/KhaavioDialogSystem.jsx";
 import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
@@ -474,7 +475,7 @@ export default function BookingsDashboard() {
 
     if (
       ["rejected", "cancelled"].includes(nextStatus) &&
-      !window.confirm(
+      !await confirmKhaavio(
         `${LABELS[nextStatus]} booking #${getReference(booking.id)}?`,
       )
     ) {

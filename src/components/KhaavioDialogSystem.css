@@ -1,0 +1,92 @@
+.khaavio-dialog__backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 100000;
+  display: grid;
+  place-items: center;
+  padding: 18px;
+  background: rgba(7, 24, 20, 0.56);
+  -webkit-backdrop-filter: blur(7px);
+  backdrop-filter: blur(7px);
+  animation: khaavio-dialog-fade-in 150ms ease-out;
+}
+
+.khaavio-dialog {
+  width: min(100%, 510px);
+  max-height: min(86vh, 760px);
+  overflow: auto;
+  border: 1px solid rgba(18, 92, 69, 0.14);
+  border-radius: 22px;
+  background: #ffffff;
+  color: #12372e;
+  box-shadow: 0 28px 80px rgba(1, 24, 18, 0.25), 0 4px 14px rgba(1, 24, 18, 0.08);
+  animation: khaavio-dialog-rise-in 180ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  outline: none;
+}
+
+.khaavio-dialog__header {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  padding: 23px 24px 19px;
+  border-bottom: 1px solid #e6efeb;
+}
+
+.khaavio-dialog__mark {
+  display: grid;
+  width: 46px;
+  height: 46px;
+  flex: 0 0 46px;
+  place-items: center;
+  border-radius: 15px;
+  background: #e2f5ed;
+  color: #047857;
+  font-size: 21px;
+  font-weight: 850;
+  letter-spacing: -0.06em;
+}
+
+.khaavio-dialog__mark.is-danger { background: #fff0ed; color: #c24132; }
+.khaavio-dialog__heading { min-width: 0; flex: 1; }
+.khaavio-dialog__eyebrow { display: block; margin-bottom: 5px; color: #548172; font-size: 10px; font-weight: 800; letter-spacing: 0.12em; }
+.khaavio-dialog__heading h2 { margin: 0; color: #102f27; font-size: clamp(19px, 4vw, 23px); font-weight: 780; line-height: 1.25; letter-spacing: -0.035em; }
+.khaavio-dialog__close { display: grid; width: 34px; height: 34px; flex: 0 0 34px; place-items: center; border: 0; border-radius: 10px; background: transparent; color: #69847c; font-size: 25px; cursor: pointer; }
+.khaavio-dialog__close:hover { background: #eef6f2; color: #12372e; }
+.khaavio-dialog__body { padding: 20px 24px 22px; }
+.khaavio-dialog__message { margin: 0; color: #526c64; font-size: 14px; line-height: 1.7; white-space: pre-line; overflow-wrap: anywhere; }
+.khaavio-dialog__field-label { display: block; margin: 20px 0 8px; color: #25483e; font-size: 12px; font-weight: 750; }
+.khaavio-dialog__input { display: block; width: 100%; min-height: 46px; box-sizing: border-box; border: 1px solid #cbded5; border-radius: 12px; padding: 11px 13px; background: #fbfdfc; color: #12372e; font: inherit; font-size: 14px; outline: none; transition: border-color 140ms ease, box-shadow 140ms ease, background 140ms ease; }
+.khaavio-dialog__input:focus { border-color: #078764; background: #ffffff; box-shadow: 0 0 0 4px rgba(8, 135, 100, 0.12); }
+.khaavio-dialog__textarea { min-height: 104px; resize: vertical; }
+.khaavio-dialog__validation { margin: 7px 0 0; color: #b42318; font-size: 12px; }
+.khaavio-dialog__actions { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: 10px; margin-top: 24px; }
+.khaavio-dialog__button { display: inline-flex; min-height: 43px; align-items: center; justify-content: center; border: 1px solid transparent; border-radius: 12px; padding: 0 17px; font: inherit; font-size: 13px; font-weight: 750; cursor: pointer; transition: transform 120ms ease, background 120ms ease, box-shadow 120ms ease; }
+.khaavio-dialog__button:active { transform: translateY(1px); }
+.khaavio-dialog__button:focus-visible, .khaavio-dialog__close:focus-visible { outline: 3px solid rgba(8, 135, 100, 0.28); outline-offset: 2px; }
+.khaavio-dialog__cancel { border-color: #d6e4dd; background: #ffffff; color: #31564b; }
+.khaavio-dialog__cancel:hover { background: #f3f8f5; }
+.khaavio-dialog__primary { background: #064e3b; color: #ffffff; box-shadow: 0 4px 10px rgba(6, 78, 59, 0.14); }
+.khaavio-dialog__primary:hover { background: #036247; box-shadow: 0 6px 14px rgba(6, 78, 59, 0.18); }
+.khaavio-dialog__danger { background: #b9382d; color: #ffffff; box-shadow: 0 4px 10px rgba(185, 56, 45, 0.13); }
+.khaavio-dialog__danger:hover { background: #a52f25; }
+.khaavio-dialog__footer { display: flex; align-items: center; gap: 8px; padding: 13px 24px 16px; border-top: 1px solid #e8f0ec; background: #f8fbf9; color: #6a867b; font-size: 11px; line-height: 1.5; }
+.khaavio-dialog__footer-dot { width: 7px; height: 7px; flex: 0 0 7px; border-radius: 50%; background: #0e9872; box-shadow: 0 0 0 3px #e0f4eb; }
+
+@keyframes khaavio-dialog-fade-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes khaavio-dialog-rise-in { from { opacity: 0; transform: translateY(8px) scale(0.99); } to { opacity: 1; transform: translateY(0) scale(1); } }
+
+@media (max-width: 520px) {
+  .khaavio-dialog__backdrop { padding: 12px; }
+  .khaavio-dialog { width: 100%; border-radius: 18px; max-height: 90dvh; }
+  .khaavio-dialog__header { padding: 19px 18px 16px; gap: 10px; }
+  .khaavio-dialog__mark { width: 40px; height: 40px; flex-basis: 40px; border-radius: 13px; }
+  .khaavio-dialog__body { padding: 18px; }
+  .khaavio-dialog__footer { padding: 12px 18px 14px; }
+  .khaavio-dialog__actions { display: grid; grid-template-columns: 1fr; }
+  .khaavio-dialog__button { width: 100%; min-height: 46px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .khaavio-dialog__backdrop, .khaavio-dialog { animation: none; }
+  .khaavio-dialog__button, .khaavio-dialog__input { transition: none; }
+}

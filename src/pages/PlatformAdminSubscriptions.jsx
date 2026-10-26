@@ -1,3 +1,4 @@
+import { confirmKhaavio, promptKhaavio } from "../components/KhaavioDialogSystem.jsx";
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
@@ -203,7 +204,7 @@ export default function PlatformAdminSubscriptions() {
     const selectedPlan = plans.find((plan) => plan.plan_key === planKey);
     if (!selectedPlan || updatingRestaurantId) return;
 
-    const confirmed = window.confirm(
+    const confirmed = await confirmKhaavio(
       `Assign ${selectedPlan.name} to ${row.restaurant_name}?\n\nThis replaces the current subscription period and starts the new period now. This panel does not collect or verify payment. Confirm only after payment has been handled manually, unless assigning Pilot Access or a trial.`,
     );
     if (!confirmed) return;
@@ -237,7 +238,7 @@ export default function PlatformAdminSubscriptions() {
     let adminNote = null;
 
     if (decision === "activate") {
-      const confirmed = window.confirm(
+      const confirmed = await confirmKhaavio(
         `Before continuing, confirm that you independently verified payment for ${request.restaurant_name}.\n\nThis will activate ${request.plan_name} ${request.billing_interval} and start a new subscription period.`,
       );
       if (!confirmed) return;
@@ -245,7 +246,7 @@ export default function PlatformAdminSubscriptions() {
       const defaultAmount = request.founding_offer_requested
         ? ""
         : String(request.catalog_price_inr);
-      const amountInput = window.prompt(
+      const amountInput = await promptKhaavio(
         `Enter the amount actually received in INR. Catalog price is ₹${request.catalog_price_inr}. A lower amount is allowed only for a requested founding offer after you verify eligibility.`,
         defaultAmount,
       );
@@ -268,7 +269,7 @@ export default function PlatformAdminSubscriptions() {
         return;
       }
 
-      paymentReference = window.prompt(
+      paymentReference = await promptKhaavio(
         "Enter the verified UPI/bank payment reference or UTR (required):",
         "",
       );
@@ -280,17 +281,17 @@ export default function PlatformAdminSubscriptions() {
         );
         return;
       }
-      adminNote = window.prompt(
+      adminNote = await promptKhaavio(
         "Optional admin note (offer eligibility or payment context):",
         "",
       );
       if (adminNote === null) return;
     } else {
-      const confirmed = window.confirm(
+      const confirmed = await confirmKhaavio(
         `Reject the subscription request from ${request.restaurant_name}?`,
       );
       if (!confirmed) return;
-      adminNote = window.prompt(
+      adminNote = await promptKhaavio(
         "Optional reason shown to the restaurant owner:",
         "",
       );
