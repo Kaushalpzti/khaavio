@@ -70,18 +70,23 @@ function getSharedAlertAudioContext() {
  * Must be called from a user gesture at least once in browsers that restrict
  * autoplay. After activation the shared context survives React route changes.
  */
-export async function activateKhaavioAlertSound() {
+export async function unlockKhaavioAlertAudio() {
   try {
     const context = getSharedAlertAudioContext();
     if (!context) return false;
     if (context.state === "suspended") await context.resume();
-    if (context.state !== "running") return false;
-    playKhaavioAlertSound();
-    return true;
+    return context.state === "running";
   } catch (error) {
-    console.warn("Khaavio alert sound could not be activated:", error);
+    console.warn("Khaavio alert sound could not be unlocked:", error);
     return false;
   }
+}
+
+export async function activateKhaavioAlertSound() {
+  const unlocked = await unlockKhaavioAlertAudio();
+  if (!unlocked) return false;
+  playKhaavioAlertSound();
+  return true;
 }
 
 /** Longer, more prominent three-tone chime for operational alerts. */
