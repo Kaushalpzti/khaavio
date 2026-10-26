@@ -34,13 +34,26 @@ export function useKhaavioOperationalAlerts() {
 
 export function KhaavioOperationalAlertsProvider({ children }) {
   const { status, userId } = useAuthSession();
+  const sessionKey = status === "authenticated" && userId ? userId : "anonymous";
+  return (
+    <KhaavioOperationalAlertsSession
+      key={sessionKey}
+      status={status}
+      userId={userId}
+    >
+      {children}
+    </KhaavioOperationalAlertsSession>
+  );
+}
+
+function KhaavioOperationalAlertsSession({ children, status, userId }) {
   const [preferences, setPreferences] = useState(() => readKhaavioAlertPreferences(userId));
   const preferencesRef = useRef(preferences);
 
-  useEffect(() => {
-    setPreferences(readKhaavioAlertPreferences(userId));
-    return subscribeKhaavioAlertPreferences(userId, setPreferences);
-  }, [userId]);
+  useEffect(
+    () => subscribeKhaavioAlertPreferences(userId, setPreferences),
+    [userId],
+  );
 
   useEffect(() => {
     preferencesRef.current = preferences;
