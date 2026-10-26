@@ -68,6 +68,7 @@ export function KhaavioOperationalAlertsProvider({ children }) {
 
     let active = true;
     let channel = null;
+    let pollIntervalId = null;
 
     async function startMonitoring() {
       try {
@@ -156,6 +157,37 @@ export function KhaavioOperationalAlertsProvider({ children }) {
             : `New table booking request for ${guests} guests at ${time}.`);
         };
 
+        const startedAt = new Date().toISOString();
+        const [initialOrders, initialBookings] = await Promise.all([
+          supabase.from("orders")
+            .select("id")
+            .eq("restaurant_id", restaurant.id)
+            .order("created_at", { ascending: false })
+            .limit(100),
+          supabase.from("bookings")
+            .select("id")
+            .eq("restaurant_id", restaurant.id)
+            .order("created_at", { ascending: false })
+            .limit(100),
+        ]);
+        const seenOrderIds = new Set((initialOrders.data || []).map((row) => row.id));
+        const seenBookingIds = new Set((initialBookings.data || []).map((row) => row.id));
+
+        const remember = (seen, id) => {
+          if (!id || seen.has(id)) return false;
+          seen.add(id);
+          if (seen.size > 1000) seen.delete(seen.values().next().value);
+          return true;
+        };
+        const processOrder = (order) => {
+          if (!active || !remember(seenOrderIds, order?.id)) return;
+          speakOrder(order);
+        };
+        const processBooking = (booking) => {
+          if (!active || !remember(seenBookingIds, booking?.id)) return;
+          if (booking.status === "pending") speakBooking(booking);
+        };
+
         channel = supabase
           .channel(`khaavio-operational-alerts-${restaurant.id}`)
           .on("postgres_changes", {
@@ -163,21 +195,41 @@ export function KhaavioOperationalAlertsProvider({ children }) {
             schema: "public",
             table: "orders",
             filter: `restaurant_id=eq.${restaurant.id}`,
-          }, (payload) => {
-            if (!active) return;
-            speakOrder(payload.new || {});
-          })
+          }, (payload) => processOrder(payload.new || {}))
           .on("postgres_changes", {
-            event: "INSERT",
+            event: "postgres_changes",
             schema: "public",
             table: "bookings",
             filter: `restaurant_id=eq.${restaurant.id}`,
-          }, (payload) => {
-            if (!active) return;
-            const booking = payload.new || {};
-            if (booking.status === "pending") speakBooking(booking);
-          })
+          }, (payload) => processBooking(payload.new || {}))
           .subscribe();
+
+        // Polling is a fallback for projects where either table is absent from
+        // the Realtime publication. ID tracking prevents repeated announcements.
+        pollIntervalId = window.setInterval(async () => {
+          if (!active) return;
+          try {
+            const [ordersResult, bookingsResult] = await Promise.all([
+              supabase.from("orders")
+                .select("id, restaurant_id, table_id, total_amount, created_at")
+                .eq("restaurant_id", restaurant.id)
+                .gte("created_at", startedAt)
+                .order("created_at", { ascending: false })
+                .limit(100),
+              supabase.from("bookings")
+                .select("id, restaurant_id, status, party_size, booking_time, created_at")
+                .eq("restaurant_id", restaurant.id)
+                .gte("created_at", startedAt)
+                .order("created_at", { ascending: false })
+                .limit(100),
+            ]);
+            if (!active) return;
+            if (!ordersResult.error) (ordersResult.data || []).forEach(processOrder);
+            if (!bookingsResult.error) (bookingsResult.data || []).forEach(processBooking);
+          } catch {
+            // Transient polling errors don't stop the Realtime channel.
+          }
+        }, 15000);
       } catch (error) {
         console.warn("Khaavio operational alerts could not subscribe:", error);
       }
@@ -186,6 +238,7 @@ export function KhaavioOperationalAlertsProvider({ children }) {
     void startMonitoring();
     return () => {
       active = false;
+      if (pollIntervalId) window.clearInterval(pollIntervalId);
       if (channel) void supabase.removeChannel(channel);
     };
   }, [status, userId]);
