@@ -170,6 +170,7 @@ export function KhaavioOperationalAlertsProvider({ children }) {
             .order("created_at", { ascending: false })
             .limit(100),
         ]);
+        if (!active) return;
         const seenOrderIds = new Set((initialOrders.data || []).map((row) => row.id));
         const seenBookingIds = new Set((initialBookings.data || []).map((row) => row.id));
 
