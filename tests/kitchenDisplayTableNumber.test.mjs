@@ -23,9 +23,8 @@ test("empty or missing table numbers do not crash the kitchen display", () => {
 });
 
 test("KitchenDisplay imports and uses the normalizer it calls", () => {
-  assert.match(
-    kitchenSource,
-    /import \{ normalizeTableNumber \} from ["']\.\.\/lib\/tableNumber(?:\\.js)?["'];/,
+  assert.ok(
+    kitchenSource.includes('import { normalizeTableNumber } from "../lib/tableNumber";'),
   );
-  assert.match(kitchenSource, /normalizeTableNumber\(order\.tableNumber\)/);
+  assert.ok(kitchenSource.includes("normalizeTableNumber(order.tableNumber)"));
 });
