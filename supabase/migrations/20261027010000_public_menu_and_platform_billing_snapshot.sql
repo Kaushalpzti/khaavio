@@ -85,7 +85,7 @@ BEGIN
       'is_accepting_orders', v_restaurant -> 'is_accepting_orders',
       'business_hours', v_restaurant -> 'business_hours',
       'timezone', v_restaurant -> 'timezone',
-      'logo_url', v_restaurant.logo_url
+      'logo_url', v_restaurant -> 'logo_url'
     ),
     'categories', COALESCE(v_categories, '[]'::jsonb),
     'items', COALESCE(v_items, '[]'::jsonb)
