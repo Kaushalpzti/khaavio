@@ -2919,3 +2919,134 @@
         line-height: 1.3;
     }
 }
+/* Khaavio homepage refresh: premium depth, clearer rhythm and mobile polish */
+.kh-home {
+    --kh-green: #163d2f;
+    --kh-dark: #102b21;
+    --kh-sage: #78927a;
+    --kh-cream: #f8f8f1;
+    --kh-paper: #fffefa;
+    --kh-orange: #d69a65;
+    --kh-border: #dfe5db;
+    background: var(--kh-cream);
+}
+.kh-home .kh-announcement {
+    min-height: 39px;
+    padding: 8px 16px;
+    letter-spacing: 0.9px;
+}
+.kh-home .kh-header {
+    box-shadow: 0 8px 22px rgba(25, 55, 45, 0.035);
+}
+.kh-home .kh-nav-inner {
+    min-height: 82px;
+}
+.kh-home .kh-brand > img {
+    border-radius: 13px;
+    box-shadow: 0 4px 12px rgba(21, 61, 47, 0.12);
+}
+.kh-home .kh-hero {
+    background:
+        radial-gradient(ellipse at 78% 30%, rgba(209, 226, 201, 0.75), transparent 37%),
+        radial-gradient(ellipse at 12% 95%, rgba(244, 220, 197, 0.4), transparent 28%),
+        linear-gradient(180deg, #fafaf5 0%, #f0f4eb 100%);
+}
+.kh-home .kh-hero-grid {
+    min-height: 700px;
+    padding-block: 76px 70px;
+}
+.kh-home .kh-hero-copy h1 {
+    font-size: clamp(48px, 5.8vw, 80px);
+    line-height: 1.01;
+    letter-spacing: -4.2px;
+}
+.kh-home .kh-hero-copy > p {
+    max-width: 510px;
+    font-size: 13px;
+    line-height: 1.95;
+}
+.kh-home .kh-eyebrow {
+    color: #667d68;
+}
+.kh-home .kh-button {
+    border-radius: 999px;
+}
+.kh-home .kh-button-dark {
+    box-shadow: 0 9px 22px rgba(16, 43, 33, 0.12);
+}
+.kh-home .kh-button-dark:hover {
+    box-shadow: 0 13px 28px rgba(16, 43, 33, 0.17);
+}
+.kh-home .kh-hero-proof {
+    padding: 14px 16px;
+    border: 1px solid rgba(213, 225, 207, 0.9);
+    border-radius: 16px;
+    background: rgba(255, 254, 250, 0.72);
+    box-shadow: 0 8px 18px rgba(29, 65, 45, 0.035);
+}
+.kh-home .kh-preview-window {
+    border: 1px solid #dce4d8;
+    border-radius: 23px;
+    box-shadow: 0 25px 70px rgba(23, 55, 37, 0.14), 0 4px 14px rgba(23, 55, 37, 0.06);
+}
+.kh-home .kh-floating-card {
+    border-radius: 16px;
+    box-shadow: 0 15px 38px rgba(24, 55, 37, 0.12);
+}
+.kh-home .kh-feature-card {
+    padding: 25px;
+    border-radius: 17px;
+    box-shadow: 0 4px 13px rgba(27, 57, 37, 0.025);
+}
+.kh-home .kh-feature-card:hover {
+    transform: translateY(-5px);
+    border-color: #d2dece;
+    box-shadow: 0 19px 38px rgba(27, 57, 37, 0.075);
+}
+.kh-home .kh-feature-icon {
+    border-radius: 14px;
+}
+.kh-home .kh-pricing-trial-banner {
+    border-radius: 17px;
+}
+.kh-home .kh-price-card {
+    border-radius: 20px;
+}
+.kh-home .kh-faq-item {
+    border-radius: 13px;
+}
+.kh-home .kh-section {
+    scroll-margin-top: 100px;
+}
+@media (max-width: 900px) {
+    .kh-home .kh-hero-grid {
+        min-height: auto;
+        padding-block: 54px 45px;
+    }
+    .kh-home .kh-hero-copy h1 {
+        font-size: clamp(43px, 8.5vw, 64px);
+        letter-spacing: -2.8px;
+    }
+    .kh-home .kh-section {
+        padding-block: 72px;
+    }
+}
+@media (max-width: 620px) {
+    .kh-home .kh-nav-inner {
+        min-height: 68px;
+    }
+    .kh-home .kh-hero-grid {
+        padding-block: 38px 38px;
+    }
+    .kh-home .kh-hero-copy h1 {
+        font-size: clamp(42px, 11vw, 58px);
+        letter-spacing: -2.5px;
+    }
+    .kh-home .kh-hero-copy > p {
+        font-size: 12px;
+    }
+    .kh-home .kh-feature-card {
+        padding: 20px;
+        border-radius: 15px;
+    }
+}
