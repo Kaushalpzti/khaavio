@@ -2010,7 +2010,7 @@ export default function TableQRStudio() {
                       </button>
                       <button
                         type="button"
-                        onClick={() => handleDownloadPng(table)
+                        onClick={() => handleDownloadPng(table)}
                         disabled={!isReady || Boolean(actionBusy)}
                         aria-label={`Download PNG for ${table.table_number}`}
                         title="Download PNG"
