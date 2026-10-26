@@ -1,6 +1,7 @@
 export const KHAAVIO_ALERT_PREFERENCE_DEFAULTS = Object.freeze({
-  voiceEnabled: true,
-  soundEnabled: true,
+  // Audio alerts start off until a team member explicitly enables them.
+  voiceEnabled: false,
+  soundEnabled: false,
 });
 
 const STORAGE_PREFIX = "khaavio:operational-alerts:v1:";
