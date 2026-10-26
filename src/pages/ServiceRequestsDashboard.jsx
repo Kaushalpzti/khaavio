@@ -1,10 +1,9 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   BellRing,
   Check,
   CheckCheck,
   CircleAlert,
-  Clock3,
   Droplets,
   LoaderCircle,
   RefreshCw,
@@ -26,14 +25,6 @@ const REQUEST_META = {
   bill: { label: "Request bill", Icon: ReceiptText },
   cutlery: { label: "Plates or cutlery", Icon: Utensils },
   other: { label: "Other request", Icon: UserRound },
-};
-
-const REQUEST_VOICE_META = {
-  waiter: { en: "a waiter", hi: "वेटर" },
-  water: { en: "water", hi: "पानी" },
-  bill: { en: "the bill", hi: "बिल" },
-  cutlery: { en: "plates or cutlery", hi: "प्लेट या कटलरी" },
-  other: { en: "assistance", hi: "मदद" },
 };
 
 const STATUS_META = {
