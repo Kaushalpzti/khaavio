@@ -21,6 +21,8 @@ import {
 } from "lucide-react";
 
 import { supabase } from "../lib/supabaseClient";
+import { useKhaavioOperationalAlerts } from "../context/KhaavioOperationalAlertsContext";
+import { cancelKhaavioVoice } from "../lib/khaavioVoiceAlerts";
 import khaavioIcon from "../assets/icon.png";
 import "./OrdersDashboard.css";
 
@@ -209,11 +211,10 @@ function speakOrdersVoiceTest(restaurantName) {
 
 export default function OrdersDashboard() {
   const navigate = useNavigate();
-  const voiceEnabledRef = useRef(false);
-  const spokenOrderIdsRef = useRef(new Set());
+  const { preferences, setPreference } = useKhaavioOperationalAlerts();
+  const voiceEnabled = preferences.voiceEnabled;
 
   const [restaurant, setRestaurant] = useState(null);
-  const [voiceEnabled, setVoiceEnabled] = useState(false);
   const [orders, setOrders] = useState([]);
   const [filter, setFilter] = useState("all");
 
@@ -225,13 +226,6 @@ export default function OrdersDashboard() {
   const [updatingOrderId, setUpdatingOrderId] = useState("");
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
-
-  useEffect(() => () => {
-    voiceEnabledRef.current = false;
-    if (typeof window !== "undefined" && window.speechSynthesis) {
-      window.speechSynthesis.cancel();
-    }
-  }, []);
 
   // Load the restaurant's orders from Supabase.
   useEffect(() => {
@@ -375,27 +369,7 @@ export default function OrdersDashboard() {
           const reference = getReference(orderId);
           let alertMessage = `New order received · #${reference}. Order list is refreshing.`;
 
-          const shouldAnnounce =
-            voiceEnabledRef.current &&
-            Boolean(orderId) &&
-            !spokenOrderIdsRef.current.has(orderId);
-          if (shouldAnnounce) {
-            if (spokenOrderIdsRef.current.size > 250) spokenOrderIdsRef.current.clear();
-            spokenOrderIdsRef.current.add(orderId);
-            void announceIncomingOrder(insertedOrder).then((queued) => {
-              if (!active || !voiceEnabledRef.current) return;
-              if (queued) {
-                setNotice((current) =>
-                  current.includes("Voice announcement queued")
-                    ? current
-                    : `${current || `New order received · #${reference}.`} Voice announcement queued.`,
-                );
-              } else {
-                setError("Voice announcement could not be queued. Check browser speech support.");
-              }
-            });
-          }
-
+          // The global operational alert manager handles speech across route changes.
           setNotice(alertMessage);
           setRefreshing(true);
           setRefreshKey((current) => current + 1);
@@ -528,55 +502,12 @@ export default function OrdersDashboard() {
     setRefreshKey((current) => current + 1);
   }
 
-  async function announceIncomingOrder(order) {
-    if (!voiceEnabledRef.current || !order?.id) return false;
-
-    let items = [];
-    let tableNumber = "";
-    try {
-      const [itemsResult, tableResult] = await Promise.all([
-        supabase
-          .from("order_items")
-          .select("item_name, quantity")
-          .eq("order_id", order.id),
-        order.table_id
-          ? supabase
-              .from("restaurant_tables")
-              .select("table_number")
-              .eq("id", order.table_id)
-              .eq("restaurant_id", order.restaurant_id)
-              .maybeSingle()
-          : Promise.resolve({ data: null, error: null }),
-      ]);
-
-      if (!itemsResult.error) items = itemsResult.data || [];
-      if (!tableResult.error) tableNumber = tableResult.data?.table_number || "";
-    } catch {
-      // Voice is an optional enhancement; the order queue remains usable if lookup fails.
-    }
-
-    if (!voiceEnabledRef.current) return false;
-
-    const itemList = items
-      .map((item) => `${Number(item.quantity) || 1} ${item.item_name}`)
-      .filter(Boolean)
-      .join(", ");
-    const total = Math.round(Number(order.total_amount) || 0);
-    const tablePhrase = tableNumber ? `Table ${tableNumber}` : "Restaurant order";
-
-    return queueOrdersVoice((isHindi) =>
-      isHindi
-        ? `नया ऑर्डर आया है। ${restaurant?.name || "रेस्टोरेंट"}। ${tableNumber ? `टेबल ${tableNumber} से` : "रेस्टोरेंट से"} ${itemList || "मेन्यू आइटम"} का ऑर्डर आया है। कुल बिल ${total} रुपये।`
-        : `New order at ${restaurant?.name || "your restaurant"}. ${tablePhrase}. ${itemList ? `Items: ${itemList}.` : "Please review the order items."} Total ${total} rupees.`,
-    );
-  }
 
   function toggleVoiceAnnouncements() {
-    if (voiceEnabledRef.current) {
-      voiceEnabledRef.current = false;
-      setVoiceEnabled(false);
-      if (window.speechSynthesis) window.speechSynthesis.cancel();
-      setNotice("Voice announcements are off.");
+    if (voiceEnabled) {
+      setPreference("voiceEnabled", false);
+      cancelKhaavioVoice();
+      setNotice("Voice alerts are off across the restaurant workspace.");
       setError("");
       return;
     }
@@ -596,10 +527,9 @@ export default function OrdersDashboard() {
       return;
     }
 
-    voiceEnabledRef.current = true;
-    setVoiceEnabled(true);
+    setPreference("voiceEnabled", true);
     setError("");
-    setNotice("Voice announcements enabled. Hindi voice is used when your browser has one installed.");
+    setNotice("Voice alerts are on across the restaurant workspace.");
   }
 
   async function enableBrowserNotifications() {
