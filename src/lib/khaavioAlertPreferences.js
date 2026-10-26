@@ -1,8 +1,6 @@
 export const KHAAVIO_ALERT_PREFERENCE_DEFAULTS = Object.freeze({
-  orderVoiceEnabled: true,
-  bookingsVoiceEnabled: true,
-  kitchenVoiceEnabled: true,
-  kitchenSoundEnabled: true,
+  voiceEnabled: true,
+  soundEnabled: true,
 });
 
 const STORAGE_PREFIX = "khaavio:operational-alerts:v1:";
