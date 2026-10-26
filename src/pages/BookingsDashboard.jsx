@@ -26,6 +26,7 @@ import {
 
 import { supabase } from "../lib/supabaseClient";
 import { cancelKhaavioVoice, isKhaavioVoiceSupported, queueKhaavioVoice } from "../lib/khaavioVoiceAlerts";
+import { useKhaavioOperationalAlerts } from "../context/KhaavioOperationalAlertsContext";
 import { usePlanAccess } from "../context/PlanAccessContext";
 import PlanUpgradeNotice from "../components/PlanUpgradeNotice";
 import "./BookingsDashboard.css";
@@ -208,6 +209,8 @@ export default function BookingsDashboard() {
   const canUseAdvancedBooking = hasFeature("booking_advanced");
   const canExportBookings = hasFeature("booking_export");
   const canUseAdvancedVoiceAlerts = hasFeature("voice_alerts_advanced");
+  const { preferences, setPreference } = useKhaavioOperationalAlerts();
+  const voiceEnabled = preferences.voiceEnabled;
 
   const [restaurant, setRestaurant] = useState(null);
   const [bookings, setBookings] = useState([]);
@@ -232,25 +235,11 @@ export default function BookingsDashboard() {
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [realtimeStatus, setRealtimeStatus] = useState("CONNECTING");
-  const [voiceEnabled, setVoiceEnabled] = useState(false);
-  const voiceEnabledRef = useRef(false);
   const knownBookingIdsRef = useRef(null);
 
   // Keep today's date current without creating Date during render.
   const [today, setToday] = useState(INITIAL_TODAY);
   const displayViewMode = canUseAdvancedBooking ? viewMode : "list";
-
-  useEffect(() => () => {
-    voiceEnabledRef.current = false;
-    cancelKhaavioVoice();
-  }, []);
-
-  useEffect(() => {
-    if (canUseAdvancedVoiceAlerts) return;
-    voiceEnabledRef.current = false;
-    setVoiceEnabled(false);
-    cancelKhaavioVoice();
-  }, [canUseAdvancedVoiceAlerts]);
 
   useEffect(() => {
     const intervalId = window.setInterval(() => {
@@ -349,25 +338,7 @@ export default function BookingsDashboard() {
           }
         }
 
-        // Speak only newly inserted pending requests. The ID snapshot makes this
-        // work for Realtime and 30-second polling without announcing duplicates.
-        if (voiceEnabledRef.current && newPendingBookings.length === 1) {
-          const booking = newPendingBookings[0];
-          const guests = Math.max(1, Number(booking.party_size) || 1);
-          const bookingDate = new Date(booking.booking_time);
-          const time = Number.isNaN(bookingDate.getTime())
-            ? "the scheduled time"
-            : new Intl.DateTimeFormat("en-IN", { hour: "numeric", minute: "2-digit" }).format(bookingDate);
-          queueKhaavioVoice((isHindi) => isHindi
-            ? `${time} पर ${guests} लोगों की नई टेबल बुकिंग है।`
-            : `New table booking request for ${guests} guests at ${time}.`);
-        } else if (voiceEnabledRef.current && newPendingBookings.length > 1) {
-          const count = newPendingBookings.length;
-          queueKhaavioVoice((isHindi) => isHindi
-            ? `${count} नई टेबल बुकिंग रिक्वेस्ट आई हैं।`
-            : `You have ${count} new table booking requests.`);
-        }
-
+        // Global operational alert manager announces new bookings across routes.
         knownBookingIdsRef.current = currentBookingIds;
         setBookings(enrichedBookings);
       } catch (err) {
@@ -434,11 +405,10 @@ export default function BookingsDashboard() {
   }, [restaurant?.id]);
 
   function toggleVoiceAnnouncements() {
-    if (voiceEnabledRef.current) {
-      voiceEnabledRef.current = false;
-      setVoiceEnabled(false);
+    if (voiceEnabled) {
+      setPreference("voiceEnabled", false);
       cancelKhaavioVoice();
-      setNotice("Booking voice announcements are off.");
+      setNotice("Voice alerts are off across the restaurant workspace.");
       return;
     }
 
@@ -449,17 +419,16 @@ export default function BookingsDashboard() {
 
     cancelKhaavioVoice();
     const queued = queueKhaavioVoice((isHindi) => isHindi
-      ? `बुकिंग अलर्ट चालू हैं। ${restaurant?.name || "आपके रेस्टोरेंट"} की नई टेबल बुकिंग की आवाज़ में सूचना दी जाएगी।`
-      : `Booking voice alerts are enabled for ${restaurant?.name || "your restaurant"}. New booking requests will be announced.`);
+      ? `आवाज़ में अलर्ट चालू हैं। ${restaurant?.name || "आपके रेस्टोरेंट"} की नई बुकिंग की सूचना दी जाएगी।`
+      : `Voice alerts are enabled for ${restaurant?.name || "your restaurant"}. New operational events will be announced.`);
     if (!queued) {
       setError("Voice announcements could not be started in this browser.");
       return;
     }
 
-    voiceEnabledRef.current = true;
-    setVoiceEnabled(true);
+    setPreference("voiceEnabled", true);
     setError("");
-    setNotice("Booking voice announcements are on. New bookings will be spoken.");
+    setNotice("Voice alerts are on across the restaurant workspace.");
   }
 
   async function updateBookingStatus(booking, nextStatus) {
