@@ -3,6 +3,7 @@ import { BrowserRouter, Navigate, Route, Routes, useLocation } from "react-route
 import ProtectedRoute from "./components/ProtectedRoute";
 import RouteErrorBoundary from "./components/RouteErrorBoundary";
 import { AuthSessionProvider } from "./context/AuthSessionContext";
+import { KhaavioOperationalAlertsProvider } from "./context/KhaavioOperationalAlertsContext";
 import SubscriptionAccessGuard from "./components/SubscriptionAccessGuard";
 import RestaurantDashboardLayout from "./components/RestaurantDashboardLayout";
 import SeoManager from "./components/SeoManager";
@@ -122,6 +123,7 @@ export default function App() {
   return (
     <BrowserRouter>
       <AuthSessionProvider>
+        <KhaavioOperationalAlertsProvider>
         <ScrollToTop />
         <SeoManager />
         <LocationAwareRouteBoundary>
@@ -322,6 +324,7 @@ export default function App() {
                     </Routes>
           </Suspense>
         </LocationAwareRouteBoundary>
+        </KhaavioOperationalAlertsProvider>
       </AuthSessionProvider>
     </BrowserRouter>
   );
