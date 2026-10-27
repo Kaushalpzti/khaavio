@@ -747,3 +747,12 @@
   flex-wrap: wrap;
   gap: 8px;
 }
+
+.ts-void-note {
+  border: 1px solid var(--ts-border, #e5e7eb);
+  border-left: 3px solid var(--ts-muted, #9ca3af);
+  border-radius: 8px;
+  padding: 9px 12px;
+  color: var(--ts-muted, #6b7280);
+  font-size: 12px;
+}

@@ -36,6 +36,9 @@ test("each guest tab gets one immutable invoice and guest payment does not close
   assert.match(migration, /finalize_public_guest_tab/i);
   assert.match(migration, /finalize_guest_tab_invoice/i);
   assert.match(migration, /mark_guest_tab_invoice_paid/i);
+  assert.match(migration, /void_guest_tab_invoice/i);
+  assert.match(migration, /voided_at timestamptz/i);
+  assert.match(migration, /payment_status <> 'void'/i);
   assert.match(migration, /Use the guest-invoice payment workflow/i);
   assert.match(migration, /i\.guest_tab_id IS NOT DISTINCT FROM v_guest_tab_id/i);
 });
@@ -60,6 +63,8 @@ test("owner billing can view guest tabs, create guest invoices and record the co
   assert.match(sessions, /from\("table_session_tabs"\)/);
   assert.match(sessions, /finalize_guest_tab_invoice/);
   assert.match(sessions, /mark_guest_tab_invoice_paid/);
+  assert.match(sessions, /void_guest_tab_invoice/);
+  assert.match(sessions, /Void & reopen tab/);
   assert.match(sessions, /renderSessionOrders\(session, invoice\.guest_tab_id\)/);
 });
 
