@@ -593,10 +593,17 @@
 .public-menu-bottom-navigation button.is-active { border-color: #dce9d9; color: #07543e; background: #eaf3e6; }
 .public-menu-sticky-cart { z-index: 85; }
 .public-menu-bottom-navigation ~ .public-table-service .public-table-service-fab { bottom: 164px; }
-.public-menu-bottom-navigation ~ .ask-khaavio-root { bottom: 94px; }
-.public-menu-bottom-navigation ~ .ask-khaavio-root.is-raised { bottom: 170px; }
-.public-menu-bottom-navigation ~ .ask-khaavio-root .ask-khaavio-panel { bottom: 91px; }
-.public-menu-bottom-navigation ~ .ask-khaavio-root.is-raised .ask-khaavio-panel { bottom: 168px; }
+/* The sticky cart only exists on mobile; keep desktop helpers at stable, separate heights. */
+.public-menu-bottom-navigation ~ .ask-khaavio-root,
+.public-menu-bottom-navigation ~ .ask-khaavio-root.is-raised { bottom: 94px; }
+/* The assistant panel is fixed to the viewport and sits above the two launchers. */
+.public-menu-bottom-navigation ~ .ask-khaavio-root .ask-khaavio-panel,
+.public-menu-bottom-navigation ~ .ask-khaavio-root.is-raised .ask-khaavio-panel {
+  bottom: 222px;
+  height: min(625px, calc(100dvh - 250px));
+  min-height: min(320px, calc(100dvh - 250px));
+  max-height: calc(100dvh - 250px);
+}
 
 @media (max-width: 680px) {
   .public-menu-page { padding-bottom: calc(100px + env(safe-area-inset-bottom, 0px)); }
@@ -651,8 +658,20 @@
   .public-menu-bottom-navigation ~ .public-table-service.is-raised .public-table-service-fab { bottom: calc(226px + env(safe-area-inset-bottom, 0px)); }
   .public-menu-bottom-navigation ~ .ask-khaavio-root { right: 13px; bottom: calc(77px + env(safe-area-inset-bottom, 0px)); }
   .public-menu-bottom-navigation ~ .ask-khaavio-root.is-raised { bottom: calc(157px + env(safe-area-inset-bottom, 0px)); }
-  .public-menu-bottom-navigation ~ .ask-khaavio-root .ask-khaavio-panel { right: 0; bottom: calc(70px + env(safe-area-inset-bottom, 0px)); width: min(350px, calc(100vw - 26px)); }
-  .public-menu-bottom-navigation ~ .ask-khaavio-root.is-raised .ask-khaavio-panel { bottom: calc(145px + env(safe-area-inset-bottom, 0px)); max-height: calc(100dvh - 170px); }
+  .public-menu-bottom-navigation ~ .ask-khaavio-root .ask-khaavio-panel {
+    right: 12px;
+    bottom: calc(199px + env(safe-area-inset-bottom, 0px));
+    width: min(350px, calc(100vw - 24px));
+    height: min(650px, calc(100dvh - 236px));
+    min-height: min(320px, calc(100dvh - 236px));
+    max-height: calc(100dvh - 236px);
+  }
+  .public-menu-bottom-navigation ~ .ask-khaavio-root.is-raised .ask-khaavio-panel {
+    bottom: calc(275px + env(safe-area-inset-bottom, 0px));
+    height: min(650px, calc(100dvh - 312px));
+    min-height: min(320px, calc(100dvh - 312px));
+    max-height: calc(100dvh - 312px);
+  }
   .public-menu-tab-view { width: calc(100% - 18px); min-height: 52vh; margin: 12px auto 24px; }
   .public-menu-tab-hero { padding: 22px 17px; border-radius: 21px; }
   .public-menu-tab-hero h1 { font-size: clamp(28px, 8vw, 36px); }
@@ -858,4 +877,19 @@
   .public-menu-promo-image img,
   .public-menu-promo-copy { animation: none !important; }
   .public-menu-promo-dots button { transition: none !important; }
+}
+
+
+/* A single matching dish should not be stranded in the first desktop column. */
+@media (min-width: 681px) {
+  .public-menu-grid:has(> .public-menu-card:only-child) {
+    grid-template-columns: minmax(0, min(720px, 100%));
+    justify-content: center;
+  }
+}
+
+@media (max-width: 680px) {
+  .public-menu-grid:has(> .public-menu-card:only-child) {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
