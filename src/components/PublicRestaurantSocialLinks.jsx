@@ -1,10 +1,10 @@
-import { AtSign, ExternalLink, Facebook, Globe, Instagram, MessageCircle, Music2, Youtube } from "lucide-react";
+import { AtSign, Camera, ExternalLink, Globe, MessageCircle, Music2, PlayCircle, Users } from "lucide-react";
 import { normalizeSocialLinks, SOCIAL_LINK_FIELDS } from "../lib/restaurantSocialLinks.js";
 
 const ICONS = {
-  instagram: Instagram,
-  facebook: Facebook,
-  youtube: Youtube,
+  instagram: Camera,
+  facebook: Users,
+  youtube: PlayCircle,
   tiktok: Music2,
   x: AtSign,
   whatsapp: MessageCircle,
