@@ -340,13 +340,8 @@ async function drawBrandedCard(restaurant, table, settings, qrDataUrl) {
   );
 
   if (settings.template === "signature") {
-    roundedRect(ctx, 58, 58, CARD_WIDTH - 116, 440, 38, "#173e32", null);
-    ctx.strokeStyle = "#c7a264";
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.moveTo(155, 110); ctx.lineTo(310, 110);
-    ctx.moveTo(770, 110); ctx.lineTo(925, 110);
-    ctx.stroke();
+    // Keep the dark masthead clear of the scan prompt below it.
+    roundedRect(ctx, 58, 58, CARD_WIDTH - 116, 390, 38, "#173e32", null);
   } else if (settings.template === "indian") {
     drawLeaf(ctx, 105, 108, 0.15, colors);
     drawLeaf(ctx, CARD_WIDTH - 110, 110, Math.PI - 0.15, colors);
@@ -382,7 +377,10 @@ async function drawBrandedCard(restaurant, table, settings, qrDataUrl) {
 
   // A restrained editorial masthead makes the print card feel like a table tent.
   roundedRect(ctx, center - 76, 76, 152, 7, 4, colors.accent, null);
-  ctx.strokeStyle = colors.border;
+  const signatureTemplate = settings.template === "signature";
+  ctx.strokeStyle = signatureTemplate
+    ? "rgba(230, 207, 158, 0.68)"
+    : colors.border;
   ctx.lineWidth = 2;
   ctx.beginPath();
   ctx.moveTo(170, 108);
@@ -390,7 +388,7 @@ async function drawBrandedCard(restaurant, table, settings, qrDataUrl) {
   ctx.moveTo(730, 108);
   ctx.lineTo(910, 108);
   ctx.stroke();
-  ctx.fillStyle = colors.muted;
+  ctx.fillStyle = signatureTemplate ? "#e6cf9e" : colors.muted;
   ctx.font = "700 18px Arial, sans-serif";
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
@@ -464,7 +462,10 @@ async function drawBrandedCard(restaurant, table, settings, qrDataUrl) {
     headerBottom = y + 14;
   }
 
-  const scanLabelY = Math.max(settings.template === "signature" ? 500 : 420, headerBottom + 20);
+  const scanLabelY = Math.max(
+    settings.template === "signature" ? 525 : 420,
+    headerBottom + 20,
+  );
   ctx.strokeStyle = colors.border;
   ctx.lineWidth = 3;
   ctx.beginPath();
@@ -761,102 +762,24 @@ function SettingToggle({ label, checked, onChange, description }) {
   );
 }
 
-function QRCardPreview({
-  restaurant,
-  table,
-  settings,
-  qrDataUrl,
-  logoFailed,
-  onLogoError,
-}) {
-  const theme =
-    TEMPLATES.find((item) => item.id === settings.template) || TEMPLATES[0];
-  const tableParts = getTableNumberParts(
-    table?.table_number,
-    settings.tableNumberFormat,
-  );
+function QRCardPreview({ restaurant, table, posterDataUrl, loading }) {
+  if (loading || !posterDataUrl) {
+    return (
+      <div className="tqr-card-preview-state" role="status" aria-live="polite">
+        {loading ? <LoaderCircle className="tqr-spinner" size={24} /> : <QrCode size={32} />}
+        <span>{loading ? "Rendering the exact export preview…" : "Preview will appear when the QR is ready."}</span>
+      </div>
+    );
+  }
 
   return (
-    <div className={`tqr-card tqr-card--${theme.id}`}>
-      <div className="tqr-card-decor tqr-card-decor--one" />
-      <div className="tqr-card-decor tqr-card-decor--two" />
-      {theme.id === "signature" ? <div className="tqr-card-brand-band" aria-hidden="true" /> : null}
-      <div className="tqr-card-overline" aria-hidden="true">
-        <span />
-        <strong>YOUR TABLE · YOUR MENU</strong>
-        <span />
-      </div>
-      {settings.showLogo ? (
-        <div className="tqr-card-logo">
-          {restaurant?.logo_url && !logoFailed ? (
-            <img
-              src={restaurant.logo_url}
-              alt={`${restaurant.name} logo`}
-              onError={onLogoError}
-            />
-          ) : (
-            <span>{getInitials(restaurant?.name)}</span>
-          )}
-        </div>
-      ) : null}
-      {settings.showName ? (
-        <h3 className="tqr-card-restaurant-name">
-          {restaurant?.name || "Restaurant"}
-        </h3>
-      ) : null}
-      {settings.showCuisine && restaurant?.restaurant_type ? (
-        <p className="tqr-card-cuisine">
-          {String(restaurant.restaurant_type).replace(/_/g, " ")}
-        </p>
-      ) : null}
-      {settings.showTagline && restaurant?.description ? (
-        <p className="tqr-card-tagline">{restaurant.description}</p>
-      ) : null}
-      <div className="tqr-card-scan-intro">
-        <span className="tqr-card-scan-rule" />
-        <span className="tqr-card-scan-copy">
-          <strong>SCAN TO EXPLORE</strong>
-          <small>Point your camera here</small>
-        </span>
-        <span className="tqr-card-scan-rule" />
-      </div>
-      <div className="tqr-card-qr-shell">
-        {qrDataUrl ? (
-          <img
-            className="tqr-card-qr"
-            src={qrDataUrl}
-            alt={`QR code for ${restaurant?.name}, ${table?.table_number}`}
-          />
-        ) : (
-          <div className="tqr-card-qr-placeholder">
-            <QrCode size={52} />
-            <span>QR preview unavailable</span>
-          </div>
-        )}
-      </div>
-      <div className="tqr-card-cta">
-        {String(settings.ctaText || "SCAN TO ORDER")
-          .trim()
-          .slice(0, 35)
-          .toUpperCase() || "SCAN TO ORDER"}
-      </div>
-      <p className="tqr-card-actions-line">
-        VIEW MENU <span>•</span> PLACE ORDER
-      </p>
-      {settings.showTableNumber ? (
-        <div className="tqr-card-table-number">
-          {tableParts.label ? <span>{tableParts.label}</span> : null}
-          <strong>{tableParts.value}</strong>
-        </div>
-      ) : null}
-      {settings.showPoweredBy ? (
-        <div className="tqr-card-powered">
-          <span>Powered by</span>
-          <img src={khaavioIcon} alt="" />
-          <strong>Khaavio</strong>
-        </div>
-      ) : null}
-    </div>
+    <img
+      className="tqr-card-preview-image"
+      src={posterDataUrl}
+      alt={`Branded table QR poster for ${restaurant?.name || "restaurant"}, ${table?.table_number || "selected table"}`}
+      width={CARD_WIDTH}
+      height={CARD_HEIGHT}
+    />
   );
 }
 
@@ -871,6 +794,8 @@ export default function TableQRStudio() {
   const [tableFilter, setTableFilter] = useState("all");
   const [settings, setSettings] = useState(DEFAULT_SETTINGS);
   const [qrDataUrl, setQrDataUrl] = useState("");
+  const [previewCardDataUrl, setPreviewCardDataUrl] = useState("");
+  const [previewCardLoading, setPreviewCardLoading] = useState(false);
   const [loading, setLoading] = useState(true);
   const [tablesLoading, setTablesLoading] = useState(false);
   const [qrLoading, setQrLoading] = useState(false);
@@ -879,7 +804,6 @@ export default function TableQRStudio() {
   const [actionBusy, setActionBusy] = useState("");
   const [bulkProgress, setBulkProgress] = useState(null);
   const [showLargePreview, setShowLargePreview] = useState(false);
-  const [logoFailed, setLogoFailed] = useState(false);
   const [showCreateTable, setShowCreateTable] = useState(false);
   const [creatingTable, setCreatingTable] = useState(false);
   const [newTableNumber, setNewTableNumber] = useState("");
@@ -1111,8 +1035,35 @@ export default function TableQRStudio() {
   }, [qrTargetUrl]);
 
   useEffect(() => {
-    setLogoFailed(false);
-  }, [restaurant?.id, restaurant?.logo_url]);
+    let active = true;
+
+    if (!restaurant || !activeTable || !qrDataUrl) {
+      setPreviewCardDataUrl("");
+      setPreviewCardLoading(false);
+      return undefined;
+    }
+
+    setPreviewCardLoading(true);
+    drawBrandedCard(restaurant, activeTable, settings, qrDataUrl)
+      .then((canvas) => {
+        if (active) setPreviewCardDataUrl(canvas.toDataURL("image/png"));
+      })
+      .catch((error) => {
+        if (!active) return;
+        setPreviewCardDataUrl("");
+        setNotice({
+          type: "error",
+          text: getErrorMessage(error, "Could not render the table QR preview."),
+        });
+      })
+      .finally(() => {
+        if (active) setPreviewCardLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [restaurant, activeTable, settings, qrDataUrl]);
 
   async function handleCreateTable(event) {
     event.preventDefault();
@@ -2344,10 +2295,8 @@ export default function TableQRStudio() {
                 <QRCardPreview
                   restaurant={restaurant}
                   table={activeTable}
-                  settings={settings}
-                  qrDataUrl={qrDataUrl}
-                  logoFailed={logoFailed}
-                  onLogoError={() => setLogoFailed(true)}
+                  posterDataUrl={previewCardDataUrl}
+                  loading={previewCardLoading || qrLoading}
                 />
               ) : (
                 <div className="tqr-preview-empty">
@@ -2501,10 +2450,8 @@ export default function TableQRStudio() {
               <QRCardPreview
                 restaurant={restaurant}
                 table={activeTable}
-                settings={settings}
-                qrDataUrl={qrDataUrl}
-                logoFailed={logoFailed}
-                onLogoError={() => setLogoFailed(true)}
+                posterDataUrl={previewCardDataUrl}
+                loading={previewCardLoading || qrLoading}
               />
             </div>
             <div className="tqr-modal-actions">
