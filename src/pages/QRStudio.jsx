@@ -4,6 +4,7 @@ import {
   ArrowLeft,
   ArrowUpRight,
   CheckCircle2,
+  Printer,
   Copy,
   Download,
   ExternalLink,
@@ -102,7 +103,7 @@ export default function QRStudio() {
 
       try {
         const image = await QRCode.toDataURL(menuUrl, {
-          width: 600,
+          width: 1200,
           margin: 4,
           errorCorrectionLevel: "H",
           color: {
@@ -171,11 +172,15 @@ export default function QRStudio() {
   }
 
   async function buildMenuPoster() {
-    const canvas = document.createElement("canvas"); canvas.width = 1080; canvas.height = 1440;
+    const posterScale = 2;
+    const canvas = document.createElement("canvas");
+    canvas.width = 1080 * posterScale;
+    canvas.height = 1440 * posterScale;
     const ctx = canvas.getContext("2d");
     if (!ctx) throw new Error("Your browser could not create the menu poster.");
+    ctx.scale(posterScale, posterScale);
     const colors = { green: "#173e32", paper: "#fbf8ef", ink: "#183d31", muted: "#64776b", gold: "#c7a264", border: "#d8d1bd" };
-    ctx.fillStyle = colors.green; ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = colors.green; ctx.fillRect(0, 0, canvas.width / posterScale, canvas.height / posterScale);
     roundedCanvasRect(ctx, 28, 28, 1024, 1384, 46, colors.paper, colors.gold, 3);
     roundedCanvasRect(ctx, 48, 48, 984, 1344, 34, null, colors.border, 2);
     roundedCanvasRect(ctx, 58, 58, 964, 410, 34, colors.green, null);
@@ -218,15 +223,80 @@ export default function QRStudio() {
 
   async function downloadQR() {
     if (!qrImage || !restaurant) return;
-    setFeedback(""); setError("");
+    setFeedback("");
+    setError("");
+    if (!restaurant.is_published) {
+      setError("Publish your menu before downloading a customer-ready QR poster.");
+      return;
+    }
     try {
       const canvas = await buildMenuPoster();
-      const blob = await new Promise((resolve,reject) => canvas.toBlob((result) => result ? resolve(result) : reject(new Error("Could not export the menu poster.")), "image/png"));
-      const objectUrl = URL.createObjectURL(blob); const link = document.createElement("a");
-      link.href = objectUrl; link.download = String(restaurant.slug || "menu") + "-branded-menu-qr.png";
-      document.body.appendChild(link); link.click(); link.remove(); window.setTimeout(() => URL.revokeObjectURL(objectUrl), 1500);
-      setFeedback("Branded menu QR poster downloaded. Print it for your counter or menu stand.");
-    } catch (err) { setError(err?.message || "Could not export the branded menu QR poster."); }
+      const blob = await new Promise((resolve, reject) =>
+        canvas.toBlob(
+          (result) => result
+            ? resolve(result)
+            : reject(new Error("Could not export the menu poster.")),
+          "image/png",
+        ),
+      );
+      const objectUrl = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = objectUrl;
+      link.download = String(restaurant.slug || "menu") + "-branded-menu-qr.png";
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      // High-resolution images can take longer to be picked up by the browser's download manager.
+      window.setTimeout(() => URL.revokeObjectURL(objectUrl), 60000);
+      setFeedback("High-resolution branded menu QR poster downloaded. Print it at A4 size.");
+    } catch (err) {
+      setError(err?.message || "Could not export the branded menu QR poster.");
+    }
+  }
+
+  async function printMenuQR() {
+    if (!qrImage || !restaurant) return;
+    setFeedback("");
+    setError("");
+    if (!restaurant.is_published) {
+      setError("Publish your menu before printing a customer-ready QR poster.");
+      return;
+    }
+
+    const printWindow = window.open("", "_blank", "width=900,height=1100");
+    if (!printWindow) {
+      setError("The print preview popup was blocked. Allow popups for this page and try again.");
+      return;
+    }
+    printWindow.document.open();
+    printWindow.document.write("<!doctype html><html><head><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><title>Khaavio Menu QR</title><style>@page{size:A4 portrait;margin:0}html,body{margin:0;width:100%;height:100%;background:#fff}body{display:flex;align-items:center;justify-content:center}img{display:block;width:210mm;height:297mm;object-fit:contain}@media screen{body{padding:16px;box-sizing:border-box}img{width:auto;height:calc(100vh - 32px);max-width:calc(100vw - 32px)}}@media print{html,body{width:210mm;height:297mm;margin:0;padding:0}body{display:block}img{width:210mm;height:297mm}}</style></head><body><p>Preparing print preview…</p></body></html>");
+    printWindow.document.close();
+
+    try {
+      const canvas = await buildMenuPoster();
+      const imageUrl = canvas.toDataURL("image/png");
+      const image = printWindow.document.createElement("img");
+      image.alt = `Branded menu QR poster for ${restaurant.name || "restaurant"}`;
+      let printStarted = false;
+      const openPrintDialog = () => {
+        if (printStarted || printWindow.closed) return;
+        printStarted = true;
+        printWindow.focus();
+        printWindow.print();
+        setFeedback("Print preview opened for your menu QR poster.");
+      };
+      image.onload = openPrintDialog;
+      image.onerror = () => {
+        if (!printWindow.closed) printWindow.close();
+        setError("The print image could not be loaded. Download the PNG and print it instead.");
+      };
+      printWindow.document.body.replaceChildren(image);
+      image.src = imageUrl;
+      if (image.complete && image.naturalWidth > 0) window.setTimeout(openPrintDialog, 0);
+    } catch (err) {
+      printWindow.close();
+      setError(err?.message || "Could not prepare the menu QR for printing.");
+    }
   }
 
   const isLocal =
@@ -333,10 +403,13 @@ export default function QRStudio() {
                   <div className="qr-poster-brand"><img src={khaavioIcon} alt="" /><span>POWERED BY KHAAVIO</span></div>
                 </div>
 
-                <button type="button" className="qr-download-button" onClick={downloadQR} disabled={!qrImage || qrLoading}>
+                <button type="button" className="qr-download-button" onClick={downloadQR} disabled={!qrImage || qrLoading || !restaurant?.is_published}>
                   <Download size={17} /> Download branded menu QR
                 </button>
-                <p className="qr-download-note">High-resolution PNG poster · Ready for counter stands</p>
+                <button type="button" className="qr-secondary-button" onClick={printMenuQR} disabled={!qrImage || qrLoading || !restaurant?.is_published} aria-label="Print branded menu QR poster">
+                  <Printer size={17} /> Print menu QR
+                </button>
+                <p className="qr-download-note">{restaurant.is_published ? "High-resolution PNG · Print-ready A4 layout" : "Publish your menu before downloading or printing a customer-ready QR."}</p>
               </div>
 
               <div className="qr-details-column">
