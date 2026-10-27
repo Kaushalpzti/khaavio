@@ -31,6 +31,7 @@ import {
 } from "lucide-react";
 
 import { supabase } from "../lib/supabaseClient";
+import { normalizeTableNumber } from "../lib/tableNumber";
 import khaavioIcon from "../assets/icon.png";
 import "./TableQRStudio.css";
 
@@ -175,7 +176,7 @@ function getInitials(name) {
 }
 
 function getTableNumberParts(value, format = "table-02") {
-  const raw = String(value ?? "").trim() || "?";
+  const raw = normalizeTableNumber(value) || "?";
   const match = raw.match(/\d+/);
   if (!match) {
     return {
@@ -1074,7 +1075,7 @@ export default function TableQRStudio() {
     event.preventDefault();
     if (!restaurant || creatingTable) return;
 
-    const tableNumber = newTableNumber.trim();
+    const tableNumber = normalizeTableNumber(newTableNumber);
     const capacity = Number(newTableCapacity);
 
     if (!tableNumber) {
@@ -1101,9 +1102,7 @@ export default function TableQRStudio() {
     if (
       tables.some(
         (table) =>
-          String(table.table_number || "")
-            .trim()
-            .toLowerCase() === tableNumber.toLowerCase(),
+          normalizeTableNumber(table.table_number).toLowerCase() === tableNumber.toLowerCase(),
       )
     ) {
       setNotice({
@@ -1164,7 +1163,7 @@ export default function TableQRStudio() {
       setShowCreateTable(false);
       setNotice({
         type: "success",
-        text: `${createdTable.table_number} created with its own QR token. ${restaurant.is_published ? "You can preview and export its QR card." : "Publish the restaurant before exporting a working public QR card."}`,
+        text: `Table ${normalizeTableNumber(createdTable.table_number)} created with its own QR token. ${restaurant.is_published ? "You can preview and export its QR card." : "Publish the restaurant before exporting a working public QR card."}`,
       });
     } catch (error) {
       const message = getErrorMessage(error, "Could not create this table.");
@@ -1190,7 +1189,7 @@ export default function TableQRStudio() {
     event.preventDefault();
     if (!restaurant || !editingTable || updatingTable) return;
 
-    const tableNumber = editTableNumber.trim();
+    const tableNumber = normalizeTableNumber(editTableNumber);
     const capacity = Number(editTableCapacity);
 
     if (!tableNumber) {
@@ -1207,7 +1206,7 @@ export default function TableQRStudio() {
     }
     if (tables.some((table) =>
       table.id !== editingTable.id &&
-      String(table.table_number || "").trim().toLowerCase() === tableNumber.toLowerCase()
+      normalizeTableNumber(table.table_number).toLowerCase() === tableNumber.toLowerCase()
     )) {
       setNotice({ type: "error", text: `A table named “${tableNumber}” already exists. Choose a unique name.` });
       return;
@@ -1238,7 +1237,7 @@ export default function TableQRStudio() {
           { numeric: true, sensitivity: "base" },
         )));
       setEditingTable(null);
-      setNotice({ type: "success", text: `${updatedTable.table_number} updated. Its existing QR link is unchanged.` });
+      setNotice({ type: "success", text: `Table ${normalizeTableNumber(updatedTable.table_number)} updated. Its existing QR link is unchanged.` });
     } catch (error) {
       const message = getErrorMessage(error, "Could not update this table.");
       setNotice({
