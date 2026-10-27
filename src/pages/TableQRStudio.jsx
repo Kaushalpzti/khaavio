@@ -304,6 +304,53 @@ function drawLeaf(ctx, x, y, rotation, palette) {
   ctx.restore();
 }
 
+function drawWorkflowIcon(ctx, type, centerX, centerY, color) {
+  ctx.save();
+  ctx.strokeStyle = color;
+  ctx.fillStyle = color;
+  ctx.lineWidth = 4;
+  ctx.lineCap = "round";
+  ctx.lineJoin = "round";
+
+  if (type === "menu") {
+    roundedRect(ctx, centerX - 17, centerY - 22, 34, 44, 5, null, color, 3);
+    for (const y of [-10, 0, 10]) {
+      ctx.beginPath();
+      ctx.moveTo(centerX - 7, centerY + y);
+      ctx.lineTo(centerX + 9, centerY + y);
+      ctx.stroke();
+    }
+  } else if (type === "cart") {
+    ctx.beginPath();
+    ctx.moveTo(centerX - 23, centerY - 17);
+    ctx.lineTo(centerX - 16, centerY - 17);
+    ctx.lineTo(centerX - 10, centerY + 9);
+    ctx.lineTo(centerX + 15, centerY + 9);
+    ctx.lineTo(centerX + 22, centerY - 8);
+    ctx.lineTo(centerX - 12, centerY - 8);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(centerX - 5, centerY + 19, 3.5, 0, Math.PI * 2);
+    ctx.arc(centerX + 13, centerY + 19, 3.5, 0, Math.PI * 2);
+    ctx.fill();
+  } else {
+    ctx.beginPath();
+    ctx.arc(centerX, centerY + 6, 21, Math.PI, Math.PI * 2);
+    ctx.lineTo(centerX + 21, centerY + 8);
+    ctx.lineTo(centerX - 21, centerY + 8);
+    ctx.closePath();
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(centerX - 26, centerY + 12);
+    ctx.lineTo(centerX + 26, centerY + 12);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(centerX, centerY - 19, 4, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
 async function drawBrandedCard(restaurant, table, settings, qrDataUrl, { scale = 1 } = {}) {
   const template =
     TEMPLATES.find((item) => item.id === settings.template) || TEMPLATES[0];
@@ -316,244 +363,234 @@ async function drawBrandedCard(restaurant, table, settings, qrDataUrl, { scale =
     throw new Error("Your browser could not create the QR card canvas.");
   ctx.scale(scale, scale);
 
+  const center = CARD_WIDTH / 2;
+  const footerFill = settings.template === "dark" ? "#173e32" : colors.ink;
+  const footerText = settings.template === "dark" ? "#fffdf5" : colors.card;
+  const accent = colors.accent;
+  const initials = getInitials(restaurant?.name);
+
+  // Clean paper surface, restrained double border, and generous whitespace.
   ctx.fillStyle = colors.background;
   ctx.fillRect(0, 0, CARD_WIDTH, CARD_HEIGHT);
   roundedRect(
-    ctx,
-    32,
-    32,
-    CARD_WIDTH - 64,
-    CARD_HEIGHT - 64,
-    44,
-    colors.background,
-    colors.border,
-    5,
+    ctx, 32, 32, CARD_WIDTH - 64, CARD_HEIGHT - 64, 42,
+    colors.background, colors.border, 4,
   );
   roundedRect(
-    ctx,
-    55,
-    55,
-    CARD_WIDTH - 110,
-    CARD_HEIGHT - 110,
-    34,
-    null,
-    colors.border,
-    2,
+    ctx, 49, 49, CARD_WIDTH - 98, CARD_HEIGHT - 98, 32,
+    null, colors.border, 1.5,
   );
 
-  if (settings.template === "signature") {
-    // Keep the dark masthead clear of the scan prompt below it.
-    roundedRect(ctx, 58, 58, CARD_WIDTH - 116, 390, 38, "#173e32", null);
-  } else if (settings.template === "indian") {
-    drawLeaf(ctx, 105, 108, 0.15, colors);
-    drawLeaf(ctx, CARD_WIDTH - 110, 110, Math.PI - 0.15, colors);
-    drawLeaf(ctx, 102, CARD_HEIGHT - 120, -0.35, colors);
-    drawLeaf(ctx, CARD_WIDTH - 110, CARD_HEIGHT - 120, Math.PI + 0.35, colors);
-  } else if (settings.template === "classic") {
-    ctx.fillStyle = colors.border;
-    for (const [x, y] of [
-      [100, 105],
-      [980, 105],
-      [100, 1510],
-      [980, 1510],
-    ]) {
-      ctx.beginPath();
-      ctx.arc(x, y, 7, 0, Math.PI * 2);
-      ctx.fill();
-    }
-  } else if (settings.template === "dark") {
-    ctx.strokeStyle = colors.accent;
-    ctx.globalAlpha = 0.65;
-    ctx.lineWidth = 3;
-    ctx.beginPath();
-    ctx.moveTo(185, 105);
-    ctx.lineTo(360, 105);
-    ctx.moveTo(720, 105);
-    ctx.lineTo(895, 105);
-    ctx.stroke();
-    ctx.globalAlpha = 1;
-  }
-
-  const center = CARD_WIDTH / 2;
-  const initials = getInitials(restaurant?.name);
-
-  // A restrained editorial masthead makes the print card feel like a table tent.
-  roundedRect(ctx, center - 76, 76, 152, 7, 4, colors.accent, null);
-  const signatureTemplate = settings.template === "signature";
-  ctx.strokeStyle = signatureTemplate
-    ? "rgba(230, 207, 158, 0.68)"
-    : colors.border;
-  ctx.lineWidth = 2;
-  ctx.beginPath();
-  ctx.moveTo(170, 108);
-  ctx.lineTo(350, 108);
-  ctx.moveTo(730, 108);
-  ctx.lineTo(910, 108);
-  ctx.stroke();
-  ctx.fillStyle = signatureTemplate ? "#e6cf9e" : colors.muted;
-  ctx.font = "700 18px Arial, sans-serif";
-  ctx.textAlign = "center";
-  ctx.textBaseline = "middle";
-  ctx.fillText("YOUR TABLE  ·  YOUR MENU", center, 108);
-  ctx.textBaseline = "alphabetic";
-
-  let headerBottom = 178;
+  let headerBottom = 88;
   if (settings.showLogo) {
-    const logo = await safeLoadImage(restaurant?.logo_url || "");
-    ctx.save();
+    const logoY = 157;
+    const logoRadius = 62;
     ctx.beginPath();
-    ctx.arc(center, 188, 65, 0, Math.PI * 2);
+    ctx.arc(center, logoY, logoRadius, 0, Math.PI * 2);
     ctx.fillStyle = colors.card;
     ctx.fill();
     ctx.lineWidth = 5;
-    ctx.strokeStyle = colors.accent;
+    ctx.strokeStyle = accent;
     ctx.stroke();
+
+    const logo = await safeLoadImage(restaurant?.logo_url || "");
+    ctx.save();
     ctx.beginPath();
-    ctx.arc(center, 188, 57, 0, Math.PI * 2);
+    ctx.arc(center, logoY, logoRadius - 7, 0, Math.PI * 2);
     ctx.clip();
     if (logo) {
       const side = Math.min(logo.width, logo.height);
-      const sx = (logo.width - side) / 2;
-      const sy = (logo.height - side) / 2;
-      ctx.drawImage(logo, sx, sy, side, side, center - 53, 135, 106, 106);
+      ctx.drawImage(
+        logo,
+        (logo.width - side) / 2,
+        (logo.height - side) / 2,
+        side,
+        side,
+        center - logoRadius + 7,
+        logoY - logoRadius + 7,
+        (logoRadius - 7) * 2,
+        (logoRadius - 7) * 2,
+      );
     } else {
-      ctx.fillStyle = colors.accent;
-      ctx.fillRect(center - 60, 128, 120, 120);
+      ctx.fillStyle = accent;
+      ctx.fillRect(center - logoRadius, logoY - logoRadius, logoRadius * 2, logoRadius * 2);
       ctx.fillStyle = colors.accentText;
-      ctx.font = "700 44px Arial, sans-serif";
+      ctx.font = "800 38px Arial, sans-serif";
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
-      ctx.fillText(initials, center, 188);
+      ctx.fillText(initials, center, logoY);
     }
     ctx.restore();
-    headerBottom = 260;
+    headerBottom = 236;
   }
 
   if (settings.showName) {
-    ctx.fillStyle = settings.template === "signature" ? "#fffdf5" : colors.ink;
-    ctx.font = "600 54px Georgia, 'Times New Roman', serif";
+    const name = String(restaurant?.name || "Restaurant").trim() || "Restaurant";
+    ctx.fillStyle = colors.ink;
     ctx.textAlign = "center";
     ctx.textBaseline = "alphabetic";
-    const lines = wrapCanvasText(ctx, restaurant?.name || "Restaurant", 870, 2);
-    let y = headerBottom + 44;
+    ctx.font = "600 52px Georgia, 'Times New Roman', serif";
+    const lines = wrapCanvasText(ctx, name, 860, 2);
+    let y = headerBottom + 42;
     for (const line of lines) {
       ctx.fillText(line, center, y);
-      y += 58;
+      y += 56;
     }
-    headerBottom = y - 25;
+    headerBottom = y - 13;
   }
 
   if (settings.showCuisine && restaurant?.restaurant_type) {
-    ctx.fillStyle = settings.template === "signature" ? "#e3d5b4" : colors.muted;
-    ctx.font = "500 24px Arial, sans-serif";
-    const cuisine = String(restaurant.restaurant_type).replace(/_/g, " ");
-    const lines = wrapCanvasText(ctx, cuisine, 880, 1);
+    const cuisine = String(restaurant.restaurant_type).replace(/_/g, " ").trim();
+    ctx.fillStyle = colors.muted;
+    ctx.font = "700 18px Arial, sans-serif";
     ctx.textAlign = "center";
-    const y = headerBottom + 19;
-    ctx.fillText(lines[0] || cuisine, center, y);
-    headerBottom = y + 17;
+    ctx.fillText(cuisine.toLocaleUpperCase().slice(0, 48), center, headerBottom + 22);
+    headerBottom += 44;
   }
 
-  if (settings.showTagline && restaurant?.description) {
-    ctx.fillStyle = settings.template === "signature" ? "#e3d5b4" : colors.muted;
-    ctx.font = "400 20px Arial, sans-serif";
-    ctx.textAlign = "center";
-    const lines = wrapCanvasText(ctx, restaurant.description, 820, 1);
-    const y = headerBottom + 19;
-    ctx.fillText(lines[0] || "", center, y);
-    headerBottom = y + 14;
-  }
+  const tagline = settings.showTagline && restaurant?.description
+    ? String(restaurant.description)
+    : "GOOD FOOD  ·  GOOD MOOD";
+  ctx.fillStyle = colors.muted;
+  ctx.font = "600 17px Arial, sans-serif";
+  ctx.textAlign = "center";
+  const taglineLines = wrapCanvasText(ctx, tagline, 800, 1);
+  ctx.fillText(taglineLines[0] || "GOOD FOOD  ·  GOOD MOOD", center, headerBottom + 22);
+  headerBottom += 43;
 
-  const scanLabelY = Math.max(
-    settings.template === "signature" ? 525 : 420,
-    headerBottom + 20,
-  );
+  // A short divider label separates restaurant branding from the QR itself.
+  const overlineY = Math.max(370, headerBottom + 24);
   ctx.strokeStyle = colors.border;
-  ctx.lineWidth = 3;
+  ctx.lineWidth = 2;
   ctx.beginPath();
-  ctx.moveTo(205, scanLabelY);
-  ctx.lineTo(350, scanLabelY);
-  ctx.moveTo(730, scanLabelY);
-  ctx.lineTo(875, scanLabelY);
+  ctx.moveTo(180, overlineY);
+  ctx.lineTo(330, overlineY);
+  ctx.moveTo(750, overlineY);
+  ctx.lineTo(900, overlineY);
   ctx.stroke();
-  ctx.fillStyle = colors.accent;
-  ctx.font = "800 23px Arial, sans-serif";
+  ctx.fillStyle = colors.ink;
+  ctx.font = "700 19px Arial, sans-serif";
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
-  ctx.fillText("SCAN TO EXPLORE", center, scanLabelY);
-  ctx.fillStyle = colors.muted;
-  ctx.font = "400 17px Arial, sans-serif";
-  ctx.fillText("Point your camera here", center, scanLabelY + 22);
+  ctx.fillText("YOUR TABLE  ·  YOUR MENU", center, overlineY);
 
-  const qrFrameY = scanLabelY + 40;
-  const qrSize = Math.max(430, Math.min(610, 1118 - qrFrameY - 72));
-  const qrFrameSize = qrSize + 72;
+  const qrSize = Math.max(300, Math.min(460, 910 - (overlineY + 32) - 36));
+  const qrFrameSize = qrSize + 36;
+  const qrFrameY = overlineY + 32;
   const qrFrameX = center - qrFrameSize / 2;
-  roundedRect(ctx, qrFrameX, qrFrameY, qrFrameSize, qrFrameSize, 36, colors.qr, colors.border, 4);
-  roundedRect(ctx, qrFrameX + 14, qrFrameY + 14, qrFrameSize - 28, qrFrameSize - 28, 27, null, colors.border, 1.5);
+  roundedRect(ctx, qrFrameX, qrFrameY, qrFrameSize, qrFrameSize, 32, colors.card, colors.ink, 4);
+  roundedRect(
+    ctx, qrFrameX + 11, qrFrameY + 11, qrFrameSize - 22, qrFrameSize - 22, 24,
+    null, colors.border, 1.5,
+  );
 
   const qrImage = await safeLoadImage(qrDataUrl);
   if (!qrImage)
     throw new Error("The QR code could not be loaded for export. Please retry.");
   ctx.imageSmoothingEnabled = false;
-  ctx.drawImage(qrImage, center - qrSize / 2, qrFrameY + 30, qrSize, qrSize);
+  ctx.drawImage(qrImage, center - qrSize / 2, qrFrameY + 18, qrSize, qrSize);
   ctx.imageSmoothingEnabled = true;
-  ctx.fillStyle = colors.muted;
-  ctx.font = "700 14px Arial, sans-serif";
+
+  const qrBottom = qrFrameY + qrFrameSize;
+  const ctaY = Math.max(955, qrBottom + 34);
+  roundedRect(ctx, 192, ctaY, 696, 76, 24, footerFill, null);
+  ctx.fillStyle = footerText;
+  ctx.font = "800 29px Arial, sans-serif";
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
-  ctx.fillText("MENU  ·  SPECIALS  ·  ORDER", center, qrFrameY + qrFrameSize - 20);
-
-  roundedRect(ctx, 180, 1156, 720, 78, 26, colors.accent, null);
-  ctx.fillStyle = colors.accentText;
-  ctx.font = "800 30px Arial, sans-serif";
-  ctx.textAlign = "center";
-  ctx.textBaseline = "middle";
-  const cta =
-    String(settings.ctaText || "SCAN TO ORDER")
-      .trim()
-      .slice(0, 35) || "SCAN TO ORDER";
-  ctx.fillText(cta.toLocaleUpperCase(), center, 1195);
+  const cta = String(settings.ctaText || "SCAN TO ORDER").trim().slice(0, 35) || "SCAN TO ORDER";
+  ctx.fillText(cta.toLocaleUpperCase(), center, ctaY + 39);
 
   ctx.fillStyle = colors.muted;
-  ctx.font = "600 20px Arial, sans-serif";
-  ctx.fillText("VIEW MENU  ·  PLACE ORDER", center, 1260);
+  ctx.font = "600 18px Arial, sans-serif";
+  ctx.fillText("VIEW MENU  ·  PLACE ORDER  ·  ENJOY", center, ctaY + 111);
+
+  // Three simple, evenly spaced actions make the stand instantly understandable.
+  const stepCenterY = 1140;
+  const steps = [
+    { x: 250, icon: "menu", title: "VIEW MENU", first: "Explore the menu", second: "on your phone" },
+    { x: 540, icon: "cart", title: "PLACE ORDER", first: "Choose your dishes", second: "and order easily" },
+    { x: 830, icon: "serve", title: "ENJOY", first: "We'll bring it", second: "to your table" },
+  ];
+  ctx.strokeStyle = colors.border;
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(390, 1090);
+  ctx.lineTo(390, 1240);
+  ctx.moveTo(690, 1090);
+  ctx.lineTo(690, 1240);
+  ctx.stroke();
+
+  for (const step of steps) {
+    ctx.beginPath();
+    ctx.arc(step.x, stepCenterY, 43, 0, Math.PI * 2);
+    ctx.fillStyle = colors.soft;
+    ctx.fill();
+    drawWorkflowIcon(ctx, step.icon, step.x, stepCenterY, colors.ink);
+    ctx.fillStyle = colors.ink;
+    ctx.font = "800 16px Arial, sans-serif";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "alphabetic";
+    ctx.fillText(step.title, step.x, 1205);
+    ctx.fillStyle = colors.muted;
+    ctx.font = "400 16px Arial, sans-serif";
+    ctx.fillText(step.first, step.x, 1232);
+    ctx.fillText(step.second, step.x, 1254);
+  }
+
+  // A calm green wave gives the table number a consistent, high-contrast home.
+  const footerTop = 1315;
+  ctx.beginPath();
+  ctx.moveTo(32, footerTop + 18);
+  ctx.bezierCurveTo(190, footerTop - 36, 288, footerTop + 48, 430, footerTop + 8);
+  ctx.bezierCurveTo(600, footerTop - 38, 730, footerTop + 40, 865, footerTop + 2);
+  ctx.bezierCurveTo(930, footerTop - 16, 990, footerTop - 2, 1048, footerTop + 18);
+  ctx.lineTo(1048, CARD_HEIGHT - 32);
+  ctx.lineTo(32, CARD_HEIGHT - 32);
+  ctx.closePath();
+  ctx.fillStyle = footerFill;
+  ctx.fill();
+
+  ctx.beginPath();
+  ctx.moveTo(32, footerTop + 18);
+  ctx.bezierCurveTo(190, footerTop - 36, 288, footerTop + 48, 430, footerTop + 8);
+  ctx.bezierCurveTo(600, footerTop - 38, 730, footerTop + 40, 865, footerTop + 2);
+  ctx.bezierCurveTo(930, footerTop - 16, 990, footerTop - 2, 1048, footerTop + 18);
+  ctx.strokeStyle = accent;
+  ctx.lineWidth = 2;
+  ctx.stroke();
 
   if (settings.showTableNumber) {
-    roundedRect(ctx, center - 180, 1286, 360, 172, 28, colors.card, colors.border, 2);
     const tableParts = getTableNumberParts(
       table?.table_number,
       settings.tableNumberFormat,
     );
     if (tableParts.label) {
-      ctx.fillStyle = colors.muted;
-      ctx.font = "800 20px Arial, sans-serif";
-      ctx.fillText(tableParts.label, center, 1335);
+      ctx.fillStyle = footerText;
+      ctx.font = "700 18px Arial, sans-serif";
+      ctx.textAlign = "center";
+      ctx.fillText(tableParts.label, center, 1390);
     }
-    ctx.fillStyle = colors.ink;
-    ctx.font = "700 88px Georgia, 'Times New Roman', serif";
-    ctx.fillText(tableParts.value, center, 1425);
+    ctx.fillStyle = footerText;
+    ctx.font = "700 78px Georgia, 'Times New Roman', serif";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "alphabetic";
+    ctx.fillText(tableParts.value, center, 1480);
   }
 
   if (settings.showPoweredBy) {
-    ctx.strokeStyle = colors.border;
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.moveTo(335, 1485);
-    ctx.lineTo(745, 1485);
-    ctx.stroke();
     const brandImage = await safeLoadImage(khaavioIcon);
     if (brandImage) {
-      ctx.drawImage(brandImage, center - 110, 1500, 48, 48);
+      ctx.drawImage(brandImage, center - 83, 1520, 28, 28);
       ctx.textAlign = "left";
-      ctx.fillStyle = colors.ink;
-      ctx.font = "700 30px Arial, sans-serif";
-      ctx.fillText("Powered by Khaavio", center - 50, 1533);
+      ctx.fillStyle = footerText;
+      ctx.font = "700 20px Arial, sans-serif";
+      ctx.fillText("Powered by Khaavio", center - 45, 1541);
     } else {
+      ctx.fillStyle = footerText;
+      ctx.font = "700 20px Arial, sans-serif";
       ctx.textAlign = "center";
-      ctx.fillStyle = colors.muted;
-      ctx.font = "700 25px Arial, sans-serif";
-      ctx.fillText("Powered by Khaavio", center, 1533);
+      ctx.fillText("Powered by Khaavio", center, 1541);
     }
   }
 
