@@ -12,6 +12,7 @@ import {
   X,
 } from "lucide-react";
 import { supabase } from "../lib/supabaseClient";
+import { normalizeTableNumber } from "../lib/tableNumber";
 import "./PublicTableService.css";
 
 const REQUEST_OPTIONS = [
@@ -186,7 +187,7 @@ export default function PublicTableService({ slug, tableToken, tableContext, has
                 </p>
                 <div className="public-table-service-table-pill">
                   <Clock3 size={15} />
-                  Table {tableContext.table_number || "—"}
+                  Table {normalizeTableNumber(tableContext.table_number) || "—"}
                 </div>
                 <button type="button" className="public-table-service-done" onClick={closePanel}>
                   Done
@@ -210,7 +211,7 @@ export default function PublicTableService({ slug, tableToken, tableContext, has
                   <h2 id="public-table-service-title">What can we help with?</h2>
                   <p>Your request goes directly to the restaurant team.</p>
                   <span className="public-table-service-table-pill">
-                    <Clock3 size={15} /> Table {tableContext.table_number || "—"}
+                    <Clock3 size={15} /> Table {normalizeTableNumber(tableContext.table_number) || "—"}
                   </span>
                 </div>
 
