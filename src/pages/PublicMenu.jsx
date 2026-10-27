@@ -49,6 +49,17 @@ function getErrorMessage(error, fallback) {
   return message || fallback;
 }
 
+function createGuestTabToken() {
+  if (typeof crypto === "undefined" || typeof crypto.randomUUID !== "function") {
+    throw new Error("This browser cannot securely start a guest bill. Please use an updated browser or ask staff for help.");
+  }
+  return crypto.randomUUID();
+}
+
+function getGuestTabStorageKey(slug, tableToken) {
+  return "khaavio-guest-tab:" + slug + ":" + tableToken;
+}
+
 function getRestaurantAvailability(restaurant, timestamp) {
   if (!restaurant) {
     return {
@@ -165,6 +176,11 @@ export default function PublicMenu() {
   const [categoryId, setCategoryId] = useState("all");
 
   const [cart, setCart] = useState([]);
+  const [guestTabToken, setGuestTabToken] = useState("");
+  const [guestTabSnapshot, setGuestTabSnapshot] = useState(null);
+  const [guestBillOpen, setGuestBillOpen] = useState(false);
+  const [guestBillLoading, setGuestBillLoading] = useState(false);
+  const [guestBillError, setGuestBillError] = useState("");
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [activeBottomTab, setActiveBottomTab] = useState("menu");
   const [activePromoSlide, setActivePromoSlide] = useState(0);
@@ -261,6 +277,10 @@ export default function PublicMenu() {
       setTableContext(null);
       setCategoryId("all");
       setCart([]);
+      setGuestTabToken("");
+      setGuestTabSnapshot(null);
+      setGuestBillOpen(false);
+      setGuestBillError("");
       setIsCartOpen(false);
       setOrderResult(null);
       setCheckoutError("");
@@ -274,13 +294,29 @@ export default function PublicMenu() {
           { p_slug: slug },
         );
         if (restaurantError) throw restaurantError;
-        const restaurantData = menuSnapshot?.restaurant;
+        const restaurantRecord = menuSnapshot?.restaurant;
 
-        if (!restaurantData) {
+        if (!restaurantRecord) {
           throw new Error(
             "This menu is not published yet, or the link is incorrect.",
           );
         }
+
+        let effectiveBillingMode = "combined";
+        if (hasTableParam && tableToken) {
+          try {
+            const { data: billingMode, error: billingModeError } = await supabase.rpc(
+              "khaavio_public_table_billing_mode",
+              { p_slug: slug, p_table_token: tableToken },
+            );
+            if (!billingModeError && (billingMode === "combined" || billingMode === "per_guest")) {
+              effectiveBillingMode = billingMode;
+            }
+          } catch {
+            effectiveBillingMode = "combined";
+          }
+        }
+        const restaurantData = { ...restaurantRecord, table_billing_mode: effectiveBillingMode };
 
         // Public menus receive only a small, non-sensitive set of plan entitlements.
         // If the RPC is unavailable, Growth-only public features fail closed while
@@ -406,6 +442,100 @@ export default function PublicMenu() {
 
     return () => window.clearInterval(intervalId);
   }, [activeBottomTab]);
+
+  const isGuestBilling = restaurant?.table_billing_mode === "per_guest" && Boolean(tableContext && tableToken);
+
+  async function refreshGuestBillSnapshot(token = guestTabToken) {
+    if (!token || !slug || !tableToken || !isGuestBilling) return;
+    setGuestBillLoading(true);
+    setGuestBillError("");
+    try {
+      const { data, error: snapshotError } = await supabase.rpc(
+        "khaavio_public_guest_tab_snapshot",
+        { p_slug: slug, p_table_token: tableToken, p_guest_tab_token: token },
+      );
+      if (snapshotError) throw snapshotError;
+      setGuestTabSnapshot(data || null);
+    } catch (snapshotError) {
+      setGuestBillError(getErrorMessage(snapshotError, "Could not load your bill. Please refresh the menu or ask staff for help."));
+    } finally {
+      setGuestBillLoading(false);
+    }
+  }
+
+  async function requestGuestBill() {
+    if (!guestTabToken || !isGuestBilling || guestBillLoading) return;
+    setGuestBillLoading(true);
+    setGuestBillError("");
+    try {
+      const { data, error: requestError } = await supabase.rpc(
+        "finalize_public_guest_tab",
+        { p_slug: slug, p_table_token: tableToken, p_guest_tab_token: guestTabToken },
+      );
+      if (requestError) throw requestError;
+      const invoice = Array.isArray(data) ? data[0] : data;
+      if (!invoice?.invoice_id) throw new Error("The bill could not be confirmed. Please refresh My Bill before retrying.");
+      await refreshGuestBillSnapshot(guestTabToken);
+    } catch (requestError) {
+      setGuestBillError(getErrorMessage(requestError, "Could not request your bill. Please ask staff for assistance."));
+    } finally {
+      setGuestBillLoading(false);
+    }
+  }
+
+  function startNewGuestBill() {
+    try {
+      const nextToken = createGuestTabToken();
+      window.localStorage.setItem(getGuestTabStorageKey(slug, tableToken), nextToken);
+      setGuestTabToken(nextToken);
+      setGuestTabSnapshot(null);
+      setGuestBillError("");
+      setOrderResult(null);
+      setGuestBillOpen(false);
+    } catch (tokenError) {
+      setGuestBillError(tokenError?.message || "Could not start a new guest bill.");
+    }
+  }
+
+  useEffect(() => {
+    if (!isGuestBilling || !tableToken || !tableContext) {
+      setGuestTabToken("");
+      setGuestTabSnapshot(null);
+      return;
+    }
+    try {
+      const key = getGuestTabStorageKey(slug, tableToken);
+      const storedToken = window.localStorage.getItem(key);
+      const token = storedToken || createGuestTabToken();
+      if (!storedToken) window.localStorage.setItem(key, token);
+      setGuestTabToken(token);
+    } catch (tokenError) {
+      setGuestBillError(tokenError?.message || "Could not prepare your guest bill on this device.");
+    }
+  }, [slug, tableToken, tableContext?.id, isGuestBilling]);
+
+  useEffect(() => {
+    if (!isGuestBilling || !guestTabToken) return undefined;
+    let active = true;
+    async function loadSnapshot() {
+      setGuestBillLoading(true);
+      setGuestBillError("");
+      try {
+        const { data, error: snapshotError } = await supabase.rpc(
+          "khaavio_public_guest_tab_snapshot",
+          { p_slug: slug, p_table_token: tableToken, p_guest_tab_token: guestTabToken },
+        );
+        if (snapshotError) throw snapshotError;
+        if (active) setGuestTabSnapshot(data || null);
+      } catch (snapshotError) {
+        if (active) setGuestBillError(getErrorMessage(snapshotError, "Could not load your bill."));
+      } finally {
+        if (active) setGuestBillLoading(false);
+      }
+    }
+    loadSnapshot();
+    return () => { active = false; };
+  }, [slug, tableToken, guestTabToken, isGuestBilling]);
 
   useEffect(() => {
     if (!isCartOpen) return undefined;
@@ -617,9 +747,15 @@ export default function PublicMenu() {
         p_loyalty_phone: loyaltyPhone || null,
       };
 
+      if (isGuestBilling && !guestTabToken) {
+        throw new Error("Your guest bill is still being prepared. Please wait a moment and try again.");
+      }
+
       const { data, error: orderError } = await supabase.rpc(
-        "place_public_order_with_loyalty",
-        payload,
+        isGuestBilling ? "place_public_order_for_guest_with_loyalty" : "place_public_order_with_loyalty",
+        isGuestBilling
+          ? { ...payload, p_guest_tab_token: guestTabToken, p_guest_display_name: name }
+          : payload,
       );
 
       if (orderError) throw orderError;
@@ -641,6 +777,7 @@ export default function PublicMenu() {
 
       setCart([]);
       setOrderNotes("");
+      if (isGuestBilling) void refreshGuestBillSnapshot(guestTabToken);
     } catch (err) {
       setCheckoutError(
         getErrorMessage(
