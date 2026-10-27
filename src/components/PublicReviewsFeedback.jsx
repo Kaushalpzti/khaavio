@@ -93,8 +93,6 @@ export default function PublicReviewsFeedback({
           : `Leave an honest Google review to help other guests discover ${restaurantName || "this restaurant"}.`}</p>
       </div>
 
-      <PublicRestaurantSocialLinks restaurantName={restaurantName} socialLinks={socialLinks} />
-
       <div className="public-reviews-actions">
         {showGoogleReview && (
           <a
@@ -198,6 +196,8 @@ export default function PublicReviewsFeedback({
           )}
         </div>
       )}
+
+      <PublicRestaurantSocialLinks restaurantName={restaurantName} socialLinks={socialLinks} />
     </section>
   );
 }
