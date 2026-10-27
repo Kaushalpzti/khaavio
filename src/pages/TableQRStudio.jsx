@@ -804,6 +804,7 @@ export default function TableQRStudio() {
   const [actionBusy, setActionBusy] = useState("");
   const [bulkProgress, setBulkProgress] = useState(null);
   const [showLargePreview, setShowLargePreview] = useState(false);
+  const [logoFailed, setLogoFailed] = useState(false);
   const [showCreateTable, setShowCreateTable] = useState(false);
   const [creatingTable, setCreatingTable] = useState(false);
   const [newTableNumber, setNewTableNumber] = useState("");
@@ -1033,6 +1034,10 @@ export default function TableQRStudio() {
       active = false;
     };
   }, [qrTargetUrl]);
+
+  useEffect(() => {
+    setLogoFailed(false);
+  }, [restaurant?.id, restaurant?.logo_url]);
 
   useEffect(() => {
     let active = true;
