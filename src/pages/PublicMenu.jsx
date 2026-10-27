@@ -486,8 +486,11 @@ export default function PublicMenu() {
     return () => window.clearInterval(intervalId);
   }, [activeBottomTab]);
 
-  const tableId = tableContext?.id;
-  const isGuestBilling = restaurant?.table_billing_mode === "per_guest" && Boolean(tableId && tableToken);
+  // The table QR has already been validated by resolve_public_table.
+  // Do not depend on a particular ID field name in that RPC's result shape:
+  // the validated table context plus its QR token is the reliable table scope.
+  const isGuestBilling =
+    restaurant?.table_billing_mode === "per_guest" && Boolean(tableContext && tableToken);
 
   async function refreshGuestBillSnapshot(token = guestTabToken) {
     if (!token || !slug || !tableToken) return;
@@ -915,7 +918,16 @@ export default function PublicMenu() {
         </div>
 
         <div className="public-menu-header-actions">
-          {isGuestBilling && (
+          {tableContext && (
+            <span
+              className="public-menu-table-badge"
+              aria-label={`Ordering at table ${tableContext.table_number}`}
+            >
+              <UtensilsCrossed size={17} aria-hidden="true" />
+              <span>Table {tableContext.table_number}</span>
+            </span>
+          )}
+          {isGuestBilling ? (
             <button
               type="button"
               className="public-menu-header-bill"
@@ -927,28 +939,20 @@ export default function PublicMenu() {
             >
               <ReceiptText size={17} aria-hidden="true" />
               <span>My Bill</span>
-              <b>{formatPrice(Number(guestTabSnapshot?.tab?.total_amount) || 0)}</b>
+              <b>{formatPrice(Number(guestTabSnapshot?.invoice?.total_amount ?? guestTabSnapshot?.tab?.total_amount) || 0)}</b>
+            </button>
+          ) : (
+            <button
+              type="button"
+              className="public-menu-header-cart"
+              aria-label={`View cart with ${cartQuantity} items`}
+              onClick={() => setIsCartOpen(true)}
+            >
+              <ShoppingBag size={17} />
+              <span>View cart</span>
+              <b>{cartQuantity}</b>
             </button>
           )}
-          {tableContext && (
-            <span
-              className="public-menu-table-badge"
-              aria-label={`Ordering at table ${tableContext.table_number}`}
-            >
-              <UtensilsCrossed size={17} aria-hidden="true" />
-              <span>Table {tableContext.table_number}</span>
-            </span>
-          )}
-          <button
-            type="button"
-            className="public-menu-header-cart"
-            aria-label={`View cart with ${cartQuantity} items`}
-            onClick={() => setIsCartOpen(true)}
-          >
-            <ShoppingBag size={17} />
-            <span>View cart</span>
-            <b>{cartQuantity}</b>
-          </button>
         </div>
       </header>
 
