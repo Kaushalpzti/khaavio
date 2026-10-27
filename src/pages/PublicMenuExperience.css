@@ -880,16 +880,112 @@
 }
 
 
-/* A single matching dish should not be stranded in the first desktop column. */
-@media (min-width: 681px) {
-  .public-menu-grid:has(> .public-menu-card:only-child) {
-    grid-template-columns: minmax(0, min(720px, 100%));
-    justify-content: center;
+
+
+/* Responsive restaurant menu grid: dense on desktop, two-up on phones. */
+.public-menu-content {
+  width: min(1500px, calc(100% - 40px));
+  margin-inline: auto;
+}
+
+.public-menu-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: stretch;
+}
+
+.public-menu-grid > .public-menu-card {
+  width: auto;
+  min-width: 0;
+  max-width: none;
+}
+
+@media (min-width: 1440px) {
+  .public-menu-content {
+    width: min(1500px, calc(100% - 48px));
+  }
+
+  .public-menu-grid {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 18px;
+  }
+}
+
+@media (min-width: 1024px) and (max-width: 1439px) {
+  .public-menu-content {
+    width: min(1320px, calc(100% - 40px));
+  }
+
+  .public-menu-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 16px;
+  }
+}
+
+@media (min-width: 900px) and (max-width: 1023px) {
+  .public-menu-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 14px;
+  }
+}
+
+@media (min-width: 681px) and (max-width: 899px) {
+  .public-menu-content {
+    width: calc(100% - 32px);
+  }
+
+  .public-menu-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
   }
 }
 
 @media (max-width: 680px) {
-  .public-menu-grid:has(> .public-menu-card:only-child) {
-    grid-template-columns: minmax(0, 1fr);
+  .public-menu-content {
+    width: calc(100% - 18px);
+  }
+
+  .public-menu-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .public-menu-grid > .public-menu-card {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .public-menu-card-media {
+    aspect-ratio: 1.08;
+  }
+}
+
+@media (max-width: 360px) {
+  .public-menu-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .public-menu-card-body {
+    padding: 8px 7px 9px;
+  }
+
+  .public-menu-card-media {
+    margin: 5px 5px 0;
+    aspect-ratio: 1.02;
+  }
+
+  .public-menu-item-footer {
+    gap: 4px;
+  }
+
+  .public-menu-add-controls {
+    gap: 2px;
+  }
+
+  .public-menu-add-controls > button {
+    width: 21px;
+    height: 21px;
+    flex-basis: 21px;
   }
 }
