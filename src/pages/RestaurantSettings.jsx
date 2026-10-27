@@ -17,7 +17,7 @@ import "./RestaurantSettings.css";
 import "./RestaurantSettingsLogo.css";
 
 const RESTAURANT_FIELDS =
-  "id, name, slug, restaurant_type, logo_url, phone, contact_email, address, city, state, postal_code, description, google_review_url, social_links, is_published";
+  "id, name, slug, restaurant_type, logo_url, phone, contact_email, address, city, state, postal_code, description, google_review_url, social_links, table_billing_mode, is_published";
 
 const GOOGLE_REVIEW_HOSTS = new Set([
   "g.page",
@@ -121,6 +121,7 @@ const INITIAL_FORM = {
   description: "",
   google_review_url: "",
   social_links: {},
+  table_billing_mode: "combined",
 };
 
 const BUSINESS_TYPES = [
@@ -144,6 +145,7 @@ function formFromRestaurant(restaurant) {
     description: restaurant.description || "",
     google_review_url: restaurant.google_review_url || "",
     social_links: normalizeSocialLinks(restaurant.social_links),
+    table_billing_mode: restaurant.table_billing_mode === "per_guest" ? "per_guest" : "combined",
   };
 }
 
@@ -383,6 +385,7 @@ export default function RestaurantSettings() {
         description: form.description.trim(),
         google_review_url: googleReviewUrl || null,
         social_links: socialValidation.value,
+        table_billing_mode: form.table_billing_mode === "per_guest" ? "per_guest" : "combined",
       };
 
       const { data, error: updateError } = await supabase
@@ -611,6 +614,22 @@ export default function RestaurantSettings() {
                         </option>
                       ))}
                     </select>
+                  </div>
+
+                  <div className="restaurant-settings-field full-width">
+                    <label htmlFor="settings-billing-mode">Table billing mode</label>
+                    <select
+                      id="settings-billing-mode"
+                      name="table_billing_mode"
+                      value={form.table_billing_mode}
+                      onChange={updateField}
+                    >
+                      <option value="combined">One combined bill for the table</option>
+                      <option value="per_guest">Separate bill for each customer</option>
+                    </select>
+                    <span className="restaurant-settings-field-hint">
+                      Applies to new table sessions only. Existing sessions keep their original billing mode.
+                    </span>
                   </div>
 
                   <div className="restaurant-settings-field">
