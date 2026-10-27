@@ -15,6 +15,7 @@ import {
   X,
 } from "lucide-react";
 import { supabase } from "../lib/supabaseClient";
+import { normalizeTableNumber } from "../lib/tableNumber";
 import { useKhaavioOperationalAlerts } from "../context/KhaavioOperationalAlertsContext";
 import { cancelKhaavioVoice, isKhaavioVoiceSupported, queueKhaavioVoice } from "../lib/khaavioVoiceAlerts";
 import "./ServiceRequestsDashboard.css";
@@ -142,7 +143,7 @@ export default function ServiceRequestsDashboard() {
         if (!active) return;
 
         const nextTableNumbers = Object.fromEntries(
-          (tableResult.data || []).map((table) => [table.id, table.table_number]),
+          (tableResult.data || []).map((table) => [table.id, normalizeTableNumber(table.table_number)]),
         );
         const nextRequests = (requestResult.data || []).map((request) => ({
           ...request,
