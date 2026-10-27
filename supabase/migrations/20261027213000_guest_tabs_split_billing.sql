@@ -161,6 +161,9 @@ DECLARE
   v_status text;
 BEGIN
   IF NEW.guest_tab_id IS NOT DISTINCT FROM OLD.guest_tab_id THEN RETURN NEW; END IF;
+  IF COALESCE(pg_catalog.current_setting('app.khaavio_allow_guest_tab_assignment', true), '') <> 'on' THEN
+    RAISE EXCEPTION 'Guest tabs can only be assigned by the validated order workflow.' USING ERRCODE = '42501';
+  END IF;
   IF OLD.guest_tab_id IS NOT NULL OR NEW.guest_tab_id IS NULL OR OLD.session_id IS NULL THEN
     RAISE EXCEPTION 'An order cannot be moved between guest tabs.' USING ERRCODE = '55000';
   END IF;
@@ -394,10 +397,12 @@ BEGIN
     RETURNING * INTO v_tab;
   END IF;
 
+  PERFORM pg_catalog.set_config('app.khaavio_allow_guest_tab_assignment', 'on', true);
   UPDATE public.orders o SET guest_tab_id = v_tab.id
   WHERE o.id = v_order_id AND o.restaurant_id = v_restaurant_id
     AND o.table_id = v_table_id AND o.session_id = v_session_id AND o.guest_tab_id IS NULL;
   IF NOT FOUND THEN RAISE EXCEPTION 'Could not attach the order to this guest bill. Please contact staff before retrying.' USING ERRCODE = '55000'; END IF;
+  PERFORM pg_catalog.set_config('app.khaavio_allow_guest_tab_assignment', 'off', true);
 
   RETURN QUERY SELECT v_order_id, v_order_reference, v_total, v_tracking_token;
 END;
