@@ -62,6 +62,18 @@ test("print exports use an adaptive high-contrast QR frame and keep QR quiet spa
   assert.match(studio, /margin: 4/);
 });
 
+test("single and bulk table QR exports are high resolution and printer-friendly", () => {
+  assert.match(studio, /const A4_WIDTH = 2480/);
+  assert.match(studio, /const A4_HEIGHT = 3508/);
+  assert.match(studio, /canvas\.width = CARD_WIDTH \* scale/);
+  assert.match(studio, /ctx\.scale\(scale, scale\)/);
+  assert.match(studio, /function getCardCanvas\(table, scale = 2\)/);
+  assert.match(studio, /canvasToJpegBytes\(canvas, 0\.97\)/);
+  assert.match(studio, /URL\.revokeObjectURL\(url\), 60000/);
+  assert.match(studio, /@page\{size:A4 portrait;margin:0\}/);
+  assert.match(studio, /image\.onload = openPrintDialog/);
+});
+
 
 test("table QR defaults to Signature Green while retaining the original table token URL", () => {
   const tableQr = read("../src/pages/TableQRStudio.jsx");
@@ -83,4 +95,15 @@ test("main Menu QR is a branded poster preview and exports the branded print lay
   assert.match(menuQrStyles, /\.qr-poster-preview/);
   assert.match(menuQrStyles, /\.qr-poster-brand/);
   assert.ok(menuQr.includes("restaurant.slug"));
+});
+
+test("menu QR poster downloads and prints at high resolution only after publishing", () => {
+  assert.match(menuQr, /canvas\.width = 1080 \* posterScale/);
+  assert.match(menuQr, /canvas\.height = 1440 \* posterScale/);
+  assert.match(menuQr, /ctx\.scale\(posterScale, posterScale\)/);
+  assert.match(menuQr, /width: 1200/);
+  assert.match(menuQr, /async function printMenuQR/);
+  assert.match(menuQr, /Print menu QR/);
+  assert.match(menuQr, /disabled=\{!qrImage \|\| qrLoading \|\| !restaurant\?\.is_published\}/);
+  assert.match(menuQr, /URL\.revokeObjectURL\(objectUrl\), 60000/);
 });
