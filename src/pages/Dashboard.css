@@ -526,3 +526,127 @@
     opacity: 0.6;
     cursor: wait;
 }
+/* Workspace home refresh: clear hierarchy, useful shortcuts, responsive cards */
+.dashboard-shell {
+    background:
+        radial-gradient(ellipse at 95% 0%, rgba(215, 228, 210, 0.48), transparent 32%),
+        var(--khaavio-cream);
+}
+.dashboard-main {
+    width: min(1240px, calc(100% - 48px));
+    padding-top: clamp(30px, 4vw, 52px);
+}
+.dashboard-welcome {
+    position: relative;
+    overflow: hidden;
+    padding: clamp(22px, 3.2vw, 34px);
+    border: 1px solid #dce6d8;
+    border-radius: 24px;
+    background: linear-gradient(120deg, #fffefa 0%, #f4f8ef 100%);
+    box-shadow: 0 12px 32px rgba(23, 63, 45, 0.055);
+}
+.dashboard-welcome::after {
+    position: absolute;
+    right: -38px;
+    bottom: -92px;
+    width: 240px;
+    height: 240px;
+    border: 1px solid rgba(23, 99, 76, 0.12);
+    border-radius: 50%;
+    box-shadow: 0 0 0 22px rgba(23, 99, 76, 0.035), 0 0 0 46px rgba(23, 99, 76, 0.025);
+    content: "";
+    pointer-events: none;
+}
+.dashboard-welcome > div:first-child,
+.dashboard-welcome .database-badge {
+    position: relative;
+    z-index: 1;
+}
+.dashboard-welcome h1 {
+    font-size: clamp(30px, 4.2vw, 48px);
+}
+.dashboard-quick-actions {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+    margin: 0 0 24px;
+}
+.dashboard-quick-action {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    min-width: 0;
+    padding: 15px;
+    border: 1px solid #e0e7dc;
+    border-radius: 16px;
+    color: var(--khaavio-ink);
+    background: rgba(255, 254, 250, 0.92);
+    text-decoration: none;
+    box-shadow: 0 5px 14px rgba(23, 63, 45, 0.035);
+    transition: transform 160ms ease, border-color 160ms ease, box-shadow 160ms ease;
+}
+.dashboard-quick-action:hover {
+    transform: translateY(-2px);
+    border-color: #b9cfbd;
+    box-shadow: 0 12px 24px rgba(23, 63, 45, 0.075);
+}
+.dashboard-quick-action > span:nth-child(2) {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 5px;
+    min-width: 0;
+}
+.dashboard-quick-action strong {
+    font-size: 12px;
+    font-weight: 800;
+}
+.dashboard-quick-action small {
+    color: #737f75;
+    font-size: 10px;
+    line-height: 1.5;
+}
+.dashboard-quick-action > svg:last-child {
+    flex: 0 0 auto;
+    color: #65836d;
+}
+.dashboard-quick-action-icon {
+    display: grid;
+    place-items: center;
+    flex: 0 0 40px;
+    width: 40px;
+    height: 40px;
+    border: 1px solid #dce7d7;
+    border-radius: 12px;
+    color: #17634c;
+    background: #edf5e8;
+}
+.restaurant-summary,
+.dashboard-module {
+    border-radius: 18px;
+    box-shadow: 0 8px 24px rgba(23, 63, 45, 0.035);
+}
+.dashboard-module {
+    min-height: 230px;
+    transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
+}
+.dashboard-module:hover {
+    box-shadow: 0 13px 30px rgba(23, 63, 45, 0.07);
+}
+@media (max-width: 900px) {
+    .dashboard-quick-actions {
+        grid-template-columns: 1fr;
+    }
+}
+@media (max-width: 560px) {
+    .dashboard-main {
+        width: calc(100% - 28px);
+    }
+    .dashboard-welcome {
+        padding: 20px;
+        border-radius: 19px;
+    }
+    .dashboard-quick-action {
+        padding: 13px;
+    }
+}

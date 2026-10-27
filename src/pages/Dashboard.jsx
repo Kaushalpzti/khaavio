@@ -294,6 +294,24 @@ export default function Dashboard() {
               </div>
             </section>
 
+            <nav className="dashboard-quick-actions" aria-label="Quick actions">
+              <Link to="/dashboard/table-qr" className="dashboard-quick-action">
+                <span className="dashboard-quick-action-icon"><QrCode size={19} /></span>
+                <span><strong>Manage table QR</strong><small>Edit tables, preview and print branded cards.</small></span>
+                <ArrowUpRight size={16} />
+              </Link>
+              <Link to="/dashboard/menu" className="dashboard-quick-action">
+                <span className="dashboard-quick-action-icon"><UtensilsCrossed size={19} /></span>
+                <span><strong>Update your menu</strong><small>Keep dishes, prices and availability current.</small></span>
+                <ArrowUpRight size={16} />
+              </Link>
+              <Link to="/dashboard/kitchen" className="dashboard-quick-action">
+                <span className="dashboard-quick-action-icon"><ChefHat size={19} /></span>
+                <span><strong>Open kitchen display</strong><small>Track active orders and preparation progress.</small></span>
+                <ArrowUpRight size={16} />
+              </Link>
+            </nav>
+
             {/* Subscription expiry reminder */}
             <SubscriptionExpiryBanner restaurantId={restaurant.id} />
 
