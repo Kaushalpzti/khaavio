@@ -12,6 +12,9 @@ const settings = read("src/pages/RestaurantSettings.jsx");
 const sessions = read("src/pages/TableSessions.jsx");
 const kitchen = read("src/pages/KitchenDisplay.jsx");
 const orders = read("src/pages/OrdersDashboard.jsx");
+const localTestScript = read("scripts/test-guest-tabs-migration.ps1");
+const localTestGuide = read("docs/guest-tabs-local-migration-test.md");
+const gitignore = read(".gitignore");
 
 test("combined billing remains the default and active sessions snapshot their billing mode", () => {
   assert.match(migration, /table_billing_mode text NOT NULL DEFAULT 'combined'/i);
@@ -74,4 +77,16 @@ test("owner billing can view guest tabs, create guest invoices and record the co
 test("kitchen and order cards show the guest label without replacing order tickets", () => {
   assert.match(kitchen, /guestTabName/);
   assert.match(orders, /guest_tab_name/);
+});
+
+test("local migration test uses a disposable local stack and protects the production schema snapshot", () => {
+  assert.match(localTestScript, /local-schema-baseline\.sql/);
+  assert.match(localTestScript, /supabase\.cmd start/);
+  assert.match(localTestScript, /db reset --local --yes/);
+  assert.match(localTestScript, /stop --no-backup/);
+  assert.match(localTestScript, /20261027000000_local_schema_baseline\.sql/);
+  assert.doesNotMatch(localTestScript, /db reset --linked|db push|migration repair/i);
+  assert.match(localTestGuide, /--data-only/);
+  assert.match(localTestGuide, /production schema or migration history/);
+  assert.match(gitignore, /supabase\/local-schema-baseline\.sql/);
 });
