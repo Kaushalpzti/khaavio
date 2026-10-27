@@ -114,7 +114,7 @@ export default function TableSessions() {
           .from("table_session_tabs")
           .select("id, restaurant_id, table_id, session_id, display_name, status, opened_at, closed_at")
           .eq("restaurant_id", restaurantData.id)
-          .order("opened_at", { ascending: true })
+          .order("opened_at", { ascending: false })
           .limit(300),
       ]);
 
