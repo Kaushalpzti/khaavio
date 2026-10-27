@@ -515,8 +515,6 @@ export default function PublicMenu() {
     if (!isGuestBilling || !guestTabToken) return undefined;
     let active = true;
     async function loadSnapshot() {
-      setGuestBillLoading(true);
-      setGuestBillError("");
       try {
         const { data, error: snapshotError } = await supabase.rpc(
           "khaavio_public_guest_tab_snapshot",
@@ -526,8 +524,6 @@ export default function PublicMenu() {
         if (active) setGuestTabSnapshot(data || null);
       } catch (snapshotError) {
         if (active) setGuestBillError(getErrorMessage(snapshotError, "Could not load your bill."));
-      } finally {
-        if (active) setGuestBillLoading(false);
       }
     }
     loadSnapshot();
