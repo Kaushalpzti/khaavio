@@ -777,7 +777,7 @@ function QRCardPreview({ restaurant, table, posterDataUrl, loading }) {
     <img
       className="tqr-card-preview-image"
       src={posterDataUrl}
-      alt={`Branded table QR poster for ${restaurant?.name || "restaurant"}, ${table?.table_number || "selected table"}`}
+      alt={`Branded table QR poster for ${restaurant?.name || "restaurant"}, Table ${normalizeTableNumber(table?.table_number) || "selected table"}`}
       width={CARD_WIDTH}
       height={CARD_HEIGHT}
     />
@@ -1427,7 +1427,7 @@ export default function TableQRStudio() {
       const blob = await canvasToBlob(canvas, "image/png");
       downloadBlob(
         blob,
-        `khaavio-table-${safeFilename(table.table_number)}.png`,
+        `khaavio-table-${safeFilename(normalizeTableNumber(table.table_number))}.png`,
       );
       setNotice({
         type: "success",
@@ -1459,7 +1459,7 @@ export default function TableQRStudio() {
       const pdf = makePdfFromJpegPages([page]);
       downloadBlob(
         new Blob([pdf], { type: "application/pdf" }),
-        `khaavio-table-${safeFilename(table.table_number)}.pdf`,
+        `khaavio-table-${safeFilename(normalizeTableNumber(table.table_number))}.pdf`,
       );
       setNotice({
         type: "success",
