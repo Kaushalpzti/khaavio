@@ -446,7 +446,7 @@ export default function PublicMenu() {
   const isGuestBilling = restaurant?.table_billing_mode === "per_guest" && Boolean(tableContext && tableToken);
 
   async function refreshGuestBillSnapshot(token = guestTabToken) {
-    if (!token || !slug || !tableToken || !isGuestBilling) return;
+    if (!token || !slug || !tableToken) return;
     setGuestBillLoading(true);
     setGuestBillError("");
     try {
@@ -733,6 +733,36 @@ export default function PublicMenu() {
     setSubmitting(true);
 
     try {
+      // Recheck the effective mode at submission time. An older combined session
+      // may have just closed, and the next session must use the current setting.
+      let useGuestBilling = isGuestBilling;
+      let activeGuestToken = guestTabToken;
+      try {
+        const { data: currentMode, error: modeError } = await supabase.rpc(
+          "khaavio_public_table_billing_mode",
+          { p_slug: slug, p_table_token: tableToken },
+        );
+        if (!modeError && (currentMode === "combined" || currentMode === "per_guest")) {
+          useGuestBilling = currentMode === "per_guest";
+          setRestaurant((current) => current ? { ...current, table_billing_mode: currentMode } : current);
+          if (useGuestBilling) {
+            const key = getGuestTabStorageKey(slug, tableToken);
+            let storedToken = window.localStorage.getItem(key);
+            if (guestTabSnapshot?.tab?.status === "closed" && guestTabSnapshot?.invoice?.payment_status === "paid") {
+              storedToken = null;
+            }
+            if (!storedToken) {
+              storedToken = createGuestTabToken();
+              window.localStorage.setItem(key, storedToken);
+            }
+            activeGuestToken = storedToken;
+            setGuestTabToken(activeGuestToken);
+          }
+        }
+      } catch (modeError) {
+        if (isGuestBilling) useGuestBilling = true;
+      }
+
       const payload = {
         p_slug: slug,
         p_table_token: tableToken,
@@ -747,14 +777,14 @@ export default function PublicMenu() {
         p_loyalty_phone: loyaltyPhone || null,
       };
 
-      if (isGuestBilling && !guestTabToken) {
+      if (useGuestBilling && !activeGuestToken) {
         throw new Error("Your guest bill is still being prepared. Please wait a moment and try again.");
       }
 
       const { data, error: orderError } = await supabase.rpc(
-        isGuestBilling ? "place_public_order_for_guest_with_loyalty" : "place_public_order_with_loyalty",
-        isGuestBilling
-          ? { ...payload, p_guest_tab_token: guestTabToken, p_guest_display_name: name }
+        useGuestBilling ? "place_public_order_for_guest_with_loyalty" : "place_public_order_with_loyalty",
+        useGuestBilling
+          ? { ...payload, p_guest_tab_token: activeGuestToken, p_guest_display_name: name }
           : payload,
       );
 
@@ -777,7 +807,7 @@ export default function PublicMenu() {
 
       setCart([]);
       setOrderNotes("");
-      if (isGuestBilling) void refreshGuestBillSnapshot(guestTabToken);
+      if (useGuestBilling) void refreshGuestBillSnapshot(activeGuestToken);
     } catch (err) {
       setCheckoutError(
         getErrorMessage(
