@@ -137,7 +137,7 @@ test("Vercel serves route-aware HTML without enabling automatic Git deployments"
   const config = JSON.parse(read("../vercel.json"));
   const catchAll = config.rewrites[config.rewrites.length - 1];
   assert.equal(catchAll.destination, "/api/seo?path=/$1");
-  assert.match(catchAll.source, /api\//);
+  assert.equal(catchAll.source, "^/(?!api/)(.*)$");
   assert.equal(config.git.deploymentEnabled, false);
   assert.equal(config.functions["api/seo.js"].includeFiles, "dist/index.html");
 });
