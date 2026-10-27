@@ -26,12 +26,14 @@ test("shared voice helper checks speech support and has a persistent louder soun
   assert.match(voice, /frequency\.setValueAtTime/);
 });
 
-test("operational alert preferences are opt-in and stored per authenticated browser session", () => {
-  assert.match(preferences, /voiceEnabled: false/);
+test("spoken operational alerts default on after login while the separate chime stays opt-in", () => {
+  assert.match(preferences, /voiceEnabled: true/);
   assert.match(preferences, /soundEnabled: false/);
   assert.match(preferences, /sessionStorage/);
+  assert.match(preferences, /operational-alerts:v2/);
   assert.match(preferences, /resetKhaavioAlertPreferences/);
   assert.match(auth, /event === "SIGNED_IN"/);
+  assert.match(auth, /resetKhaavioAlertPreferences\(session\.user\.id\)/);
 });
 
 test("one app-level alert provider stays mounted above routes", () => {

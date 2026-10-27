@@ -5,6 +5,7 @@ import { readFileSync } from "node:fs";
 const read = (path) => readFileSync(new URL(path, import.meta.url), "utf8");
 const studio = read("../src/pages/TableQRStudio.jsx");
 const studioStyles = read("../src/pages/TableQRStudio.css");
+const menuQr = read("../src/pages/QRStudio.jsx");
 const dashboard = read("../src/pages/Dashboard.jsx");
 const dashboardStyles = read("../src/pages/Dashboard.css");
 const homeStyles = read("../src/pages/Home.css");
@@ -46,20 +47,38 @@ test("public home page has the refreshed responsive visual system without alteri
 });
 
 
-test("premium QR cards use an editorial overline, scan prompt and table plaque", () => {
+test("table QR card uses a minimal premium layout with aligned branding and table details", () => {
   assert.match(studio, /fillText\("YOUR TABLE\s+·\s+YOUR MENU"/);
-  assert.ok(studio.includes("SCAN TO EXPLORE"));
-  assert.ok(studio.includes("Point your camera here"));
+  assert.ok(studio.includes("GOOD FOOD  ·  GOOD MOOD"));
+  assert.ok(studio.includes("SCAN TO ORDER"));
+  assert.ok(studio.includes("VIEW MENU  ·  PLACE ORDER  ·  ENJOY"));
+  assert.ok(studio.includes("drawWorkflowIcon"));
+  assert.ok(studio.includes("Powered by Khaavio"));
   assert.match(studioStyles, /\.tqr-card-overline/);
   assert.match(studioStyles, /\.tqr-card-scan-intro/);
   assert.match(studioStyles, /\.tqr-card-table-number/);
 });
 
-test("print exports use an adaptive high-contrast QR frame and keep QR quiet space", () => {
-  assert.match(studio, /const qrFrameY = scanLabelY \+ 40/);
-  assert.match(studio, /const qrSize = Math\.max\(430, Math\.min\(610/);
+test("print exports keep a high-contrast QR frame and predictable layout spacing", () => {
+  assert.match(studio, /const qrFrameY = overlineY \+ 32/);
+  assert.match(studio, /const qrSize = Math\.max\(300, Math\.min\(460/);
   assert.match(studio, /imageSmoothingEnabled = false/);
   assert.match(studio, /margin: 4/);
+});
+
+test("single and bulk table QR exports are high resolution and printer-friendly", () => {
+  assert.match(studio, /const A4_WIDTH = 2480/);
+  assert.match(studio, /const A4_HEIGHT = 3508/);
+  assert.match(studio, /const width = 1165;\s+const height = 1748;/);
+  assert.ok(studio.includes("PDF · A4 sheet · A6 card"));
+  assert.ok(studio.includes("A6 card centered on A4 paper"));
+  assert.match(studio, /canvas\.width = CARD_WIDTH \* scale/);
+  assert.match(studio, /ctx\.scale\(scale, scale\)/);
+  assert.match(studio, /function getCardCanvas\(table, scale = 2\)/);
+  assert.match(studio, /canvasToJpegBytes\(canvas, 0\.97\)/);
+  assert.match(studio, /URL\.revokeObjectURL\(url\), 60000/);
+  assert.match(studio, /@page\{size:A4 portrait;margin:0\}/);
+  assert.match(studio, /image\.onload = openPrintDialog/);
 });
 
 
@@ -74,7 +93,6 @@ test("table QR defaults to Signature Green while retaining the original table to
 
 
 test("main Menu QR is a branded poster preview and exports the branded print layout", () => {
-  const menuQr = read("../src/pages/QRStudio.jsx");
   const menuQrStyles = read("../src/pages/QRStudio.css");
   assert.ok(menuQr.includes("buildMenuPoster"));
   assert.ok(menuQr.includes("branded-menu-qr.png"));
@@ -83,4 +101,15 @@ test("main Menu QR is a branded poster preview and exports the branded print lay
   assert.match(menuQrStyles, /\.qr-poster-preview/);
   assert.match(menuQrStyles, /\.qr-poster-brand/);
   assert.ok(menuQr.includes("restaurant.slug"));
+});
+
+test("menu QR poster downloads and prints at high resolution only after publishing", () => {
+  assert.match(menuQr, /canvas\.width = 1080 \* posterScale/);
+  assert.match(menuQr, /canvas\.height = 1440 \* posterScale/);
+  assert.match(menuQr, /ctx\.scale\(posterScale, posterScale\)/);
+  assert.match(menuQr, /width: 1200/);
+  assert.match(menuQr, /async function printMenuQR/);
+  assert.match(menuQr, /Print menu QR/);
+  assert.match(menuQr, /disabled=\{!qrImage \|\| qrLoading \|\| !restaurant\?\.is_published\}/);
+  assert.match(menuQr, /URL\.revokeObjectURL\(objectUrl\), 60000/);
 });

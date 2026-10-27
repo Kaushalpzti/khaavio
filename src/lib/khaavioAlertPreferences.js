@@ -1,10 +1,11 @@
 export const KHAAVIO_ALERT_PREFERENCE_DEFAULTS = Object.freeze({
-  // Audio alerts start off until a team member explicitly enables them.
-  voiceEnabled: false,
+  // Spoken operational alerts are enabled automatically after a successful login.
+  // The separate chime remains opt-in so login never triggers unexpected sound.
+  voiceEnabled: true,
   soundEnabled: false,
 });
 
-const STORAGE_PREFIX = "khaavio:operational-alerts:v1:";
+const STORAGE_PREFIX = "khaavio:operational-alerts:v2:";
 const CHANGE_EVENT = "khaavio:operational-alerts-change";
 const validKeys = new Set(Object.keys(KHAAVIO_ALERT_PREFERENCE_DEFAULTS));
 
@@ -60,7 +61,7 @@ export function writeKhaavioAlertPreference(userId, preference, value) {
   return next;
 }
 
-/** Reset all operational alert toggles to ON for an explicit successful login. */
+/** Apply the login defaults: spoken alerts on, separate audible chime off. */
 export function resetKhaavioAlertPreferences(userId) {
   if (!userId) return;
   const next = { ...KHAAVIO_ALERT_PREFERENCE_DEFAULTS };
