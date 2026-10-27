@@ -1,6 +1,7 @@
 export const KHAAVIO_ALERT_PREFERENCE_DEFAULTS = Object.freeze({
-  // Audio alerts start off until a team member explicitly enables them.
-  voiceEnabled: false,
+  // Spoken operational alerts are enabled automatically after a successful login.
+  // The separate chime remains opt-in so login never triggers unexpected sound.
+  voiceEnabled: true,
   soundEnabled: false,
 });
 
