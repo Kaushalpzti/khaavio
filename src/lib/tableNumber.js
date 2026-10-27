@@ -1,7 +1,7 @@
 /**
- * Convert the stored table number into a safe, display-ready label.
- * Accepts numeric values and strings, including values already prefixed with
- * "Table", so the kitchen display never renders "Table Table 4".
+ * Return the table's stored name without a redundant leading "Table" label.
+ * Accepts existing legacy values such as "Table 1", "TABLE-2", "Table: 3"
+ * and newer values such as "1" or custom names such as "Patio A".
  */
 export function normalizeTableNumber(value) {
   if (value === null || value === undefined) return "";
@@ -9,5 +9,7 @@ export function normalizeTableNumber(value) {
   const normalized = String(value).trim();
   if (!normalized) return "";
 
-  return normalized.replace(/^table\s*/i, "").trim();
+  // Require a separator or a digit after "table" so custom names such as
+  // "Tabletop" are not accidentally changed.
+  return normalized.replace(/^table(?:\s+|[-:#]\s*|(?=\d))/i, "").trim();
 }
