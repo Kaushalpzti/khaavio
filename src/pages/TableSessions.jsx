@@ -102,7 +102,7 @@ export default function TableSessions() {
           .limit(100),
         supabase
           .from("table_session_invoices")
-          .select("id, restaurant_id, table_id, session_id, guest_tab_id, invoice_number, total_amount, order_count, payment_status, issued_at, issued_by, paid_at, payment_method")
+          .select("id, restaurant_id, table_id, session_id, guest_tab_id, invoice_number, total_amount, order_count, payment_status, issued_at, issued_by, paid_at, payment_method, voided_at, voided_by, void_reason")
           .eq("restaurant_id", restaurantData.id)
           .order("issued_at", { ascending: false })
           .limit(100),
@@ -227,6 +227,31 @@ export default function TableSessions() {
     return orders
       .filter((order) => order.guest_tab_id === tabId && order.status !== "cancelled")
       .reduce((total, order) => total + (Number(order.total_amount) || 0), 0);
+  }
+
+  async function reopenGuestTab(tab, invoice) {
+    if (!invoice || invoice.payment_status !== "unpaid" || tab.status !== "billing") return;
+    const confirmed = await confirmKhaavio(
+      "Void unpaid invoice " + invoice.invoice_number + " and reopen " +
+      (tab.display_name || "this guest") +
+      "'s tab? The old invoice will remain in history, and new orders can be added before a replacement bill is issued.",
+    );
+    if (!confirmed) return;
+    setWorkingSessionId(tab.session_id);
+    setError("");
+    setNotice("");
+    try {
+      const { error: rpcError } = await supabase.rpc("void_guest_tab_invoice", {
+        p_invoice_id: invoice.id,
+      });
+      if (rpcError) throw rpcError;
+      setNotice("Invoice " + invoice.invoice_number + " was voided and " + (tab.display_name || "the guest") + "'s tab is open again.");
+      await loadData({ quiet: true });
+    } catch (actionError) {
+      setError(actionError?.message || "Could not reopen the guest tab.");
+    } finally {
+      setWorkingSessionId("");
+    }
   }
 
   async function finalizeGuestTab(tab) {
@@ -435,7 +460,7 @@ export default function TableSessions() {
                             {(tabsBySession.get(session.id) || []).length ? (
                               (tabsBySession.get(session.id) || []).map((tab) => {
                                 const tabOrders = orders.filter((order) => order.guest_tab_id === tab.id);
-                                const tabInvoice = invoices.find((invoice) => invoice.guest_tab_id === tab.id);
+                                const tabInvoice = invoices.find((invoice) => invoice.guest_tab_id === tab.id && invoice.payment_status !== "void");
                                 const tabTotal = tabInvoice ? Number(tabInvoice.total_amount) : getGuestTabTotal(tab.id);
                                 return (
                                   <article className="ts-guest-tab-card" key={tab.id}>
@@ -456,6 +481,16 @@ export default function TableSessions() {
                                       {tabInvoice && (
                                         <button type="button" className="ts-secondary-button" onClick={() => { setActiveTab("invoices"); setExpandedInvoiceId(tabInvoice.id); }}>
                                           View invoice
+                                        </button>
+                                      )}
+                                      {tabInvoice?.payment_status === "unpaid" && tab.status === "billing" && (
+                                        <button
+                                          type="button"
+                                          className="ts-secondary-button"
+                                          onClick={() => reopenGuestTab(tab, tabInvoice)}
+                                          disabled={workingSessionId === tab.session_id}
+                                        >
+                                          Void & reopen tab
                                         </button>
                                       )}
                                     </div>
@@ -536,6 +571,11 @@ export default function TableSessions() {
                               <div><span>{invoice.guest_tab_id ? "GUEST INVOICE" : "FINAL TABLE INVOICE"}</span><h2>{restaurant?.name || "Restaurant"}</h2><p>{invoice.invoice_number}</p>{invoice.guest_tab_id && <p>{guestTabNames.get(invoice.guest_tab_id) || "Guest"}</p>}</div>
                             </div>
                             <div className="ts-print-meta"><span>Table <strong>{tableNumber}</strong></span><span>Issued <strong>{formatDate(invoice.issued_at)}</strong></span><span>Payment <strong>{titleCase(invoice.payment_status)}</strong></span></div>
+                            {invoice.payment_status === "void" && (
+                              <p className="ts-void-note">
+                                Voided {invoice.voided_at ? formatDate(invoice.voided_at) : ""} · {invoice.void_reason || "Voided by restaurant staff"}
+                              </p>
+                            )}
                             {session ? renderSessionOrders(session, invoice.guest_tab_id) : <p className="ts-empty-inline">Order details are unavailable for this invoice.</p>}
                             <div className="ts-print-grand-total"><span>FINAL TOTAL</span><strong>{formatPrice(invoice.total_amount)}</strong></div>
                             {invoice.payment_status === "paid" && <p className="ts-paid-note">Paid {invoice.payment_method ? `via ${invoice.payment_method}` : ""}{invoice.paid_at ? ` · ${formatDate(invoice.paid_at)}` : ""}</p>}
