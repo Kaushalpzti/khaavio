@@ -443,7 +443,8 @@ export default function PublicMenu() {
     return () => window.clearInterval(intervalId);
   }, [activeBottomTab]);
 
-  const isGuestBilling = restaurant?.table_billing_mode === "per_guest" && Boolean(tableContext && tableToken);
+  const tableId = tableContext?.id;
+  const isGuestBilling = restaurant?.table_billing_mode === "per_guest" && Boolean(tableId && tableToken);
 
   async function refreshGuestBillSnapshot(token = guestTabToken) {
     if (!token || !slug || !tableToken) return;
@@ -498,11 +499,7 @@ export default function PublicMenu() {
   }
 
   useEffect(() => {
-    if (!isGuestBilling || !tableToken || !tableContext) {
-      setGuestTabToken("");
-      setGuestTabSnapshot(null);
-      return;
-    }
+    if (!isGuestBilling || !tableToken || !tableId) return;
     try {
       const key = getGuestTabStorageKey(slug, tableToken);
       const storedToken = window.localStorage.getItem(key);
@@ -512,7 +509,7 @@ export default function PublicMenu() {
     } catch (tokenError) {
       setGuestBillError(tokenError?.message || "Could not prepare your guest bill on this device.");
     }
-  }, [slug, tableToken, tableContext?.id, isGuestBilling]);
+  }, [slug, tableToken, tableId, isGuestBilling]);
 
   useEffect(() => {
     if (!isGuestBilling || !guestTabToken) return undefined;
@@ -759,7 +756,7 @@ export default function PublicMenu() {
             setGuestTabToken(activeGuestToken);
           }
         }
-      } catch (modeError) {
+      } catch {
         if (isGuestBilling) useGuestBilling = true;
       }
 
