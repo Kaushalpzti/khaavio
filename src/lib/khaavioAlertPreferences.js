@@ -5,7 +5,7 @@ export const KHAAVIO_ALERT_PREFERENCE_DEFAULTS = Object.freeze({
   soundEnabled: false,
 });
 
-const STORAGE_PREFIX = "khaavio:operational-alerts:v1:";
+const STORAGE_PREFIX = "khaavio:operational-alerts:v2:";
 const CHANGE_EVENT = "khaavio:operational-alerts-change";
 const validKeys = new Set(Object.keys(KHAAVIO_ALERT_PREFERENCE_DEFAULTS));
 
