@@ -69,6 +69,9 @@ test("print exports keep a high-contrast QR frame and predictable layout spacing
 test("single and bulk table QR exports are high resolution and printer-friendly", () => {
   assert.match(studio, /const A4_WIDTH = 2480/);
   assert.match(studio, /const A4_HEIGHT = 3508/);
+  assert.match(studio, /const width = 1165;\s+const height = 1748;/);
+  assert.ok(studio.includes("PDF · A4 sheet · A6 card"));
+  assert.ok(studio.includes("A6 card centered on A4 paper"));
   assert.match(studio, /canvas\.width = CARD_WIDTH \* scale/);
   assert.match(studio, /ctx\.scale\(scale, scale\)/);
   assert.match(studio, /function getCardCanvas\(table, scale = 2\)/);
