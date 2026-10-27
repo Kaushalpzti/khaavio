@@ -61,7 +61,7 @@ export function writeKhaavioAlertPreference(userId, preference, value) {
   return next;
 }
 
-/** Reset all operational alert toggles to ON for an explicit successful login. */
+/** Apply the login defaults: spoken alerts on, separate audible chime off. */
 export function resetKhaavioAlertPreferences(userId) {
   if (!userId) return;
   const next = { ...KHAAVIO_ALERT_PREFERENCE_DEFAULTS };
