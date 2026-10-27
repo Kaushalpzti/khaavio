@@ -162,7 +162,23 @@ FOR EACH ROW EXECUTE FUNCTION public.khaavio_guard_per_guest_order_insert();
 ALTER TABLE public.table_session_invoices
   DROP CONSTRAINT IF EXISTS table_session_invoices_session_id_key;
 ALTER TABLE public.table_session_invoices
-  ADD COLUMN IF NOT EXISTS guest_tab_id uuid;
+  ADD COLUMN IF NOT EXISTS guest_tab_id uuid,
+  ADD COLUMN IF NOT EXISTS voided_at timestamptz,
+  ADD COLUMN IF NOT EXISTS voided_by uuid REFERENCES auth.users(id) ON DELETE SET NULL,
+  ADD COLUMN IF NOT EXISTS void_reason text;
+DO $invoice_void_reason_check$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_catalog.pg_constraint
+    WHERE conrelid = 'public.table_session_invoices'::regclass
+      AND conname = 'table_session_invoices_void_reason_length_check'
+  ) THEN
+    ALTER TABLE public.table_session_invoices
+      ADD CONSTRAINT table_session_invoices_void_reason_length_check
+      CHECK (void_reason IS NULL OR pg_catalog.char_length(void_reason) <= 240);
+  END IF;
+END;
+$invoice_void_reason_check$;
 DO $invoice_guest_tab_fk$
 BEGIN
   IF NOT EXISTS (
@@ -184,7 +200,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS table_session_invoices_one_combined_per_sessio
   WHERE guest_tab_id IS NULL;
 CREATE UNIQUE INDEX IF NOT EXISTS table_session_invoices_one_per_guest_tab_uidx
   ON public.table_session_invoices (guest_tab_id)
-  WHERE guest_tab_id IS NOT NULL;
+  WHERE guest_tab_id IS NOT NULL AND payment_status <> 'void';
 
 ALTER TABLE public.table_session_tabs ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS table_session_tabs_owner_read ON public.table_session_tabs;
@@ -363,7 +379,10 @@ BEGIN
     'total_amount', i.total_amount, 'order_count', i.order_count, 'payment_status', i.payment_status,
     'issued_at', i.issued_at, 'paid_at', i.paid_at, 'payment_method', i.payment_method)
     INTO v_invoice
-  FROM public.table_session_invoices i WHERE i.guest_tab_id = v_tab.id;
+  FROM public.table_session_invoices i
+  WHERE i.guest_tab_id = v_tab.id AND i.payment_status <> 'void'
+  ORDER BY i.issued_at DESC
+  LIMIT 1;
 
   SELECT COALESCE(pg_catalog.jsonb_agg(
     pg_catalog.jsonb_build_object(
@@ -560,7 +579,9 @@ BEGIN
 
   SELECT i.id, i.invoice_number, i.total_amount, i.order_count, i.payment_status
     INTO v_invoice_id, v_invoice_number, v_total, v_order_count, v_payment_status
-  FROM public.table_session_invoices i WHERE i.guest_tab_id = p_guest_tab_id FOR UPDATE;
+  FROM public.table_session_invoices i
+  WHERE i.guest_tab_id = p_guest_tab_id AND i.payment_status <> 'void'
+  FOR UPDATE;
   IF FOUND THEN RETURN QUERY SELECT v_invoice_id, v_invoice_number, v_total, v_order_count, v_payment_status; RETURN; END IF;
 
   IF v_session_status = 'closed' OR v_tab.status <> 'open' THEN RAISE EXCEPTION 'This guest bill is not open.'; END IF;
@@ -653,6 +674,90 @@ END;
 $function$;
 REVOKE ALL ON FUNCTION public.finalize_guest_tab_invoice(uuid) FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.finalize_guest_tab_invoice(uuid) TO authenticated;
+
+-- Void only an unpaid guest invoice and reopen that guest tab for corrections.
+-- The old invoice and its line snapshot remain in history; reissue creates a new invoice number.
+CREATE OR REPLACE FUNCTION public.void_guest_tab_invoice(p_invoice_id uuid)
+RETURNS TABLE(invoice_id uuid, invoice_number text, payment_status text)
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path TO ''
+AS $function$
+DECLARE
+  v_restaurant_id uuid;
+  v_table_id uuid;
+  v_session_id uuid;
+  v_tab_id uuid;
+  v_invoice_number text;
+  v_status text;
+  v_tab_status text;
+  v_session_status text;
+BEGIN
+  IF auth.uid() IS NULL THEN
+    RAISE EXCEPTION 'Authentication is required to reopen a guest bill.' USING ERRCODE = '42501';
+  END IF;
+
+  SELECT i.restaurant_id, i.table_id, i.session_id, i.guest_tab_id, i.invoice_number, i.payment_status
+    INTO v_restaurant_id, v_table_id, v_session_id, v_tab_id, v_invoice_number, v_status
+  FROM public.table_session_invoices i
+  JOIN public.restaurants r ON r.id = i.restaurant_id
+  WHERE i.id = p_invoice_id AND r.owner_id = (SELECT auth.uid());
+  IF NOT FOUND OR v_tab_id IS NULL THEN
+    RAISE EXCEPTION 'Guest invoice not found or access denied.' USING ERRCODE = '42501';
+  END IF;
+
+  PERFORM 1 FROM public.restaurant_tables rt
+  WHERE rt.id = v_table_id AND rt.restaurant_id = v_restaurant_id
+  FOR UPDATE;
+  IF NOT FOUND THEN RAISE EXCEPTION 'The restaurant table no longer exists.'; END IF;
+
+  SELECT ts.status INTO v_session_status
+  FROM public.table_sessions ts
+  WHERE ts.id = v_session_id AND ts.restaurant_id = v_restaurant_id AND ts.table_id = v_table_id
+  FOR UPDATE;
+  IF NOT FOUND OR v_session_status = 'closed' THEN
+    RAISE EXCEPTION 'This table session is already closed and cannot be reopened.' USING ERRCODE = '55000';
+  END IF;
+
+  SELECT t.status INTO v_tab_status
+  FROM public.table_session_tabs t
+  WHERE t.id = v_tab_id AND t.session_id = v_session_id
+  FOR UPDATE;
+  IF NOT FOUND THEN RAISE EXCEPTION 'The guest tab no longer exists.'; END IF;
+
+  SELECT i.payment_status INTO v_status
+  FROM public.table_session_invoices i
+  WHERE i.id = p_invoice_id AND i.guest_tab_id = v_tab_id
+  FOR UPDATE;
+  IF NOT FOUND THEN RAISE EXCEPTION 'The guest invoice no longer exists.'; END IF;
+  IF v_status = 'paid' THEN RAISE EXCEPTION 'A paid guest invoice cannot be voided from this workflow.'; END IF;
+  IF v_status = 'void' THEN RAISE EXCEPTION 'This guest invoice is already void.'; END IF;
+  IF v_status <> 'unpaid' OR v_tab_status <> 'billing' THEN
+    RAISE EXCEPTION 'Only an unpaid invoice for a guest tab awaiting payment can be voided.' USING ERRCODE = '55000';
+  END IF;
+
+  PERFORM pg_catalog.set_config('app.khaavio_guest_invoice_payment', 'on', true);
+  UPDATE public.table_session_invoices
+  SET payment_status = 'void',
+      voided_at = pg_catalog.now(),
+      voided_by = (SELECT auth.uid()),
+      void_reason = 'Guest tab reopened by restaurant staff'
+  WHERE id = p_invoice_id;
+  PERFORM pg_catalog.set_config('app.khaavio_guest_invoice_payment', 'off', true);
+
+  UPDATE public.table_session_tabs
+  SET status = 'open', closed_at = NULL
+  WHERE id = v_tab_id;
+
+  UPDATE public.table_sessions
+  SET status = 'open', closed_at = NULL, closed_by = NULL
+  WHERE id = v_session_id;
+
+  RETURN QUERY SELECT p_invoice_id, v_invoice_number, 'void'::text;
+END;
+$function$;
+REVOKE ALL ON FUNCTION public.void_guest_tab_invoice(uuid) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.void_guest_tab_invoice(uuid) TO authenticated;
 
 CREATE OR REPLACE FUNCTION public.mark_guest_tab_invoice_paid(p_invoice_id uuid, p_payment_method text)
 RETURNS TABLE(invoice_id uuid, invoice_number text, total_amount numeric, payment_status text, paid_at timestamptz, payment_method text)
