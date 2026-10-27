@@ -71,3 +71,16 @@ test("table QR defaults to Signature Green while retaining the original table to
   assert.ok(tableQr.includes("table.qr_token"));
   assert.match(tableQrStyles, /\.tqr-card--signature/);
 });
+
+
+test("main Menu QR is a branded poster preview and exports the branded print layout", () => {
+  const menuQr = read("../src/pages/QRStudio.jsx");
+  const menuQrStyles = read("../src/pages/QRStudio.css");
+  assert.ok(menuQr.includes("buildMenuPoster"));
+  assert.ok(menuQr.includes("branded-menu-qr.png"));
+  assert.ok(menuQr.includes("GOOD FOOD  ·  ONE SCAN AWAY"));
+  assert.ok(menuQr.includes("OPEN MENU & ORDER"));
+  assert.match(menuQrStyles, /\.qr-poster-preview/);
+  assert.match(menuQrStyles, /\.qr-poster-brand/);
+  assert.ok(menuQr.includes("restaurant.slug"));
+});
