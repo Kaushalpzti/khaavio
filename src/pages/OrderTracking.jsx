@@ -13,6 +13,7 @@ import {
   XCircle,
 } from "lucide-react";
 import { supabase } from "../lib/supabaseClient";
+import { normalizeTableNumber } from "../lib/tableNumber";
 import "./OrderTracking.css";
 
 const STATUS_STEPS = [
@@ -239,7 +240,7 @@ export default function OrderTracking() {
                 </div>
                 <div>
                   <span>Table</span>
-                  <strong>{order.table_number ? `Table ${order.table_number}` : "—"}</strong>
+                  <strong>{order.table_number ? `Table ${normalizeTableNumber(order.table_number)}` : "—"}</strong>
                 </div>
                 <div>
                   <span>Order total</span>
