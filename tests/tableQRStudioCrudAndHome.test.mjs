@@ -47,18 +47,21 @@ test("public home page has the refreshed responsive visual system without alteri
 });
 
 
-test("premium QR cards use an editorial overline, scan prompt and table plaque", () => {
+test("table QR card uses a minimal premium layout with aligned branding and table details", () => {
   assert.match(studio, /fillText\("YOUR TABLE\s+·\s+YOUR MENU"/);
-  assert.ok(studio.includes("SCAN TO EXPLORE"));
-  assert.ok(studio.includes("Point your camera here"));
+  assert.ok(studio.includes("GOOD FOOD  ·  GOOD MOOD"));
+  assert.ok(studio.includes("SCAN TO ORDER"));
+  assert.ok(studio.includes("VIEW MENU  ·  PLACE ORDER  ·  ENJOY"));
+  assert.ok(studio.includes("drawWorkflowIcon"));
+  assert.ok(studio.includes("Powered by Khaavio"));
   assert.match(studioStyles, /\.tqr-card-overline/);
   assert.match(studioStyles, /\.tqr-card-scan-intro/);
   assert.match(studioStyles, /\.tqr-card-table-number/);
 });
 
-test("print exports use an adaptive high-contrast QR frame and keep QR quiet space", () => {
-  assert.match(studio, /const qrFrameY = scanLabelY \+ 40/);
-  assert.match(studio, /const qrSize = Math\.max\(430, Math\.min\(610/);
+test("print exports keep a high-contrast QR frame and predictable layout spacing", () => {
+  assert.match(studio, /const qrFrameY = overlineY \+ 32/);
+  assert.match(studio, /const qrSize = Math\.max\(300, Math\.min\(460/);
   assert.match(studio, /imageSmoothingEnabled = false/);
   assert.match(studio, /margin: 4/);
 });
