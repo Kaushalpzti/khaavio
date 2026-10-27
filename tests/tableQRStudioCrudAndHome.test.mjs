@@ -5,6 +5,7 @@ import { readFileSync } from "node:fs";
 const read = (path) => readFileSync(new URL(path, import.meta.url), "utf8");
 const studio = read("../src/pages/TableQRStudio.jsx");
 const studioStyles = read("../src/pages/TableQRStudio.css");
+const menuQr = read("../src/pages/QRStudio.jsx");
 const dashboard = read("../src/pages/Dashboard.jsx");
 const dashboardStyles = read("../src/pages/Dashboard.css");
 const homeStyles = read("../src/pages/Home.css");
@@ -86,7 +87,6 @@ test("table QR defaults to Signature Green while retaining the original table to
 
 
 test("main Menu QR is a branded poster preview and exports the branded print layout", () => {
-  const menuQr = read("../src/pages/QRStudio.jsx");
   const menuQrStyles = read("../src/pages/QRStudio.css");
   assert.ok(menuQr.includes("buildMenuPoster"));
   assert.ok(menuQr.includes("branded-menu-qr.png"));
