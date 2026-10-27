@@ -2425,3 +2425,29 @@
         transition: none !important;
     }
 }
+/* Guest-specific tab and split-invoice experience */
+.public-menu-header-bill { max-width: 190px; }
+.public-guest-bill-drawer { gap: 18px; }
+.public-guest-bill-status {
+  align-self: flex-start; border-radius: 999px; padding: 6px 10px;
+  background: var(--surface-muted, #f3f4f6); color: var(--text-secondary, #4b5563);
+  font-size: 12px; font-weight: 700; text-transform: capitalize;
+}
+.public-guest-bill-loading { display: flex; align-items: center; gap: 8px; color: var(--text-secondary, #6b7280); }
+.public-guest-bill-orders { display: grid; gap: 12px; }
+.public-guest-bill-order { border: 1px solid var(--border-subtle, #e5e7eb); border-radius: 14px; padding: 14px; }
+.public-guest-bill-order-heading { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+.public-guest-bill-order-heading > div { display: grid; gap: 4px; }
+.public-guest-bill-order-heading small, .public-guest-bill-order-status { color: var(--text-secondary, #6b7280); font-size: 12px; text-transform: capitalize; }
+.public-guest-bill-item-list { display: grid; gap: 7px; margin-top: 12px; }
+.public-guest-bill-item-list > div { display: flex; justify-content: space-between; gap: 12px; font-size: 13px; }
+.public-guest-bill-order-status { display: inline-block; margin-top: 10px; }
+.public-guest-bill-total { display: flex; justify-content: space-between; align-items: center; gap: 12px; border-top: 1px solid var(--border-subtle, #e5e7eb); padding-top: 16px; font-size: 15px; }
+.public-guest-bill-total strong { font-size: 22px; }
+.public-guest-bill-invoice { display: grid; gap: 6px; border-radius: 14px; padding: 14px; background: var(--surface-muted, #f8fafc); }
+.public-guest-bill-invoice span, .public-guest-bill-invoice p { color: var(--text-secondary, #6b7280); font-size: 13px; }
+@media (max-width: 520px) {
+  .public-menu-header-actions { gap: 6px; }
+  .public-menu-header-bill, .public-menu-header-cart { padding-inline: 10px; gap: 6px; }
+  .public-menu-header-bill b { max-width: 72px; overflow: hidden; text-overflow: ellipsis; }
+}
