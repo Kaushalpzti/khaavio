@@ -1,38 +1,14 @@
 import { useEffect } from "react";
 import { useLocation } from "react-router-dom";
-
-const SITE_URL = "https://khaavio.in";
-const SOCIAL_IMAGE = `${SITE_URL}/khaavio-social-preview.png`;
-
-const STATIC_PAGES = {
-  "/": {
-    title: "Khaavio | QR Ordering, Menus & Restaurant Operations",
-    description:
-      "Manage digital menus, table QR orders, bookings, kitchen workflows, table billing, loyalty rewards, guest feedback and AI menu help in one workspace.",
-    indexable: true,
-  },
-  "/privacy": {
-    title: "Privacy Policy | Khaavio",
-    description:
-      "Learn how Khaavio handles restaurant account information, guest order and booking details, subscription records and privacy requests.",
-    indexable: true,
-  },
-  "/terms": {
-    title: "Terms & Conditions | Khaavio",
-    description:
-      "Read the terms for using Khaavio restaurant software, digital menus, QR ordering, bookings and subscription services.",
-    indexable: true,
-  },
-  "/refund-policy": {
-    title: "Refund & Cancellation Policy | Khaavio",
-    description:
-      "Understand Khaavio subscription cancellations, manual payment verification and how to request a refund.",
-    indexable: true,
-  },
-};
+import { supabase } from "../lib/supabaseClient";
+import { buildPageMetadata, normalizeMetadataPath } from "../lib/seoMetadata.js";
 
 function upsertMeta(selector, attribute, key, content) {
   let node = document.head.querySelector(selector);
+  if (content == null || content === "") {
+    node?.remove();
+    return;
+  }
   if (!node) {
     node = document.createElement("meta");
     node.setAttribute(attribute, key);
@@ -43,6 +19,10 @@ function upsertMeta(selector, attribute, key, content) {
 
 function upsertCanonical(href) {
   let node = document.head.querySelector('link[rel="canonical"]');
+  if (!href) {
+    node?.remove();
+    return;
+  }
   if (!node) {
     node = document.createElement("link");
     node.rel = "canonical";
@@ -51,66 +31,85 @@ function upsertCanonical(href) {
   node.href = href;
 }
 
-function resolvePage(pathname) {
-  if (STATIC_PAGES[pathname]) return STATIC_PAGES[pathname];
-
-  if (pathname.startsWith("/menu/")) {
-    return {
-      title: "Digital Restaurant Menu | Khaavio",
-      description:
-        "Browse a restaurant's digital menu on Khaavio. Explore available dishes, prices and table ordering options.",
-      indexable: true,
-    };
+function upsertStructuredData(value) {
+  let node = document.head.querySelector('script[type="application/ld+json"]');
+  if (!value) {
+    node?.remove();
+    return;
   }
-
-  if (pathname.startsWith("/book/")) {
-    return {
-      title: "Restaurant Table Booking | Khaavio",
-      description:
-        "Send a table booking request to a restaurant using its Khaavio booking page.",
-      indexable: false,
-    };
+  if (!node) {
+    node = document.createElement("script");
+    node.type = "application/ld+json";
+    document.head.appendChild(node);
   }
+  node.textContent = JSON.stringify(value);
+}
 
-  return {
-    title: "Khaavio | Restaurant Workspace",
-    description:
-      "Manage restaurant menus, orders, bookings and table operations with Khaavio.",
-    indexable: false,
-  };
+async function loadPublicRestaurant(slug) {
+  if (!slug) return null;
+  try {
+    const { data, error } = await supabase.rpc("khaavio_public_restaurant_menu", {
+      p_slug: slug,
+    });
+    if (error || !data?.restaurant || data.restaurant.is_published !== true) return null;
+    return data.restaurant;
+  } catch {
+    return null;
+  }
 }
 
 export default function SeoManager() {
-  const { pathname } = useLocation();
+  const { pathname, search } = useLocation();
 
   useEffect(() => {
-    const normalizedPath = pathname === "/" ? "/" : pathname.replace(/\/$/, "");
-    const page = resolvePage(normalizedPath);
-    const canonical = `${SITE_URL}${normalizedPath}`;
+    let active = true;
 
-    document.title = page.title;
-    upsertMeta('meta[name="description"]', "name", "description", page.description);
-    upsertMeta(
-      'meta[name="robots"]',
-      "name",
-      "robots",
-      page.indexable ? "index,follow,max-image-preview:large" : "noindex,follow",
-    );
-    upsertMeta('meta[property="og:title"]', "property", "og:title", page.title);
-    upsertMeta('meta[property="og:description"]', "property", "og:description", page.description);
-    upsertMeta('meta[property="og:url"]', "property", "og:url", canonical);
-    upsertMeta('meta[property="og:image"]', "property", "og:image", SOCIAL_IMAGE);
-    upsertMeta('meta[name="twitter:card"]', "name", "twitter:card", "summary_large_image");
-    upsertMeta('meta[name="twitter:title"]', "name", "twitter:title", page.title);
-    upsertMeta('meta[name="twitter:description"]', "name", "twitter:description", page.description);
-    upsertMeta('meta[name="twitter:image"]', "name", "twitter:image", SOCIAL_IMAGE);
+    async function updateMetadata() {
+      const normalizedPath = normalizeMetadataPath(pathname);
+      const query = new URLSearchParams(search);
+      const tableToken = query.get("table") || "";
+      const dynamicMatch = normalizedPath.match(/^\/(menu|book)\/([^/]+)$/);
+      let restaurant = null;
 
-    if (page.indexable) {
-      upsertCanonical(canonical);
-    } else {
-      document.head.querySelector('link[rel="canonical"]')?.remove();
+      if (dynamicMatch) {
+        let slug = "";
+        try { slug = decodeURIComponent(dynamicMatch[2]); } catch { slug = ""; }
+        if (/^[a-z0-9][a-z0-9-]{0,159}$/i.test(slug)) restaurant = await loadPublicRestaurant(slug);
+      }
+
+      if (!active) return;
+      const page = buildPageMetadata(normalizedPath, { restaurant, tableToken });
+      document.title = page.title;
+      upsertMeta('meta[name="description"]', "name", "description", page.description);
+      upsertMeta(
+        'meta[name="robots"]',
+        "name",
+        "robots",
+        page.indexable ? "index,follow,max-image-preview:large" : "noindex,follow",
+      );
+      upsertMeta('meta[name="keywords"]', "name", "keywords", page.keywords);
+      upsertMeta('meta[property="og:type"]', "property", "og:type", "website");
+      upsertMeta('meta[property="og:site_name"]', "property", "og:site_name", "Khaavio");
+      upsertMeta('meta[property="og:locale"]', "property", "og:locale", "en_IN");
+      upsertMeta('meta[property="og:title"]', "property", "og:title", page.title);
+      upsertMeta('meta[property="og:description"]', "property", "og:description", page.description);
+      upsertMeta('meta[property="og:url"]', "property", "og:url", page.ogUrl);
+      upsertMeta('meta[property="og:image"]', "property", "og:image", page.image);
+      upsertMeta('meta[property="og:image:type"]', "property", "og:image:type", page.imageType);
+      upsertMeta('meta[property="og:image:width"]', "property", "og:image:width", String(page.imageWidth));
+      upsertMeta('meta[property="og:image:height"]', "property", "og:image:height", String(page.imageHeight));
+      upsertMeta('meta[property="og:image:alt"]', "property", "og:image:alt", page.imageAlt);
+      upsertMeta('meta[name="twitter:card"]', "name", "twitter:card", "summary_large_image");
+      upsertMeta('meta[name="twitter:title"]', "name", "twitter:title", page.title);
+      upsertMeta('meta[name="twitter:description"]', "name", "twitter:description", page.description);
+      upsertMeta('meta[name="twitter:image"]', "name", "twitter:image", page.image);
+      upsertCanonical(page.canonical);
+      upsertStructuredData(page.structuredData);
     }
-  }, [pathname]);
+
+    updateMetadata();
+    return () => { active = false; };
+  }, [pathname, search]);
 
   return null;
 }

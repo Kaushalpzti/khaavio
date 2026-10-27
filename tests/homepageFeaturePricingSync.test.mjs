@@ -38,8 +38,10 @@ test("homepage advertises the current shipped restaurant and guest modules", () 
   assert.match(publicMenu, /import AskKhaavio from "\.\.\/components\/AskKhaavio"/);
   assert.match(publicMenu, /import PublicLoyaltyClub from "\.\.\/components\/PublicLoyaltyClub"/);
   assert.match(publicMenu, /import PublicReviewsFeedback(?:, \{[^}]+\})? from "\.\.\/components\/PublicReviewsFeedback"/);
-  assert.match(seoManager, /Khaavio \| QR Ordering, Menus & Restaurant Operations/);
-  assert.match(seoManager, /table billing, loyalty rewards, guest feedback and AI menu help/);
+  assert.match(seoManager, /buildPageMetadata/);
+  const seoMetadata = read("../src/lib/seoMetadata.js");
+  assert.match(seoMetadata, /Khaavio \| QR Ordering, Menus & Restaurant Operations/);
+  assert.match(seoMetadata, /table billing, loyalty rewards, guest feedback and AI menu help/);
   assert.match(indexHtml, /og:title.*QR Ordering, Menus &amp; Restaurant Operations/);
   assert.match(indexHtml, /AI menu help in one workspace/);
 });
