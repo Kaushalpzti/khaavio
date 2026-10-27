@@ -47,7 +47,7 @@ test("public home page has the refreshed responsive visual system without alteri
 
 
 test("premium QR cards use an editorial overline, scan prompt and table plaque", () => {
-  assert.ok(studio.includes("YOUR TABLE · YOUR MENU"));
+  assert.match(studio, /fillText\("YOUR TABLE\s+·\s+YOUR MENU"/);
   assert.ok(studio.includes("SCAN TO EXPLORE"));
   assert.ok(studio.includes("Point your camera here"));
   assert.match(studioStyles, /\.tqr-card-overline/);
