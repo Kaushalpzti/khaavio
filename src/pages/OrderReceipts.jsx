@@ -11,6 +11,7 @@ import {
   Store,
 } from "lucide-react";
 import { supabase } from "../lib/supabaseClient";
+import { normalizeTableNumber } from "../lib/tableNumber";
 import "./OrderReceipts.css";
 
 function formatPrice(value) {
@@ -207,7 +208,7 @@ export default function OrderReceipts() {
                         <strong>Order #{getReference(order.id)}</strong>
                         <span className={`order-receipt-status status-${order.status}`}>{titleCase(order.status)}</span>
                       </div>
-                      <p>{order.customer_name || "Walk-in customer"} · Table {order.tableNumber ?? "—"}</p>
+                      <p>{order.customer_name || "Walk-in customer"} · Table {normalizeTableNumber(order.tableNumber) || "—"}</p>
                       <span className="order-receipt-row-date"><CalendarDays size={13} /> {formatDate(order.created_at)}</span>
                     </div>
                     <div className="order-receipt-row-end">
@@ -258,7 +259,7 @@ export default function OrderReceipts() {
               </div>
               <div className="receipt-meta-line"><span>Date</span><span>{formatDate(selectedOrder.created_at)}</span></div>
               <div className="receipt-meta-line"><span>Order status</span><span>{titleCase(selectedOrder.status)}</span></div>
-              <div className="receipt-meta-line"><span>Table</span><span>{selectedOrder.tableNumber ?? "—"}</span></div>
+              <div className="receipt-meta-line"><span>Table</span><span>{normalizeTableNumber(selectedOrder.tableNumber) || "—"}</span></div>
               <div className="receipt-meta-line"><span>Customer</span><span>{selectedOrder.customer_name || "Walk-in customer"}</span></div>
               {selectedOrder.customer_phone && <div className="receipt-meta-line"><span>Phone</span><span>{selectedOrder.customer_phone}</span></div>}
 
