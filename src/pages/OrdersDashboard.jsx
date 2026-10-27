@@ -268,7 +268,7 @@ export default function OrdersDashboard() {
         const { data: orderData, error: ordersError } = await supabase
           .from("orders")
           .select(
-            "id, restaurant_id, table_id, customer_name, customer_phone, notes, status, total_amount, created_at",
+            "id, restaurant_id, table_id, guest_tab_id, customer_name, customer_phone, notes, status, total_amount, created_at",
           )
           .eq("restaurant_id", restaurantData.id)
           .order("created_at", { ascending: false });
@@ -277,8 +277,9 @@ export default function OrdersDashboard() {
 
         const orderList = orderData || [];
         const orderIds = orderList.map((order) => order.id);
+        const guestTabIds = [...new Set(orderList.map((order) => order.guest_tab_id).filter(Boolean))];
 
-        const [itemsResult, tablesResult] = await Promise.all([
+        const [itemsResult, tablesResult, guestTabsResult] = await Promise.all([
           orderIds.length > 0
             ? supabase
                 .from("order_items")
@@ -292,10 +293,18 @@ export default function OrdersDashboard() {
             .from("restaurant_tables")
             .select("id, table_number")
             .eq("restaurant_id", restaurantData.id),
+          guestTabIds.length > 0
+            ? supabase
+                .from("table_session_tabs")
+                .select("id, display_name")
+                .eq("restaurant_id", restaurantData.id)
+                .in("id", guestTabIds)
+            : Promise.resolve({ data: [], error: null }),
         ]);
 
         if (itemsResult.error) throw itemsResult.error;
         if (tablesResult.error) throw tablesResult.error;
+        if (guestTabsResult.error) throw guestTabsResult.error;
 
         if (!active) return;
 
@@ -313,10 +322,14 @@ export default function OrdersDashboard() {
             table.table_number,
           ]),
         );
+        const guestTabNames = new Map(
+          (guestTabsResult.data || []).map((tab) => [tab.id, tab.display_name || "Guest"]),
+        );
 
         const enrichedOrders = orderList.map((order) => ({
           ...order,
           table_number: tableNames.get(order.table_id) || "Restaurant table",
+          guest_tab_name: guestTabNames.get(order.guest_tab_id) || null,
           items: itemGroups.get(order.id) || [],
         }));
 
@@ -803,7 +816,7 @@ export default function OrdersDashboard() {
                           <div className="order-meta">
                             <span>
                               <Store size={14} />
-                              {order.table_number}
+                              {order.table_number}{order.guest_tab_name ? " · " + order.guest_tab_name : ""}
                             </span>
 
                             <span>
