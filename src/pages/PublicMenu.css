@@ -2426,7 +2426,50 @@
     }
 }
 /* Guest-specific tab and split-invoice experience */
-.public-menu-header-bill { max-width: 190px; }
+.public-menu-header-bill {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 42px;
+  max-width: 190px;
+  padding: 8px 11px;
+  border: 1px solid #cfe5cf;
+  border-radius: 14px;
+  color: #174f35;
+  background: #eaf5e8;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 800;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: border-color 160ms ease, transform 160ms ease, background 160ms ease;
+}
+.public-menu-header-bill:hover {
+  transform: translateY(-1px);
+  border-color: #9dcca5;
+  background: #e0f0dd;
+}
+.public-menu-header-bill:focus-visible {
+  outline: 3px solid rgba(31, 112, 72, 0.35);
+  outline-offset: 2px;
+}
+.public-menu-header-bill span { display: inline; }
+.public-menu-header-bill b {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  max-width: 86px;
+  min-height: 22px;
+  padding: 0 6px;
+  border-radius: 999px;
+  color: #174f35;
+  background: #d2eacb;
+  font-size: 10px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 .public-guest-bill-drawer { gap: 18px; }
 .public-guest-bill-status {
   align-self: flex-start; border-radius: 999px; padding: 6px 10px;
@@ -2446,8 +2489,26 @@
 .public-guest-bill-total strong { font-size: 22px; }
 .public-guest-bill-invoice { display: grid; gap: 6px; border-radius: 14px; padding: 14px; background: var(--surface-muted, #f8fafc); }
 .public-guest-bill-invoice span, .public-guest-bill-invoice p { color: var(--text-secondary, #6b7280); font-size: 13px; }
+@media (max-width: 680px) {
+  .public-menu-header-bill {
+    min-height: 39px;
+    gap: 6px;
+    padding: 7px 9px;
+    border-radius: 12px;
+    font-size: 11px;
+  }
+  .public-menu-header-bill svg { width: 15px; height: 15px; flex: 0 0 auto; }
+}
+
 @media (max-width: 520px) {
   .public-menu-header-actions { gap: 6px; }
-  .public-menu-header-bill, .public-menu-header-cart { padding-inline: 10px; gap: 6px; }
+  .public-menu-header-cart { padding-inline: 8px; gap: 5px; }
+  .public-menu-header-bill { padding-inline: 8px; gap: 5px; }
   .public-menu-header-bill b { max-width: 72px; overflow: hidden; text-overflow: ellipsis; }
+}
+
+@media (max-width: 400px) {
+  .public-menu-header-bill span { display: inline !important; }
+  .public-menu-header-bill b { display: none; }
+  .public-menu-header-bill { min-width: 0; padding-inline: 8px; }
 }
