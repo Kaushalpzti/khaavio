@@ -704,9 +704,10 @@ async function createA4PageForCard(cardCanvas) {
   if (!ctx) throw new Error("Unable to create an A4 export page.");
   ctx.fillStyle = "#ffffff";
   ctx.fillRect(0, 0, A4_WIDTH, A4_HEIGHT);
-  // A4 raster is 300 DPI. Keep a printer-safe margin around the card.
-  const width = 2120;
-  const height = 3180;
+  // A4 sheet is 300 DPI. Fit the portrait card inside an A6-sized footprint
+  // (105 × 148 mm); preserve the artwork's 2:3 ratio rather than stretching it.
+  const width = 1165;
+  const height = 1748;
   ctx.drawImage(
     cardCanvas,
     (A4_WIDTH - width) / 2,
@@ -2279,7 +2280,7 @@ export default function TableQRStudio() {
               </div>
               <div className="tqr-format-pills">
                 <span>PNG · 2160 × 3240 · high resolution</span>
-                <span>PDF · A4 · 300 DPI</span>
+                <span>PDF · A4 sheet · A6 card</span>
               </div>
             </div>
           </div>
@@ -2366,7 +2367,7 @@ export default function TableQRStudio() {
                 </span>
                 <span>
                   <strong>Download as PDF</strong>
-                  <small>A4 page, print ready</small>
+                  <small>A6 card centered on A4 paper</small>
                 </span>
               </div>
               <button
