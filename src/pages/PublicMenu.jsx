@@ -60,6 +60,33 @@ function getGuestTabStorageKey(slug, tableToken) {
   return "khaavio-guest-tab:" + slug + ":" + tableToken;
 }
 
+function getGuestOrderRequestStorageKey(slug, tableToken, guestTabToken) {
+  return "khaavio-guest-order-request:" + slug + ":" + tableToken + ":" + guestTabToken;
+}
+
+function getOrCreateGuestOrderRequest(slug, tableToken, guestTabToken, fingerprint) {
+  const key = getGuestOrderRequestStorageKey(slug, tableToken, guestTabToken);
+  try {
+    const raw = window.sessionStorage.getItem(key);
+    if (raw) {
+      try {
+        const saved = JSON.parse(raw);
+        if (saved?.fingerprint === fingerprint && typeof saved?.token === "string" && saved.token) {
+          return { key, token: saved.token };
+        }
+      } catch {
+        // Replace a malformed/stale retry record with a new request ID.
+      }
+    }
+
+    const token = createGuestTabToken();
+    window.sessionStorage.setItem(key, JSON.stringify({ token, fingerprint }));
+    return { key, token };
+  } catch {
+    throw new Error("Khaavio could not safely save this order's retry key in this browser. Enable session storage or ask restaurant staff for help.");
+  }
+}
+
 function getRestaurantAvailability(restaurant, timestamp) {
   if (!restaurant) {
     return {
@@ -774,10 +801,31 @@ export default function PublicMenu() {
         throw new Error("Your guest bill is still being prepared. Please wait a moment and try again.");
       }
 
+      const guestOrderRequest = useGuestBilling
+        ? getOrCreateGuestOrderRequest(
+            slug,
+            tableToken,
+            activeGuestToken,
+            JSON.stringify({
+              name,
+              phone: payload.p_customer_phone,
+              notes: payload.p_notes,
+              items: payload.p_items,
+              loyaltyMemberToken: payload.p_loyalty_member_token,
+              loyaltyPhone: payload.p_loyalty_phone,
+            }),
+          )
+        : null;
+
       const { data, error: orderError } = await supabase.rpc(
         useGuestBilling ? "place_public_order_for_guest_with_loyalty" : "place_public_order_with_loyalty",
         useGuestBilling
-          ? { ...payload, p_guest_tab_token: activeGuestToken, p_guest_display_name: name }
+          ? {
+              ...payload,
+              p_guest_tab_token: activeGuestToken,
+              p_guest_display_name: name,
+              p_guest_order_request_token: guestOrderRequest.token,
+            }
           : payload,
       );
 
@@ -798,6 +846,13 @@ export default function PublicMenu() {
         trackingToken: result.tracking_token || null,
       });
 
+      if (guestOrderRequest) {
+        try {
+          window.sessionStorage.removeItem(guestOrderRequest.key);
+        } catch {
+          // The order is already committed; storage cleanup failure must not report an order failure.
+        }
+      }
       setCart([]);
       setOrderNotes("");
       if (useGuestBilling) void refreshGuestBillSnapshot(activeGuestToken);
