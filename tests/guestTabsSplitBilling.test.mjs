@@ -65,6 +65,9 @@ test("owner billing can view guest tabs, create guest invoices and record the co
   assert.match(sessions, /mark_guest_tab_invoice_paid/);
   assert.match(sessions, /void_guest_tab_invoice/);
   assert.match(sessions, /Void & reopen tab/);
+  assert.match(sessions, /from\("table_session_invoice_items"\)/);
+  assert.match(sessions, /invoiceItemsByInvoice/);
+  assert.match(sessions, /renderInvoiceSnapshot\(invoice, session\)/);
   assert.match(sessions, /renderSessionOrders\(session, invoice\.guest_tab_id\)/);
 });
 
