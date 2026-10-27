@@ -9,6 +9,7 @@ import {
   LoaderCircle,
   Minus,
   Plus,
+  ReceiptText,
   Search,
   ShoppingBag,
   Gift,
@@ -917,14 +918,14 @@ export default function PublicMenu() {
           {isGuestBilling && (
             <button
               type="button"
-              className="public-menu-header-cart public-menu-header-bill"
+              className="public-menu-header-bill"
               onClick={() => {
                 setGuestBillOpen(true);
                 void refreshGuestBillSnapshot();
               }}
-              aria-label="View my guest bill"
+              aria-label="Open My Bill"
             >
-              <ShoppingBag size={17} />
+              <ReceiptText size={17} aria-hidden="true" />
               <span>My Bill</span>
               <b>{formatPrice(Number(guestTabSnapshot?.tab?.total_amount) || 0)}</b>
             </button>
