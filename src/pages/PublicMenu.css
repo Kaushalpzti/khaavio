@@ -2378,17 +2378,25 @@
         bottom: calc(154px + env(safe-area-inset-bottom, 0px));
     }
     .public-menu-bottom-navigation~.ask-khaavio-root {
-        bottom: calc(82px + env(safe-area-inset-bottom, 0px));
-    }
-    .public-menu-bottom-navigation~.ask-khaavio-root.is-raised {
-        bottom: calc(210px + env(safe-area-inset-bottom, 0px));
-    }
-    .public-menu-bottom-navigation~.ask-khaavio-root .ask-khaavio-panel {
         bottom: calc(77px + env(safe-area-inset-bottom, 0px));
     }
+    .public-menu-bottom-navigation~.ask-khaavio-root.is-raised {
+        bottom: calc(157px + env(safe-area-inset-bottom, 0px));
+    }
+    /* The AI panel uses viewport coordinates, separate from its launcher. */
+    .public-menu-bottom-navigation~.ask-khaavio-root .ask-khaavio-panel {
+        right: 12px;
+        bottom: calc(199px + env(safe-area-inset-bottom, 0px));
+        width: min(350px, calc(100vw - 24px));
+        height: min(650px, calc(100dvh - 236px));
+        min-height: min(320px, calc(100dvh - 236px));
+        max-height: calc(100dvh - 236px);
+    }
     .public-menu-bottom-navigation~.ask-khaavio-root.is-raised .ask-khaavio-panel {
-        bottom: calc(208px + env(safe-area-inset-bottom, 0px));
-        max-height: calc(100dvh - 230px);
+        bottom: calc(275px + env(safe-area-inset-bottom, 0px));
+        height: min(650px, calc(100dvh - 312px));
+        min-height: min(320px, calc(100dvh - 312px));
+        max-height: calc(100dvh - 312px);
     }
     .public-menu-rewards-sheet-backdrop {
         align-items: flex-end;
