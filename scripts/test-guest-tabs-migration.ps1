@@ -4,6 +4,7 @@ $RepoRoot = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
 $BaselinePath = Join-Path $RepoRoot "supabase\local-schema-baseline.sql"
 $FeatureMigrationPath = Join-Path $RepoRoot "supabase\migrations\20261027213000_guest_tabs_split_billing.sql"
 $ConfigPath = Join-Path $RepoRoot "supabase\config.toml"
+$FunctionsSourcePath = Join-Path $RepoRoot "supabase\functions"
 $SupabaseCli = Join-Path $RepoRoot "node_modules\.bin\supabase.cmd"
 
 if (-not (Test-Path $SupabaseCli)) {
@@ -23,6 +24,9 @@ if (-not (Test-Path $FeatureMigrationPath)) {
 }
 if (-not (Test-Path $ConfigPath)) {
   throw "Supabase config not found: $ConfigPath"
+}
+if (-not (Test-Path $FunctionsSourcePath)) {
+  throw "Supabase Edge Functions directory not found: $FunctionsSourcePath"
 }
 
 $BaselineSql = Get-Content -Raw -Path $BaselinePath
@@ -44,6 +48,9 @@ $UniqueProjectId = $null
 try {
   New-Item -ItemType Directory -Path $TempMigrations -Force | Out-Null
   New-Item -ItemType Directory -Path $TempFunctions -Force | Out-Null
+  # The copied config declares Edge Functions; copy their source so the CLI can resolve
+  # every configured function path while starting this disposable migration-test stack.
+  Get-ChildItem -LiteralPath $FunctionsSourcePath -Force | Copy-Item -Destination $TempFunctions -Recurse -Force
   $ConfigText = Get-Content -Raw -Path $ConfigPath
   if ($ConfigText -notmatch '(?m)^project_id\s*=\s*"[^"]+"') {
     throw "Could not safely set a unique local project_id in the copied Supabase config."
