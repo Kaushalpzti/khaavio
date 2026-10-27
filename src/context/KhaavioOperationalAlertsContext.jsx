@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 import { supabase } from "../lib/supabaseClient";
+import { normalizeTableNumber } from "../lib/tableNumber";
 import { resolvePlanFeatureFlags } from "../lib/planFeatures";
 import { useAuthSession } from "./AuthSessionContext";
 import {
@@ -150,7 +151,7 @@ function KhaavioOperationalAlertsSession({ children, status, userId }) {
                       .limit(8)
                   : Promise.resolve({ data: [], error: null }),
               ]);
-              if (!tableResult.error) tableNumber = tableResult.data?.table_number || "";
+              if (!tableResult.error) tableNumber = normalizeTableNumber(tableResult.data?.table_number || "");
               if (!itemsResult.error) {
                 itemSummary = (itemsResult.data || [])
                   .map((item) => `${Number(item.quantity) || 1} ${item.item_name}`)
@@ -196,7 +197,7 @@ function KhaavioOperationalAlertsSession({ children, status, userId }) {
                   .eq("restaurant_id", restaurant.id)
                   .eq("id", request.table_id)
                   .maybeSingle();
-                if (!error) tableNumber = data?.table_number || "";
+                if (!error) tableNumber = normalizeTableNumber(data?.table_number || "");
               }
             } catch {
               // The request can still be announced without a table number.
