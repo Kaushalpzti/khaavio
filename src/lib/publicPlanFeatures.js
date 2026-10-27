@@ -17,8 +17,12 @@ export function normalizePublicFeatureFlags(value) {
   );
 }
 
-export function shouldShowPublicReviewsTab(features, hasValidGoogleReviewUrl) {
-  return features?.private_feedback === true || (
-    features?.google_review_link === true && hasValidGoogleReviewUrl === true
-  );
+export function shouldShowPublicReviewsTab(
+  features,
+  hasValidGoogleReviewUrl,
+  hasConfiguredSocialLinks = false,
+) {
+  return hasConfiguredSocialLinks === true ||
+    features?.private_feedback === true ||
+    (features?.google_review_link === true && hasValidGoogleReviewUrl === true);
 }

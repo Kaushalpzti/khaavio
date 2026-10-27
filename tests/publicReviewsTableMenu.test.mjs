@@ -18,3 +18,9 @@ test("only one feedback widget is mounted in the dedicated review screen", () =>
   assert.equal((menu.match(/<PublicReviewsFeedback/g) || []).length, 1);
   assert.match(menu, /className="public-menu-tab-view public-menu-reviews-view"[\s\S]*?<PublicReviewsFeedback/);
 });
+
+
+test("social profiles are passed to the public reviews tab and can reveal it", () => {
+  assert.match(menu, /socialLinks=\{restaurant\.social_links\}/);
+  assert.match(menu, /hasSocialLinks\(restaurant\?\.social_links\)/);
+});

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { ExternalLink, MessageCircle, Send, Star, X } from "lucide-react";
 import { supabase } from "../lib/supabaseClient";
+import PublicRestaurantSocialLinks from "./PublicRestaurantSocialLinks";
 import "./PublicReviewsFeedback.css";
 
 const FEEDBACK_CATEGORIES = [
@@ -32,6 +33,7 @@ export default function PublicReviewsFeedback({
   restaurantSlug,
   restaurantName,
   googleReviewUrl,
+  socialLinks = {},
   allowGoogleReviewLink = true,
   allowPrivateFeedback = true,
 }) {
@@ -90,6 +92,8 @@ export default function PublicReviewsFeedback({
           ? `Your feedback helps ${restaurantName || "our team"} make every visit better.`
           : `Leave an honest Google review to help other guests discover ${restaurantName || "this restaurant"}.`}</p>
       </div>
+
+      <PublicRestaurantSocialLinks restaurantName={restaurantName} socialLinks={socialLinks} />
 
       <div className="public-reviews-actions">
         {showGoogleReview && (

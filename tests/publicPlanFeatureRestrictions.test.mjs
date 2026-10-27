@@ -38,6 +38,8 @@ test("Starter exposes only a configured Google review link, not Rewards or priva
   assert.equal(planHasFeature(starter, "ai_menu_assistant"), false);
   assert.equal(shouldShowPublicReviewsTab({ private_feedback: false, google_review_link: true }, true), true);
   assert.equal(shouldShowPublicReviewsTab({ private_feedback: false, google_review_link: true }, false), false);
+  assert.equal(shouldShowPublicReviewsTab({ private_feedback: false, google_review_link: false }, false, true), true);
+  assert.equal(shouldShowPublicReviewsTab({ private_feedback: false, google_review_link: false }, false, false), false);
 });
 
 test("Growth, trial and legacy plans retain the Growth feature set", () => {
@@ -56,6 +58,7 @@ test("public menu uses server feature flags for Rewards, Reviews and Ask Khaavio
   assert.match(publicMenu, /allowPrivateFeedback=\{canUsePrivateFeedback\}/);
   assert.match(publicMenu, /\{canUseAskKhaavio && \(/);
   assert.match(publicMenu, /shouldShowPublicReviewsTab/);
+  assert.match(publicMenu, /hasSocialLinks\(restaurant\?\.social_links\)/);
 });
 
 test("Starter review tab can show Google link but private form is plan gated", () => {
