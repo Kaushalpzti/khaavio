@@ -39,8 +39,8 @@ test("dashboard and review widget use the social profile fields", () => {
   const settings = read("../src/pages/RestaurantSettings.jsx");
   const publicReviews = read("../src/components/PublicReviewsFeedback.jsx");
   const socialComponent = read("../src/components/PublicRestaurantSocialLinks.jsx");
-  assert.match(settings, /social_links: socialValidation\\.value/);
-  assert.match(settings, /SOCIAL_LINK_FIELDS\\.map/);
+  assert.match(settings, /social_links: socialValidation\.value/);
+  assert.match(settings, /SOCIAL_LINK_FIELDS\.map/);
   assert.match(publicReviews, /PublicRestaurantSocialLinks/);
   assert.match(socialComponent, /FOLLOW ALONG/);
   assert.match(socialComponent, /rel="noopener noreferrer nofollow"/);
@@ -49,7 +49,7 @@ test("dashboard and review widget use the social profile fields", () => {
 test("social links are allowlisted in the published menu RPC", () => {
   const migration = read("../supabase/migrations/20261027203000_restaurant_social_links.sql");
   assert.match(migration, /ADD COLUMN IF NOT EXISTS social_links jsonb/);
-  assert.match(migration, /CHECK \\(pg_catalog\\.jsonb_typeof\\(social_links\\) = 'object'\\)/);
-  assert.match(migration, /'social_links', COALESCE\\(v_restaurant -> 'social_links', '\\{\\}'::jsonb\\)/);
-  assert.match(migration, /WHERE r\\.slug = pg_catalog\\.btrim\\(p_slug\\) AND r\\.is_published IS TRUE/);
+  assert.match(migration, /CHECK \(pg_catalog\.jsonb_typeof\(social_links\) = 'object'\)/);
+  assert.match(migration, /'social_links', COALESCE\(v_restaurant -> 'social_links', '\{\}'::jsonb\)/);
+  assert.match(migration, /WHERE r\.slug = pg_catalog\.btrim\(p_slug\) AND r\.is_published IS TRUE/);
 });
