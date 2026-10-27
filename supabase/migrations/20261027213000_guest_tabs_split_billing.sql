@@ -855,4 +855,34 @@ begin
 end;
 $function$;
 
+-- Once a guest invoice is issued, freeze that guest's source orders even when
+-- the shared table session remains open for other guests.
+CREATE OR REPLACE FUNCTION public.khaavio_guard_closed_guest_tab_updates()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path TO ''
+AS $function$
+DECLARE
+  v_tab_status text;
+BEGIN
+  IF OLD.guest_tab_id IS NULL THEN
+    RETURN NEW;
+  END IF;
+  SELECT t.status INTO v_tab_status
+  FROM public.table_session_tabs t
+  WHERE t.id = OLD.guest_tab_id
+  FOR UPDATE;
+  IF NOT FOUND OR v_tab_status <> 'open' THEN
+    RAISE EXCEPTION 'Orders belonging to a guest bill cannot be changed after billing starts.' USING ERRCODE = '55000';
+  END IF;
+  RETURN NEW;
+END;
+$function$;
+REVOKE ALL ON FUNCTION public.khaavio_guard_closed_guest_tab_updates() FROM PUBLIC, anon, authenticated;
+DROP TRIGGER IF EXISTS khaavio_z_guard_closed_guest_tab_updates ON public.orders;
+CREATE TRIGGER khaavio_z_guard_closed_guest_tab_updates
+BEFORE UPDATE ON public.orders
+FOR EACH ROW EXECUTE FUNCTION public.khaavio_guard_closed_guest_tab_updates();
+
 COMMIT;
