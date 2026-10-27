@@ -27,3 +27,5 @@ dist-ssr
 .env
 .env.*
 !.env.example
+# Local-only schema snapshot for isolated migration validation; never commit this production-derived dump.
+supabase/local-schema-baseline.sql

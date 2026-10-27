@@ -9,6 +9,7 @@ import {
   LoaderCircle,
   Minus,
   Plus,
+  ReceiptText,
   Search,
   ShoppingBag,
   Gift,
@@ -47,6 +48,44 @@ function getErrorMessage(error, fallback) {
     return "Online ordering is temporarily unavailable at this restaurant. Please ask the restaurant team for help.";
   }
   return message || fallback;
+}
+
+function createGuestTabToken() {
+  if (typeof crypto === "undefined" || typeof crypto.randomUUID !== "function") {
+    throw new Error("This browser cannot securely start a guest bill. Please use an updated browser or ask staff for help.");
+  }
+  return crypto.randomUUID();
+}
+
+function getGuestTabStorageKey(slug, tableToken) {
+  return "khaavio-guest-tab:" + slug + ":" + tableToken;
+}
+
+function getGuestOrderRequestStorageKey(slug, tableToken, guestTabToken) {
+  return "khaavio-guest-order-request:" + slug + ":" + tableToken + ":" + guestTabToken;
+}
+
+function getOrCreateGuestOrderRequest(slug, tableToken, guestTabToken, fingerprint) {
+  const key = getGuestOrderRequestStorageKey(slug, tableToken, guestTabToken);
+  try {
+    const raw = window.sessionStorage.getItem(key);
+    if (raw) {
+      try {
+        const saved = JSON.parse(raw);
+        if (saved?.fingerprint === fingerprint && typeof saved?.token === "string" && saved.token) {
+          return { key, token: saved.token };
+        }
+      } catch {
+        // Replace a malformed/stale retry record with a new request ID.
+      }
+    }
+
+    const token = createGuestTabToken();
+    window.sessionStorage.setItem(key, JSON.stringify({ token, fingerprint }));
+    return { key, token };
+  } catch {
+    throw new Error("Khaavio could not safely save this order's retry key in this browser. Enable session storage or ask restaurant staff for help.");
+  }
 }
 
 function getRestaurantAvailability(restaurant, timestamp) {
@@ -165,6 +204,11 @@ export default function PublicMenu() {
   const [categoryId, setCategoryId] = useState("all");
 
   const [cart, setCart] = useState([]);
+  const [guestTabToken, setGuestTabToken] = useState("");
+  const [guestTabSnapshot, setGuestTabSnapshot] = useState(null);
+  const [guestBillOpen, setGuestBillOpen] = useState(false);
+  const [guestBillLoading, setGuestBillLoading] = useState(false);
+  const [guestBillError, setGuestBillError] = useState("");
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [activeBottomTab, setActiveBottomTab] = useState("menu");
   const [activePromoSlide, setActivePromoSlide] = useState(0);
@@ -261,6 +305,10 @@ export default function PublicMenu() {
       setTableContext(null);
       setCategoryId("all");
       setCart([]);
+      setGuestTabToken("");
+      setGuestTabSnapshot(null);
+      setGuestBillOpen(false);
+      setGuestBillError("");
       setIsCartOpen(false);
       setOrderResult(null);
       setCheckoutError("");
@@ -274,13 +322,29 @@ export default function PublicMenu() {
           { p_slug: slug },
         );
         if (restaurantError) throw restaurantError;
-        const restaurantData = menuSnapshot?.restaurant;
+        const restaurantRecord = menuSnapshot?.restaurant;
 
-        if (!restaurantData) {
+        if (!restaurantRecord) {
           throw new Error(
             "This menu is not published yet, or the link is incorrect.",
           );
         }
+
+        let effectiveBillingMode = "combined";
+        if (hasTableParam && tableToken) {
+          try {
+            const { data: billingMode, error: billingModeError } = await supabase.rpc(
+              "khaavio_public_table_billing_mode",
+              { p_slug: slug, p_table_token: tableToken },
+            );
+            if (!billingModeError && (billingMode === "combined" || billingMode === "per_guest")) {
+              effectiveBillingMode = billingMode;
+            }
+          } catch {
+            effectiveBillingMode = "combined";
+          }
+        }
+        const restaurantData = { ...restaurantRecord, table_billing_mode: effectiveBillingMode };
 
         // Public menus receive only a small, non-sensitive set of plan entitlements.
         // If the RPC is unavailable, Growth-only public features fail closed while
@@ -309,6 +373,8 @@ export default function PublicMenu() {
         if (!accessError) transactionAccess = accessData === true;
 
         let resolvedTable = null;
+        let resolvedGuestTabToken = "";
+        let guestTokenInitError = "";
 
         // A table-specific QR must resolve to a valid active table.
         if (hasTableParam) {
@@ -341,6 +407,17 @@ export default function PublicMenu() {
           }
         }
 
+        if (effectiveBillingMode === "per_guest" && resolvedTable && tableToken) {
+          try {
+            const key = getGuestTabStorageKey(slug, tableToken);
+            const storedToken = window.localStorage.getItem(key);
+            resolvedGuestTabToken = storedToken || createGuestTabToken();
+            if (!storedToken) window.localStorage.setItem(key, resolvedGuestTabToken);
+          } catch (tokenError) {
+            guestTokenInitError = tokenError?.message || "Could not prepare your guest bill on this device.";
+          }
+        }
+
         const publicCategories = Array.isArray(menuSnapshot?.categories)
           ? menuSnapshot.categories
           : [];
@@ -368,6 +445,8 @@ export default function PublicMenu() {
         );
 
         setTableContext(resolvedTable);
+        setGuestTabToken(resolvedGuestTabToken);
+        if (guestTokenInitError) setGuestBillError(guestTokenInitError);
       } catch (err) {
         if (!cancelled) {
           setError(
@@ -406,6 +485,83 @@ export default function PublicMenu() {
 
     return () => window.clearInterval(intervalId);
   }, [activeBottomTab]);
+
+  // The table QR has already been validated by resolve_public_table.
+  // Do not depend on a particular ID field name in that RPC's result shape:
+  // the validated table context plus its QR token is the reliable table scope.
+  const isGuestBilling =
+    restaurant?.table_billing_mode === "per_guest" && Boolean(tableContext && tableToken);
+
+  async function refreshGuestBillSnapshot(token = guestTabToken) {
+    if (!token || !slug || !tableToken) return;
+    setGuestBillLoading(true);
+    setGuestBillError("");
+    try {
+      const { data, error: snapshotError } = await supabase.rpc(
+        "khaavio_public_guest_tab_snapshot",
+        { p_slug: slug, p_table_token: tableToken, p_guest_tab_token: token },
+      );
+      if (snapshotError) throw snapshotError;
+      setGuestTabSnapshot(data || null);
+    } catch (snapshotError) {
+      setGuestBillError(getErrorMessage(snapshotError, "Could not load your bill. Please refresh the menu or ask staff for help."));
+    } finally {
+      setGuestBillLoading(false);
+    }
+  }
+
+  async function requestGuestBill() {
+    if (!guestTabToken || !isGuestBilling || guestBillLoading) return;
+    setGuestBillLoading(true);
+    setGuestBillError("");
+    try {
+      const { data, error: requestError } = await supabase.rpc(
+        "finalize_public_guest_tab",
+        { p_slug: slug, p_table_token: tableToken, p_guest_tab_token: guestTabToken },
+      );
+      if (requestError) throw requestError;
+      const invoice = Array.isArray(data) ? data[0] : data;
+      if (!invoice?.invoice_id) throw new Error("The bill could not be confirmed. Please refresh My Bill before retrying.");
+      await refreshGuestBillSnapshot(guestTabToken);
+    } catch (requestError) {
+      setGuestBillError(getErrorMessage(requestError, "Could not request your bill. Please ask staff for assistance."));
+    } finally {
+      setGuestBillLoading(false);
+    }
+  }
+
+  function startNewGuestBill() {
+    try {
+      const nextToken = createGuestTabToken();
+      window.localStorage.setItem(getGuestTabStorageKey(slug, tableToken), nextToken);
+      setGuestTabToken(nextToken);
+      setGuestTabSnapshot(null);
+      setGuestBillError("");
+      setOrderResult(null);
+      setGuestBillOpen(false);
+    } catch (tokenError) {
+      setGuestBillError(tokenError?.message || "Could not start a new guest bill.");
+    }
+  }
+
+  useEffect(() => {
+    if (!isGuestBilling || !guestTabToken) return undefined;
+    let active = true;
+    async function loadSnapshot() {
+      try {
+        const { data, error: snapshotError } = await supabase.rpc(
+          "khaavio_public_guest_tab_snapshot",
+          { p_slug: slug, p_table_token: tableToken, p_guest_tab_token: guestTabToken },
+        );
+        if (snapshotError) throw snapshotError;
+        if (active) setGuestTabSnapshot(data || null);
+      } catch (snapshotError) {
+        if (active) setGuestBillError(getErrorMessage(snapshotError, "Could not load your bill."));
+      }
+    }
+    loadSnapshot();
+    return () => { active = false; };
+  }, [slug, tableToken, guestTabToken, isGuestBilling]);
 
   useEffect(() => {
     if (!isCartOpen) return undefined;
@@ -603,6 +759,36 @@ export default function PublicMenu() {
     setSubmitting(true);
 
     try {
+      // Recheck the effective mode at submission time. An older combined session
+      // may have just closed, and the next session must use the current setting.
+      let useGuestBilling = isGuestBilling;
+      let activeGuestToken = guestTabToken;
+      try {
+        const { data: currentMode, error: modeError } = await supabase.rpc(
+          "khaavio_public_table_billing_mode",
+          { p_slug: slug, p_table_token: tableToken },
+        );
+        if (!modeError && (currentMode === "combined" || currentMode === "per_guest")) {
+          useGuestBilling = currentMode === "per_guest";
+          setRestaurant((current) => current ? { ...current, table_billing_mode: currentMode } : current);
+          if (useGuestBilling) {
+            const key = getGuestTabStorageKey(slug, tableToken);
+            let storedToken = window.localStorage.getItem(key);
+            if (guestTabSnapshot?.tab?.status === "closed" && guestTabSnapshot?.invoice?.payment_status === "paid") {
+              storedToken = null;
+            }
+            if (!storedToken) {
+              storedToken = createGuestTabToken();
+              window.localStorage.setItem(key, storedToken);
+            }
+            activeGuestToken = storedToken;
+            setGuestTabToken(activeGuestToken);
+          }
+        }
+      } catch {
+        if (isGuestBilling) useGuestBilling = true;
+      }
+
       const payload = {
         p_slug: slug,
         p_table_token: tableToken,
@@ -617,9 +803,36 @@ export default function PublicMenu() {
         p_loyalty_phone: loyaltyPhone || null,
       };
 
+      if (useGuestBilling && !activeGuestToken) {
+        throw new Error("Your guest bill is still being prepared. Please wait a moment and try again.");
+      }
+
+      const guestOrderRequest = useGuestBilling
+        ? getOrCreateGuestOrderRequest(
+            slug,
+            tableToken,
+            activeGuestToken,
+            JSON.stringify({
+              name,
+              phone: payload.p_customer_phone,
+              notes: payload.p_notes,
+              items: payload.p_items,
+              loyaltyMemberToken: payload.p_loyalty_member_token,
+              loyaltyPhone: payload.p_loyalty_phone,
+            }),
+          )
+        : null;
+
       const { data, error: orderError } = await supabase.rpc(
-        "place_public_order_with_loyalty",
-        payload,
+        useGuestBilling ? "place_public_order_for_guest_with_loyalty" : "place_public_order_with_loyalty",
+        useGuestBilling
+          ? {
+              ...payload,
+              p_guest_tab_token: activeGuestToken,
+              p_guest_display_name: name,
+              p_guest_order_request_token: guestOrderRequest.token,
+            }
+          : payload,
       );
 
       if (orderError) throw orderError;
@@ -639,8 +852,16 @@ export default function PublicMenu() {
         trackingToken: result.tracking_token || null,
       });
 
+      if (guestOrderRequest) {
+        try {
+          window.sessionStorage.removeItem(guestOrderRequest.key);
+        } catch {
+          // The order is already committed; storage cleanup failure must not report an order failure.
+        }
+      }
       setCart([]);
       setOrderNotes("");
+      if (useGuestBilling) void refreshGuestBillSnapshot(activeGuestToken);
     } catch (err) {
       setCheckoutError(
         getErrorMessage(
@@ -706,18 +927,140 @@ export default function PublicMenu() {
               <span>Table {tableContext.table_number}</span>
             </span>
           )}
-          <button
-            type="button"
-            className="public-menu-header-cart"
-            aria-label={`View cart with ${cartQuantity} items`}
-            onClick={() => setIsCartOpen(true)}
-          >
-            <ShoppingBag size={17} />
-            <span>View cart</span>
-            <b>{cartQuantity}</b>
-          </button>
+          {isGuestBilling ? (
+            <button
+              type="button"
+              className="public-menu-header-bill"
+              onClick={() => {
+                setGuestBillOpen(true);
+                void refreshGuestBillSnapshot();
+              }}
+              aria-label="Open My Bill"
+            >
+              <ReceiptText size={17} aria-hidden="true" />
+              <span>My Bill</span>
+              <b>{formatPrice(Number(guestTabSnapshot?.invoice?.total_amount ?? guestTabSnapshot?.tab?.total_amount) || 0)}</b>
+            </button>
+          ) : (
+            <button
+              type="button"
+              className="public-menu-header-cart"
+              aria-label={`View cart with ${cartQuantity} items`}
+              onClick={() => setIsCartOpen(true)}
+            >
+              <ShoppingBag size={17} />
+              <span>View cart</span>
+              <b>{cartQuantity}</b>
+            </button>
+          )}
         </div>
       </header>
+
+      {guestBillOpen && isGuestBilling && (
+        <div
+          className="public-cart-backdrop"
+          role="presentation"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget && !guestBillLoading) setGuestBillOpen(false);
+          }}
+        >
+          <section
+            className="public-order-section public-cart-drawer public-guest-bill-drawer"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="public-guest-bill-heading"
+            tabIndex={-1}
+          >
+            <div className="public-cart-drawer-topbar">
+              <span className="public-menu-eyebrow">TABLE {tableContext?.table_number}</span>
+              <button
+                type="button"
+                className="public-cart-drawer-close"
+                aria-label="Close my bill"
+                onClick={() => setGuestBillOpen(false)}
+                disabled={guestBillLoading}
+              ><X size={19} /></button>
+            </div>
+            <div className="public-order-heading">
+              <div>
+                <span className="public-menu-eyebrow">YOUR PERSONAL TAB</span>
+                <h2 id="public-guest-bill-heading">My Bill</h2>
+                <p>Every order you place from this device is collected here.</p>
+              </div>
+              {guestTabSnapshot?.tab?.status && (
+                <span className="public-guest-bill-status">{guestTabSnapshot.tab.status.replace(/_/g, " ")}</span>
+              )}
+            </div>
+            {guestBillError && <div className="public-order-error" role="alert">{guestBillError}</div>}
+            {guestBillLoading && (
+              <p className="public-guest-bill-loading">
+                <LoaderCircle className="public-menu-spinner" size={17} /> Updating your bill…
+              </p>
+            )}
+            {!guestTabSnapshot?.exists ? (
+              <div className="public-order-empty">
+                <div className="public-menu-empty-icon"><ShoppingBag size={24} /></div>
+                <h3>Your personal bill starts with your first order</h3>
+                <p>Place an order from this menu. Your next orders from this browser will be added to the same bill.</p>
+                <button type="button" className="public-order-submit" onClick={() => setGuestBillOpen(false)}>Browse menu</button>
+              </div>
+            ) : (
+              <>
+                <div className="public-guest-bill-orders">
+                  {(guestTabSnapshot.orders || []).map((order) => (
+                    <article className="public-guest-bill-order" key={order.id}>
+                      <div className="public-guest-bill-order-heading">
+                        <div>
+                          <strong>Order #{order.reference}</strong>
+                          <small>{new Intl.DateTimeFormat("en-IN", { hour: "2-digit", minute: "2-digit", day: "2-digit", month: "short" }).format(new Date(order.created_at))}</small>
+                        </div>
+                        <span>{formatPrice(order.total_amount)}</span>
+                      </div>
+                      <div className="public-guest-bill-item-list">
+                        {(order.items || []).map((item) => (
+                          <div key={item.id}>
+                            <span>{item.quantity}× {item.item_name}</span>
+                            <strong>{formatPrice(item.line_total)}</strong>
+                          </div>
+                        ))}
+                      </div>
+                      <small className="public-guest-bill-order-status">{order.status.replace(/_/g, " ")}</small>
+                    </article>
+                  ))}
+                </div>
+                <div className="public-guest-bill-total">
+                  <span>{guestTabSnapshot.invoice ? "Final bill" : "Running total"}</span>
+                  <strong>{formatPrice(guestTabSnapshot.invoice?.total_amount ?? guestTabSnapshot.tab?.total_amount)}</strong>
+                </div>
+                {guestTabSnapshot.invoice ? (
+                  <div className="public-guest-bill-invoice">
+                    <strong>{guestTabSnapshot.invoice.invoice_number}</strong>
+                    <span>Status: {guestTabSnapshot.invoice.payment_status}</span>
+                    {guestTabSnapshot.invoice.payment_status === "paid" ? (
+                      <p>Your bill is paid. Thank you for dining with us!</p>
+                    ) : (
+                      <p>Your final bill has been requested. Please pay with restaurant staff.</p>
+                    )}
+                  </div>
+                ) : guestTabSnapshot.tab?.status === "open" ? (
+                  <button
+                    type="button"
+                    className="public-order-submit"
+                    onClick={requestGuestBill}
+                    disabled={guestBillLoading || Number(guestTabSnapshot.tab?.order_count || 0) < 1}
+                  >
+                    {guestBillLoading ? <LoaderCircle className="public-menu-spinner" size={17} /> : <CheckCircle2 size={17} />}
+                    Request final bill
+                  </button>
+                ) : null}
+                {guestTabSnapshot.tab?.status === "closed" && guestTabSnapshot.invoice?.payment_status === "paid" && (
+                  <button type="button" className="public-order-submit" onClick={startNewGuestBill}>Start a new bill</button>
+                )}
+              </>
+            )}
+          </section>
+        </div>
+      )}
 
       {error ? (
         <section className="public-menu-state">
