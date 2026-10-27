@@ -25,6 +25,7 @@ import {
 } from "lucide-react";
 
 import { supabase } from "../lib/supabaseClient";
+import { normalizeTableNumber } from "../lib/tableNumber";
 import { cancelKhaavioVoice, isKhaavioVoiceSupported, queueKhaavioVoice } from "../lib/khaavioVoiceAlerts";
 import { useKhaavioOperationalAlerts } from "../context/KhaavioOperationalAlertsContext";
 import { usePlanAccess } from "../context/PlanAccessContext";
@@ -181,6 +182,14 @@ function getWhatsAppPhone(phone) {
   return digits.length >= 10 && digits.length <= 15 ? digits : "";
 }
 
+function formatBookingTableLabel(value) {
+  const raw = String(value || "").trim();
+  if (!raw) return "No table assigned";
+  if (/^(no table assigned|assigned table)$/i.test(raw)) return raw;
+  const table = normalizeTableNumber(raw);
+  return table ? `Table ${table}` : raw;
+}
+
 function getBookingWhatsAppUrl(booking, restaurantName) {
   const phone = getWhatsAppPhone(booking.guest_phone);
   if (!phone || !restaurantName) return "";
@@ -188,7 +197,7 @@ function getBookingWhatsAppUrl(booking, restaurantName) {
   const reference = getReference(booking.id);
   const dateTime = formatDate(booking.booking_time);
   const guestName = booking.guest_name || "there";
-  const table = booking.table_number || "Assigned table";
+  const table = normalizeTableNumber(booking.table_number) || "Assigned table";
   const guestCount = `${booking.party_size} ${booking.party_size === 1 ? "guest" : "guests"}`;
 
   const messages = {
@@ -582,7 +591,7 @@ export default function BookingsDashboard() {
         booking.guest_email,
         formatDate(booking.booking_time),
         booking.party_size,
-        booking.table_number,
+        formatBookingTableLabel(booking.table_number),
         LABELS[booking.status] || booking.status,
         booking.special_requests,
         formatDate(booking.created_at),
@@ -978,7 +987,7 @@ export default function BookingsDashboard() {
 
                               <div className="booking-table-label">
                                 <Store size={14} />
-                                {booking.table_number}
+                                {formatBookingTableLabel(booking.table_number)}
                               </div>
 
                               {booking.guest_phone && (
@@ -1299,7 +1308,7 @@ export default function BookingsDashboard() {
                                     </span>
                                   </div>
                                   <p>
-                                    {booking.table_number} ·{" "}
+                                    {formatBookingTableLabel(booking.table_number)} ·{" "}
                                     {booking.party_size}{" "}
                                     {booking.party_size === 1
                                       ? "guest"
