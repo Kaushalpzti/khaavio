@@ -48,6 +48,12 @@ const A4_HEIGHT = 1754;
 
 const TEMPLATES = [
   {
+    id: "signature",
+    name: "Signature Green",
+    caption: "Forest · Ivory · Champagne",
+    colors: { background: "#f2f1e8", card: "#fffdf5", ink: "#183c31", muted: "#60766b", accent: "#c7a264", accentText: "#183c31", border: "#c8d3c5", soft: "#e4eadf", qr: "#ffffff" },
+  },
+  {
     id: "classic",
     name: "Classic Elegant",
     caption: "Ivory · Espresso · Gold",
@@ -114,7 +120,7 @@ const TEMPLATES = [
 ];
 
 const DEFAULT_SETTINGS = {
-  template: "classic",
+  template: "signature",
   showLogo: true,
   showName: true,
   showTagline: false,
@@ -333,7 +339,15 @@ async function drawBrandedCard(restaurant, table, settings, qrDataUrl) {
     2,
   );
 
-  if (settings.template === "indian") {
+  if (settings.template === "signature") {
+    roundedRect(ctx, 58, 58, CARD_WIDTH - 116, 440, 38, "#173e32", null);
+    ctx.strokeStyle = "#c7a264";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(155, 110); ctx.lineTo(310, 110);
+    ctx.moveTo(770, 110); ctx.lineTo(925, 110);
+    ctx.stroke();
+  } else if (settings.template === "indian") {
     drawLeaf(ctx, 105, 108, 0.15, colors);
     drawLeaf(ctx, CARD_WIDTH - 110, 110, Math.PI - 0.15, colors);
     drawLeaf(ctx, 102, CARD_HEIGHT - 120, -0.35, colors);
@@ -416,7 +430,7 @@ async function drawBrandedCard(restaurant, table, settings, qrDataUrl) {
   }
 
   if (settings.showName) {
-    ctx.fillStyle = colors.ink;
+    ctx.fillStyle = settings.template === "signature" ? "#fffdf5" : colors.ink;
     ctx.font = "600 54px Georgia, 'Times New Roman', serif";
     ctx.textAlign = "center";
     ctx.textBaseline = "alphabetic";
@@ -430,7 +444,7 @@ async function drawBrandedCard(restaurant, table, settings, qrDataUrl) {
   }
 
   if (settings.showCuisine && restaurant?.restaurant_type) {
-    ctx.fillStyle = colors.muted;
+    ctx.fillStyle = settings.template === "signature" ? "#e3d5b4" : colors.muted;
     ctx.font = "500 24px Arial, sans-serif";
     const cuisine = String(restaurant.restaurant_type).replace(/_/g, " ");
     const lines = wrapCanvasText(ctx, cuisine, 880, 1);
@@ -441,7 +455,7 @@ async function drawBrandedCard(restaurant, table, settings, qrDataUrl) {
   }
 
   if (settings.showTagline && restaurant?.description) {
-    ctx.fillStyle = colors.muted;
+    ctx.fillStyle = settings.template === "signature" ? "#e3d5b4" : colors.muted;
     ctx.font = "400 20px Arial, sans-serif";
     ctx.textAlign = "center";
     const lines = wrapCanvasText(ctx, restaurant.description, 820, 1);
@@ -450,7 +464,7 @@ async function drawBrandedCard(restaurant, table, settings, qrDataUrl) {
     headerBottom = y + 14;
   }
 
-  const scanLabelY = Math.max(420, headerBottom + 20);
+  const scanLabelY = Math.max(settings.template === "signature" ? 500 : 420, headerBottom + 20);
   ctx.strokeStyle = colors.border;
   ctx.lineWidth = 3;
   ctx.beginPath();
@@ -766,6 +780,7 @@ function QRCardPreview({
     <div className={`tqr-card tqr-card--${theme.id}`}>
       <div className="tqr-card-decor tqr-card-decor--one" />
       <div className="tqr-card-decor tqr-card-decor--two" />
+      {theme.id === "signature" ? <div className="tqr-card-brand-band" aria-hidden="true" /> : null}
       <div className="tqr-card-overline" aria-hidden="true">
         <span />
         <strong>YOUR TABLE · YOUR MENU</strong>

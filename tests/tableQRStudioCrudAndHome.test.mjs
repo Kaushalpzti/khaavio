@@ -61,3 +61,13 @@ test("print exports use an adaptive high-contrast QR frame and keep QR quiet spa
   assert.match(studio, /imageSmoothingEnabled = false/);
   assert.match(studio, /margin: 4/);
 });
+
+
+test("table QR defaults to Signature Green while retaining the original table token URL", () => {
+  const tableQr = read("../src/pages/TableQRStudio.jsx");
+  const tableQrStyles = read("../src/pages/TableQRStudio.css");
+  assert.match(tableQr, /template: "signature"/);
+  assert.ok(tableQr.includes('id: "signature"'));
+  assert.ok(tableQr.includes("table.qr_token"));
+  assert.match(tableQrStyles, /\.tqr-card--signature/);
+});

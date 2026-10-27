@@ -2513,3 +2513,29 @@
         width: 67%;
     }
 }
+
+/* Signature Green table tent — new default premium design. */
+.tqr-template-option--signature .tqr-template-swatch { border-color:#b9cbb8; background:linear-gradient(180deg,#173e32 0 42%,#fffdf5 42% 100%); }
+.tqr-template-option--signature .tqr-template-logo { border-color:#c7a264; background:#fffdf5; }
+.tqr-template-option--signature .tqr-template-line { background:#c7a264; }
+.tqr-template-option--signature .tqr-template-number { color:#183c31; }
+.tqr-card--signature {
+ --tqr-bg:#f2f1e8;--tqr-panel:#fffdf5;--tqr-ink:#183c31;--tqr-muted:#60766b;--tqr-accent:#c7a264;--tqr-accent-text:#183c31;--tqr-border:#c8d3c5;--tqr-soft:#e4eadf;
+ background:linear-gradient(180deg,#173e32 0%,#173e32 33%,#f2f1e8 33%,#f2f1e8 100%);border-color:#c7a264;box-shadow:0 23px 42px rgba(19,48,38,.23),0 4px 10px rgba(19,48,38,.09);
+}
+.tqr-card--signature::before{border-color:rgba(199,162,100,.78)}
+.tqr-card--signature::after{width:94px;height:5px;background:#e3c88e}
+.tqr-card-brand-band{position:absolute;z-index:-1;top:0;left:0;width:100%;height:34%;border-radius:20px 20px 42% 4%;background:#173e32;pointer-events:none}
+.tqr-card--signature .tqr-card-decor{border-color:#c7a264;opacity:.42}
+.tqr-card--signature .tqr-card-overline{color:#e6cf9e}
+.tqr-card--signature .tqr-card-overline>span{background:rgba(230,207,158,.65)}
+.tqr-card--signature .tqr-card-logo{color:#173e32;background:#fffdf5;box-shadow:0 0 0 4px #173e32,0 0 0 5px #c7a264,0 8px 18px rgba(0,0,0,.19)}
+.tqr-card--signature .tqr-card-restaurant-name{color:#fffdf5}
+.tqr-card--signature .tqr-card-cuisine,.tqr-card--signature .tqr-card-tagline{color:#e3d5b4}
+.tqr-card--signature .tqr-card-scan-intro{color:#183c31}
+.tqr-card--signature .tqr-card-qr-shell{border-color:#c7a264;box-shadow:0 0 0 4px #fffdf5,0 0 0 5px #c7a264,0 13px 26px rgba(30,49,38,.15)}
+.tqr-card--signature .tqr-card-cta{color:#fffdf5;border-color:#173e32;background:linear-gradient(135deg,#1a4c3c,#102f25);box-shadow:0 8px 17px rgba(18,57,43,.22)}
+.tqr-card--signature .tqr-card-actions-line{color:#526c5d}
+.tqr-card--signature .tqr-card-actions-line span{color:#b48b4d}
+.tqr-card--signature .tqr-card-table-number{border-color:#c7a264;background:#fffdf5;box-shadow:0 6px 13px rgba(24,60,49,.07)}
+.tqr-card--signature .tqr-card-powered{border-top-color:#c8d3c5}
