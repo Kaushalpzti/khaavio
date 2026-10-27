@@ -55,6 +55,7 @@ export default function TableSessions() {
   const [restaurant, setRestaurant] = useState(null);
   const [sessions, setSessions] = useState([]);
   const [invoices, setInvoices] = useState([]);
+  const [invoiceItems, setInvoiceItems] = useState([]);
   const [orders, setOrders] = useState([]);
   const [tables, setTables] = useState([]);
   const [guestTabs, setGuestTabs] = useState([]);
@@ -124,10 +125,26 @@ export default function TableSessions() {
       if (guestTabsResult.error) throw guestTabsResult.error;
 
       const sessionRows = sessionsResult.data || [];
-      const sessionIds = sessionRows.map((session) => session.id);
+      const invoiceRows = invoicesResult.data || [];
+      const invoiceIds = invoiceRows.map((invoice) => invoice.id);
       const tableRows = tablesResult.data || [];
+      let invoiceItemRows = [];
       let orderRows = [];
       let itemRows = [];
+
+      if (invoiceIds.length) {
+        const { data, error: invoiceItemsError } = await supabase
+          .from("table_session_invoice_items")
+          .select("id, invoice_id, order_id, order_reference, order_created_at, customer_name, item_name, unit_price, quantity, line_total, created_at")
+          .in("invoice_id", invoiceIds)
+          .order("order_created_at", { ascending: true })
+          .order("order_id", { ascending: true })
+          .order("created_at", { ascending: true });
+        if (invoiceItemsError) throw invoiceItemsError;
+        invoiceItemRows = data || [];
+      }
+
+      const sessionIds = sessionRows.map((session) => session.id);
 
       if (sessionIds.length) {
         const { data, error: ordersError } = await supabase
@@ -151,7 +168,8 @@ export default function TableSessions() {
 
       setRestaurant(restaurantData);
       setSessions(sessionRows);
-      setInvoices(invoicesResult.data || []);
+      setInvoices(invoiceRows);
+      setInvoiceItems(invoiceItemRows);
       setTables(tableRows);
       setGuestTabs(guestTabsResult.data || []);
       setOrders(orderRows);
@@ -188,6 +206,15 @@ export default function TableSessions() {
     () => new Map(guestTabs.map((tab) => [tab.id, tab.display_name || "Guest"])),
     [guestTabs],
   );
+  const invoiceItemsByInvoice = useMemo(() => {
+    const map = new Map();
+    for (const item of invoiceItems) {
+      const current = map.get(item.invoice_id) || [];
+      current.push(item);
+      map.set(item.invoice_id, current);
+    }
+    return map;
+  }, [invoiceItems]);
   const tabsBySession = useMemo(() => {
     const map = new Map();
     for (const tab of guestTabs) {
@@ -354,6 +381,58 @@ export default function TableSessions() {
     setPrintingInvoiceId(invoice.id);
     document.body.classList.add("khaavio-printing-session-invoice");
     window.setTimeout(() => window.print(), 150);
+  }
+
+  function renderInvoiceSnapshot(invoice, session) {
+    const snapshotRows = invoiceItemsByInvoice.get(invoice.id) || [];
+    if (!snapshotRows.length) {
+      // Existing invoices created before snapshot rows existed remain viewable.
+      return session
+        ? renderSessionOrders(session, invoice.guest_tab_id)
+        : <p className="ts-empty-inline">No saved invoice line items are available.</p>;
+    }
+
+    const grouped = new Map();
+    for (const row of snapshotRows) {
+      const current = grouped.get(row.order_id) || {
+        id: row.order_id,
+        reference: row.order_reference || getReference(row.order_id),
+        created_at: row.order_created_at,
+        customer_name: row.customer_name || "Customer",
+        total: 0,
+        items: [],
+      };
+      current.total += Number(row.line_total) || 0;
+      current.items.push(row);
+      grouped.set(row.order_id, current);
+    }
+
+    return (
+      <div className="ts-order-list">
+        {[...grouped.values()].map((order) => (
+          <article className="ts-order-block" key={order.id}>
+            <div className="ts-order-heading">
+              <div>
+                <strong>Order #{order.reference}</strong>
+                <span>{formatDate(order.created_at)} · {order.customer_name}</span>
+              </div>
+              <div className="ts-order-amount">
+                <strong>{formatPrice(order.total)}</strong>
+                <span className="ts-status ts-status-completed">Invoiced</span>
+              </div>
+            </div>
+            <div className="ts-order-items">
+              {order.items.map((item) => (
+                <div className="ts-order-item" key={item.id}>
+                  <span>{item.quantity} × {item.item_name}</span>
+                  <strong>{formatPrice(item.line_total)}</strong>
+                </div>
+              ))}
+            </div>
+          </article>
+        ))}
+      </div>
+    );
   }
 
   function renderSessionOrders(session, guestTabId = null) {
@@ -576,7 +655,7 @@ export default function TableSessions() {
                                 Voided {invoice.voided_at ? formatDate(invoice.voided_at) : ""} · {invoice.void_reason || "Voided by restaurant staff"}
                               </p>
                             )}
-                            {session ? renderSessionOrders(session, invoice.guest_tab_id) : <p className="ts-empty-inline">Order details are unavailable for this invoice.</p>}
+                            {renderInvoiceSnapshot(invoice, session)}
                             <div className="ts-print-grand-total"><span>FINAL TOTAL</span><strong>{formatPrice(invoice.total_amount)}</strong></div>
                             {invoice.payment_status === "paid" && <p className="ts-paid-note">Paid {invoice.payment_method ? `via ${invoice.payment_method}` : ""}{invoice.paid_at ? ` · ${formatDate(invoice.paid_at)}` : ""}</p>}
                             <p className="ts-print-footer">Thank you for dining with us · Powered by Khaavio</p>
