@@ -834,6 +834,21 @@ export default function PublicMenu() {
         </div>
 
         <div className="public-menu-header-actions">
+          {isGuestBilling && (
+            <button
+              type="button"
+              className="public-menu-header-cart public-menu-header-bill"
+              onClick={() => {
+                setGuestBillOpen(true);
+                void refreshGuestBillSnapshot();
+              }}
+              aria-label="View my guest bill"
+            >
+              <ShoppingBag size={17} />
+              <span>My Bill</span>
+              <b>{formatPrice(Number(guestTabSnapshot?.tab?.total_amount) || 0)}</b>
+            </button>
+          )}
           {tableContext && (
             <span
               className="public-menu-table-badge"
@@ -855,6 +870,112 @@ export default function PublicMenu() {
           </button>
         </div>
       </header>
+
+      {guestBillOpen && isGuestBilling && (
+        <div
+          className="public-cart-backdrop"
+          role="presentation"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget && !guestBillLoading) setGuestBillOpen(false);
+          }}
+        >
+          <section
+            className="public-order-section public-cart-drawer public-guest-bill-drawer"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="public-guest-bill-heading"
+            tabIndex={-1}
+          >
+            <div className="public-cart-drawer-topbar">
+              <span className="public-menu-eyebrow">TABLE {tableContext?.table_number}</span>
+              <button
+                type="button"
+                className="public-cart-drawer-close"
+                aria-label="Close my bill"
+                onClick={() => setGuestBillOpen(false)}
+                disabled={guestBillLoading}
+              ><X size={19} /></button>
+            </div>
+            <div className="public-order-heading">
+              <div>
+                <span className="public-menu-eyebrow">YOUR PERSONAL TAB</span>
+                <h2 id="public-guest-bill-heading">My Bill</h2>
+                <p>Every order you place from this device is collected here.</p>
+              </div>
+              {guestTabSnapshot?.tab?.status && (
+                <span className="public-guest-bill-status">{guestTabSnapshot.tab.status.replace(/_/g, " ")}</span>
+              )}
+            </div>
+            {guestBillError && <div className="public-order-error" role="alert">{guestBillError}</div>}
+            {guestBillLoading && (
+              <p className="public-guest-bill-loading">
+                <LoaderCircle className="public-menu-spinner" size={17} /> Updating your bill…
+              </p>
+            )}
+            {!guestTabSnapshot?.exists ? (
+              <div className="public-order-empty">
+                <div className="public-menu-empty-icon"><ShoppingBag size={24} /></div>
+                <h3>Your personal bill starts with your first order</h3>
+                <p>Place an order from this menu. Your next orders from this browser will be added to the same bill.</p>
+                <button type="button" className="public-order-submit" onClick={() => setGuestBillOpen(false)}>Browse menu</button>
+              </div>
+            ) : (
+              <>
+                <div className="public-guest-bill-orders">
+                  {(guestTabSnapshot.orders || []).map((order) => (
+                    <article className="public-guest-bill-order" key={order.id}>
+                      <div className="public-guest-bill-order-heading">
+                        <div>
+                          <strong>Order #{order.reference}</strong>
+                          <small>{new Intl.DateTimeFormat("en-IN", { hour: "2-digit", minute: "2-digit", day: "2-digit", month: "short" }).format(new Date(order.created_at))}</small>
+                        </div>
+                        <span>{formatPrice(order.total_amount)}</span>
+                      </div>
+                      <div className="public-guest-bill-item-list">
+                        {(order.items || []).map((item) => (
+                          <div key={item.id}>
+                            <span>{item.quantity}× {item.item_name}</span>
+                            <strong>{formatPrice(item.line_total)}</strong>
+                          </div>
+                        ))}
+                      </div>
+                      <small className="public-guest-bill-order-status">{order.status.replace(/_/g, " ")}</small>
+                    </article>
+                  ))}
+                </div>
+                <div className="public-guest-bill-total">
+                  <span>{guestTabSnapshot.invoice ? "Final bill" : "Running total"}</span>
+                  <strong>{formatPrice(guestTabSnapshot.invoice?.total_amount ?? guestTabSnapshot.tab?.total_amount)}</strong>
+                </div>
+                {guestTabSnapshot.invoice ? (
+                  <div className="public-guest-bill-invoice">
+                    <strong>{guestTabSnapshot.invoice.invoice_number}</strong>
+                    <span>Status: {guestTabSnapshot.invoice.payment_status}</span>
+                    {guestTabSnapshot.invoice.payment_status === "paid" ? (
+                      <p>Your bill is paid. Thank you for dining with us!</p>
+                    ) : (
+                      <p>Your final bill has been requested. Please pay with restaurant staff.</p>
+                    )}
+                  </div>
+                ) : guestTabSnapshot.tab?.status === "open" ? (
+                  <button
+                    type="button"
+                    className="public-order-submit"
+                    onClick={requestGuestBill}
+                    disabled={guestBillLoading || Number(guestTabSnapshot.tab?.order_count || 0) < 1}
+                  >
+                    {guestBillLoading ? <LoaderCircle className="public-menu-spinner" size={17} /> : <CheckCircle2 size={17} />}
+                    Request final bill
+                  </button>
+                ) : null}
+                {guestTabSnapshot.tab?.status === "closed" && guestTabSnapshot.invoice?.payment_status === "paid" && (
+                  <button type="button" className="public-order-submit" onClick={startNewGuestBill}>Start a new bill</button>
+                )}
+              </>
+            )}
+          </section>
+        </div>
+      )}
 
       {error ? (
         <section className="public-menu-state">
