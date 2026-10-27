@@ -30,6 +30,7 @@ test("spoken operational alerts default on after login while the separate chime 
   assert.match(preferences, /voiceEnabled: true/);
   assert.match(preferences, /soundEnabled: false/);
   assert.match(preferences, /sessionStorage/);
+  assert.match(preferences, /operational-alerts:v2/);
   assert.match(preferences, /resetKhaavioAlertPreferences/);
   assert.match(auth, /event === "SIGNED_IN"/);
   assert.match(auth, /resetKhaavioAlertPreferences\(session\.user\.id\)/);
