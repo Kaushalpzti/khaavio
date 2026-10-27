@@ -29,7 +29,7 @@ test("rejects unsafe protocols and links on the wrong platform", () => {
 
 test("public normalization omits invalid old values and detects configured links", () => {
   const normal = normalizeSocialLinks({ instagram: "https://instagram.com/ayushicafe", facebook: "javascript:alert(1)" });
-  assert.equal(normal.instagram, "https://instagram.com/ayushi.cafe");
+  assert.equal(normal.instagram, "https://instagram.com/ayushicafe");
   assert.equal(normal.facebook, "");
   assert.equal(hasSocialLinks(normal), true);
   assert.equal(hasSocialLinks({}), false);
@@ -39,8 +39,8 @@ test("dashboard and review widget use the social profile fields", () => {
   const settings = read("../src/pages/RestaurantSettings.jsx");
   const publicReviews = read("../src/components/PublicReviewsFeedback.jsx");
   const socialComponent = read("../src/components/PublicRestaurantSocialLinks.jsx");
-  assert.match(settings, /social_links: socialValidation\.value/);
-  assert.match(settings, /SOCIAL_LINK_FIELDS\.map/);
+  assert.ok(settings.includes("social_links: socialValidation.value"));
+  assert.ok(settings.includes("SOCIAL_LINK_FIELDS.map"));
   assert.match(publicReviews, /PublicRestaurantSocialLinks/);
   assert.match(socialComponent, /FOLLOW ALONG/);
   assert.match(socialComponent, /rel="noopener noreferrer nofollow"/);
@@ -49,7 +49,7 @@ test("dashboard and review widget use the social profile fields", () => {
 test("social links are allowlisted in the published menu RPC", () => {
   const migration = read("../supabase/migrations/20261027203000_restaurant_social_links.sql");
   assert.match(migration, /ADD COLUMN IF NOT EXISTS social_links jsonb/);
-  assert.match(migration, /CHECK \(pg_catalog\.jsonb_typeof\(social_links\) = 'object'\)/);
-  assert.match(migration, /'social_links', COALESCE\(v_restaurant -> 'social_links', '\{\}'::jsonb\)/);
-  assert.match(migration, /WHERE r\.slug = pg_catalog\.btrim\(p_slug\) AND r\.is_published IS TRUE/);
+  assert.ok(migration.includes("CHECK (pg_catalog.jsonb_typeof(social_links) = 'object')"));
+  assert.ok(migration.includes("'social_links', COALESCE(v_restaurant -> 'social_links', '{}'::jsonb)"));
+  assert.ok(migration.includes("WHERE r.slug = pg_catalog.btrim(p_slug) AND r.is_published IS TRUE"));
 });
