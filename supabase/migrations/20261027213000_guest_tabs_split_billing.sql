@@ -90,6 +90,7 @@ CREATE INDEX IF NOT EXISTS table_session_tabs_restaurant_table_idx
   ON public.table_session_tabs (restaurant_id, table_id, opened_at DESC);
 
 ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS guest_tab_id uuid;
+ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS guest_order_request_token uuid;
 DO $order_guest_tab_fk$
 BEGIN
   IF NOT EXISTS (
@@ -108,6 +109,9 @@ $order_guest_tab_fk$;
 CREATE INDEX IF NOT EXISTS orders_guest_tab_created_idx
   ON public.orders (guest_tab_id, created_at ASC)
   WHERE guest_tab_id IS NOT NULL;
+CREATE UNIQUE INDEX IF NOT EXISTS orders_guest_order_request_uidx
+  ON public.orders (restaurant_id, guest_order_request_token)
+  WHERE guest_order_request_token IS NOT NULL;
 
 -- Block legacy/stale order RPCs from creating an unassigned order in a per-guest
 -- session. Only the validated guest-order RPC enables this transaction-local flag.
@@ -119,7 +123,13 @@ SET search_path TO ''
 AS $function$
 DECLARE
   v_billing_mode text;
+  v_request_token text;
 BEGIN
+  v_request_token := NULLIF(pg_catalog.current_setting('app.khaavio_guest_order_request_token', true), '');
+  IF v_request_token IS NOT NULL THEN
+    NEW.guest_order_request_token := v_request_token::uuid;
+  END IF;
+
   IF NEW.session_id IS NULL THEN
     RETURN NEW;
   END IF;
@@ -385,7 +395,7 @@ GRANT EXECUTE ON FUNCTION public.khaavio_public_guest_tab_snapshot(text, uuid, u
 CREATE OR REPLACE FUNCTION public.place_public_order_for_guest_with_loyalty(
   p_slug text, p_table_token uuid, p_customer_name text, p_customer_phone text,
   p_notes text, p_items jsonb, p_loyalty_member_token uuid, p_loyalty_phone text,
-  p_guest_tab_token uuid, p_guest_display_name text
+  p_guest_tab_token uuid, p_guest_display_name text, p_guest_order_request_token uuid
 )
 RETURNS TABLE(order_id uuid, order_reference text, total_amount numeric, tracking_token uuid)
 LANGUAGE plpgsql
@@ -403,19 +413,79 @@ DECLARE
   v_mode text;
   v_tab public.table_session_tabs%ROWTYPE;
   v_display_name text;
+  v_constraint_name text;
 BEGIN
-  IF p_guest_tab_token IS NULL THEN RAISE EXCEPTION 'A guest tab token is required. Refresh the menu and try again.' USING ERRCODE = '22023'; END IF;
+  IF p_guest_tab_token IS NULL OR p_guest_order_request_token IS NULL THEN
+    RAISE EXCEPTION 'A guest tab and order request token are required. Refresh the menu and try again.' USING ERRCODE = '22023';
+  END IF;
   v_display_name := COALESCE(NULLIF(pg_catalog.btrim(p_guest_display_name), ''), NULLIF(pg_catalog.btrim(p_customer_name), ''), 'Guest');
   IF pg_catalog.char_length(v_display_name) > 80 THEN RAISE EXCEPTION 'Guest name must be 80 characters or fewer.' USING ERRCODE = '22023'; END IF;
 
-  PERFORM pg_catalog.set_config('app.khaavio_guest_order_workflow', 'on', true);
-  SELECT placed.order_id, placed.order_reference, placed.total_amount, placed.tracking_token
+  SELECT r.id, rt.id INTO v_restaurant_id, v_table_id
+  FROM public.restaurants r
+  JOIN public.restaurant_tables rt ON rt.restaurant_id = r.id
+  WHERE r.slug = pg_catalog.btrim(p_slug)
+    AND r.is_published IS TRUE
+    AND rt.qr_token = p_table_token
+    AND rt.is_active IS TRUE;
+  IF NOT FOUND THEN RAISE EXCEPTION 'This table QR is invalid, inactive, or unpublished.' USING ERRCODE = '22023'; END IF;
+
+  -- Fast idempotency path for a retry after the original order was committed.
+  SELECT o.id,
+    pg_catalog.upper(pg_catalog.substr(pg_catalog.replace(o.id::text, '-', ''), 1, 8)),
+    o.total_amount, o.tracking_token
+  INTO v_order_id, v_order_reference, v_total, v_tracking_token
+  FROM public.orders o
+  JOIN public.table_session_tabs t ON t.id = o.guest_tab_id
+  WHERE o.restaurant_id = v_restaurant_id
+    AND o.table_id = v_table_id
+    AND o.guest_order_request_token = p_guest_order_request_token
+    AND t.guest_tab_token = p_guest_tab_token
+    AND t.restaurant_id = v_restaurant_id
+    AND t.table_id = v_table_id
+  LIMIT 1;
+  IF FOUND THEN
+    RETURN QUERY SELECT v_order_id, v_order_reference, v_total, v_tracking_token;
+    RETURN;
+  END IF;
+
+  -- Concurrent retries race on a unique request id; catch only that constraint
+  -- and return the committed order rather than creating a second kitchen ticket.
+  BEGIN
+    PERFORM pg_catalog.set_config('app.khaavio_guest_order_workflow', 'on', true);
+    PERFORM pg_catalog.set_config('app.khaavio_guest_order_request_token', p_guest_order_request_token::text, true);
+    SELECT placed.order_id, placed.order_reference, placed.total_amount, placed.tracking_token
+      INTO v_order_id, v_order_reference, v_total, v_tracking_token
+    FROM public.place_public_order_with_loyalty(
+      p_slug, p_table_token, p_customer_name, p_customer_phone, p_notes, p_items,
+      p_loyalty_member_token, p_loyalty_phone
+    ) AS placed;
+  EXCEPTION WHEN unique_violation THEN
+    GET STACKED DIAGNOSTICS v_constraint_name = CONSTRAINT_NAME;
+    IF v_constraint_name IS DISTINCT FROM 'orders_guest_order_request_uidx' THEN
+      RAISE;
+    END IF;
+    SELECT o.id,
+      pg_catalog.upper(pg_catalog.substr(pg_catalog.replace(o.id::text, '-', ''), 1, 8)),
+      o.total_amount, o.tracking_token
     INTO v_order_id, v_order_reference, v_total, v_tracking_token
-  FROM public.place_public_order_with_loyalty(
-    p_slug, p_table_token, p_customer_name, p_customer_phone, p_notes, p_items,
-    p_loyalty_member_token, p_loyalty_phone
-  ) AS placed;
+    FROM public.orders o
+    JOIN public.table_session_tabs t ON t.id = o.guest_tab_id
+    WHERE o.restaurant_id = v_restaurant_id
+      AND o.table_id = v_table_id
+      AND o.guest_order_request_token = p_guest_order_request_token
+      AND t.guest_tab_token = p_guest_tab_token
+      AND t.restaurant_id = v_restaurant_id
+      AND t.table_id = v_table_id
+    LIMIT 1;
+    IF FOUND THEN
+      RETURN QUERY SELECT v_order_id, v_order_reference, v_total, v_tracking_token;
+      RETURN;
+    END IF;
+    RAISE EXCEPTION 'This order request token was already used. Refresh the menu and submit a new order.' USING ERRCODE = '23505';
+  END;
   PERFORM pg_catalog.set_config('app.khaavio_guest_order_workflow', 'off', true);
+  PERFORM pg_catalog.set_config('app.khaavio_guest_order_request_token', '', true);
 
   SELECT o.restaurant_id, o.table_id, o.session_id, ts.billing_mode
     INTO v_restaurant_id, v_table_id, v_session_id, v_mode
@@ -449,7 +519,7 @@ BEGIN
   RETURN QUERY SELECT v_order_id, v_order_reference, v_total, v_tracking_token;
 END;
 $function$;
-REVOKE ALL ON FUNCTION public.place_public_order_for_guest_with_loyalty(text, uuid, text, text, text, jsonb, uuid, text, uuid, text) FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.place_public_order_for_guest_with_loyalty(text, uuid, text, text, text, jsonb, uuid, text, uuid, text, uuid) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.place_public_order_for_guest_with_loyalty(text, uuid, text, text, text, jsonb, uuid, text, uuid, text) TO anon, authenticated;
 
 CREATE OR REPLACE FUNCTION public.khaavio_finalize_guest_tab(p_guest_tab_id uuid)
