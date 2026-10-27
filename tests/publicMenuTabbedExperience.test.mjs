@@ -18,7 +18,7 @@ test("public menu has the requested four in-shell tabs and no Home tab", () => {
 
 test("table number is displayed as a non-interactive badge, not a selector", () => {
   assert.match(menu, /className="public-menu-table-badge"/);
-  assert.match(menu, /<span>Table \{tableContext\.table_number\}<\/span>/);
+  assert.match(menu, /<span>Table \{normalizeTableNumber\(tableContext\.table_number\)\}<\/span>/);
   assert.doesNotMatch(menu, /select[^>]+tableContext|tableContext[^<]+<select/i);
 });
 
