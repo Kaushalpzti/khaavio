@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 
 import { supabase } from "../lib/supabaseClient";
+import { normalizeTableNumber } from "../lib/tableNumber";
 import khaavioIcon from "../assets/icon.png";
 import "./TableSessions.css";
 
@@ -324,7 +325,7 @@ export default function TableSessions() {
     }
     const tableNumber = tableNames.get(session.table_id) || "this table";
     const confirmed = await confirmKhaavio(
-      `Generate the final bill and close ${tableNumber}? New QR orders after closing will start a new bill session.`,
+      `Generate the final bill and close Table ${normalizeTableNumber(tableNumber)}? New QR orders after closing will start a new bill session.`,
     );
     if (!confirmed) return;
 
@@ -525,7 +526,7 @@ export default function TableSessions() {
                           <div className="ts-table-symbol"><Table2 size={20} /></div>
                           <div className="ts-session-summary">
                             <span className="ts-chip ts-chip-open">OPEN BILL</span>
-                            <h2>Table {tableNumber}</h2>
+                            <h2>Table {normalizeTableNumber(tableNumber)}</h2>
                             <p><Clock3 size={13} /> Started {formatDate(session.opened_at)}</p>
                           </div>
                           <div className="ts-session-total"><span>Running total</span><strong>{formatPrice(total)}</strong><small>{sessionOrders.length} {sessionOrders.length === 1 ? "order" : "orders"}</small></div>
@@ -615,7 +616,7 @@ export default function TableSessions() {
                           <div className="ts-session-summary">
                             <span className={`ts-chip ${invoice.payment_status === "paid" ? "ts-chip-paid" : "ts-chip-unpaid"}`}>{titleCase(invoice.payment_status)}</span>
                             <h2>{invoice.invoice_number}</h2>
-                            <p><Table2 size={13} /> Table {tableNumber}{invoice.guest_tab_id ? " · " + (guestTabNames.get(invoice.guest_tab_id) || "Guest") : ""} · <CalendarDays size={13} /> {formatDate(invoice.issued_at)}</p>
+                            <p><Table2 size={13} /> Table {normalizeTableNumber(tableNumber)}{invoice.guest_tab_id ? " · " + (guestTabNames.get(invoice.guest_tab_id) || "Guest") : ""} · <CalendarDays size={13} /> {formatDate(invoice.issued_at)}</p>
                           </div>
                           <div className="ts-session-total"><span>Final total</span><strong>{formatPrice(invoice.total_amount)}</strong><small>{invoice.order_count} {invoice.order_count === 1 ? "order" : "orders"}</small></div>
                         </div>
@@ -649,7 +650,7 @@ export default function TableSessions() {
                               <img src={khaavioIcon} alt="" />
                               <div><span>{invoice.guest_tab_id ? "GUEST INVOICE" : "FINAL TABLE INVOICE"}</span><h2>{restaurant?.name || "Restaurant"}</h2><p>{invoice.invoice_number}</p>{invoice.guest_tab_id && <p>{guestTabNames.get(invoice.guest_tab_id) || "Guest"}</p>}</div>
                             </div>
-                            <div className="ts-print-meta"><span>Table <strong>{tableNumber}</strong></span><span>Issued <strong>{formatDate(invoice.issued_at)}</strong></span><span>Payment <strong>{titleCase(invoice.payment_status)}</strong></span></div>
+                            <div className="ts-print-meta"><span>Table <strong>{normalizeTableNumber(tableNumber)}</strong></span><span>Issued <strong>{formatDate(invoice.issued_at)}</strong></span><span>Payment <strong>{titleCase(invoice.payment_status)}</strong></span></div>
                             {invoice.payment_status === "void" && (
                               <p className="ts-void-note">
                                 Voided {invoice.voided_at ? formatDate(invoice.voided_at) : ""} · {invoice.void_reason || "Voided by restaurant staff"}
