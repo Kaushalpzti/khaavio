@@ -36,7 +36,7 @@ import khaavioIcon from "../assets/icon.png";
 import "./TableQRStudio.css";
 
 const QR_OPTIONS = {
-  width: 900,
+  width: 1400,
   margin: 4,
   errorCorrectionLevel: "H",
   color: { dark: "#17120f", light: "#ffffff" },
@@ -44,8 +44,8 @@ const QR_OPTIONS = {
 
 const CARD_WIDTH = 1080;
 const CARD_HEIGHT = 1620;
-const A4_WIDTH = 1240;
-const A4_HEIGHT = 1754;
+const A4_WIDTH = 2480;
+const A4_HEIGHT = 3508;
 
 const TEMPLATES = [
   {
@@ -304,16 +304,17 @@ function drawLeaf(ctx, x, y, rotation, palette) {
   ctx.restore();
 }
 
-async function drawBrandedCard(restaurant, table, settings, qrDataUrl) {
+async function drawBrandedCard(restaurant, table, settings, qrDataUrl, { scale = 1 } = {}) {
   const template =
     TEMPLATES.find((item) => item.id === settings.template) || TEMPLATES[0];
   const colors = template.colors;
   const canvas = document.createElement("canvas");
-  canvas.width = CARD_WIDTH;
-  canvas.height = CARD_HEIGHT;
+  canvas.width = CARD_WIDTH * scale;
+  canvas.height = CARD_HEIGHT * scale;
   const ctx = canvas.getContext("2d");
   if (!ctx)
     throw new Error("Your browser could not create the QR card canvas.");
+  ctx.scale(scale, scale);
 
   ctx.fillStyle = colors.background;
   ctx.fillRect(0, 0, CARD_WIDTH, CARD_HEIGHT);
@@ -572,7 +573,7 @@ function canvasToBlob(canvas, type = "image/png", quality) {
   });
 }
 
-async function canvasToJpegBytes(canvas, quality = 0.94) {
+async function canvasToJpegBytes(canvas, quality = 0.97) {
   const blob = await canvasToBlob(canvas, "image/jpeg", quality);
   return new Uint8Array(await blob.arrayBuffer());
 }
@@ -671,7 +672,8 @@ function downloadBlob(blob, filename) {
   document.body.appendChild(anchor);
   anchor.click();
   anchor.remove();
-  window.setTimeout(() => URL.revokeObjectURL(url), 1500);
+  // Delay revocation so large downloads have time to start in slower browsers.
+  window.setTimeout(() => URL.revokeObjectURL(url), 60000);
 }
 
 async function createA4PageForCard(cardCanvas) {
@@ -682,8 +684,9 @@ async function createA4PageForCard(cardCanvas) {
   if (!ctx) throw new Error("Unable to create an A4 export page.");
   ctx.fillStyle = "#ffffff";
   ctx.fillRect(0, 0, A4_WIDTH, A4_HEIGHT);
-  const width = 1040;
-  const height = 1560;
+  // A4 raster is 300 DPI. Keep a printer-safe margin around the card.
+  const width = 2120;
+  const height = 3180;
   ctx.drawImage(
     cardCanvas,
     (A4_WIDTH - width) / 2,
@@ -697,10 +700,10 @@ async function createA4PageForCard(cardCanvas) {
 async function createBulkA4Pages(tables, restaurant, settings, onProgress) {
   const pages = [];
   const perPage = 9;
-  const cardWidth = 340;
-  const cardHeight = 510;
-  const horizontalGap = 40;
-  const verticalGap = 25;
+  const cardWidth = 680;
+  const cardHeight = 1020;
+  const horizontalGap = 80;
+  const verticalGap = 50;
   const startX = (A4_WIDTH - (cardWidth * 3 + horizontalGap * 2)) / 2;
   const startY = (A4_HEIGHT - (cardHeight * 3 + verticalGap * 2)) / 2;
 
@@ -736,7 +739,7 @@ async function createBulkA4Pages(tables, restaurant, settings, onProgress) {
     }
 
     pages.push({
-      jpegBytes: await canvasToJpegBytes(canvas, 0.92),
+      jpegBytes: await canvasToJpegBytes(canvas, 0.97),
       width: A4_WIDTH,
       height: A4_HEIGHT,
       pageWidth: 595.28,
@@ -1400,7 +1403,7 @@ export default function TableQRStudio() {
     });
   }
 
-  async function getCardCanvas(table) {
+  async function getCardCanvas(table, scale = 2) {
     if (!restaurant)
       throw new Error("Choose a restaurant before exporting QR cards.");
     if (!canExport(table)) {
@@ -1416,7 +1419,7 @@ export default function TableQRStudio() {
     if (!destination)
       throw new Error("A valid public menu destination could not be created.");
     const qr = await QRCode.toDataURL(destination, QR_OPTIONS);
-    return drawBrandedCard(restaurant, table, settings, qr);
+    return drawBrandedCard(restaurant, table, settings, qr, { scale });
   }
 
   async function handleDownloadPng(table) {
@@ -1487,7 +1490,7 @@ export default function TableQRStudio() {
 
     printWindow.document.open();
     printWindow.document.write(
-      "<!doctype html><html><head><title>Khaavio Table QR</title><style>body{margin:0;padding:12mm;display:flex;justify-content:center;align-items:center;background:#fff}img{display:block;max-height:270mm;max-width:100%;object-fit:contain}@page{size:A4;margin:8mm}@media print{body{padding:0}}</style></head><body><p>Preparing print preview…</p></body></html>",
+      "<!doctype html><html><head><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><title>Khaavio Table QR</title><style>@page{size:A4 portrait;margin:0}html,body{margin:0;width:100%;height:100%;background:#fff}body{display:flex;align-items:center;justify-content:center}img{display:block;width:210mm;height:297mm;object-fit:contain}@media screen{body{padding:16px;box-sizing:border-box}img{width:auto;height:calc(100vh - 32px);max-width:calc(100vw - 32px)}}@media print{html,body{width:210mm;height:297mm;margin:0;padding:0}body{display:block}img{width:210mm;height:297mm}}</style></head><body><p>Preparing print preview…</p></body></html>",
     );
     printWindow.document.close();
 
@@ -1496,19 +1499,28 @@ export default function TableQRStudio() {
       const canvas = await getCardCanvas(table);
       const a4Canvas = await createA4PageForCard(canvas);
       const imageUrl = a4Canvas.toDataURL("image/png");
-      printWindow.document.body.innerHTML = "";
+      printWindow.document.body.replaceChildren();
       const image = printWindow.document.createElement("img");
       image.alt = `QR card for ${restaurant?.name || "restaurant"}, Table ${normalizeTableNumber(table.table_number)}`;
-      image.src = imageUrl;
-      printWindow.document.body.appendChild(image);
-      image.onload = () => {
+      let printStarted = false;
+      const openPrintDialog = () => {
+        if (printStarted || printWindow.closed) return;
+        printStarted = true;
         printWindow.focus();
         printWindow.print();
+        setNotice({
+          type: "success",
+          text: `Print preview opened for Table ${normalizeTableNumber(table.table_number)}.`,
+        });
       };
-      setNotice({
-        type: "success",
-        text: `Print preview opened for Table ${normalizeTableNumber(table.table_number)}.`,
-      });
+      image.onload = openPrintDialog;
+      image.onerror = () => {
+        if (!printWindow.closed) printWindow.close();
+        setNotice({ type: "error", text: "The print image could not be loaded. Download the PDF and print it instead." });
+      };
+      printWindow.document.body.appendChild(image);
+      image.src = imageUrl;
+      if (image.complete && image.naturalWidth > 0) window.setTimeout(openPrintDialog, 0);
     } catch (error) {
       printWindow.close();
       setNotice({
@@ -2246,8 +2258,8 @@ export default function TableQRStudio() {
                 </p>
               </div>
               <div className="tqr-format-pills">
-                <span>PNG · 1080 × 1620</span>
-                <span>PDF · A4 print page</span>
+                <span>PNG · 2160 × 3240 · high resolution</span>
+                <span>PDF · A4 · 300 DPI</span>
               </div>
             </div>
           </div>
