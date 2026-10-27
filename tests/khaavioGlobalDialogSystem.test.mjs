@@ -9,7 +9,7 @@ const targets = [
   ["src/pages/MenuManager.jsx", 2, 0],
   ["src/pages/OrdersDashboard.jsx", 1, 0],
   ["src/pages/PlatformAdminSubscriptions.jsx", 3, 4],
-  ["src/pages/TableSessions.jsx", 2, 0],
+  ["src/pages/TableSessions.jsx", 3, 0],
 ];
 
 test("all audited pages use the shared dialog APIs instead of browser confirm/prompt", () => {
@@ -26,7 +26,7 @@ test("all audited pages use the shared dialog APIs instead of browser confirm/pr
     confirms += actualConfirms;
     prompts += actualPrompts;
   }
-  assert.equal(confirms, 9);
+  assert.equal(confirms, 10);
   assert.equal(prompts, 4);
 });
 
