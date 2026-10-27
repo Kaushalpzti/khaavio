@@ -1274,8 +1274,8 @@ export default function TableQRStudio() {
       setNotice({
         type: "success",
         text: nextActive
-          ? `${table.table_number} is active again. Its saved QR token has been kept.`
-          : `${table.table_number} is inactive. Existing order and billing history is preserved.`,
+          ? `Table ${normalizeTableNumber(table.table_number)} is active again. Its saved QR token has been kept.`
+          : `Table ${normalizeTableNumber(table.table_number)} is inactive. Existing order and billing history is preserved.`,
       });
     } catch (error) {
       setNotice({ type: "error", text: getErrorMessage(error, "Could not update this table's status.") });
@@ -1287,7 +1287,7 @@ export default function TableQRStudio() {
   async function handleDeleteTable(table) {
     if (!restaurant || !table?.id || actionBusy) return;
     const confirmed = window.confirm(
-      `Permanently delete ${table.table_number}? This is only allowed when the table has no order or billing history. If it has history, you can deactivate it instead.`,
+      `Permanently delete Table ${normalizeTableNumber(table.table_number)}? This is only allowed when the table has no order or billing history. If it has history, you can deactivate it instead.`,
     );
     if (!confirmed) return;
 
@@ -1321,7 +1321,7 @@ export default function TableQRStudio() {
       if (hasHistory) {
         setNotice({
           type: "error",
-          text: `${table.table_number} has order or billing history, so it cannot be permanently deleted. Deactivate it instead to keep old orders and invoices intact.`,
+          text: `Table ${normalizeTableNumber(table.table_number)} has order or billing history, so it cannot be permanently deleted. Deactivate it instead to keep old orders and invoices intact.`,
         });
         return;
       }
@@ -1347,13 +1347,13 @@ export default function TableQRStudio() {
       if (activeTableId === table.id) {
         setActiveTableId((remainingTables.find((row) => canExport(row)) || remainingTables[0])?.id || "");
       }
-      setNotice({ type: "success", text: `${table.table_number} deleted.` });
+      setNotice({ type: "success", text: `Table ${normalizeTableNumber(table.table_number)} deleted.` });
     } catch (error) {
       const message = getErrorMessage(error, "Could not delete this table.");
       setNotice({
         type: "error",
         text: /foreign key|constraint|referenced/i.test(message)
-          ? `${table.table_number} is linked to existing records and cannot be deleted safely. Deactivate it instead to preserve history.`
+          ? `Table ${normalizeTableNumber(table.table_number)} is linked to existing records and cannot be deleted safely. Deactivate it instead to preserve history.`
           : message,
       });
     } finally {
@@ -1431,7 +1431,7 @@ export default function TableQRStudio() {
       );
       setNotice({
         type: "success",
-        text: `PNG QR card for ${table.table_number} downloaded.`,
+        text: `PNG QR card for Table ${normalizeTableNumber(table.table_number)} downloaded.`,
       });
     } catch (error) {
       setNotice({
@@ -1463,7 +1463,7 @@ export default function TableQRStudio() {
       );
       setNotice({
         type: "success",
-        text: `Print-ready PDF for ${table.table_number} downloaded.`,
+        text: `Print-ready PDF for Table ${normalizeTableNumber(table.table_number)} downloaded.`,
       });
     } catch (error) {
       setNotice({
@@ -1498,7 +1498,7 @@ export default function TableQRStudio() {
       const imageUrl = a4Canvas.toDataURL("image/png");
       printWindow.document.body.innerHTML = "";
       const image = printWindow.document.createElement("img");
-      image.alt = `QR card for ${restaurant?.name || "restaurant"} ${table.table_number}`;
+      image.alt = `QR card for ${restaurant?.name || "restaurant"}, Table ${normalizeTableNumber(table.table_number)}`;
       image.src = imageUrl;
       printWindow.document.body.appendChild(image);
       image.onload = () => {
@@ -1507,7 +1507,7 @@ export default function TableQRStudio() {
       };
       setNotice({
         type: "success",
-        text: `Print preview opened for ${table.table_number}.`,
+        text: `Print preview opened for Table ${normalizeTableNumber(table.table_number)}.`,
       });
     } catch (error) {
       printWindow.close();
@@ -1546,7 +1546,7 @@ export default function TableQRStudio() {
       }
       setNotice({
         type: "success",
-        text: `Public QR link for ${table.table_number} copied.`,
+        text: `Public QR link for Table ${normalizeTableNumber(table.table_number)} copied.`,
       });
     } catch (error) {
       setNotice({
@@ -1982,7 +1982,7 @@ export default function TableQRStudio() {
                         <QrCode size={22} />
                       </span>
                       <span className="tqr-table-copy">
-                        <strong>{table.table_number}</strong>
+                        <strong>Table {normalizeTableNumber(table.table_number)}</strong>
                         <small>
                           {table.capacity
                             ? `${table.capacity} seats`
@@ -2257,7 +2257,7 @@ export default function TableQRStudio() {
               <h3>Live preview</h3>
               <p>
                 {activeTable
-                  ? `Preview for ${activeTable.table_number}`
+                  ? `Preview for Table ${normalizeTableNumber(activeTable.table_number)}`
                   : "Select a table to preview its code"}
               </p>
             </div>
@@ -2438,7 +2438,7 @@ export default function TableQRStudio() {
               <div>
                 <h2 id="tqr-modal-title">Live QR card preview</h2>
                 <p>
-                  {activeTable.table_number} · {restaurant?.name}
+                  Table {normalizeTableNumber(activeTable.table_number)} · {restaurant?.name}
                 </p>
               </div>
               <button
@@ -2496,7 +2496,7 @@ export default function TableQRStudio() {
               <div>
                 <span className="tqr-edit-eyebrow">TABLE SETTINGS</span>
                 <h2 id="tqr-edit-title">Edit table</h2>
-                <p>Update the name or seating capacity for {editingTable.table_number}.</p>
+                <p>Update the name or seating capacity for Table {normalizeTableNumber(editingTable.table_number)}.</p>
               </div>
               <button
                 type="button"
