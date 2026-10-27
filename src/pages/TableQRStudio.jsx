@@ -287,23 +287,6 @@ function safeLoadImage(src) {
   });
 }
 
-function drawLeaf(ctx, x, y, rotation, palette) {
-  ctx.save();
-  ctx.translate(x, y);
-  ctx.rotate(rotation);
-  ctx.globalAlpha = 0.58;
-  ctx.strokeStyle = palette.border;
-  ctx.lineWidth = 3;
-  for (let i = 0; i < 3; i += 1) {
-    ctx.beginPath();
-    ctx.ellipse(i * 17, -i * 18, 13, 31, -0.55, 0, Math.PI * 2);
-    ctx.fillStyle = palette.soft;
-    ctx.fill();
-    ctx.stroke();
-  }
-  ctx.restore();
-}
-
 function drawWorkflowIcon(ctx, type, centerX, centerY, color) {
   ctx.save();
   ctx.strokeStyle = color;
