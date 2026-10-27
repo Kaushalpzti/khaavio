@@ -53,14 +53,17 @@
 .ask-khaavio-launcher-sparkle { display: inline-flex; opacity: .95; }
 
 .ask-khaavio-panel {
-  position: absolute;
-  right: 0;
-  bottom: 68px;
+  /* Anchor the dialog to the viewport, not the launcher's zero-height wrapper.
+     This keeps the header visible on desktop and avoids clipping when raised. */
+  position: fixed;
+  right: max(20px, env(safe-area-inset-right, 0px));
+  bottom: 118px;
   display: flex;
   flex-direction: column;
-  width: min(390px, calc(100vw - 28px));
-  height: min(625px, calc(100dvh - 122px));
-  min-height: 380px;
+  width: min(390px, calc(100vw - 32px));
+  height: min(625px, calc(100dvh - 150px));
+  min-height: min(320px, calc(100dvh - 150px));
+  max-height: calc(100dvh - 150px);
   overflow: hidden;
   border: 1px solid rgba(118, 70, 44, .18);
   border-radius: 23px;
@@ -68,7 +71,6 @@
   box-shadow: 0 24px 75px rgba(49, 27, 15, .24), 0 4px 14px rgba(49,27,15,.08);
   animation: ask-khaavio-enter .18s ease-out;
 }
-.ask-khaavio-root.is-raised .ask-khaavio-panel { bottom: 68px; }
 
 .ask-khaavio-header {
   display: flex;
@@ -311,15 +313,18 @@
   .ask-khaavio-panel {
     position: fixed;
     right: 12px;
-    bottom: calc(76px + env(safe-area-inset-bottom));
+    bottom: calc(152px + env(safe-area-inset-bottom, 0px));
     width: calc(100vw - 24px);
-    height: min(650px, calc(100dvh - 104px));
-    min-height: min(370px, calc(100dvh - 104px));
+    height: min(650px, calc(100dvh - 176px));
+    min-height: min(320px, calc(100dvh - 176px));
+    max-height: calc(100dvh - 176px);
     border-radius: 20px;
   }
   .ask-khaavio-root.is-raised .ask-khaavio-panel {
-    bottom: calc(142px + env(safe-area-inset-bottom));
-    max-height: calc(100dvh - 160px);
+    bottom: calc(152px + env(safe-area-inset-bottom, 0px));
+    height: min(650px, calc(100dvh - 176px));
+    min-height: min(320px, calc(100dvh - 176px));
+    max-height: calc(100dvh - 176px);
   }
   .ask-khaavio-header { gap: 8px; padding: 12px; }
   .ask-khaavio-avatar { flex-basis: 38px; width: 38px; height: 38px; }
