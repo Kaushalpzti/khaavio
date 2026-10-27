@@ -352,18 +352,18 @@ export default function PublicBooking({ slugOverride, embedded = false, onReturn
       setSubscriptionAllowsTransactions(null);
 
       try {
-        const { data, error: restaurantError } = await supabase
-          .from("restaurants")
-          .select(
-            "id, name, slug, restaurant_type, address, is_published, business_hours, timezone",
-          )
-          .eq("slug", slug)
-          .eq("is_published", true)
-          .maybeSingle();
+        // Use the same public, allowlisted snapshot as the menu. Directly
+        // selecting public.restaurant is owner/RLS dependent and makes a valid
+        // booking page appear unavailable in incognito or on another device.
+        const { data: publicSnapshot, error: restaurantError } =
+          await supabase.rpc("khaavio_public_restaurant_menu", {
+            p_slug: slug,
+          });
 
         if (restaurantError) throw restaurantError;
 
-        if (!data) {
+        const data = publicSnapshot?.restaurant;
+        if (!data || data.is_published !== true) {
           throw new Error(
             "This restaurant has not published its menu, or the link is incorrect.",
           );
