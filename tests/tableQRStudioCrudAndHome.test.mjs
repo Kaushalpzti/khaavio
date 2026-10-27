@@ -44,3 +44,20 @@ test("public home page has the refreshed responsive visual system without alteri
   assert.match(homeStyles, /Khaavio homepage refresh/);
   assert.match(homeStyles, /@media \(max-width: 620px\)/);
 });
+
+
+test("premium QR cards use an editorial overline, scan prompt and table plaque", () => {
+  assert.ok(studio.includes("YOUR TABLE · YOUR MENU"));
+  assert.ok(studio.includes("SCAN TO EXPLORE"));
+  assert.ok(studio.includes("Point your camera here"));
+  assert.match(studioStyles, /\.tqr-card-overline/);
+  assert.match(studioStyles, /\.tqr-card-scan-intro/);
+  assert.match(studioStyles, /\.tqr-card-table-number/);
+});
+
+test("print exports use an adaptive high-contrast QR frame and keep QR quiet space", () => {
+  assert.match(studio, /const qrFrameY = scanLabelY \+ 40/);
+  assert.match(studio, /const qrSize = Math\.max\(430, Math\.min\(610/);
+  assert.match(studio, /imageSmoothingEnabled = false/);
+  assert.match(studio, /margin: 4/);
+});
