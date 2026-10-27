@@ -56,7 +56,7 @@ test("public menu stores a device-scoped tab token, rechecks the mode and render
   assert.match(menu, /Request final bill/);
   assert.match(menu, /Start a new bill/);
   assert.match(menu, /className="public-menu-header-bill"/);
-  assert.match(menu, /<ReceiptText size={17} aria-hidden="true" \/>/);
+  assert.match(menu, /<ReceiptText size=\\{17\\} aria-hidden="true" \/>/);
   assert.doesNotMatch(menu, /className="public-menu-header-cart public-menu-header-bill"/);
   assert.match(menu, /<span>My Bill<\/span>/);
 });
