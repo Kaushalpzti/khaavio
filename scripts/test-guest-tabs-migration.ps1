@@ -36,12 +36,14 @@ if ($BaselineSql -match "(?m)^\s*COPY\s+\S+\s*\(") {
 $TempRoot = Join-Path $env:TEMP ("khaavio-guest-billing-local-" + [guid]::NewGuid().ToString("N"))
 $TempSupabase = Join-Path $TempRoot "supabase"
 $TempMigrations = Join-Path $TempSupabase "migrations"
+$TempFunctions = Join-Path $TempSupabase "functions"
 $StackAttempted = $false
 $Failure = $null
 $UniqueProjectId = $null
 
 try {
   New-Item -ItemType Directory -Path $TempMigrations -Force | Out-Null
+  New-Item -ItemType Directory -Path $TempFunctions -Force | Out-Null
   $ConfigText = Get-Content -Raw -Path $ConfigPath
   if ($ConfigText -notmatch '(?m)^project_id\s*=\s*"[^"]+"') {
     throw "Could not safely set a unique local project_id in the copied Supabase config."

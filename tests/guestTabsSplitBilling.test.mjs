@@ -82,6 +82,8 @@ test("kitchen and order cards show the guest label without replacing order ticke
 test("local migration test uses a disposable local stack and protects the production schema snapshot", () => {
   assert.match(localTestScript, /local-schema-baseline\.sql/);
   assert.match(localTestScript, /node_modules/);
+  assert.match(localTestScript, /$TempFunctions = Join-Path $TempSupabase "functions"/);
+  assert.match(localTestScript, /New-Item -ItemType Directory -Path $TempFunctions -Force/);
   assert.match(localTestScript, /\$SupabaseCli start/);
   assert.match(localTestScript, /db reset --local --yes/);
   assert.match(localTestScript, /stop --no-backup/);
