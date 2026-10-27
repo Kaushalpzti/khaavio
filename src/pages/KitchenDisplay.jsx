@@ -215,7 +215,7 @@ export default function KitchenDisplay() {
         const { data: orderData, error: ordersError } = await supabase
           .from("orders")
           .select(
-            "id, restaurant_id, table_id, customer_name, customer_phone, notes, status, total_amount, created_at",
+            "id, restaurant_id, table_id, guest_tab_id, customer_name, customer_phone, notes, status, total_amount, created_at",
           )
           .eq("restaurant_id", restaurantId)
           .in("status", ACTIVE_STATUSES)
@@ -228,8 +228,11 @@ export default function KitchenDisplay() {
         const tableIds = [
           ...new Set(currentOrders.map((order) => order.table_id).filter(Boolean)),
         ];
+        const guestTabIds = [
+          ...new Set(currentOrders.map((order) => order.guest_tab_id).filter(Boolean)),
+        ];
 
-        const [itemsResult, tablesResult] = await Promise.all([
+        const [itemsResult, tablesResult, guestTabsResult] = await Promise.all([
           orderIds.length
             ? supabase
                 .from("order_items")
@@ -243,10 +246,18 @@ export default function KitchenDisplay() {
                 .eq("restaurant_id", restaurantId)
                 .in("id", tableIds)
             : Promise.resolve({ data: [], error: null }),
+          guestTabIds.length
+            ? supabase
+                .from("table_session_tabs")
+                .select("id, display_name")
+                .eq("restaurant_id", restaurantId)
+                .in("id", guestTabIds)
+            : Promise.resolve({ data: [], error: null }),
         ]);
 
         if (itemsResult.error) throw itemsResult.error;
         if (tablesResult.error) throw tablesResult.error;
+        if (guestTabsResult.error) throw guestTabsResult.error;
 
         const itemsByOrder = new Map();
         for (const item of itemsResult.data || []) {
@@ -258,11 +269,15 @@ export default function KitchenDisplay() {
         const tableById = new Map(
           (tablesResult.data || []).map((table) => [table.id, table.table_number]),
         );
+        const guestTabById = new Map(
+          (guestTabsResult.data || []).map((tab) => [tab.id, tab.display_name || "Guest"]),
+        );
 
         const enrichedOrders = currentOrders.map((order) => ({
           ...order,
           items: itemsByOrder.get(order.id) || [],
           tableNumber: tableById.get(order.table_id) || null,
+          guestTabName: guestTabById.get(order.guest_tab_id) || null,
         }));
 
         // The shared operational alert manager announces new orders across routes.
@@ -532,7 +547,7 @@ export default function KitchenDisplay() {
                   <div className="kitchen-order-card-top">
                     <div>
                       <span className="kitchen-order-reference">ORDER #{getReference(order.id)}</span>
-                      <h2>{tableNumber ? `Table ${tableNumber}` : "Restaurant order"}</h2>
+                      <h2>{tableNumber ? `Table ${tableNumber}${order.guestTabName ? " · " + order.guestTabName : ""}` : "Restaurant order"}</h2>
                     </div>
                     <span className={`kitchen-status-pill status-${order.status}`}>
                       {STATUS_LABELS[order.status] || order.status}
