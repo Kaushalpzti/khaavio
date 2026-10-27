@@ -372,6 +372,8 @@ export default function PublicMenu() {
         if (!accessError) transactionAccess = accessData === true;
 
         let resolvedTable = null;
+        let resolvedGuestTabToken = "";
+        let guestTokenInitError = "";
 
         // A table-specific QR must resolve to a valid active table.
         if (hasTableParam) {
@@ -404,6 +406,17 @@ export default function PublicMenu() {
           }
         }
 
+        if (effectiveBillingMode === "per_guest" && resolvedTable && tableToken) {
+          try {
+            const key = getGuestTabStorageKey(slug, tableToken);
+            const storedToken = window.localStorage.getItem(key);
+            resolvedGuestTabToken = storedToken || createGuestTabToken();
+            if (!storedToken) window.localStorage.setItem(key, resolvedGuestTabToken);
+          } catch (tokenError) {
+            guestTokenInitError = tokenError?.message || "Could not prepare your guest bill on this device.";
+          }
+        }
+
         const publicCategories = Array.isArray(menuSnapshot?.categories)
           ? menuSnapshot.categories
           : [];
@@ -431,6 +444,8 @@ export default function PublicMenu() {
         );
 
         setTableContext(resolvedTable);
+        setGuestTabToken(resolvedGuestTabToken);
+        if (guestTokenInitError) setGuestBillError(guestTokenInitError);
       } catch (err) {
         if (!cancelled) {
           setError(
@@ -524,19 +539,6 @@ export default function PublicMenu() {
       setGuestBillError(tokenError?.message || "Could not start a new guest bill.");
     }
   }
-
-  useEffect(() => {
-    if (!isGuestBilling || !tableToken || !tableId) return;
-    try {
-      const key = getGuestTabStorageKey(slug, tableToken);
-      const storedToken = window.localStorage.getItem(key);
-      const token = storedToken || createGuestTabToken();
-      if (!storedToken) window.localStorage.setItem(key, token);
-      setGuestTabToken(token);
-    } catch (tokenError) {
-      setGuestBillError(tokenError?.message || "Could not prepare your guest bill on this device.");
-    }
-  }, [slug, tableToken, tableId, isGuestBilling]);
 
   useEffect(() => {
     if (!isGuestBilling || !guestTabToken) return undefined;
