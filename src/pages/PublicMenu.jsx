@@ -22,6 +22,7 @@ import { supabase } from "../lib/supabaseClient";
 import { getOrCreateKhaavioLoyaltyToken } from "../lib/loyaltyToken";
 import { getStoredKhaavioLoyaltyPhone, setStoredKhaavioLoyaltyPhone } from "../lib/loyaltyPhone";
 import { DEFAULT_PUBLIC_FEATURES, normalizePublicFeatureFlags, shouldShowPublicReviewsTab } from "../lib/publicPlanFeatures";
+import { hasSocialLinks } from "../lib/restaurantSocialLinks.js";
 import PublicTableService from "../components/PublicTableService";
 import PublicLoyaltyClub from "../components/PublicLoyaltyClub";
 import PublicReviewsFeedback, { isValidGoogleReviewUrl } from "../components/PublicReviewsFeedback";
@@ -188,6 +189,7 @@ export default function PublicMenu() {
   const canShowReviewsTab = shouldShowPublicReviewsTab(
     publicFeatures,
     canShowGoogleReviewLink,
+    hasSocialLinks(restaurant?.social_links),
   );
   const canUseAskKhaavio = publicFeatures.ai_menu_assistant === true;
 
@@ -999,6 +1001,7 @@ export default function PublicMenu() {
                   restaurantSlug={slug}
                   restaurantName={restaurant.name}
                   googleReviewUrl={restaurant.google_review_url}
+                  socialLinks={restaurant.social_links}
                   allowGoogleReviewLink={publicFeatures.google_review_link}
                   allowPrivateFeedback={canUsePrivateFeedback}
                 />

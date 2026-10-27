@@ -42,3 +42,17 @@ test("review URL must be HTTPS on an allowed Google host", () => {
   const settings = read("../src/pages/RestaurantSettings.jsx");
   assert.match(settings, /google_review_url/);
 });
+
+
+test("public review section renders social links and dashboard saves validated profiles", () => {
+  const socialComponent = read("../src/components/PublicRestaurantSocialLinks.jsx");
+  const socialStyles = read("../src/components/PublicReviewsFeedback.css");
+  const settings = read("../src/pages/RestaurantSettings.jsx");
+  assert.match(publicWidget, /PublicRestaurantSocialLinks/);
+  assert.match(publicWidget, /socialLinks = \{\}/);
+  assert.match(socialComponent, /normalizeSocialLinks\(socialLinks\)/);
+  assert.match(socialComponent, /rel="noopener noreferrer nofollow"/);
+  assert.match(socialStyles, /\.public-reviews-social-links/);
+  assert.match(settings, /validateSocialLinks\(form\.social_links\)/);
+  assert.match(settings, /social_links: socialValidation\.value/);
+});

@@ -47,3 +47,11 @@ test("Khaavio Control contains a read-only Razorpay billing and webhook view", (
   assert.match(adminStyles, /\.billing-record-facts/);
   assert.match(adminStyles, /@media \(max-width: 600px\)[\s\S]*?\.billing-webhook-row/);
 });
+
+
+test("new social links migration extends the published restaurant menu allowlist", () => {
+  const migration = read("../supabase/migrations/20261027203000_restaurant_social_links.sql");
+  assert.match(migration, /ADD COLUMN IF NOT EXISTS social_links jsonb/);
+  assert.match(migration, /'social_links', COALESCE\(v_restaurant -> 'social_links', '\{\}'::jsonb\)/);
+  assert.match(migration, /GRANT EXECUTE ON FUNCTION public\.khaavio_public_restaurant_menu\(text\) TO anon, authenticated/);
+});

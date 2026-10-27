@@ -63,3 +63,22 @@
   .public-reviews-form-wrap { animation: none; }
   .public-reviews-google, .public-reviews-private, .public-reviews-submit, .public-reviews-star { transition: none; }
 }
+
+
+.public-reviews-social{margin-top:24px;padding:19px;border:1px solid rgba(88,123,91,.18);border-radius:18px;background:rgba(255,255,255,.68)}
+.public-reviews-social-heading{margin-bottom:13px}
+.public-reviews-social-eyebrow{display:block;color:#6d8c70;font-size:9px;font-weight:900;letter-spacing:1.5px}
+.public-reviews-social-heading h3{margin:6px 0 0;color:#2b4032;font-size:clamp(16px,2vw,19px);line-height:1.25}
+.public-reviews-social-links{display:flex;flex-wrap:wrap;gap:9px}
+.public-reviews-social-link{display:inline-flex;align-items:center;gap:8px;min-height:42px;padding:0 12px;border:1px solid #dbe5d8;border-radius:12px;background:#fff;color:#314b38;font-size:12px;font-weight:800;text-decoration:none;box-shadow:0 4px 12px rgba(39,69,46,.045);transition:transform 160ms ease,border-color 160ms ease,box-shadow 160ms ease}
+.public-reviews-social-link:hover{transform:translateY(-2px);border-color:#a9c8aa;box-shadow:0 8px 18px rgba(39,69,46,.10)}
+.public-reviews-social-link>svg:first-child{flex:0 0 auto;color:#477b5b}
+.public-reviews-social-link>svg:last-child{flex:0 0 auto;color:#87968a}
+.public-reviews-social-link.is-instagram>svg:first-child{color:#b43d83}
+.public-reviews-social-link.is-facebook>svg:first-child{color:#1877f2}
+.public-reviews-social-link.is-youtube>svg:first-child{color:#d93025}
+.public-reviews-social-link.is-tiktok>svg:first-child{color:#242424}
+.public-reviews-social-link.is-x>svg:first-child{color:#202020}
+.public-reviews-social-link.is-whatsapp>svg:first-child{color:#1d9d60}
+@media(max-width:600px){.public-reviews-social{padding:15px 13px}.public-reviews-social-links{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}.public-reviews-social-link{justify-content:flex-start;min-width:0;padding:0 10px}.public-reviews-social-link span{overflow-wrap:anywhere}}
+@media(prefers-reduced-motion:reduce){.public-reviews-social-link{transition:none}}

@@ -12,11 +12,12 @@ import {
   Upload,
 } from "lucide-react";
 import { supabase } from "../lib/supabaseClient";
+import { normalizeSocialLinks, SOCIAL_LINK_FIELDS, validateSocialLinks } from "../lib/restaurantSocialLinks.js";
 import "./RestaurantSettings.css";
 import "./RestaurantSettingsLogo.css";
 
 const RESTAURANT_FIELDS =
-  "id, name, slug, restaurant_type, logo_url, phone, contact_email, address, city, state, postal_code, description, google_review_url, is_published";
+  "id, name, slug, restaurant_type, logo_url, phone, contact_email, address, city, state, postal_code, description, google_review_url, social_links, is_published";
 
 const GOOGLE_REVIEW_HOSTS = new Set([
   "g.page",
@@ -119,6 +120,7 @@ const INITIAL_FORM = {
   postal_code: "",
   description: "",
   google_review_url: "",
+  social_links: {},
 };
 
 const BUSINESS_TYPES = [
@@ -141,6 +143,7 @@ function formFromRestaurant(restaurant) {
     postal_code: restaurant.postal_code || "",
     description: restaurant.description || "",
     google_review_url: restaurant.google_review_url || "",
+    social_links: normalizeSocialLinks(restaurant.social_links),
   };
 }
 
@@ -324,6 +327,12 @@ export default function RestaurantSettings() {
     setError("");
   }
 
+  function updateSocialLink(key, value) {
+    setForm((current) => ({ ...current, social_links: { ...current.social_links, [key]: value } }));
+    setNotice("");
+    setError("");
+  }
+
   async function handleSubmit(event) {
     event.preventDefault();
     if (!restaurant || !userId || saving) return;
@@ -351,6 +360,12 @@ export default function RestaurantSettings() {
       return;
     }
 
+    const socialValidation = validateSocialLinks(form.social_links);
+    if (!socialValidation.ok) {
+      setError(socialValidation.message);
+      return;
+    }
+
     setSaving(true);
     setError("");
     setNotice("");
@@ -367,6 +382,7 @@ export default function RestaurantSettings() {
         postal_code: form.postal_code.trim() || null,
         description: form.description.trim(),
         google_review_url: googleReviewUrl || null,
+        social_links: socialValidation.value,
       };
 
       const { data, error: updateError } = await supabase
@@ -723,6 +739,37 @@ export default function RestaurantSettings() {
                       Add your Google Business Profile review link. It appears to all customers, regardless of their private feedback rating.
                     </span>
                   </div>
+                </div>
+              </section>
+
+              <section className="restaurant-settings-section restaurant-settings-social-section">
+                <div className="restaurant-settings-section-heading">
+                  <div>
+                    <h2>Social media & links</h2>
+                    <p>Add profiles customers can follow. Only links you fill in appear on your public menu.</p>
+                  </div>
+                </div>
+                <div className="restaurant-settings-grid">
+                  {SOCIAL_LINK_FIELDS.map((field) => (
+                    <div className="restaurant-settings-field" key={field.key}>
+                      <label htmlFor={"settings-social-" + field.key}>
+                        {field.label}
+                        <span className="restaurant-settings-field-hint"> (optional)</span>
+                      </label>
+                      <input
+                        id={"settings-social-" + field.key}
+                        name={"social_links." + field.key}
+                        type="url"
+                        inputMode="url"
+                        autoComplete="url"
+                        value={form.social_links?.[field.key] || ""}
+                        onChange={(event) => updateSocialLink(field.key, event.target.value)}
+                        placeholder={field.placeholder}
+                        maxLength={500}
+                      />
+                      <span className="restaurant-settings-field-hint">{field.helper}</span>
+                    </div>
+                  ))}
                 </div>
               </section>
 

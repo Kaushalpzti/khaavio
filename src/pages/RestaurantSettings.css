@@ -440,3 +440,7 @@
         grid-column: auto;
     }
 }
+
+.restaurant-settings-social-section .restaurant-settings-section-heading p { max-width: 660px; }
+.restaurant-settings-social-section .restaurant-settings-field-hint { line-height: 1.55; }
+.restaurant-settings-social-section .restaurant-settings-field label .restaurant-settings-field-hint { font-weight: 500; }
