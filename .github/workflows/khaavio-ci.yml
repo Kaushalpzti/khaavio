@@ -36,3 +36,9 @@ jobs:
         run: npm run lint
       - name: Build production bundle
         run: npm run build
+      - name: Install Khaavio Control PWA dependencies
+        working-directory: khaavio-superadmin-pwa
+        run: npm ci
+      - name: Build Khaavio Control PWA
+        working-directory: khaavio-superadmin-pwa
+        run: npm run build
