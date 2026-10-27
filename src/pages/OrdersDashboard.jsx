@@ -23,6 +23,7 @@ import {
 import { supabase } from "../lib/supabaseClient";
 import { useKhaavioOperationalAlerts } from "../context/KhaavioOperationalAlertsContext";
 import { cancelKhaavioVoice } from "../lib/khaavioVoiceAlerts";
+import { normalizeTableNumber } from "../lib/tableNumber";
 import khaavioIcon from "../assets/icon.png";
 import "./OrdersDashboard.css";
 
@@ -118,14 +119,10 @@ function normalizeWhatsAppPhone(value) {
 }
 
 function formatTableLabel(value) {
-  const table = String(value || "").trim();
+  const table = normalizeTableNumber(value);
 
   if (!table || /^restaurant(?:\s|$)/i.test(table)) {
     return "Restaurant order";
-  }
-
-  if (/^table\s*/i.test(table)) {
-    return table.replace(/^table\s*/i, "Table ");
   }
 
   return `Table ${table}`;
@@ -154,7 +151,7 @@ function getWhatsAppUrl(order, restaurant) {
     "",
     `Order update from ${restaurant?.name || "the restaurant"}.`,
     `Order reference: #${getReference(order.id)}`,
-    `Table: ${formatTableLabel(order.table_number)}`,
+    formatTableLabel(order.table_number),
     `Status: ${status}`,
     statusMessage,
     `Order total: ${formatPrice(order.total_amount)}`,
