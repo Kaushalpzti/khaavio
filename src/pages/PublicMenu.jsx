@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 
 import { supabase } from "../lib/supabaseClient";
+import { normalizeTableNumber } from "../lib/tableNumber";
 import { getOrCreateKhaavioLoyaltyToken } from "../lib/loyaltyToken";
 import { getStoredKhaavioLoyaltyPhone, setStoredKhaavioLoyaltyPhone } from "../lib/loyaltyPhone";
 import { DEFAULT_PUBLIC_FEATURES, normalizePublicFeatureFlags, shouldShowPublicReviewsTab } from "../lib/publicPlanFeatures";
@@ -921,10 +922,10 @@ export default function PublicMenu() {
           {tableContext && (
             <span
               className="public-menu-table-badge"
-              aria-label={`Ordering at table ${tableContext.table_number}`}
+              aria-label={`Ordering at table ${normalizeTableNumber(tableContext.table_number)}`}
             >
               <UtensilsCrossed size={17} aria-hidden="true" />
-              <span>Table {tableContext.table_number}</span>
+              <span>Table {normalizeTableNumber(tableContext.table_number)}</span>
             </span>
           )}
           {isGuestBilling ? (
@@ -972,7 +973,7 @@ export default function PublicMenu() {
             tabIndex={-1}
           >
             <div className="public-cart-drawer-topbar">
-              <span className="public-menu-eyebrow">TABLE {tableContext?.table_number}</span>
+              <span className="public-menu-eyebrow">TABLE {normalizeTableNumber(tableContext?.table_number)}</span>
               <button
                 type="button"
                 className="public-cart-drawer-close"
@@ -1554,7 +1555,7 @@ export default function PublicMenu() {
                           <CheckCircle2 size={16} />
                           <span>
                             Ordering for table{" "}
-                            <strong>{tableContext.table_number}</strong>
+                            <strong>{normalizeTableNumber(tableContext.table_number)}</strong>
                           </span>
                         </div>
                       ) : (
