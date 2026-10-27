@@ -42,7 +42,8 @@ test("dashboard and review widget use the social profile fields", () => {
   assert.ok(settings.includes("social_links: socialValidation.value"));
   assert.ok(settings.includes("SOCIAL_LINK_FIELDS.map"));
   assert.match(publicReviews, /PublicRestaurantSocialLinks/);
-  assert.match(socialComponent, /FOLLOW ALONG/);
+  assert.match(socialComponent, /public-reviews-social-icon/);
+  assert.doesNotMatch(socialComponent, /FOLLOW ALONG|Find \{restaurantName/);
   assert.match(socialComponent, /rel="noopener noreferrer nofollow"/);
 });
 

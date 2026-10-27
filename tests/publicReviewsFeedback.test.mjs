@@ -52,7 +52,9 @@ test("public review section renders social links and dashboard saves validated p
   assert.match(publicWidget, /socialLinks = \{\}/);
   assert.match(socialComponent, /normalizeSocialLinks\(socialLinks\)/);
   assert.match(socialComponent, /rel="noopener noreferrer nofollow"/);
-  assert.match(socialStyles, /\.public-reviews-social-links/);
+  assert.match(socialStyles, /\.public-reviews-social-icons/);
+  assert.match(socialStyles, /\.public-reviews-social-icon/);
+  assert.ok(publicWidget.lastIndexOf("<PublicRestaurantSocialLinks") > publicWidget.indexOf("{allowPrivateFeedback && isOpen && ("));
   assert.match(settings, /validateSocialLinks\(form\.social_links\)/);
   assert.match(settings, /social_links: socialValidation\.value/);
 });
