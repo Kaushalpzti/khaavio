@@ -23,6 +23,10 @@ test("combined billing remains the default and active sessions snapshot their bi
 test("guest orders are linked server-side and scoped to the same restaurant, table and session", () => {
   assert.match(migration, /place_public_order_for_guest_with_loyalty/i);
   assert.match(migration, /orders_guest_tab_scope_fkey/i);
+  assert.match(migration, /guest_order_request_token uuid/i);
+  assert.match(migration, /orders_guest_order_request_uidx/i);
+  assert.match(migration, /p_guest_order_request_token uuid/i);
+  assert.match(migration, /This guest-order RPC enables this transaction-local flag|app\.khaavio_guest_order_request_token/i);
   assert.match(migration, /An order cannot be moved between guest tabs/i);
   assert.match(migration, /guest_tab_token/i);
   assert.match(migration, /khaavio_guard_closed_guest_tab_updates/i);
@@ -41,6 +45,8 @@ test("public menu stores a device-scoped tab token, rechecks the mode and render
   assert.match(menu, /khaavio_public_guest_tab_snapshot/);
   assert.match(menu, /khaavio_public_table_billing_mode/);
   assert.match(menu, /place_public_order_for_guest_with_loyalty/);
+  assert.match(menu, /khaavio-guest-order-request:/);
+  assert.match(menu, /p_guest_order_request_token/);
   assert.match(menu, /Request final bill/);
   assert.match(menu, /Start a new bill/);
 });

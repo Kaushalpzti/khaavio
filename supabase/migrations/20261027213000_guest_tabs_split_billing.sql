@@ -413,7 +413,6 @@ DECLARE
   v_mode text;
   v_tab public.table_session_tabs%ROWTYPE;
   v_display_name text;
-  v_constraint_name text;
 BEGIN
   IF p_guest_tab_token IS NULL OR p_guest_order_request_token IS NULL THEN
     RAISE EXCEPTION 'A guest tab and order request token are required. Refresh the menu and try again.' USING ERRCODE = '22023';
@@ -461,10 +460,9 @@ BEGIN
       p_loyalty_member_token, p_loyalty_phone
     ) AS placed;
   EXCEPTION WHEN unique_violation THEN
-    GET STACKED DIAGNOSTICS v_constraint_name = CONSTRAINT_NAME;
-    IF v_constraint_name IS DISTINCT FROM 'orders_guest_order_request_uidx' THEN
-      RAISE;
-    END IF;
+    -- A concurrent retry may have won the unique request ID. Return only an
+    -- existing order bound to the same QR table and guest token; otherwise
+    -- rethrow the original uniqueness error.
     SELECT o.id,
       pg_catalog.upper(pg_catalog.substr(pg_catalog.replace(o.id::text, '-', ''), 1, 8)),
       o.total_amount, o.tracking_token
@@ -482,7 +480,7 @@ BEGIN
       RETURN QUERY SELECT v_order_id, v_order_reference, v_total, v_tracking_token;
       RETURN;
     END IF;
-    RAISE EXCEPTION 'This order request token was already used. Refresh the menu and submit a new order.' USING ERRCODE = '23505';
+    RAISE;
   END;
   PERFORM pg_catalog.set_config('app.khaavio_guest_order_workflow', 'off', true);
   PERFORM pg_catalog.set_config('app.khaavio_guest_order_request_token', '', true);
@@ -520,7 +518,7 @@ BEGIN
 END;
 $function$;
 REVOKE ALL ON FUNCTION public.place_public_order_for_guest_with_loyalty(text, uuid, text, text, text, jsonb, uuid, text, uuid, text, uuid) FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION public.place_public_order_for_guest_with_loyalty(text, uuid, text, text, text, jsonb, uuid, text, uuid, text) TO anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.place_public_order_for_guest_with_loyalty(text, uuid, text, text, text, jsonb, uuid, text, uuid, text, uuid) TO anon, authenticated;
 
 CREATE OR REPLACE FUNCTION public.khaavio_finalize_guest_tab(p_guest_tab_id uuid)
 RETURNS TABLE(invoice_id uuid, invoice_number text, total_amount numeric, order_count integer, payment_status text)
