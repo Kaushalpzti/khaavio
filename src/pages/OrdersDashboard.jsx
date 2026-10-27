@@ -813,7 +813,7 @@ export default function OrdersDashboard() {
                           <div className="order-meta">
                             <span>
                               <Store size={14} />
-                              {order.table_number}{order.guest_tab_name ? " · " + order.guest_tab_name : ""}
+                              {formatTableLabel(order.table_number)}{order.guest_tab_name ? " · " + order.guest_tab_name : ""}
                             </span>
 
                             <span>
