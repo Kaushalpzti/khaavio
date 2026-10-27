@@ -365,93 +365,129 @@ async function drawBrandedCard(restaurant, table, settings, qrDataUrl) {
 
   const center = CARD_WIDTH / 2;
   const initials = getInitials(restaurant?.name);
-  let headerBottom = 170;
 
+  // A restrained editorial masthead makes the print card feel like a table tent.
+  roundedRect(ctx, center - 76, 76, 152, 7, 4, colors.accent, null);
+  ctx.strokeStyle = colors.border;
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(170, 108);
+  ctx.lineTo(350, 108);
+  ctx.moveTo(730, 108);
+  ctx.lineTo(910, 108);
+  ctx.stroke();
+  ctx.fillStyle = colors.muted;
+  ctx.font = "700 18px Arial, sans-serif";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText("YOUR TABLE  ·  YOUR MENU", center, 108);
+  ctx.textBaseline = "alphabetic";
+
+  let headerBottom = 178;
   if (settings.showLogo) {
     const logo = await safeLoadImage(restaurant?.logo_url || "");
     ctx.save();
     ctx.beginPath();
-    ctx.arc(center, 150, 66, 0, Math.PI * 2);
+    ctx.arc(center, 188, 65, 0, Math.PI * 2);
     ctx.fillStyle = colors.card;
     ctx.fill();
-    ctx.lineWidth = 4;
+    ctx.lineWidth = 5;
     ctx.strokeStyle = colors.accent;
     ctx.stroke();
     ctx.beginPath();
-    ctx.arc(center, 150, 58, 0, Math.PI * 2);
+    ctx.arc(center, 188, 57, 0, Math.PI * 2);
     ctx.clip();
     if (logo) {
       const side = Math.min(logo.width, logo.height);
       const sx = (logo.width - side) / 2;
       const sy = (logo.height - side) / 2;
-      ctx.drawImage(logo, sx, sy, side, side, center - 54, 96, 108, 108);
+      ctx.drawImage(logo, sx, sy, side, side, center - 53, 135, 106, 106);
     } else {
       ctx.fillStyle = colors.accent;
-      ctx.fillRect(center - 62, 88, 124, 124);
+      ctx.fillRect(center - 60, 128, 120, 120);
       ctx.fillStyle = colors.accentText;
-      ctx.font = "700 45px Arial, sans-serif";
+      ctx.font = "700 44px Arial, sans-serif";
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
-      ctx.fillText(initials, center, 151);
+      ctx.fillText(initials, center, 188);
     }
     ctx.restore();
-    headerBottom = 245;
+    headerBottom = 260;
   }
 
   if (settings.showName) {
     ctx.fillStyle = colors.ink;
-    ctx.font = "600 58px Georgia, 'Times New Roman', serif";
+    ctx.font = "600 54px Georgia, 'Times New Roman', serif";
     ctx.textAlign = "center";
     ctx.textBaseline = "alphabetic";
-    const lines = wrapCanvasText(ctx, restaurant?.name || "Restaurant", 900, 2);
+    const lines = wrapCanvasText(ctx, restaurant?.name || "Restaurant", 870, 2);
     let y = headerBottom + 44;
     for (const line of lines) {
       ctx.fillText(line, center, y);
-      y += 64;
+      y += 58;
     }
-    headerBottom = y - 30;
+    headerBottom = y - 25;
   }
 
   if (settings.showCuisine && restaurant?.restaurant_type) {
     ctx.fillStyle = colors.muted;
-    ctx.font = "500 25px Arial, sans-serif";
+    ctx.font = "500 24px Arial, sans-serif";
     const cuisine = String(restaurant.restaurant_type).replace(/_/g, " ");
     const lines = wrapCanvasText(ctx, cuisine, 880, 1);
     ctx.textAlign = "center";
-    ctx.fillText(lines[0] || cuisine, center, Math.max(350, headerBottom + 20));
-    headerBottom = Math.max(350, headerBottom + 26);
+    const y = headerBottom + 19;
+    ctx.fillText(lines[0] || cuisine, center, y);
+    headerBottom = y + 17;
   }
 
   if (settings.showTagline && restaurant?.description) {
     ctx.fillStyle = colors.muted;
-    ctx.font = "400 21px Arial, sans-serif";
+    ctx.font = "400 20px Arial, sans-serif";
     ctx.textAlign = "center";
-    const lines = wrapCanvasText(ctx, restaurant.description, 830, 1);
-    ctx.fillText(
-      lines[0] || "",
-      center,
-      Math.min(416, Math.max(390, headerBottom + 30)),
-    );
+    const lines = wrapCanvasText(ctx, restaurant.description, 820, 1);
+    const y = headerBottom + 19;
+    ctx.fillText(lines[0] || "", center, y);
+    headerBottom = y + 14;
   }
 
-  // Give the scannable code a generous, high-contrast print-safe frame.
-  roundedRect(ctx, 150, 420, 780, 730, 38, colors.qr, colors.border, 4);
-  roundedRect(ctx, 165, 435, 750, 700, 28, null, colors.border, 1);
-  const qrImage = await safeLoadImage(qrDataUrl);
-  if (!qrImage)
-    throw new Error(
-      "The QR code could not be loaded for export. Please retry.",
-    );
-  ctx.imageSmoothingEnabled = false;
-  ctx.drawImage(qrImage, 235, 470, 610, 610);
-  ctx.imageSmoothingEnabled = true;
-  ctx.fillStyle = colors.muted;
-  ctx.font = "700 18px Arial, sans-serif";
+  const scanLabelY = Math.max(420, headerBottom + 20);
+  ctx.strokeStyle = colors.border;
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(205, scanLabelY);
+  ctx.lineTo(350, scanLabelY);
+  ctx.moveTo(730, scanLabelY);
+  ctx.lineTo(875, scanLabelY);
+  ctx.stroke();
+  ctx.fillStyle = colors.accent;
+  ctx.font = "800 23px Arial, sans-serif";
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
-  ctx.fillText("SCAN  •  EXPLORE  •  ORDER", center, 1118);
+  ctx.fillText("SCAN TO EXPLORE", center, scanLabelY);
+  ctx.fillStyle = colors.muted;
+  ctx.font = "400 17px Arial, sans-serif";
+  ctx.fillText("Point your camera here", center, scanLabelY + 22);
 
-  roundedRect(ctx, 180, 1175, 720, 82, 28, colors.accent, null);
+  const qrFrameY = scanLabelY + 40;
+  const qrSize = Math.max(430, Math.min(610, 1118 - qrFrameY - 72));
+  const qrFrameSize = qrSize + 72;
+  const qrFrameX = center - qrFrameSize / 2;
+  roundedRect(ctx, qrFrameX, qrFrameY, qrFrameSize, qrFrameSize, 36, colors.qr, colors.border, 4);
+  roundedRect(ctx, qrFrameX + 14, qrFrameY + 14, qrFrameSize - 28, qrFrameSize - 28, 27, null, colors.border, 1.5);
+
+  const qrImage = await safeLoadImage(qrDataUrl);
+  if (!qrImage)
+    throw new Error("The QR code could not be loaded for export. Please retry.");
+  ctx.imageSmoothingEnabled = false;
+  ctx.drawImage(qrImage, center - qrSize / 2, qrFrameY + 30, qrSize, qrSize);
+  ctx.imageSmoothingEnabled = true;
+  ctx.fillStyle = colors.muted;
+  ctx.font = "700 14px Arial, sans-serif";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText("MENU  ·  SPECIALS  ·  ORDER", center, qrFrameY + qrFrameSize - 20);
+
+  roundedRect(ctx, 180, 1156, 720, 78, 26, colors.accent, null);
   ctx.fillStyle = colors.accentText;
   ctx.font = "800 30px Arial, sans-serif";
   ctx.textAlign = "center";
@@ -460,28 +496,35 @@ async function drawBrandedCard(restaurant, table, settings, qrDataUrl) {
     String(settings.ctaText || "SCAN TO ORDER")
       .trim()
       .slice(0, 35) || "SCAN TO ORDER";
-  ctx.fillText(cta.toLocaleUpperCase(), center, 1216);
+  ctx.fillText(cta.toLocaleUpperCase(), center, 1195);
 
   ctx.fillStyle = colors.muted;
   ctx.font = "600 20px Arial, sans-serif";
-  ctx.fillText("VIEW MENU  •  PLACE ORDER", center, 1290);
+  ctx.fillText("VIEW MENU  ·  PLACE ORDER", center, 1260);
 
   if (settings.showTableNumber) {
+    roundedRect(ctx, center - 180, 1286, 360, 172, 28, colors.card, colors.border, 2);
     const tableParts = getTableNumberParts(
       table?.table_number,
       settings.tableNumberFormat,
     );
     if (tableParts.label) {
       ctx.fillStyle = colors.muted;
-      ctx.font = "800 25px Arial, sans-serif";
-      ctx.fillText(tableParts.label, center, 1370);
+      ctx.font = "800 20px Arial, sans-serif";
+      ctx.fillText(tableParts.label, center, 1335);
     }
     ctx.fillStyle = colors.ink;
-    ctx.font = "700 92px Georgia, 'Times New Roman', serif";
-    ctx.fillText(tableParts.value, center, 1460);
+    ctx.font = "700 88px Georgia, 'Times New Roman', serif";
+    ctx.fillText(tableParts.value, center, 1425);
   }
 
   if (settings.showPoweredBy) {
+    ctx.strokeStyle = colors.border;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(335, 1485);
+    ctx.lineTo(745, 1485);
+    ctx.stroke();
     const brandImage = await safeLoadImage(khaavioIcon);
     if (brandImage) {
       ctx.drawImage(brandImage, center - 110, 1500, 48, 48);
@@ -723,6 +766,11 @@ function QRCardPreview({
     <div className={`tqr-card tqr-card--${theme.id}`}>
       <div className="tqr-card-decor tqr-card-decor--one" />
       <div className="tqr-card-decor tqr-card-decor--two" />
+      <div className="tqr-card-overline" aria-hidden="true">
+        <span />
+        <strong>YOUR TABLE · YOUR MENU</strong>
+        <span />
+      </div>
       {settings.showLogo ? (
         <div className="tqr-card-logo">
           {restaurant?.logo_url && !logoFailed ? (
@@ -749,6 +797,14 @@ function QRCardPreview({
       {settings.showTagline && restaurant?.description ? (
         <p className="tqr-card-tagline">{restaurant.description}</p>
       ) : null}
+      <div className="tqr-card-scan-intro">
+        <span className="tqr-card-scan-rule" />
+        <span className="tqr-card-scan-copy">
+          <strong>SCAN TO EXPLORE</strong>
+          <small>Point your camera here</small>
+        </span>
+        <span className="tqr-card-scan-rule" />
+      </div>
       <div className="tqr-card-qr-shell">
         {qrDataUrl ? (
           <img
