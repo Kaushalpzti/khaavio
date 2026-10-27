@@ -109,6 +109,46 @@ CREATE INDEX IF NOT EXISTS orders_guest_tab_created_idx
   ON public.orders (guest_tab_id, created_at ASC)
   WHERE guest_tab_id IS NOT NULL;
 
+-- Block legacy/stale order RPCs from creating an unassigned order in a per-guest
+-- session. Only the validated guest-order RPC enables this transaction-local flag.
+CREATE OR REPLACE FUNCTION public.khaavio_guard_per_guest_order_insert()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path TO ''
+AS $function$
+DECLARE
+  v_billing_mode text;
+BEGIN
+  IF NEW.session_id IS NULL THEN
+    RETURN NEW;
+  END IF;
+
+  SELECT ts.billing_mode INTO v_billing_mode
+  FROM public.table_sessions ts
+  WHERE ts.id = NEW.session_id
+    AND ts.restaurant_id = NEW.restaurant_id
+    AND ts.table_id = NEW.table_id
+  FOR UPDATE;
+
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'The order table session is invalid.' USING ERRCODE = '23503';
+  END IF;
+
+  IF v_billing_mode = 'per_guest'
+     AND COALESCE(pg_catalog.current_setting('app.khaavio_guest_order_workflow', true), '') <> 'on' THEN
+    RAISE EXCEPTION 'This table uses separate guest bills. Refresh the menu and try again.' USING ERRCODE = '55000';
+  END IF;
+
+  RETURN NEW;
+END;
+$function$;
+REVOKE ALL ON FUNCTION public.khaavio_guard_per_guest_order_insert() FROM PUBLIC, anon, authenticated;
+DROP TRIGGER IF EXISTS khaavio_guard_per_guest_order_insert ON public.orders;
+CREATE TRIGGER khaavio_guard_per_guest_order_insert
+BEFORE INSERT ON public.orders
+FOR EACH ROW EXECUTE FUNCTION public.khaavio_guard_per_guest_order_insert();
+
 ALTER TABLE public.table_session_invoices
   DROP CONSTRAINT IF EXISTS table_session_invoices_session_id_key;
 ALTER TABLE public.table_session_invoices
@@ -368,12 +408,14 @@ BEGIN
   v_display_name := COALESCE(NULLIF(pg_catalog.btrim(p_guest_display_name), ''), NULLIF(pg_catalog.btrim(p_customer_name), ''), 'Guest');
   IF pg_catalog.char_length(v_display_name) > 80 THEN RAISE EXCEPTION 'Guest name must be 80 characters or fewer.' USING ERRCODE = '22023'; END IF;
 
+  PERFORM pg_catalog.set_config('app.khaavio_guest_order_workflow', 'on', true);
   SELECT placed.order_id, placed.order_reference, placed.total_amount, placed.tracking_token
     INTO v_order_id, v_order_reference, v_total, v_tracking_token
   FROM public.place_public_order_with_loyalty(
     p_slug, p_table_token, p_customer_name, p_customer_phone, p_notes, p_items,
     p_loyalty_member_token, p_loyalty_phone
   ) AS placed;
+  PERFORM pg_catalog.set_config('app.khaavio_guest_order_workflow', 'off', true);
 
   SELECT o.restaurant_id, o.table_id, o.session_id, ts.billing_mode
     INTO v_restaurant_id, v_table_id, v_session_id, v_mode
