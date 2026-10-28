@@ -89,6 +89,13 @@ function getOrCreateGuestOrderRequest(slug, tableToken, guestTabToken, fingerpri
   }
 }
 
+function canStartFreshGuestBill(snapshot) {
+  const tab = snapshot?.tab;
+  if (tab?.status !== "closed") return false;
+  if (snapshot?.invoice?.payment_status === "paid") return true;
+  return !snapshot?.invoice && Number(tab?.order_count || 0) === 0;
+}
+
 function getRestaurantAvailability(restaurant, timestamp) {
   if (!restaurant) {
     return {
@@ -775,7 +782,7 @@ export default function PublicMenu() {
           if (useGuestBilling) {
             const key = getGuestTabStorageKey(slug, tableToken);
             let storedToken = window.localStorage.getItem(key);
-            if (guestTabSnapshot?.tab?.status === "closed" && guestTabSnapshot?.invoice?.payment_status === "paid") {
+            if (canStartFreshGuestBill(guestTabSnapshot)) {
               storedToken = null;
             }
             if (!storedToken) {
@@ -1054,7 +1061,7 @@ export default function PublicMenu() {
                     Request final bill
                   </button>
                 ) : null}
-                {guestTabSnapshot.tab?.status === "closed" && guestTabSnapshot.invoice?.payment_status === "paid" && (
+                {canStartFreshGuestBill(guestTabSnapshot) && (
                   <button type="button" className="public-order-submit" onClick={startNewGuestBill}>Start a new bill</button>
                 )}
               </>
