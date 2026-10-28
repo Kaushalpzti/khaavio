@@ -29,7 +29,7 @@ test("table QR workspace supports activation and history-safe deletion", () => {
 test("table QR editor has accessible edit dialog and responsive management actions", () => {
   assert.match(studio, /aria-labelledby="tqr-edit-title"/);
   assert.match(studioStyles, /\.tqr-edit-form/);
-  assert.match(studioStyles, /@media \(max-width: 620px\)/);
+  assert.match(studioStyles, /@media \(max-width: 600px\)/);
   assert.match(studioStyles, /\.tqr-card-qr-shell/);
 });
 
