@@ -3050,3 +3050,146 @@
         border-radius: 15px;
     }
 }
+
+
+/* Launch-readiness typography pass: readable copy, labels and links without shrinking the layout. */
+.kh-home .kh-announcement {
+    font-size: 11px;
+    letter-spacing: 0.7px;
+}
+.kh-home .kh-nav-links > a,
+.kh-home .kh-login-link {
+    font-size: 13px;
+}
+.kh-home .kh-button {
+    font-size: 13px;
+}
+.kh-home .kh-eyebrow,
+.kh-home .kh-section-label,
+.kh-home .kh-feature-label,
+.kh-home .kh-cta-kicker {
+    font-size: 10px;
+    letter-spacing: 0.9px;
+}
+.kh-home .kh-hero-copy > p {
+    max-width: 570px;
+    font-size: clamp(16px, 1.15vw, 18px);
+    line-height: 1.8;
+}
+.kh-home .kh-intro-grid > div:last-child > p,
+.kh-home .kh-section-heading > p,
+.kh-home .kh-workflow-copy > p,
+.kh-home .kh-pricing-heading > p,
+.kh-home .kh-faq-grid > div:first-child > p,
+.kh-home .kh-final-cta-inner > p {
+    font-size: 16px;
+    line-height: 1.8;
+}
+.kh-home .kh-feature-label {
+    margin-top: 22px;
+}
+.kh-home .kh-feature-card h3 {
+    font-size: clamp(18px, 1.25vw, 21px);
+    line-height: 1.4;
+}
+.kh-home .kh-feature-card > p,
+.kh-home .kh-step p,
+.kh-home .kh-faq-item > p,
+.kh-home .kh-price-description {
+    font-size: 15px;
+    line-height: 1.75;
+}
+.kh-home .kh-step h3 {
+    font-size: 17px;
+    line-height: 1.45;
+}
+.kh-home .kh-pricing-trial-banner p,
+.kh-home .kh-price-note,
+.kh-home .kh-plan-founders-offer > small,
+.kh-home .kh-pricing-disclaimer,
+.kh-home .kh-faq-contact small {
+    font-size: 12px;
+    line-height: 1.6;
+}
+.kh-home .kh-plan-cta,
+.kh-home .kh-pricing-billing > button,
+.kh-home .kh-faq-item > button {
+    font-size: 14px;
+}
+.kh-home .kh-price-card li {
+    font-size: 14px;
+    line-height: 1.7;
+}
+.kh-home .kh-includes-label,
+.kh-home .kh-plan-founders-offer > span {
+    font-size: 10px;
+    letter-spacing: 0.75px;
+}
+.kh-home .kh-footer-brand > p,
+.kh-home .kh-footer-social > p {
+    font-size: 14px;
+    line-height: 1.75;
+}
+.kh-home .kh-footer-contact > a,
+.kh-home .kh-footer-column > a {
+    font-size: 14px;
+    line-height: 1.55;
+}
+.kh-home .kh-footer-column > span,
+.kh-home .kh-footer-social > span {
+    font-size: 11px;
+    letter-spacing: 0.8px;
+}
+.kh-home .kh-footer-bottom {
+    font-size: 12px;
+    line-height: 1.7;
+}
+.kh-home .kh-footer-bottom > a {
+    font-size: 12px;
+}
+@media (max-width: 900px) {
+    .kh-home .kh-intro-grid > div:last-child > p,
+    .kh-home .kh-section-heading > p,
+    .kh-home .kh-workflow-copy > p,
+    .kh-home .kh-pricing-heading > p,
+    .kh-home .kh-faq-grid > div:first-child > p,
+    .kh-home .kh-final-cta-inner > p {
+        font-size: 15.5px;
+    }
+    .kh-home .kh-price-card li {
+        font-size: 13.5px;
+    }
+}
+@media (max-width: 620px) {
+    .kh-home .kh-hero-copy > p,
+    .kh-home .kh-feature-card > p,
+    .kh-home .kh-step p,
+    .kh-home .kh-faq-item > p,
+    .kh-home .kh-price-description {
+        font-size: 15px;
+        line-height: 1.75;
+    }
+    .kh-home .kh-nav-links > a,
+    .kh-home .kh-login-link {
+        font-size: 13px;
+    }
+    .kh-home .kh-feature-card h3 {
+        font-size: 19px;
+    }
+    .kh-home .kh-price-card li {
+        font-size: 13.5px;
+    }
+    .kh-home .kh-footer-column > a {
+        font-size: 13.5px;
+        min-height: 32px;
+        line-height: 1.5;
+    }
+    .kh-home .kh-footer-bottom {
+        font-size: 11.5px;
+    }
+}
+@media (prefers-reduced-motion: reduce) {
+    .kh-home .kh-feature-card {
+        transition: none;
+    }
+}
