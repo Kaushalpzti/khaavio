@@ -4,7 +4,7 @@ PR #11 adds a versioned migration that changes two expected guest-billing confli
 
 ## Automated PostgreSQL check
 
-The GitHub Actions workflow starts a disposable PostgreSQL 17 service, creates a tiny compile-time fixture, applies only `supabase/migrations/20261028060000_guest_billing_conflict_http_status.sql`, and checks that both functions contain the `PT409` SQLSTATE mapping.
+The GitHub Actions workflow starts a disposable PostgreSQL 17 service, creates a tiny compile-time fixture, applies only `supabase/migrations/20261028003935_guest_billing_conflict_http_status.sql`, and checks that both functions contain the `PT409` SQLSTATE mapping.
 
 To see the result, open [PR #11](https://github.com/Kaushalpzti/khaavio/pull/11) and wait for **Validate guest-billing migration SQL** and **Khaavio CI** to pass. No database password, local schema dump, or Docker install is required on your PC for this CI check.
 
