@@ -1,4 +1,4 @@
-/* Khaavio homepage — complete layout rebuild (editorial hospitality, not a colour-only reskin). */
+/* Khaavio homepage refresh: complete editorial layout rebuild. */
 .hp-home {
   --hp-ink: #2b2228;
   --hp-plum: #30232d;
@@ -205,7 +205,7 @@
 .hp-feature-tile-top > small { color: #b8a196; font-size: 9px; font-weight: 800; letter-spacing: .7px; }
 .hp-feature-tile .hp-feature-number { margin-top: 20px; font-size: 8px; letter-spacing: .8px; }
 .hp-feature-tile h3 { margin: 8px 0 8px; color: #392a31; font-size: 17px; font-weight: 750; line-height: 1.35; letter-spacing: -.3px; }
-.hp-feature-tile p { margin: 0; color: #7d6b65; font-size: 12px; line-height: 1.75; }
+.hp-feature-tile p { margin: 0; color: #7d6b65; font-size: 13px; line-height: 1.75; }
 
 /* How it works: a contrasting dark editorial section with a horizontal process line. */
 .hp-workflow { position: relative; isolation: isolate; padding-block: clamp(78px, 8vw, 112px); color: #fff7ef; background: radial-gradient(ellipse at 90% 10%, rgb(232 108 74 / 18%), transparent 31%), linear-gradient(130deg, #382831 0%, #251b25 65%, #39262e 100%); overflow: hidden; }
@@ -369,7 +369,7 @@
 .hp-footer-social a:hover { color: #fffaf4; background: #d96343; }
 .hp-footer-column { display: flex; flex-direction: column; align-items: flex-start; gap: 13px; }
 .hp-footer-column > span { margin-bottom: 4px; color: #f0a88e; font-size: 9px; font-weight: 850; letter-spacing: 1px; }
-.hp-footer-column > a { color: #dacbc5; font-size: 11px; line-height: 1.5; transition: color 160ms ease; }
+.hp-footer-column > a { color: #dacbc5; font-size: 12px; line-height: 1.5; transition: color 160ms ease; }
 .hp-footer-column > a:hover { color: #ffb18f; }
 .hp-footer-bottom { min-height: 62px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px 20px; padding-block: 15px; color: #b7a7a1; border-top: 1px solid rgb(255 255 255 / 12%); font-size: 10px; }
 .hp-footer-bottom > a { padding: 8px 11px; color: #f1e3dc; border: 1px solid rgb(255 255 255 / 16%); border-radius: 999px; }
@@ -527,7 +527,7 @@
   .hp-feature-tile-top .hp-feature-icon svg { width: 17px; }
   .hp-feature-tile .hp-feature-number { margin-top: 15px; font-size: 7px; letter-spacing: .45px; }
   .hp-feature-tile h3 { font-size: 14px; line-height: 1.35; }
-  .hp-feature-tile p { font-size: 11px; line-height: 1.65; }
+  .hp-feature-tile p { font-size: 12px; line-height: 1.65; }
   .hp-workflow { padding-block: 66px; }
   .hp-workflow-inner { gap: 27px; }
   .hp-workflow-heading h2 { font-size: clamp(36px, 9vw, 47px); letter-spacing: -1.5px; }
@@ -620,7 +620,7 @@
   .hp-footer-brand-column > p { max-width: 340px; font-size: 11px; }
   .hp-footer-column { gap: 11px; }
   .hp-footer-column > span { font-size: 8px; letter-spacing: .6px; }
-  .hp-footer-column > a { font-size: 10px; }
+  .hp-footer-column > a { font-size: 11px; }
   .hp-footer-bottom { align-items: flex-start; gap: 10px; font-size: 9px; }
   .hp-footer-bottom > span:nth-child(2) { display: none; }
 }
@@ -644,4 +644,41 @@
 }
 @media (prefers-reduced-motion: reduce) {
   .hp-home *, .hp-home *::before, .hp-home *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; scroll-behavior: auto !important; transition-duration: .01ms !important; }
+}
+
+/* Khaavio's positioning comparison retained in the new editorial card composition. */
+.hp-comparison { background: radial-gradient(ellipse at 4% 100%, rgb(232 211 226 / 30%), transparent 32%), #fffaf4; }
+.hp-comparison .hp-section-intro { margin-bottom: 32px; }
+.hp-comparison .hp-section-intro > p { max-width: 430px; }
+.hp-comparison-grid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); align-items: stretch; gap: 18px; }
+.hp-comparison-card { min-width: 0; padding: clamp(23px, 3vw, 34px); background: #fffdf8; border: 1px solid #eaded4; border-radius: 21px; box-shadow: 0 14px 35px rgb(66 41 33 / 5%); }
+.hp-comparison-khaavio { background: linear-gradient(145deg, #fff0e7 0%, #fffdf8 76%); border-color: #efcdbd; }
+.hp-comparison-broader { background: linear-gradient(145deg, #f0e7f2 0%, #fffdf8 90%); border-color: #e3d4e8; }
+.hp-comparison-card-heading { display: flex; align-items: center; gap: 12px; min-height: 53px; margin-bottom: 21px; }
+.hp-comparison-icon { display: grid; flex: 0 0 44px; place-items: center; width: 44px; height: 44px; color: #a94d34; background: #ffe3d5; border: 1px solid #f0cdbd; border-radius: 13px; }
+.hp-comparison-broader .hp-comparison-icon { color: #7c5683; background: #ebdff0; border-color: #decee5; }
+.hp-comparison-card-heading > div { min-width: 0; }
+.hp-comparison-card-heading small { display: block; margin-bottom: 5px; color: #a16d5e; font-size: 8px; font-weight: 850; letter-spacing: .75px; }
+.hp-comparison-broader .hp-comparison-card-heading small { color: #8a6b91; }
+.hp-comparison-card-heading h3 { margin: 0; color: #392a31; font-size: clamp(17px, 1.6vw, 21px); font-weight: 800; line-height: 1.35; letter-spacing: -.35px; }
+.hp-comparison-card > ul { display: grid; gap: 13px; padding: 0; margin: 0; list-style: none; }
+.hp-comparison-card > ul > li { display: grid; grid-template-columns: 22px minmax(0,1fr); align-items: start; gap: 9px; }
+.hp-comparison-card > ul > li > span { display: grid; place-items: center; width: 22px; height: 22px; margin-top: 1px; color: #fffaf4; background: #d96545; border-radius: 50%; }
+.hp-comparison-broader > ul > li > span { color: #805b88; background: #ede3f0; }
+.hp-comparison-card > ul > li > p { margin: 0; color: #725f5a; font-size: 13px; line-height: 1.7; }
+.hp-comparison-note { max-width: 850px; margin: 18px auto 0; color: #948078; font-size: 10px; line-height: 1.75; text-align: center; }
+.hp-footer-social > a > svg { display: block; flex: 0 0 auto; width: 15px; height: 15px; }
+.hp-footer-social > a > span { line-height: 1; }
+
+@media (max-width: 820px) {
+  .hp-comparison-grid { grid-template-columns: minmax(0,1fr); gap: 13px; }
+  .hp-comparison-card { padding: 23px; border-radius: 18px; }
+}
+@media (max-width: 600px) {
+  .hp-comparison-card { padding: 19px; border-radius: 16px; }
+  .hp-comparison-card-heading { align-items: flex-start; gap: 10px; }
+  .hp-comparison-card-heading h3 { font-size: 17px; }
+  .hp-comparison-card > ul { gap: 11px; }
+  .hp-comparison-card > ul > li > p { font-size: 12px; }
+  .hp-comparison-note { font-size: 9px; text-align: left; }
 }
