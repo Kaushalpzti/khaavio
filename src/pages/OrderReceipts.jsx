@@ -83,7 +83,7 @@ export default function OrderReceipts() {
         const [ordersResult, tablesResult] = await Promise.all([
           supabase
             .from("orders")
-            .select("id, restaurant_id, table_id, customer_name, customer_phone, notes, status, total_amount, created_at")
+            .select("id, restaurant_id, table_id, customer_name, customer_phone, notes, status, total_amount, subtotal_amount, discount_amount, coupon_code, created_at")
             .eq("restaurant_id", restaurantData.id)
             .order("created_at", { ascending: false })
             .limit(100),
@@ -271,9 +271,16 @@ export default function OrderReceipts() {
                     <span>{item.item_name}</span>
                     <small>{formatPrice(item.unit_price)} × {item.quantity}</small>
                   </div>
-                  <strong>{formatPrice(item.line_total)}</strong>
+                  <strong>{formatPrice(Number(selectedOrder.discount_amount) > 0 ? Number(item.unit_price) * Number(item.quantity) : item.line_total)}</strong>
                 </div>
               ))}
+              {Number(selectedOrder.discount_amount) > 0 && (
+                <>
+                  <div className="receipt-divider receipt-dashed" />
+                  <div className="receipt-total-line"><span>Subtotal</span><strong>{formatPrice(selectedOrder.subtotal_amount ?? selectedOrder.total_amount)}</strong></div>
+                  <div className="receipt-total-line"><span>Coupon · {selectedOrder.coupon_code}</span><strong>−{formatPrice(selectedOrder.discount_amount)}</strong></div>
+                </>
+              )}
               <div className="receipt-divider receipt-dashed" />
               <div className="receipt-total-line"><span>TOTAL</span><strong>{formatPrice(selectedOrder.total_amount)}</strong></div>
               {selectedOrder.notes && (

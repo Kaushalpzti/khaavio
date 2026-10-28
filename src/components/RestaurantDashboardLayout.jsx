@@ -7,6 +7,7 @@ import {
   BellRing,
   Gift,
   MessageSquareText,
+  Megaphone,
   ChefHat,
   ChevronLeft,
   ChevronRight,
@@ -62,6 +63,7 @@ const NAV_GROUPS = [
     items: [
       { label: "Analytics", to: "/dashboard/analytics", icon: BarChart3 },
       { label: "Reviews & feedback", to: "/dashboard/feedback", icon: MessageSquareText },
+      { label: "Offers & campaigns", to: "/dashboard/marketing", icon: Megaphone },
     ],
   },
   {
