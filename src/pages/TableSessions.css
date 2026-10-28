@@ -756,25 +756,3 @@
   color: var(--ts-muted, #6b7280);
   font-size: 12px;
 }
-
-
-.ts-order-discount-summary {
-  display: grid;
-  gap: 6px;
-  margin: 9px 0 2px;
-  padding: 10px 0 0;
-  border-top: 1px dashed #dce5d8;
-}
-.ts-order-discount-summary > div {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  color: #77877a;
-  font-size: 11px;
-}
-.ts-order-discount-summary > div strong {
-  color: #3a6743;
-  font-size: 11px;
-  font-weight: 800;
-}
