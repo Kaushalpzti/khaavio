@@ -95,10 +95,10 @@ test("homepage uses vector social icons and includes comparison and motion secti
   assert.match(home, /<SocialIcon name=\{profile\.name\} \/>/);
   assert.doesNotMatch(home, /profile\.mark/);
   assert.match(home, /id="comparison"/);
-  assert.match(home, /kh-comparison-grid/);
-  assert.match(styles, /@keyframes kh-hero-reveal/);
-  assert.match(styles, /kh-steps\.is-visible::before/);
-  assert.match(styles, /kh-comparison-grid\.is-visible/);
+  assert.match(home, /hp-comparison-grid/);
+  assert.match(styles, /@keyframes hp-fade-up/);
+  assert.match(styles, /@keyframes hp-phone-float/);
+  assert.match(styles, /\.hp-hero-copy\s*\{[^}]*animation:\s*hp-fade-up/s);
 });
 
 test("route navigation resets scroll to the top before paint", () => {
