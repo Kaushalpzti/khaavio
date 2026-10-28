@@ -4,7 +4,7 @@ import { readFileSync } from "node:fs";
 
 const read = (path) => readFileSync(new URL(path, import.meta.url), "utf8");
 const menu = read("../src/pages/PublicMenu.jsx");
-const migration = read("../supabase/migrations/20261028123000_require_phone_for_public_orders.sql");
+const migration = read("../supabase/migrations/20261028085900_require_phone_for_public_orders.sql");
 const legal = read("../src/pages/LegalPage.jsx");
 
 test("public QR checkout requires a mobile number and sends its normalized form", () => {
@@ -22,6 +22,9 @@ test("public order button label uses a clean text separator", () => {
   assert.doesNotMatch(menu, /Â·/);
 });
 
+test("phone migration terminates the function statement before COMMENT", () => {
+  assert.match(migration, /\$function\$;\s*COMMENT ON FUNCTION public\.place_public_order/);
+});
 test("database order function rejects missing or invalid mobile numbers", () => {
   assert.match(migration, /CREATE OR REPLACE FUNCTION public\.place_public_order\(/);
   assert.match(migration, /public\.khaavio_normalize_indian_mobile\(p_customer_phone\)/);
