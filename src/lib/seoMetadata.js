@@ -28,6 +28,12 @@ const STATIC_PAGES = {
       },
     },
   },
+  "/about": {
+    title: "About Khaavio | Restaurant QR Ordering & Operations",
+    description: "Learn how Khaavio helps cafés and restaurants bring digital menus, QR ordering, bookings, kitchen workflows, guest billing and loyalty tools into one workspace.",
+    indexable: true,
+    canonicalPath: "/about",
+  },
   "/privacy": {
     title: "Privacy Policy | Khaavio",
     description: "Learn how Khaavio handles restaurant account information, guest order and booking details, subscription records and privacy requests.",

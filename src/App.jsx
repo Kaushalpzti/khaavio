@@ -12,6 +12,7 @@ import "./PageLoader.css";
 
 // Public pages
 const Home = lazy(() => import("./pages/Home"));
+const About = lazy(() => import("./pages/About"));
 const Auth = lazy(() => import("./pages/Auth"));
 const PublicMenu = lazy(() => import("./pages/PublicMenu"));
 const PublicBooking = lazy(() => import("./pages/PublicBooking"));
@@ -131,6 +132,7 @@ export default function App() {
             <Routes>
           {/* Public marketing and legal pages */}
           <Route path="/" element={<Home />} />
+          <Route path="/about" element={<About />} />
           <Route path="/privacy" element={<LegalPage type="privacy" />} />
           <Route path="/terms" element={<LegalPage type="terms" />} />
           <Route path="/refund-policy" element={<LegalPage type="refund" />} />

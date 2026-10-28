@@ -91,9 +91,9 @@ const features = [
   {
     number: "06",
     label: "TABLE SESSIONS + BILLING",
-    title: "Bring each table’s bill together.",
+    title: "Billing that fits the table.",
     description:
-      "Track open table sessions, combine eligible orders into a final bill, create a numbered invoice and print it for the guest.",
+      "Track table sessions and create numbered, printable invoices. Configure eligible tables for one combined bill or separate guest tabs and bills.",
     icon: ReceiptText,
   },
   {
@@ -1002,7 +1002,8 @@ export default function Home() {
             </div>
 
             <div className="kh-footer-column">
-              <span>EXPLORE</span>
+              <span>QUICK LINKS</span>
+              <Link to="/about">About Khaavio</Link>
               <a href="#features">Features</a>
               <a href="#how-it-works">How it works</a>
               <a href="#pricing">Pricing</a>

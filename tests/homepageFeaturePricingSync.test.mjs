@@ -20,6 +20,8 @@ test("homepage advertises the current shipped restaurant and guest modules", () 
     "ORDERS + INSIGHTS",
     "TABLE-SIDE SERVICE",
     "TABLE SESSIONS + BILLING",
+    "Billing that fits the table.",
+    "separate guest tabs and bills",
     "LOYALTY + REWARDS",
     "GUEST REVIEWS + FEEDBACK",
     "ASK KHAAVIO AI",
@@ -44,6 +46,13 @@ test("homepage advertises the current shipped restaurant and guest modules", () 
   assert.match(seoMetadata, /table billing, loyalty rewards, guest feedback and AI menu help/);
   assert.match(indexHtml, /og:title.*QR Ordering, Menus &amp; Restaurant Operations/);
   assert.match(indexHtml, /AI menu help in one workspace/);
+});
+
+test("homepage marketing copy uses readable body text and labels on desktop and mobile", () => {
+  assert.match(homeCss, /\.kh-home \.kh-hero-copy > p\s*\{[^}]*font-size:\s*clamp\(16px, 1\.15vw, 18px\)/s);
+  assert.match(homeCss, /\.kh-home \.kh-feature-card > p,[\s\S]*?font-size:\s*15px/);
+  assert.match(homeCss, /\.kh-home \.kh-footer-column > a\s*\{[^}]*font-size:\s*14px/s);
+  assert.match(homeCss, /@media \(max-width: 620px\)[\s\S]*?\.kh-home \.kh-hero-copy > p[\s\S]*?font-size:\s*15px/);
 });
 
 test("homepage Starter and Growth plan copy reflects the current product and tier split", () => {

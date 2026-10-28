@@ -5,7 +5,7 @@ import "./LegalPage.css";
 
 const SUPPORT_EMAIL = "khaavioqr@gmail.com";
 const SUPPORT_WHATSAPP = "917324883263";
-const LAST_UPDATED = "25 October 2026";
+const LAST_UPDATED = "28 October 2026";
 
 const LEGAL_CONTENT = {
   privacy: {
@@ -87,7 +87,15 @@ const LEGAL_CONTENT = {
         ],
       },
       {
-        title: "10. Updates and contact",
+        title: "10. Indian data protection framework and privacy requests",
+        paragraphs: [
+          "Khaavio reviews its personal-data handling against applicable Indian privacy law, including the Digital Personal Data Protection Act, 2023 and the Digital Personal Data Protection Rules, 2025. Different provisions have different commencement dates under the notified schedule. This policy does not represent a provision as currently in force before its legal commencement; we will update notices and workflows as requirements applicable to our service take effect.",
+          "To request access to, correction of, or erasure of Khaavio account information—or to withdraw consent where processing is based on consent—email khaavioqr@gmail.com. Describe the request and identify the account using the associated email address. We may need to verify identity, coordinate with a restaurant where it determines how guest information is used, and retain certain records where permitted or required by law. We will handle verified requests within the timelines required by applicable law.",
+          "Where Khaavio provides technical processing on behalf of a restaurant, that restaurant may be the right first contact for decisions about guest data. We will assist with routing a request where appropriate."
+        ],
+      },
+      {
+        title: "11. Updates and contact",
         paragraphs: [
           "We may update this policy when the service or legal requirements change. The latest version will be published on this page with its updated date. Material changes will be communicated through the platform or another reasonable channel where appropriate.",
         ],
@@ -174,7 +182,14 @@ const LEGAL_CONTENT = {
         ],
       },
       {
-        title: "11. Law, changes and contact",
+        title: "11. Consumer complaints and grievance handling",
+        paragraphs: [
+          "Send complaints about Khaavio software, account access or subscription billing to khaavioqr@gmail.com. Include your account email, a clear description of the issue and relevant dates or payment references. Do not send passwords, card PINs, banking passwords or OTPs.",
+          "We aim to acknowledge consumer complaints within 48 hours and resolve them within 30 days, or sooner where a different deadline is required by applicable law. This process does not limit any statutory right or remedy. For food quality, fulfilment, restaurant-side cancellations, bookings or charges collected by a restaurant, contact the restaurant directly; Khaavio can assist with issues relating to the platform itself."
+        ],
+      },
+      {
+        title: "12. Law, changes and contact",
         paragraphs: [
           "These Terms are governed by the laws of India, subject to any mandatory protections and jurisdictional rights available under applicable law. We may update the Terms as the platform evolves; the latest version and its updated date will appear here.",
         ],
@@ -222,9 +237,10 @@ const LEGAL_CONTENT = {
         ],
       },
       {
-        title: "6. Legal rights and updates",
+        title: "6. Legal rights, complaints and updates",
         paragraphs: [
-          "Nothing in this policy limits any refund, cancellation or consumer right that cannot lawfully be excluded. This policy may be updated as billing workflows or legal requirements change; the current version and its updated date will be published here.",
+          "Subscription billing complaints and policy concerns can be sent to khaavioqr@gmail.com with the account email, relevant dates, amount and payment reference where applicable. We aim to acknowledge consumer complaints within 48 hours and resolve them within 30 days, or sooner where a different deadline is required by applicable law.",
+          "Nothing in this policy limits any refund, cancellation or consumer right that cannot lawfully be excluded. Any mandatory statutory right or applicable payment-system requirement takes precedence over a conflicting statement in this policy. This policy may be updated as billing workflows or legal requirements change; the current version and its updated date will be published here.",
         ],
       },
     ],
@@ -288,8 +304,8 @@ export default function LegalPage({ type }) {
         <aside className="kh-legal-contact">
           <div className="kh-legal-contact-icon"><Mail size={20} /></div>
           <div>
-            <h2>Questions? Talk to us.</h2>
-            <p>For privacy requests, subscription questions or policy concerns, contact Khaavio Support.</p>
+            <h2>Support &amp; grievance contact</h2>
+            <p>For privacy requests, subscription questions or consumer complaints, contact Khaavio Support. We aim to acknowledge consumer complaints within 48 hours and address them within 30 days, or sooner where applicable law requires.</p>
             <div className="kh-legal-contact-actions">
               <a href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL} <ArrowUpRight size={14} /></a>
               <a href={`https://wa.me/${SUPPORT_WHATSAPP}`} target="_blank" rel="noreferrer">WhatsApp support <ArrowUpRight size={14} /></a>
@@ -300,7 +316,7 @@ export default function LegalPage({ type }) {
 
       <footer className="kh-legal-footer">
         <span>© {new Date().getFullYear()} Khaavio. Every Table, Digitally Connected.</span>
-        <Link to="/">Back to homepage <ArrowUpRight size={14} /></Link>
+        <div className="kh-legal-footer-links"><Link to="/about">About Khaavio</Link><Link to="/">Back to homepage <ArrowUpRight size={14} /></Link></div>
       </footer>
     </main>
   );

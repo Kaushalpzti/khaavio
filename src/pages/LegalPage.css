@@ -209,3 +209,21 @@
 @media (prefers-reduced-motion: reduce) {
   .kh-legal-tabs a { transition: none; }
 }
+
+
+.kh-legal-footer-links {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px;
+}
+.kh-legal-footer-links a {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+@media (max-width: 600px) {
+  .kh-legal-footer-links {
+    gap: 14px;
+  }
+}
