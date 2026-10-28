@@ -12,8 +12,6 @@ import {
   ChevronDown,
   ChevronLeft,
   ChevronRight,
-  Clock3,
-  CreditCard,
   Gift,
   LayoutDashboard,
   Mail,
