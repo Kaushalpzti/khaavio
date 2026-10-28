@@ -7,7 +7,8 @@ import path from "node:path";
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const read = (relativePath) => readFileSync(path.join(root, relativePath), "utf8");
 const migration = read("supabase/migrations/20261028060000_guest_billing_conflict_http_status.sql");
-const testScript = read("scripts/test-guest-billing-conflict-migration.ps1");
+const fixture = read("tests/sql/guest-billing-conflict-fixture.sql");
+const workflow = read(".github/workflows/khaavio-ci.yml");
 const testGuide = read("docs/guest-billing-conflict-local-test.md");
 
 test("expected guest-billing conflicts use HTTP 409 SQLSTATEs, not internal-error SQLSTATEs", () => {
@@ -26,13 +27,16 @@ test("expected guest-billing conflicts use HTTP 409 SQLSTATEs, not internal-erro
   );
 });
 
-test("local SQL replay uses only a disposable Supabase stack and never pushes/resets production", () => {
-  assert.match(testScript, /local-schema-baseline\.sql/);
-  assert.match(testScript, /20261028060000_guest_billing_conflict_http_status\.sql/);
-  assert.match(testScript, /\$SupabaseCli start/);
-  assert.match(testScript, /db reset --local --yes/);
-  assert.match(testScript, /stop --no-backup/);
-  assert.doesNotMatch(testScript, /db reset --linked|db push|migration repair/i);
-  assert.match(testGuide, /schema-only/);
-  assert.match(testGuide, /does not reset, push to, or modify the linked hosted project/);
+test("GitHub CI validates the migration on disposable PostgreSQL without requiring local Docker", () => {
+  assert.match(workflow, /guest_billing_migration_sql:/);
+  assert.match(workflow, /image: postgres:17/);
+  assert.match(workflow, /tests\/sql\/guest-billing-conflict-fixture\.sql/);
+  assert.match(workflow, /psql -v ON_ERROR_STOP=1 -f supabase\/migrations\/20261028060000_guest_billing_conflict_http_status\.sql/);
+  assert.match(workflow, /strpos\(v_order_body, 'PT409'\)/);
+  assert.match(workflow, /strpos\(v_finalize_body, 'PT409'\)/);
+  assert.match(fixture, /CREATE ROLE anon NOLOGIN/);
+  assert.match(fixture, /CREATE ROLE authenticated NOLOGIN/);
+  assert.match(fixture, /CREATE TABLE public\.table_session_tabs/);
+  assert.match(testGuide, /do **not** need Docker Desktop/i);
+  assert.doesNotMatch(workflow, /db reset --linked|db push|migration repair/i);
 });
