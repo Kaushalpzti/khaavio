@@ -37,6 +37,6 @@ test("GitHub CI validates the migration on disposable PostgreSQL without requiri
   assert.match(fixture, /CREATE ROLE anon NOLOGIN/);
   assert.match(fixture, /CREATE ROLE authenticated NOLOGIN/);
   assert.match(fixture, /CREATE TABLE public\.table_session_tabs/);
-  assert.match(testGuide, /do **not** need Docker Desktop/i);
+  assert.ok(testGuide.toLowerCase().includes("do **not** need docker desktop"));
   assert.doesNotMatch(workflow, /db reset --linked|db push|migration repair/i);
 });
