@@ -119,6 +119,23 @@ const features = [
   },
 ];
 
+const comparisonBenefits = [
+  "Branded digital menu plus restaurant and table-specific QR codes.",
+  "Browser-based QR ordering with private order-status tracking.",
+  "Orders, Kitchen Display, receipts and booking requests in one workspace.",
+  "One combined table bill or separate guest tabs and invoices.",
+  "One-tap waiter, water, cutlery and bill requests from a table QR.",
+  "Growth adds loyalty stamps, private feedback, enhanced insights and multilingual menu AI.",
+];
+
+const comparisonAlternatives = [
+  "Full POS, inventory and purchasing tools may suit inventory-heavy outlets better.",
+  "Larger POS ecosystems can offer multi-outlet controls, extensive reports and deep integrations.",
+  "Some QR/POS products offer OTP order checks, CRM campaigns or automated messaging.",
+  "Capabilities, add-ons, setup and total pricing differ by provider and plan.",
+  "Choose a broader suite when those extra operational systems are requirements—not just nice-to-haves.",
+];
+
 const plans = [
   {
     name: "Starter",
@@ -213,6 +230,54 @@ function Brand({ footer = false }) {
   );
 }
 
+function SocialIcon({ name }) {
+  const svgProps = {
+    viewBox: "0 0 24 24",
+    width: 19,
+    height: 19,
+    fill: "currentColor",
+    "aria-hidden": true,
+    focusable: "false",
+  };
+
+  if (name === "Instagram") {
+    return (
+      <svg {...svgProps} fill="none" stroke="currentColor" strokeWidth="1.8">
+        <rect x="3" y="3" width="18" height="18" rx="5" />
+        <circle cx="12" cy="12" r="4" />
+        <circle cx="17.5" cy="6.5" r="0.85" fill="currentColor" stroke="none" />
+      </svg>
+    );
+  }
+
+  if (name === "LinkedIn") {
+    return (
+      <svg {...svgProps}>
+        <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.35V9h3.414v1.561h.049c.476-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 1 1 .001-4.124 2.062 2.062 0 0 1-.001 4.124zM7.119 9H3.555v11.452H7.12V9zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" />
+      </svg>
+    );
+  }
+
+  if (name === "YouTube") {
+    return (
+      <svg {...svgProps}>
+        <path d="M23.5 6.2a3 3 0 0 0-2.1-2.12C19.5 3.55 12 3.55 12 3.55s-7.5 0-9.4.53A3 3 0 0 0 .5 6.2 31 31 0 0 0 0 12a31 31 0 0 0 .5 5.8 3 3 0 0 0 2.1 2.12c1.9.53 9.4.53 9.4.53s7.5 0 9.4-.53a3 3 0 0 0 2.1-2.12A31 31 0 0 0 24 12a31 31 0 0 0-.5-5.8Z" />
+        <path d="m9.6 8.7 6.2 3.3-6.2 3.3V8.7Z" fill="#112a21" />
+      </svg>
+    );
+  }
+
+  if (name === "Facebook") {
+    return (
+      <svg {...svgProps}>
+        <path d="M13.6 21v-8h2.7l.4-3.1h-3.1V8c0-.9.3-1.5 1.6-1.5h1.7V3.6c-.3 0-1.3-.1-2.4-.1-2.4 0-4 1.5-4 4.2v2.3H7.8V13h2.7v8h3.1Z" />
+      </svg>
+    );
+  }
+
+  return null;
+}
+
 function HeroScene() {
   return (
     <div className="hp-hero-stage" aria-label="Illustrative Khaavio restaurant product preview">
@@ -305,6 +370,33 @@ function WorkspacePreview() {
       </div>
       <div className="hp-workspace-annotation"><span><ShieldCheck size={15} /></span><div><strong>One connected workspace.</strong><small>Menus, orders, bookings and kitchen flow.</small></div></div>
     </div>
+  );
+}
+
+function ComparisonSection() {
+  return (
+    <section className="hp-section hp-comparison" id="comparison">
+      <div className="hp-container">
+        <div className="hp-section-intro">
+          <div>
+            <span className="hp-eyebrow"><i /> A PRACTICAL, HONEST COMPARISON</span>
+            <h2>A focused fit for<br /><em>everyday hospitality.</em></h2>
+          </div>
+          <p>Khaavio focuses on QR-first guest service and table-level operations. Broader POS systems may fit better when you also need inventory, purchasing or multi-outlet controls.</p>
+        </div>
+        <div className="hp-comparison-grid">
+          <article className="hp-comparison-card hp-comparison-khaavio">
+            <div className="hp-comparison-card-heading"><span className="hp-comparison-icon"><Store size={21} /></span><div><small>KHAAVIO · QR-FIRST</small><h3>Guest journey + table operations</h3></div></div>
+            <ul>{comparisonBenefits.map((item) => <li key={item}><span><Check size={14} /></span><p>{item}</p></li>)}</ul>
+          </article>
+          <article className="hp-comparison-card hp-comparison-broader">
+            <div className="hp-comparison-card-heading"><span className="hp-comparison-icon"><LayoutDashboard size={21} /></span><div><small>BROADER POS ECOSYSTEMS</small><h3>More depth in other areas</h3></div></div>
+            <ul>{comparisonAlternatives.map((item) => <li key={item}><span><ArrowRight size={13} /></span><p>{item}</p></li>)}</ul>
+          </article>
+        </div>
+        <p className="hp-comparison-note">Starter starts at ₹499/month and Growth at ₹899/month, with a 7-day free trial. Competitor features and pricing vary by product and plan; compare the exact tools your restaurant needs before deciding.</p>
+      </div>
+    </section>
   );
 }
 
@@ -454,13 +546,15 @@ export default function Home() {
         </div>
       </section>
 
+      <ComparisonSection />
+
       <PricingSection />
 
       <section className="hp-section hp-faq" id="faq"><div className="hp-container hp-faq-layout"><div className="hp-faq-intro"><span className="hp-eyebrow"><i /> GOOD TO KNOW</span><h2>A few things<br /><em>you might wonder.</em></h2><p>Everything you need to know before your first scan.</p><a href={"mailto:" + BRAND_CONTACT.email} className="hp-faq-contact"><span><Mail size={17} /></span><span><strong>Still have questions?</strong><small>{BRAND_CONTACT.email}</small></span><ArrowUpRight size={15} /></a></div><div className="hp-faq-list">{faqs.map((faq,index)=>{const isOpen=activeFaq===index;return <article className={isOpen?"hp-faq-item hp-faq-open":"hp-faq-item"} key={faq.question}><button type="button" onClick={()=>setActiveFaq(isOpen?-1:index)} aria-expanded={isOpen}><span>{faq.question}</span><ChevronDown size={18} /></button>{isOpen&&<p>{faq.answer}</p>}</article>;})}</div></div></section>
 
       <section className="hp-final-cta"><div className="hp-final-cta-inner hp-container"><div className="hp-cta-orbit" aria-hidden="true" /><span className="hp-cta-label"><Sparkles size={14} /> FOR THE PEOPLE BEHIND THE FOOD</span><h2>Your restaurant,<br /><em>ready for what’s next.</em></h2><p>Try Khaavio for 7 days and see how a connected guest experience feels.</p><div className="hp-final-actions"><Link to="/signup" className="hp-button hp-button-light">Get started with Khaavio <ArrowUpRight size={17} /></Link><Link to="/login" className="hp-button hp-button-ghost">Already have an account? Sign in</Link></div><span className="hp-cta-footnote"><Check size={13} /> No card required to start your trial</span></div></section>
 
-      <footer className="hp-footer"><div className="hp-container"><div className="hp-footer-top"><div className="hp-footer-brand-column"><Brand footer /><p>Thoughtful digital experiences for the restaurants and cafés bringing people together.</p><a className="hp-footer-email" href={"mailto:" + BRAND_CONTACT.email}><Mail size={15} /> {BRAND_CONTACT.email}</a><div className="hp-footer-social">{socialProfiles.filter((profile)=>profile.url).map((profile)=><a href={profile.url} key={profile.name} target="_blank" rel="noopener noreferrer">{profile.name}<ArrowUpRight size={12} /></a>)}</div></div><div className="hp-footer-column"><span>EXPLORE</span><a href="#features">Platform</a><a href="#how-it-works">How it works</a><a href="#pricing">Pricing</a><a href="#faq">FAQs</a><Link to="/about">About Khaavio</Link></div><div className="hp-footer-column"><span>YOUR ACCOUNT</span><Link to="/signup">Create account</Link><Link to="/login">Sign in</Link><Link to="/onboarding">Restaurant setup</Link></div><div className="hp-footer-column"><span>THE IMPORTANT BITS</span><Link to="/privacy">Privacy Policy</Link><Link to="/terms">Terms &amp; Conditions</Link><Link to="/refund-policy">Refund Policy</Link></div></div><div className="hp-footer-bottom"><span>© 2026 Khaavio. All rights reserved.</span><span>Every table, thoughtfully connected.</span><a href="#top">Back to top ↑</a></div></div></footer>
+      <footer className="hp-footer"><div className="hp-container"><div className="hp-footer-top"><div className="hp-footer-brand-column"><Brand footer /><p>Thoughtful digital experiences for the restaurants and cafés bringing people together.</p><a className="hp-footer-email" href={"mailto:" + BRAND_CONTACT.email}><Mail size={15} /> {BRAND_CONTACT.email}</a><div className="hp-footer-social">{socialProfiles.filter((profile)=>profile.url).map((profile)=><a href={profile.url} key={profile.name} target="_blank" rel="noopener noreferrer"><SocialIcon name={profile.name} /><span>{profile.name}</span><ArrowUpRight size={12} /></a>)}</div></div><div className="hp-footer-column"><span>EXPLORE</span><a href="#features">Platform</a><a href="#how-it-works">How it works</a><a href="#pricing">Pricing</a><a href="#faq">FAQs</a><Link to="/about">About Khaavio</Link></div><div className="hp-footer-column"><span>YOUR ACCOUNT</span><Link to="/signup">Create account</Link><Link to="/login">Sign in</Link><Link to="/onboarding">Restaurant setup</Link></div><div className="hp-footer-column"><span>THE IMPORTANT BITS</span><Link to="/privacy">Privacy Policy</Link><Link to="/terms">Terms &amp; Conditions</Link><Link to="/refund-policy">Refund Policy</Link></div></div><div className="hp-footer-bottom"><span>© 2026 Khaavio. All rights reserved.</span><span>Every table, thoughtfully connected.</span><a href="#top">Back to top ↑</a></div></div></footer>
     </main>
   );
 }
