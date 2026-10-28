@@ -48,11 +48,13 @@ test("homepage advertises the current shipped restaurant and guest modules", () 
   assert.match(indexHtml, /AI menu help in one workspace/);
 });
 
-test("homepage marketing copy uses readable body text and labels on desktop and mobile", () => {
-  assert.match(homeCss, /\.kh-home \.kh-hero-copy > p\s*\{[^}]*font-size:\s*clamp\(16px, 1\.15vw, 18px\)/s);
-  assert.match(homeCss, /\.kh-home \.kh-feature-card > p,[\s\S]*?font-size:\s*15px/);
-  assert.match(homeCss, /\.kh-home \.kh-footer-column > a\s*\{[^}]*font-size:\s*14px/s);
-  assert.match(homeCss, /@media \(max-width: 620px\)[\s\S]*?\.kh-home \.kh-hero-copy > p[\s\S]*?font-size:\s*15px/);
+test("homepage editorial layout keeps marketing copy readable across desktop and mobile", () => {
+  assert.match(homeCss, /\.hp-hero-copy > p\s*\{[^}]*font-size:\s*clamp\(16px, 1\.2vw, 18px\)/s);
+  assert.match(homeCss, /\.hp-feature-tile p\s*\{[^}]*font-size:\s*13px/s);
+  assert.match(homeCss, /\.hp-footer-column > a\s*\{[^}]*font-size:\s*12px/s);
+  assert.match(homeCss, /@media \(max-width: 600px\)[\s\S]*?\.hp-hero-copy > p[\s\S]*?font-size:\s*15px/);
+  assert.ok(home.includes('className="hp-feature-bento"'));
+  assert.ok(home.includes('className="hp-workspace-frame"'));
 });
 
 test("homepage Starter and Growth plan copy reflects the current product and tier split", () => {
@@ -119,8 +121,8 @@ test("forward gating migration aligns the live catalog with Starter/Growth entit
   assert.doesNotMatch(gatingMigration, /price_inr\s*=/i, "feature gating must not change plan pricing");
 });
 
-test("expanded homepage feature grid remains responsive", () => {
-  assert.match(homeCss, /\.kh-feature-grid\s*\{[^}]*grid-template-columns:\s*repeat\(3,\s*minmax\(0,\s*1fr\)\)/s);
-  assert.match(homeCss, /@media\s*\(max-width:\s*1080px\)[\s\S]*?\.kh-feature-grid,[\s\S]*?grid-template-columns:\s*repeat\(2,\s*minmax\(0,\s*1fr\)\)/);
-  assert.match(homeCss, /@media\s*\(max-width:\s*760px\)[\s\S]*?\.kh-feature-grid\s*\{\s*grid-template-columns:\s*1fr;/);
+test("rebuilt homepage feature tiles adapt from four desktop columns to a compact mobile grid", () => {
+  assert.match(homeCss, /\.hp-feature-grid\s*\{[^}]*grid-template-columns:\s*repeat\(4,\s*minmax\(0,\s*1fr\)\)/s);
+  assert.match(homeCss, /@media\s*\(max-width:\s*1100px\)[\s\S]*?\.hp-feature-grid\s*\{[^}]*grid-template-columns:\s*repeat\(3,\s*minmax\(0,\s*1fr\)\)/s);
+  assert.match(homeCss, /@media\s*\(max-width:\s*600px\)[\s\S]*?\.hp-feature-grid\s*\{[^}]*grid-template-columns:\s*repeat\(2,\s*minmax\(0,\s*1fr\)\)/s);
 });
