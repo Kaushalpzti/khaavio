@@ -50,7 +50,7 @@ test("About page has a public route, metadata and homepage quick link", () => {
   const seo = readRoot("src/lib/seoMetadata.js");
   assert.ok(app.includes('path="/about"'));
   assert.ok(home.includes('to="/about">About Khaavio</Link>'));
-  assert.match(about, /About Khaavio/);
+  assert.match(about, /Better table service/);
   assert.match(about, /restaurant/i);
   assert.match(seo, /"\/about":\s*\{/);
   assert.match(seo, /About Khaavio \| Restaurant QR Ordering & Operations/);
