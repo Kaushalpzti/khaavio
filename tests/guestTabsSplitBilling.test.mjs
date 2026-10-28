@@ -55,6 +55,10 @@ test("public menu stores a device-scoped tab token, rechecks the mode and render
   assert.match(menu, /p_guest_order_request_token/);
   assert.match(menu, /Request final bill/);
   assert.match(menu, /Start a new bill/);
+  assert.ok(menu.includes("function canStartFreshGuestBill(snapshot)"));
+  assert.ok(menu.includes("return !snapshot?.invoice && Number(tab?.order_count || 0) === 0;"));
+  assert.ok(menu.includes("if (canStartFreshGuestBill(guestTabSnapshot))"));
+  assert.ok(menu.includes("{canStartFreshGuestBill(guestTabSnapshot) && ("));
   assert.match(menu, /className="public-menu-header-bill"/);
   assert.match(menu, /Boolean\(tableContext && tableToken\)/);
   assert.match(menu, /isGuestBilling \? \(/);
