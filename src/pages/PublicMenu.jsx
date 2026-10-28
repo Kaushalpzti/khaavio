@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 
 import { supabase } from "../lib/supabaseClient";
+import { normalizeIndianMobilePhone } from "../lib/customerInsights";
 import { normalizeTableNumber } from "../lib/tableNumber";
 import { getOrCreateKhaavioLoyaltyToken } from "../lib/loyaltyToken";
 import { getStoredKhaavioLoyaltyPhone, setStoredKhaavioLoyaltyPhone } from "../lib/loyaltyPhone";
@@ -754,8 +755,9 @@ export default function PublicMenu() {
       return;
     }
 
-    if (customerPhone.trim().length > 25) {
-      setCheckoutError("Phone number must be 25 characters or fewer.");
+    const phone = normalizeIndianMobilePhone(customerPhone);
+    if (!phone) {
+      setCheckoutError("Enter a valid 10-digit Indian mobile number (with optional +91).");
       return;
     }
 
@@ -801,7 +803,7 @@ export default function PublicMenu() {
         p_slug: slug,
         p_table_token: tableToken,
         p_customer_name: name,
-        p_customer_phone: customerPhone.trim() || null,
+        p_customer_phone: phone,
         p_notes: orderNotes.trim() || null,
         p_items: cart.map((entry) => ({
           item_id: entry.id,
@@ -1587,18 +1589,25 @@ export default function PublicMenu() {
                       </label>
 
                       <label>
-                        <span>Phone number (optional)</span>
+                        <span>Mobile number *</span>
                         <input
                           type="tel"
                           value={customerPhone}
-                          onChange={(event) =>
-                            setCustomerPhone(event.target.value)
-                          }
+                          onChange={(event) => {
+                            setCustomerPhone(event.target.value);
+                            setCheckoutError("");
+                          }}
                           maxLength={25}
                           autoComplete="tel"
-                          placeholder="Enter phone number"
+                          inputMode="tel"
+                          aria-describedby="public-order-phone-help"
+                          placeholder="10-digit mobile number"
+                          required
                         />
                       </label>
+                      <p className="public-order-field-help" id="public-order-phone-help">
+                        Required to identify your order and help the restaurant with service. Promotional messages require separate consent.
+                      </p>
 
                       <label>
                         <span>Special instructions (optional)</span>

@@ -28,7 +28,7 @@ const LEGAL_CONTENT = {
         bullets: [
           "Account information: name, email address, authentication identifiers and account or access status.",
           "Restaurant workspace information: restaurant name, slug, contact or address details supplied by the operator, menu items, prices, opening hours, table settings, logos and other content the operator uploads.",
-          "Guest order and booking information: name, phone number, email when provided, party size, requested date and time, order items, notes, booking/order status and reference identifiers.",
+          "Guest order and booking information: name, a mobile number for public menu orders, email when provided, party size, requested date and time, order items, notes, booking/order status and reference identifiers.",
           "Subscription and support information: selected plan, request notes, amount and payment reference/UTR supplied for manual verification, activation status, support messages and related records.",
           "Technical information: basic request, device, browser, diagnostic and security information needed to operate, protect and troubleshoot the service.",
         ],
@@ -39,6 +39,7 @@ const LEGAL_CONTENT = {
           "Create and secure accounts and restaurant workspaces.",
           "Display restaurant menus and pass orders or booking requests to the relevant restaurant workspace.",
           "Provide order tracking, kitchen updates, receipts, subscription administration and customer support.",
+          "Group submitted orders by the guest-provided mobile number to show the relevant restaurant repeat-visit and order trends. Promotional messages require any consent that applicable law requires; submitting an order is not marketing consent.",
           "Verify manual subscription payments, prevent fraud or misuse, maintain records and resolve disputes.",
           "Maintain platform reliability, troubleshoot failures, protect the service and meet legal obligations.",
         ],

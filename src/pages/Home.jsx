@@ -123,19 +123,20 @@ const features = [
 ];
 
 const comparisonBenefits = [
-  "Edit dishes, prices and photos in one place.",
-  "Create restaurant and table QR codes from one workspace.",
-  "Connect QR orders with order tracking and kitchen workflows.",
-  "Manage table-side requests, table sessions and guest bills.",
-  "Handle booking requests and Growth guest-engagement tools.",
+  "Branded digital menu plus restaurant and table-specific QR codes.",
+  "Browser-based QR ordering with private order-status tracking.",
+  "Orders, Kitchen Display, receipts and booking requests in one workspace.",
+  "One combined table bill or separate guest tabs and invoices.",
+  "One-tap waiter, water, cutlery and bill requests from a table QR.",
+  "Growth adds loyalty stamps, private feedback, enhanced insights and multilingual menu AI.",
 ];
 
 const comparisonAlternatives = [
-  "Menu files and QR assets may need separate updates.",
-  "Ordering and kitchen work can sit in different systems.",
-  "Staff may rely on manual handoffs for table-side requests.",
-  "Booking and guest-engagement tools may need separate setup.",
-  "More logins and dashboards to keep track of.",
+  "Full POS, inventory and purchasing tools may suit inventory-heavy outlets better.",
+  "Larger POS ecosystems can offer multi-outlet controls, extensive reports and deep integrations.",
+  "Some QR/POS products offer OTP order checks, CRM campaigns or automated messaging.",
+  "Capabilities, add-ons, setup and total pricing differ by provider and plan.",
+  "Choose a broader suite when those extra operational systems are requirements—not just nice-to-haves.",
 ];
 
 const plans = [
@@ -936,16 +937,15 @@ export default function Home() {
         <div className="kh-section-wrap">
           <div className="kh-comparison-heading">
             <div className="kh-section-label">
-              <span /> KHAAVIO VS. THE USUAL TOOL SHUFFLE
+              <span /> A PRACTICAL, HONEST COMPARISON
             </div>
             <h2>
-              Less tool-hopping.
+              A better fit for
               <br />
-              <em>More hospitality.</em>
+              <em>everyday hospitality.</em>
             </h2>
             <p>
-              Keep everyday restaurant workflows connected instead of stitching
-              together a different tool for every task.
+              Khaavio focuses on QR-first guest service and table-level operations. Full POS suites may be a better fit when you also need deep inventory, purchasing or multi-outlet controls.
             </p>
           </div>
 
@@ -956,8 +956,8 @@ export default function Home() {
                   <Store size={21} strokeWidth={1.8} />
                 </span>
                 <div>
-                  <span className="kh-comparison-eyebrow">WITH KHAAVIO</span>
-                  <h3>One connected workspace</h3>
+                  <span className="kh-comparison-eyebrow">KHAAVIO · QR-FIRST</span>
+                  <h3>Guest journey + table operations</h3>
                 </div>
               </div>
               <ul>
@@ -978,8 +978,8 @@ export default function Home() {
                   <LayoutDashboard size={21} strokeWidth={1.8} />
                 </span>
                 <div>
-                  <span className="kh-comparison-eyebrow">A MULTI-TOOL SETUP</span>
-                  <h3>More moving parts</h3>
+                  <span className="kh-comparison-eyebrow">BROADER POS ECOSYSTEMS</span>
+                  <h3>More depth in other areas</h3>
                 </div>
               </div>
               <ul>
@@ -996,9 +996,7 @@ export default function Home() {
           </div>
 
           <p className="kh-comparison-note">
-            Every platform is different. This is a practical comparison between
-            Khaavio’s connected workflow and a common setup spread across multiple tools,
-            not a claim about every provider.
+            Starter starts at ₹499/month and Growth at ₹899/month, with a 7-day free trial. Competitor features and pricing vary by product and plan; compare the exact tools your restaurant needs before deciding.
           </p>
         </div>
       </section>
