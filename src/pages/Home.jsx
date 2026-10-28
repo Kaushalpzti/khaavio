@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   ArrowRight,
@@ -13,8 +13,11 @@ import {
   ChevronLeft,
   ChevronRight,
   CreditCard,
+  Facebook,
   Gift,
+  Instagram,
   LayoutDashboard,
+  Linkedin,
   Mail,
   Menu,
   MessageSquareText,
@@ -25,6 +28,7 @@ import {
   Store,
   UtensilsCrossed,
   X,
+  Youtube,
 } from "lucide-react";
 import khaavioIcon from "../assets/icon.png";
 
@@ -41,10 +45,10 @@ const BRAND_CONTACT = {
 };
 
 const socialProfiles = [
-  { name: "Instagram", mark: "ig", url: BRAND_CONTACT.instagram },
-  { name: "LinkedIn", mark: "in", url: BRAND_CONTACT.linkedin },
-  { name: "YouTube", mark: "yt", url: BRAND_CONTACT.youtube },
-  { name: "Facebook", mark: "f", url: BRAND_CONTACT.facebook },
+  { name: "Instagram", Icon: Instagram, url: BRAND_CONTACT.instagram },
+  { name: "LinkedIn", Icon: Linkedin, url: BRAND_CONTACT.linkedin },
+  { name: "YouTube", Icon: Youtube, url: BRAND_CONTACT.youtube },
+  { name: "Facebook", Icon: Facebook, url: BRAND_CONTACT.facebook },
 ];
 
 const features = [
@@ -120,6 +124,22 @@ const features = [
       "Available with Growth: guests can ask about dishes and prices or get menu suggestions in English, Hindi or Hinglish, based on the restaurant menu (usage limits apply).",
     icon: Bot,
   },
+];
+
+const comparisonBenefits = [
+  "Edit dishes, prices and photos in one place.",
+  "Create restaurant and table QR codes from one workspace.",
+  "Connect QR orders with order tracking and kitchen workflows.",
+  "Manage table-side requests, table sessions and guest bills.",
+  "Handle booking requests and Growth guest-engagement tools.",
+];
+
+const comparisonAlternatives = [
+  "Menu files and QR assets may need separate updates.",
+  "Ordering and kitchen work can sit in different systems.",
+  "Staff may rely on manual handoffs for table-side requests.",
+  "Booking and guest-engagement tools may need separate setup.",
+  "More logins and dashboards to keep track of.",
 ];
 
 const plans = [
@@ -235,18 +255,21 @@ function SocialLinks() {
 
   return (
     <div className="kh-social-links">
-      {available.map((profile) => (
-        <a
-          key={profile.name}
-          href={profile.url}
-          target="_blank"
-          rel="noreferrer"
-          aria-label={`Khaavio on ${profile.name}`}
-          title={profile.name}
-        >
-          {profile.mark}
-        </a>
-      ))}
+      {available.map((profile) => {
+        const Icon = profile.Icon;
+        return (
+          <a
+            key={profile.name}
+            href={profile.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label={`Khaavio on ${profile.name}`}
+            title={profile.name}
+          >
+            <Icon size={19} strokeWidth={1.9} aria-hidden="true" />
+          </a>
+        );
+      })}
     </div>
   );
 }
@@ -603,6 +626,34 @@ export default function Home() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [activeFaq, setActiveFaq] = useState(0);
 
+  useEffect(() => {
+    const animatedSections = document.querySelectorAll(
+      ".kh-home .kh-steps, .kh-home .kh-comparison-grid",
+    );
+
+    if (!animatedSections.length) return;
+
+    if (typeof IntersectionObserver === "undefined") {
+      animatedSections.forEach((element) => element.classList.add("is-visible"));
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add("is-visible");
+            observer.unobserve(entry.target);
+          }
+        });
+      },
+      { threshold: 0.16, rootMargin: "0px 0px -4% 0px" },
+    );
+
+    animatedSections.forEach((element) => observer.observe(element));
+    return () => observer.disconnect();
+  }, []);
+
   function closeMenu() {
     setMenuOpen(false);
   }
@@ -838,6 +889,77 @@ export default function Home() {
         </div>
       </section>
 
+      <section className="kh-comparison kh-section" id="comparison">
+        <div className="kh-section-wrap">
+          <div className="kh-comparison-heading">
+            <div className="kh-section-label">
+              <span /> KHAAVIO VS. THE USUAL TOOL SHUFFLE
+            </div>
+            <h2>
+              Less tool-hopping.
+              <br />
+              <em>More hospitality.</em>
+            </h2>
+            <p>
+              Keep everyday restaurant workflows connected instead of stitching
+              together a different tool for every task.
+            </p>
+          </div>
+
+          <div className="kh-comparison-grid">
+            <article className="kh-comparison-card kh-comparison-khaavio">
+              <div className="kh-comparison-card-heading">
+                <span className="kh-comparison-card-icon">
+                  <Store size={21} strokeWidth={1.8} />
+                </span>
+                <div>
+                  <span className="kh-comparison-eyebrow">WITH KHAAVIO</span>
+                  <h3>One connected workspace</h3>
+                </div>
+              </div>
+              <ul>
+                {comparisonBenefits.map((benefit) => (
+                  <li key={benefit}>
+                    <span className="kh-comparison-check">
+                      <Check size={15} strokeWidth={2.2} />
+                    </span>
+                    <span>{benefit}</span>
+                  </li>
+                ))}
+              </ul>
+            </article>
+
+            <article className="kh-comparison-card kh-comparison-scattered">
+              <div className="kh-comparison-card-heading">
+                <span className="kh-comparison-card-icon">
+                  <LayoutDashboard size={21} strokeWidth={1.8} />
+                </span>
+                <div>
+                  <span className="kh-comparison-eyebrow">A MULTI-TOOL SETUP</span>
+                  <h3>More moving parts</h3>
+                </div>
+              </div>
+              <ul>
+                {comparisonAlternatives.map((alternative) => (
+                  <li key={alternative}>
+                    <span className="kh-comparison-alternative-mark">
+                      <ArrowRight size={14} />
+                    </span>
+                    <span>{alternative}</span>
+                  </li>
+                ))}
+              </ul>
+            </article>
+          </div>
+
+          <p className="kh-comparison-note">
+            Every platform is different. This is a practical comparison between
+            Khaavio’s connected workflow and a common setup spread across multiple tools,
+            not a claim about every provider.
+          </p>
+        </div>
+      </section>
+
       <section className="kh-workflow kh-section" id="how-it-works">
         <div className="kh-section-wrap kh-workflow-grid">
           <div className="kh-workflow-copy">
@@ -1005,6 +1127,7 @@ export default function Home() {
               <span>QUICK LINKS</span>
               <Link to="/about">About Khaavio</Link>
               <a href="#features">Features</a>
+              <a href="#comparison">Why Khaavio</a>
               <a href="#how-it-works">How it works</a>
               <a href="#pricing">Pricing</a>
               <a href="#faq">FAQs</a>
@@ -1033,19 +1156,6 @@ export default function Home() {
             </div>
           </div>
 
-          <section className="kh-footer-operator" aria-label="Platform operator and grievance contact">
-            <div className="kh-footer-operator-copy">
-              <strong>Platform operator &amp; grievance contact</strong>
-              <p>Consumer complaints are acknowledged within 48 hours and redressed within 30 days of receipt, or sooner where applicable law requires.</p>
-            </div>
-            <div className="kh-footer-operator-details">
-              <span><strong>Legal operator:</strong> Kaushal Kumar</span>
-              <span><strong>Principal address:</strong> Patna, Bihar – 800011, India</span>
-              <span><strong>Grievance Officer:</strong> Kaushal Kumar (Platform Operator)</span>
-              <a href="tel:+919471640485">+91 9471640485</a>
-              <a href="mailto:kaushalpzti@gmail.com">kaushalpzti@gmail.com</a>
-            </div>
-          </section>
 
           <div className="kh-footer-bottom">
             <span>© 2026 Khaavio. All rights reserved.</span>
