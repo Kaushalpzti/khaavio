@@ -17,6 +17,11 @@ test("public QR checkout requires a mobile number and sends its normalized form"
   assert.doesNotMatch(menu, /Phone number \(optional\)/);
 });
 
+test("public order button label uses a clean text separator", () => {
+  assert.ok(menu.includes("`Place order - ${formatPrice(cartTotal)}`"));
+  assert.doesNotMatch(menu, /Â·/);
+});
+
 test("database order function rejects missing or invalid mobile numbers", () => {
   assert.match(migration, /CREATE OR REPLACE FUNCTION public\.place_public_order\(/);
   assert.match(migration, /public\.khaavio_normalize_indian_mobile\(p_customer_phone\)/);
