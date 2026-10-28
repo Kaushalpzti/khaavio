@@ -271,7 +271,7 @@ export default function OrderReceipts() {
                     <span>{item.item_name}</span>
                     <small>{formatPrice(item.unit_price)} × {item.quantity}</small>
                   </div>
-                  <strong>{formatPrice(item.line_total)}</strong>
+                  <strong>{formatPrice(Number(selectedOrder.discount_amount) > 0 ? Number(item.unit_price) * Number(item.quantity) : item.line_total)}</strong>
                 </div>
               ))}
               {Number(selectedOrder.discount_amount) > 0 && (

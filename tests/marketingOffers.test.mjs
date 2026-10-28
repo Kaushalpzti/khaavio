@@ -12,6 +12,7 @@ const marketing = read("src/pages/MarketingStudio.jsx");
 const app = read("src/App.jsx");
 const layout = read("src/components/RestaurantDashboardLayout.jsx");
 const receipts = read("src/pages/OrderReceipts.jsx");
+const tableSessions = read("src/pages/TableSessions.jsx");
 
 test("offer data is restaurant-scoped and owner-protected", () => {
   assert.match(migration, /CREATE TABLE IF NOT EXISTS public\.offers/i);
@@ -29,6 +30,8 @@ test("discounts are validated by the server and reconciled with table-session in
   assert.match(migration, /app\.khaavio_apply_offer_discount/i);
   assert.match(migration, /The order total must match its saved order items/i);
   assert.match(migration, /khaavio_snapshot_offer_totals_on_invoice/i);
+  assert.match(migration, /NEW\.guest_tab_id IS NULL OR o\.guest_tab_id = NEW\.guest_tab_id/i);
+  assert.match(migration, /i2\.guest_tab_id IS NULL OR o\.guest_tab_id = i2\.guest_tab_id/i);
   assert.match(migration, /max_redemptions/i);
   assert.match(migration, /per_customer_limit/i);
 });
@@ -59,4 +62,7 @@ test("order receipts request and display discount snapshots", () => {
   assert.match(receipts, /subtotal_amount/);
   assert.match(receipts, /discount_amount/);
   assert.match(receipts, /coupon_code/);
+  assert.match(receipts, /Number\(selectedOrder\.discount_amount\) > 0 \? Number\(item\.unit_price\) \* Number\(item\.quantity\)/);
+  assert.match(tableSessions, /ts-order-discount-summary/);
+  assert.match(tableSessions, /subtotal_amount, discount_amount, coupon_code/);
 });
