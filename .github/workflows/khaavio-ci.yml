@@ -108,3 +108,113 @@ jobs:
           END;
           $verify$;
           SQL
+
+  business_copilot_sql:
+    name: Validate Business Copilot aggregate RPC and plan access
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_DB: khaavio_copilot_test
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d khaavio_copilot_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      PGHOST: localhost
+      PGPORT: 5432
+      PGUSER: postgres
+      PGPASSWORD: postgres
+      PGDATABASE: khaavio_copilot_test
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Install PostgreSQL client
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes postgresql-client
+      - name: Create Business Copilot fixture
+        run: psql -v ON_ERROR_STOP=1 -f tests/sql/business-copilot-fixture.sql
+      - name: Apply Business Copilot migration
+        run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261028110000_business_copilot_summary.sql
+      - name: Verify summary aggregates, tenant isolation and Growth access
+        run: |
+          psql -v ON_ERROR_STOP=1 <<'SQL'
+          INSERT INTO public.restaurants (id, owner_id, name, slug)
+          VALUES ('20000000-0000-0000-0000-000000000001',
+                  '20000000-0000-0000-0000-000000000002', 'Fixture Cafe', 'fixture-cafe');
+          INSERT INTO public.restaurant_subscriptions (restaurant_id, plan_key, status, starts_at, ends_at)
+          VALUES ('20000000-0000-0000-0000-000000000001', 'growth', 'active', now() - interval '1 day', now() + interval '30 days');
+          SELECT set_config('request.jwt.claim.sub', '20000000-0000-0000-0000-000000000002', false);
+
+          INSERT INTO public.orders (id, restaurant_id, customer_phone, total_amount, status, created_at) VALUES
+            ('20000000-0000-0000-0000-000000000010', '20000000-0000-0000-0000-000000000001', '+91 98765 43210', 100, 'completed', now() - interval '1 day'),
+            ('20000000-0000-0000-0000-000000000011', '20000000-0000-0000-0000-000000000001', '+919876543210', 200, 'completed', now() - interval '2 days'),
+            ('20000000-0000-0000-0000-000000000012', '20000000-0000-0000-0000-000000000001', '+919876543210', 90, 'cancelled', now() - interval '3 days'),
+            ('20000000-0000-0000-0000-000000000013', '20000000-0000-0000-0000-000000000001', '+911234567890', 50, 'completed', now() - interval '8 days');
+          INSERT INTO public.order_items (id, order_id, item_name, quantity, line_total) VALUES
+            ('20000000-0000-0000-0000-000000000020', '20000000-0000-0000-0000-000000000010', 'Masala Dosa', 2, 100),
+            ('20000000-0000-0000-0000-000000000021', '20000000-0000-0000-0000-000000000011', 'Masala Dosa', 1, 200),
+            ('20000000-0000-0000-0000-000000000022', '20000000-0000-0000-0000-000000000013', 'Tea', 1, 50);
+          INSERT INTO public.bookings (id, restaurant_id, booking_time, status)
+          VALUES ('20000000-0000-0000-0000-000000000030', '20000000-0000-0000-0000-000000000001', now() + interval '5 days', 'confirmed');
+
+          DO $verify_summary$
+          DECLARE
+            v_summary jsonb;
+          BEGIN
+            v_summary := public.khaavio_business_copilot_summary('20000000-0000-0000-0000-000000000001', 7);
+            IF (v_summary #>> '{current_period,orders}')::integer <> 3
+               OR (v_summary #>> '{current_period,completed_orders}')::integer <> 2
+               OR (v_summary #>> '{current_period,cancelled_orders}')::integer <> 1
+               OR (v_summary #>> '{current_period,completed_sales_inr}')::numeric <> 300
+               OR (v_summary #>> '{current_period,average_order_value_inr}')::numeric <> 150
+               OR (v_summary #>> '{previous_period,completed_sales_inr}')::numeric <> 50
+               OR (v_summary ->> 'repeat_customers')::integer <> 1
+               OR (v_summary ->> 'upcoming_bookings_next_30_days')::integer <> 1
+               OR v_summary #>> '{top_dishes,0,dish}' <> 'Masala Dosa'
+               OR (v_summary #>> '{top_dishes,0,quantity_sold}')::integer <> 3 THEN
+              RAISE EXCEPTION 'Business Copilot summary did not match the fixture: %', v_summary;
+            END IF;
+            IF v_summary::text LIKE '%9876543210%' OR v_summary::text LIKE '%1234567890%' THEN
+              RAISE EXCEPTION 'Business Copilot summary exposed a customer phone number.';
+            END IF;
+          END;
+          $verify_summary$;
+
+          -- A different owner cannot read this restaurant's summary.
+          SELECT set_config('request.jwt.claim.sub', '20000000-0000-0000-0000-000000000099', false);
+          DO $verify_tenant$
+          BEGIN
+            BEGIN
+              PERFORM public.khaavio_business_copilot_summary('20000000-0000-0000-0000-000000000001', 7);
+              RAISE EXCEPTION 'Expected cross-restaurant access to be rejected.';
+            EXCEPTION WHEN SQLSTATE '42501' THEN
+              IF position('access to this restaurant' IN SQLERRM) = 0 THEN RAISE; END IF;
+            END;
+          END;
+          $verify_tenant$;
+
+          -- Starter is denied server-side even if a caller tries the RPC directly.
+          SELECT set_config('request.jwt.claim.sub', '20000000-0000-0000-0000-000000000002', false);
+          UPDATE public.restaurant_subscriptions SET plan_key = 'starter'
+          WHERE restaurant_id = '20000000-0000-0000-0000-000000000001';
+          DO $verify_plan$
+          BEGIN
+            BEGIN
+              PERFORM public.khaavio_business_copilot_summary('20000000-0000-0000-0000-000000000001', 7);
+              RAISE EXCEPTION 'Expected Starter to be denied Business Copilot.';
+            EXCEPTION WHEN SQLSTATE '42501' THEN
+              IF position('KHAAVIO_PLAN_ACCESS_REQUIRED' IN SQLERRM) = 0 THEN RAISE; END IF;
+            END;
+          END;
+          $verify_plan$;
+          SELECT 'PASS: Business Copilot aggregates, privacy, tenant scope and Growth plan gate verified.' AS result;
+          SQL
