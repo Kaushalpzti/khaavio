@@ -22,7 +22,7 @@ test("Starter includes daily restaurant operations", () => {
 
 test("Starter does not include Growth-only tools", () => {
   const starter = subscription("starter_yearly");
-  for (const feature of ["booking_advanced", "booking_export", "analytics_advanced", "priority_support", "loyalty_rewards", "private_feedback", "ai_menu_assistant", "voice_alerts_advanced"]) {
+  for (const feature of ["booking_advanced", "booking_export", "analytics_advanced", "priority_support", "loyalty_rewards", "private_feedback", "ai_menu_assistant", "voice_alerts_advanced", "business_copilot"]) {
     assert.equal(planHasFeature(starter, feature), false, `${feature} should be locked on Starter`);
   }
 });

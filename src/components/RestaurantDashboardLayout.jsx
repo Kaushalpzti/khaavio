@@ -8,6 +8,7 @@ import {
   Gift,
   MessageSquareText,
   Megaphone,
+  Sparkles,
   ChefHat,
   ChevronLeft,
   ChevronRight,
@@ -62,6 +63,7 @@ const NAV_GROUPS = [
     label: "Insights",
     items: [
       { label: "Analytics", to: "/dashboard/analytics", icon: BarChart3 },
+      { label: "Business Copilot", to: "/dashboard/copilot", icon: Sparkles },
       { label: "Reviews & feedback", to: "/dashboard/feedback", icon: MessageSquareText },
       { label: "Offers & campaigns", to: "/dashboard/marketing", icon: Megaphone },
     ],
