@@ -24,6 +24,7 @@ export const PLAN_FEATURE_KEYS = [
   "google_review_link",
   "ai_menu_assistant",
   "voice_alerts_advanced",
+  "business_copilot",
 ];
 
 const CORE_FLAGS = Object.freeze({
@@ -48,6 +49,7 @@ const CORE_FLAGS = Object.freeze({
   google_review_link: true,
   ai_menu_assistant: false,
   voice_alerts_advanced: false,
+  business_copilot: false,
 });
 
 const FULL_FLAGS = Object.freeze(

@@ -20,6 +20,7 @@ import {
   QrCode,
   Receipt,
   Settings,
+  Sparkles,
   Store,
   UtensilsCrossed,
   X,
@@ -61,6 +62,7 @@ const NAV_GROUPS = [
     label: "Insights",
     items: [
       { label: "Analytics", to: "/dashboard/analytics", icon: BarChart3 },
+      { label: "Business Copilot", to: "/dashboard/copilot", icon: Sparkles },
       { label: "Reviews & feedback", to: "/dashboard/feedback", icon: MessageSquareText },
     ],
   },
