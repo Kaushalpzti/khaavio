@@ -152,7 +152,7 @@ begin
     v_total,
     v_tracking_token;
 end;
-$function$
+$function$;
 
 COMMENT ON FUNCTION public.place_public_order(text, uuid, text, text, text, jsonb)
 IS 'Places a public QR order only when the customer supplies a valid Indian mobile number; stores the number in canonical +91 format.';
