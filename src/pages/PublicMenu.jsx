@@ -1649,7 +1649,7 @@ export default function PublicMenu() {
                         )}
                         {submitting
                           ? "Submitting order..."
-                          : `Place order Â· ${formatPrice(cartTotal)}`}
+                          : `Place order - ${formatPrice(cartTotal)}`}
                       </button>
 
                       <p className="public-order-disclaimer">
