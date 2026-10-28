@@ -6,7 +6,7 @@ import path from "node:path";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const read = (relativePath) => readFileSync(path.join(root, relativePath), "utf8");
-const migration = read("supabase/migrations/20261028060000_guest_billing_conflict_http_status.sql");
+const migration = read("supabase/migrations/20261028003935_guest_billing_conflict_http_status.sql");
 const fixture = read("tests/sql/guest-billing-conflict-fixture.sql");
 const workflow = read(".github/workflows/khaavio-ci.yml");
 const testGuide = read("docs/guest-billing-conflict-local-test.md");
