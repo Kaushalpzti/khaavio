@@ -204,7 +204,7 @@
 
 .analytics-stat-grid {
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 15px;
     margin-bottom: 18px;
 }
@@ -898,3 +898,24 @@
         flex-direction: column;
     }
 }
+/* Customer insights: private to the authenticated restaurant workspace. */
+.analytics-customers-section { margin-bottom: 18px; }
+.analytics-customer-panel { min-width: 0; }
+.analytics-customer-heading { align-items: center; margin-bottom: 18px; }
+.analytics-customer-export-button { display: inline-flex; flex: 0 0 auto; align-items: center; justify-content: center; gap: 8px; min-height: 39px; padding: 0 13px; border: 1px solid #d9e5d6; border-radius: 9px; color: #345b3f; background: #f4f8f1; font: inherit; font-size: 11px; font-weight: 750; cursor: pointer; }
+.analytics-customer-export-button:hover:not(:disabled) { background: #eaf3e5; border-color: #c3d9bd; }
+.analytics-customer-export-button:disabled { opacity: .55; cursor: not-allowed; }
+.analytics-customer-table-wrap { width: 100%; overflow-x: auto; border: 1px solid #e5ebe2; border-radius: 12px; }
+.analytics-customer-table { width: 100%; min-width: 700px; border-collapse: collapse; text-align: left; }
+.analytics-customer-table th { padding: 12px 14px; color: #6d806f; background: #f5f8f2; font-size: 10px; font-weight: 800; letter-spacing: .35px; white-space: nowrap; }
+.analytics-customer-table td { padding: 13px 14px; border-top: 1px solid #edf0e9; color: #445b49; font-size: 12px; line-height: 1.5; white-space: nowrap; }
+.analytics-customer-table td:first-child { white-space: normal; min-width: 140px; }
+.analytics-customer-table td strong { color: #2d4734; font-size: 12px; }
+.analytics-customer-table td a { color: #2f7247; font-weight: 750; text-decoration-thickness: 1px; text-underline-offset: 3px; }
+.analytics-customer-table tbody tr:hover { background: #fbfcf8; }
+.analytics-repeat-badge { display: inline-flex; margin-left: 7px; padding: 3px 6px; border-radius: 999px; color: #2f6841; background: #e7f2e2; font-size: 9px; font-weight: 800; vertical-align: middle; }
+.analytics-customer-more { margin: 10px 12px; color: #778579; font-size: 11px; line-height: 1.6; }
+.analytics-customer-empty { padding-block: 30px; }
+.analytics-customer-privacy-note { margin: 13px 0 0; color: #7b877e; font-size: 10px; line-height: 1.7; }
+@media (max-width: 760px) { .analytics-customer-heading { align-items: flex-start; flex-direction: column; } .analytics-customer-export-button { min-height: 40px; } }
+@media (max-width: 600px) { .analytics-customer-panel { padding: 16px; } .analytics-customer-table th, .analytics-customer-table td { padding: 11px 12px; } }

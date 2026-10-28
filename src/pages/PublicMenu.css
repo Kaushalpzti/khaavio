@@ -2520,3 +2520,5 @@
   .public-menu-header-bill b { display: none; }
   .public-menu-header-bill { min-width: 0; padding-inline: 8px; }
 }
+
+.public-order-field-help { margin: 7px 0 0; color: #8b796b; font-size: 10px; line-height: 1.65; }

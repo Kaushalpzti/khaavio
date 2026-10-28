@@ -66,7 +66,7 @@ test("legal policies are reviewed against current Indian privacy and consumer gr
   assert.match(legal, /statutory right or remedy/);
 });
 
-test("operator identity and grievance contact are prominently displayed on legal pages and homepage", () => {
+test("operator identity and grievance contact appear on legal pages but not the homepage", () => {
   const legal = readRoot("src/pages/LegalPage.jsx");
   const home = readRoot("src/pages/Home.jsx");
   for (const text of [
@@ -79,12 +79,26 @@ test("operator identity and grievance contact are prominently displayed on legal
     "30 days",
   ]) {
     assert.ok(legal.includes(text), `legal pages should show ${text}`);
-    assert.ok(home.includes(text), `homepage footer should show ${text}`);
   }
   assert.match(legal, /href="tel:\+919471640485"/);
   assert.match(legal, /href="mailto:kaushalpzti@gmail\.com"/);
-  assert.match(home, /href="tel:\+919471640485"/);
-  assert.match(home, /href="mailto:kaushalpzti@gmail\.com"/);
+  assert.doesNotMatch(home, /kh-footer-operator|Kaushal Kumar|Patna, Bihar|Grievance Officer|tel:\+919471640485|mailto:kaushalpzti@gmail\.com/);
+});
+
+test("homepage uses vector social icons and includes comparison and motion sections", () => {
+  const home = readRoot("src/pages/Home.jsx");
+  const styles = readRoot("src/pages/Home.css");
+  assert.ok(home.indexOf('name: "Instagram"') < home.indexOf('name: "LinkedIn"'));
+  assert.ok(home.indexOf('name: "LinkedIn"') < home.indexOf('name: "YouTube"'));
+  assert.ok(home.indexOf('name: "YouTube"') < home.indexOf('name: "Facebook"'));
+  assert.match(home, /function SocialIcon\(\{ name \}\)/);
+  assert.match(home, /<SocialIcon name=\{profile\.name\} \/>/);
+  assert.doesNotMatch(home, /profile\.mark/);
+  assert.match(home, /id="comparison"/);
+  assert.match(home, /kh-comparison-grid/);
+  assert.match(styles, /@keyframes kh-hero-reveal/);
+  assert.match(styles, /kh-steps\.is-visible::before/);
+  assert.match(styles, /kh-comparison-grid\.is-visible/);
 });
 
 test("route navigation resets scroll to the top before paint", () => {

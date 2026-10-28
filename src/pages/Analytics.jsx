@@ -11,12 +11,15 @@ import {
   Download,
   LoaderCircle,
   RefreshCw,
+  Repeat2,
   ShoppingBag,
+  UsersRound,
   TrendingUp,
   UtensilsCrossed,
   Wallet,
 } from "lucide-react";
 import { supabase } from "../lib/supabaseClient";
+import { summarizeCustomerOrders } from "../lib/customerInsights";
 import { usePlanAccess } from "../context/PlanAccessContext";
 import PlanUpgradeNotice from "../components/PlanUpgradeNotice";
 import "./Analytics.css";
@@ -147,7 +150,7 @@ export default function Analytics() {
           supabase
             .from("orders")
             .select(
-              "id, restaurant_id, customer_name, status, total_amount, created_at",
+              "id, restaurant_id, customer_name, customer_phone, status, total_amount, created_at",
             )
             .eq("restaurant_id", restaurantData.id)
             .gte("created_at", start.toISOString())
@@ -220,6 +223,8 @@ export default function Analytics() {
     const createdAt = new Date(order.created_at).getTime();
     return createdAt >= rangeStartTime && createdAt <= rangeEndTime;
   });
+  const customerSummaries = summarizeCustomerOrders(rangeOrders);
+  const repeatCustomerCount = customerSummaries.filter((customer) => customer.isRepeatCustomer).length;
   const completedOrders = rangeOrders.filter(
     (order) => order.status === "completed",
   );
@@ -291,6 +296,7 @@ export default function Analytics() {
         "order_id",
         "created_at",
         "customer_name",
+        "customer_phone",
         "status",
         "order_total_inr",
         "item_name",
@@ -306,6 +312,7 @@ export default function Analytics() {
         order.id,
         order.created_at,
         order.customer_name || "",
+        order.customer_phone || "",
         order.status || "",
       ];
 
@@ -333,6 +340,29 @@ export default function Analytics() {
     const link = document.createElement("a");
     link.href = url;
     link.download = `khaavio-orders-${effectiveRangeDays}-days-${getDateKey(referenceDate)}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+
+  function exportCustomerListCsv() {
+    if (!customerSummaries.length) return;
+    const escapeCsv = (value) => {
+      let text = value == null ? "" : String(value);
+      if (/^[\s]*[=+@-]/.test(text)) text = `'${text}`;
+      return `"${text.replace(/"/g, '""')}"`;
+    };
+    const rows = [
+      ["customer_name", "customer_phone", "orders_in_selected_period_excluding_cancelled", "completed_order_value_inr", "last_order_at"],
+      ...customerSummaries.map((customer) => [customer.name, customer.phone, customer.orderCount, customer.completedSpend.toFixed(2), customer.lastOrderAt]),
+    ];
+    const csv = rows.map((row) => row.map(escapeCsv).join(",")).join("\r\n");
+    const blob = new Blob([`\uFEFF${csv}`], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `khaavio-customers-${effectiveRangeDays}-days-${getDateKey(referenceDate)}.csv`;
     document.body.appendChild(link);
     link.click();
     link.remove();
@@ -491,6 +521,24 @@ export default function Analytics() {
                   </strong>
                   <p>{todayBookings} pending or confirmed today</p>
                 </article>
+
+                <article className="analytics-stat-card">
+                  <div className="analytics-stat-top">
+                    <span>Known customers</span>
+                    <span className="analytics-stat-icon green"><UsersRound size={19} /></span>
+                  </div>
+                  <strong>{customerSummaries.length.toLocaleString("en-IN")}</strong>
+                  <p>Unique valid mobile numbers in this period</p>
+                </article>
+
+                <article className="analytics-stat-card">
+                  <div className="analytics-stat-top">
+                    <span>Repeat customers</span>
+                    <span className="analytics-stat-icon sage"><Repeat2 size={19} /></span>
+                  </div>
+                  <strong>{repeatCustomerCount.toLocaleString("en-IN")}</strong>
+                  <p>Customers with 2+ non-cancelled orders in this period</p>
+                </article>
               </section>
 
               <section className="analytics-main-grid">
@@ -594,6 +642,47 @@ export default function Analytics() {
                   <Link to="/dashboard/orders" className="analytics-panel-link">
                     Manage orders <ArrowUpRight size={15} />
                   </Link>
+                </article>
+              </section>
+
+              <section className="analytics-customers-section" aria-labelledby="analytics-customers-heading">
+                <article className="analytics-panel analytics-customer-panel">
+                  <div className="analytics-panel-heading analytics-customer-heading">
+                    <div>
+                      <span className="analytics-section-eyebrow">CUSTOMER INSIGHTS</span>
+                      <h2 id="analytics-customers-heading">Customer contacts & repeat visits</h2>
+                      <p>Customers grouped by mobile number across non-cancelled orders in the selected {effectiveRangeDays}-day period.</p>
+                    </div>
+                    <button type="button" className="analytics-customer-export-button" onClick={exportCustomerListCsv} disabled={!customerSummaries.length}>
+                      <Download size={15} /> Download customer list
+                    </button>
+                  </div>
+                  {customerSummaries.length ? (
+                    <div className="analytics-customer-table-wrap">
+                      <table className="analytics-customer-table">
+                        <thead><tr><th scope="col">Customer</th><th scope="col">Mobile</th><th scope="col">Orders</th><th scope="col">Completed spend</th><th scope="col">Last order</th></tr></thead>
+                        <tbody>
+                          {customerSummaries.slice(0, 12).map((customer) => (
+                            <tr key={customer.phone}>
+                              <td><strong>{customer.name}</strong>{customer.isRepeatCustomer && <span className="analytics-repeat-badge">Repeat</span>}</td>
+                              <td><a href={`tel:${customer.phone}`}>{customer.phone}</a></td>
+                              <td>{customer.orderCount.toLocaleString("en-IN")}</td>
+                              <td>{formatPrice(customer.completedSpend)}</td>
+                              <td>{formatDate(customer.lastOrderAt, { year: "numeric" })}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                      {customerSummaries.length > 12 && <p className="analytics-customer-more">Showing the 12 most recently active customers. Download the list to see all {customerSummaries.length}.</p>}
+                    </div>
+                  ) : (
+                    <div className="analytics-empty-inline analytics-customer-empty">
+                      <UsersRound size={24} />
+                      <strong>No customer contacts in this period yet</strong>
+                      <p>After guests place orders with a valid mobile number, their order history and repeat visits will show here.</p>
+                    </div>
+                  )}
+                  <p className="analytics-customer-privacy-note">Customer contacts are for order and service coordination. Use them for promotional outreach only where required customer consent has been obtained.</p>
                 </article>
               </section>
 
