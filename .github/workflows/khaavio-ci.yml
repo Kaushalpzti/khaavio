@@ -108,3 +108,128 @@ jobs:
           END;
           $verify$;
           SQL
+
+  offers_engine_migration_sql:
+    name: Validate Offers Engine migration and redemption math
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_DB: khaavio_offers_test
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d khaavio_offers_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      PGHOST: localhost
+      PGPORT: 5432
+      PGUSER: postgres
+      PGPASSWORD: postgres
+      PGDATABASE: khaavio_offers_test
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Install PostgreSQL client
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes postgresql-client
+      - name: Create Offers Engine compile-time fixture
+        run: psql -v ON_ERROR_STOP=1 -f tests/sql/offers-engine-fixture.sql
+      - name: Apply Offers Engine migration
+        run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261028100000_offers_campaigns_engine.sql
+      - name: Verify coupon totals, invoice snapshot and redemption limit
+        run: |
+          psql -v ON_ERROR_STOP=1 <<'SQL'
+          INSERT INTO public.restaurants (id, owner_id, slug, is_published)
+          VALUES ('10000000-0000-0000-0000-000000000001', '10000000-0000-0000-0000-000000000002', 'offers-fixture', true);
+          INSERT INTO public.restaurant_tables (id, restaurant_id, qr_token, is_active)
+          VALUES ('10000000-0000-0000-0000-000000000003', '10000000-0000-0000-0000-000000000001', '10000000-0000-0000-0000-000000000004', true);
+          INSERT INTO public.table_sessions (id, restaurant_id, table_id, status)
+          VALUES ('10000000-0000-0000-0000-000000000005', '10000000-0000-0000-0000-000000000001', '10000000-0000-0000-0000-000000000003', 'open');
+          INSERT INTO public.orders (id, restaurant_id, table_id, session_id, customer_phone, total_amount, status)
+          VALUES ('10000000-0000-0000-0000-000000000006', '10000000-0000-0000-0000-000000000001',
+                  '10000000-0000-0000-0000-000000000003', '10000000-0000-0000-0000-000000000005',
+                  '+919876543210', 200, 'pending');
+          INSERT INTO public.order_items (id, order_id, item_name, unit_price, quantity, line_total)
+          VALUES
+            ('10000000-0000-0000-0000-000000000007', '10000000-0000-0000-0000-000000000006', 'Dish one', 100, 1, 100),
+            ('10000000-0000-0000-0000-000000000008', '10000000-0000-0000-0000-000000000006', 'Dish two', 100, 1, 100);
+          INSERT INTO public.offers (restaurant_id, name, coupon_code, discount_type, discount_value, max_redemptions, status)
+          VALUES ('10000000-0000-0000-0000-000000000001', 'Fixture offer', 'TEST10', 'percentage', 10, 1, 'active');
+
+          SELECT * FROM public.khaavio_apply_offer_to_order('10000000-0000-0000-0000-000000000006', 'TEST10');
+
+          DO $verify$
+          DECLARE
+            v_total numeric(12,2);
+            v_subtotal numeric(12,2);
+            v_discount numeric(12,2);
+            v_lines numeric(12,2);
+            v_redemptions integer;
+          BEGIN
+            SELECT total_amount, subtotal_amount, discount_amount
+              INTO v_total, v_subtotal, v_discount
+            FROM public.orders WHERE id = '10000000-0000-0000-0000-000000000006';
+            SELECT COALESCE(SUM(line_total), 0)::numeric(12,2) INTO v_lines
+            FROM public.order_items WHERE order_id = '10000000-0000-0000-0000-000000000006';
+            SELECT count(*)::integer INTO v_redemptions FROM public.offer_redemptions;
+            IF v_total <> 180 OR v_subtotal <> 200 OR v_discount <> 20 OR v_lines <> v_total OR v_redemptions <> 1 THEN
+              RAISE EXCEPTION 'Coupon totals did not reconcile (total %, subtotal %, discount %, lines %, redemptions %)',
+                v_total, v_subtotal, v_discount, v_lines, v_redemptions;
+            END IF;
+          END;
+          $verify$;
+
+          INSERT INTO public.table_session_invoices
+            (id, restaurant_id, table_id, session_id, invoice_number, total_amount, order_count)
+          VALUES
+            ('10000000-0000-0000-0000-000000000009',
+             '10000000-0000-0000-0000-000000000001',
+             '10000000-0000-0000-0000-000000000003',
+             '10000000-0000-0000-0000-000000000005',
+             'FIXTURE-INV', 180, 1);
+
+          DO $verify_invoice$
+          DECLARE
+            v_subtotal numeric(12,2);
+            v_discount numeric(12,2);
+            v_codes text[];
+          BEGIN
+            SELECT subtotal_amount, discount_amount, coupon_codes
+              INTO v_subtotal, v_discount, v_codes
+            FROM public.table_session_invoices WHERE invoice_number = 'FIXTURE-INV';
+            IF v_subtotal <> 200 OR v_discount <> 20 OR NOT ('TEST10' = ANY(v_codes)) THEN
+              RAISE EXCEPTION 'Invoice offer snapshot is incorrect (subtotal %, discount %, codes %)', v_subtotal, v_discount, v_codes;
+            END IF;
+          END;
+          $verify_invoice$;
+
+          INSERT INTO public.orders (id, restaurant_id, table_id, session_id, customer_phone, total_amount, status)
+          VALUES ('10000000-0000-0000-0000-000000000010', '10000000-0000-0000-0000-000000000001',
+                  '10000000-0000-0000-0000-000000000003', '10000000-0000-0000-0000-000000000005',
+                  '+911234567890', 200, 'pending');
+          INSERT INTO public.order_items (id, order_id, item_name, unit_price, quantity, line_total)
+          VALUES ('10000000-0000-0000-0000-000000000011', '10000000-0000-0000-0000-000000000010', 'Dish one', 200, 1, 200);
+
+          DO $verify_limit$
+          BEGIN
+            BEGIN
+              PERFORM * FROM public.khaavio_apply_offer_to_order('10000000-0000-0000-0000-000000000010', 'TEST10');
+              RAISE EXCEPTION 'Expected the redemption limit to reject a second use.';
+            EXCEPTION WHEN SQLSTATE '22023' THEN
+              IF position('usage limit' IN SQLERRM) = 0 THEN RAISE; END IF;
+            END;
+            IF (SELECT count(*) FROM public.offer_redemptions WHERE offer_id = (SELECT id FROM public.offers WHERE coupon_code = 'TEST10')) <> 1 THEN
+              RAISE EXCEPTION 'The redemption limit allowed an extra redemption.';
+            END IF;
+          END;
+          $verify_limit$;
+          RAISE NOTICE 'PASS: Offers migration applied, totals reconcile and redemption limit is enforced.';
+          SQL
