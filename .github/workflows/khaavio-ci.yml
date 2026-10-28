@@ -231,5 +231,5 @@ jobs:
             END IF;
           END;
           $verify_limit$;
-          RAISE NOTICE 'PASS: Offers migration applied, totals reconcile and redemption limit is enforced.';
+          SELECT 'PASS: Offers migration applied, totals reconcile and redemption limit is enforced.' AS result;
           SQL
