@@ -1653,7 +1653,7 @@ export default function PublicMenu() {
                           value={couponCode}
                           maxLength={24}
                           onChange={(event) => {
-                            setCouponCode(event.target.value.toUpperCase().replace(/\\s+/g, ""));
+                            setCouponCode(event.target.value.toUpperCase().replace(/\s+/g, ""));
                             setCouponPreview(null);
                             setCouponAppliedFingerprint("");
                           }}
