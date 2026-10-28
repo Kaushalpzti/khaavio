@@ -42,7 +42,6 @@ const OrdersDashboard = lazy(() => import("./pages/OrdersDashboard"));
 const OrderReceipts = lazy(() => import("./pages/OrderReceipts"));
 const BookingsDashboard = lazy(() => import("./pages/BookingsDashboard"));
 const Analytics = lazy(() => import("./pages/Analytics"));
-const MarketingStudio = lazy(() => import("./pages/MarketingStudio"));
 const KitchenDisplay = lazy(() => import("./pages/KitchenDisplay"));
 
 // Reset scroll after client-side navigation so links from a page footer open
@@ -272,14 +271,6 @@ export default function App() {
             element={
               <ProtectedRestaurantPage>
                 <Analytics />
-              </ProtectedRestaurantPage>
-            }
-          />
-          <Route
-            path="/dashboard/marketing"
-            element={
-              <ProtectedRestaurantPage>
-                <MarketingStudio />
               </ProtectedRestaurantPage>
             }
           />
