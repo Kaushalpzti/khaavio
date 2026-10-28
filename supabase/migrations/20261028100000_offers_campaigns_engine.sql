@@ -507,7 +507,7 @@ RETURNS TABLE (
 LANGUAGE plpgsql SECURITY DEFINER SET search_path TO ''
 AS $function$
 DECLARE
-  v_base record; v_existing_order_id uuid; v_existing_offer_id uuid; v_existing_coupon_code text; v_existing boolean := false;
+  v_base record; v_offer record; v_existing_order_id uuid; v_existing_offer_id uuid; v_existing_coupon_code text; v_existing boolean := false;
 BEGIN
   SELECT o.id, o.offer_id, o.coupon_code
     INTO v_existing_order_id, v_existing_offer_id, v_existing_coupon_code
