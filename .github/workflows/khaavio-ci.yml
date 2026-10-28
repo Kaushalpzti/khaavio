@@ -153,9 +153,13 @@ jobs:
           VALUES ('10000000-0000-0000-0000-000000000003', '10000000-0000-0000-0000-000000000001', '10000000-0000-0000-0000-000000000004', true);
           INSERT INTO public.table_sessions (id, restaurant_id, table_id, status)
           VALUES ('10000000-0000-0000-0000-000000000005', '10000000-0000-0000-0000-000000000001', '10000000-0000-0000-0000-000000000003', 'open');
-          INSERT INTO public.orders (id, restaurant_id, table_id, session_id, customer_phone, total_amount, status)
+          INSERT INTO public.table_session_tabs (id, restaurant_id, table_id, session_id, guest_tab_token, display_name, status)
+          VALUES
+            ('10000000-0000-0000-0000-000000000012', '10000000-0000-0000-0000-000000000001', '10000000-0000-0000-0000-000000000003', '10000000-0000-0000-0000-000000000005', '10000000-0000-0000-0000-000000000022', 'Guest A', 'open'),
+            ('10000000-0000-0000-0000-000000000013', '10000000-0000-0000-0000-000000000001', '10000000-0000-0000-0000-000000000003', '10000000-0000-0000-0000-000000000005', '10000000-0000-0000-0000-000000000023', 'Guest B', 'open');
+          INSERT INTO public.orders (id, restaurant_id, table_id, session_id, guest_tab_id, customer_phone, total_amount, status)
           VALUES ('10000000-0000-0000-0000-000000000006', '10000000-0000-0000-0000-000000000001',
-                  '10000000-0000-0000-0000-000000000003', '10000000-0000-0000-0000-000000000005',
+                  '10000000-0000-0000-0000-000000000003', '10000000-0000-0000-0000-000000000005', '10000000-0000-0000-0000-000000000012',
                   '+919876543210', 200, 'pending');
           INSERT INTO public.order_items (id, order_id, item_name, unit_price, quantity, line_total)
           VALUES
@@ -211,12 +215,38 @@ jobs:
           END;
           $verify_invoice$;
 
-          INSERT INTO public.orders (id, restaurant_id, table_id, session_id, customer_phone, total_amount, status)
+          INSERT INTO public.orders (id, restaurant_id, table_id, session_id, guest_tab_id, customer_phone, total_amount, status)
           VALUES ('10000000-0000-0000-0000-000000000010', '10000000-0000-0000-0000-000000000001',
-                  '10000000-0000-0000-0000-000000000003', '10000000-0000-0000-0000-000000000005',
+                  '10000000-0000-0000-0000-000000000003', '10000000-0000-0000-0000-000000000005', '10000000-0000-0000-0000-000000000013',
                   '+911234567890', 200, 'pending');
           INSERT INTO public.order_items (id, order_id, item_name, unit_price, quantity, line_total)
           VALUES ('10000000-0000-0000-0000-000000000011', '10000000-0000-0000-0000-000000000010', 'Dish one', 200, 1, 200);
+
+          INSERT INTO public.table_session_invoices
+            (id, restaurant_id, table_id, session_id, guest_tab_id, invoice_number, total_amount, order_count)
+          VALUES
+            ('10000000-0000-0000-0000-000000000014',
+             '10000000-0000-0000-0000-000000000001',
+             '10000000-0000-0000-0000-000000000003',
+             '10000000-0000-0000-0000-000000000005',
+             '10000000-0000-0000-0000-000000000013',
+             'FIXTURE-GUEST-B-INV', 200, 1);
+
+          DO $verify_guest_invoice$
+          DECLARE
+            v_subtotal numeric(12,2);
+            v_discount numeric(12,2);
+            v_codes text[];
+          BEGIN
+            SELECT subtotal_amount, discount_amount, coupon_codes
+              INTO v_subtotal, v_discount, v_codes
+            FROM public.table_session_invoices WHERE invoice_number = 'FIXTURE-GUEST-B-INV';
+            IF v_subtotal <> 200 OR v_discount <> 0 OR cardinality(v_codes) <> 0 THEN
+              RAISE EXCEPTION 'Guest B invoice leaked another guest coupon summary (subtotal %, discount %, codes %)',
+                v_subtotal, v_discount, v_codes;
+            END IF;
+          END;
+          $verify_guest_invoice$;
 
           DO $verify_limit$
           BEGIN

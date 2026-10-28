@@ -100,15 +100,18 @@ SET subtotal_amount = rollup.subtotal_amount,
     discount_amount = rollup.discount_amount,
     coupon_codes = rollup.coupon_codes
 FROM (
-  SELECT ts.id AS session_id,
+  SELECT i2.id AS invoice_id,
     COALESCE(SUM(COALESCE(o.subtotal_amount, o.total_amount)), 0)::numeric(12,2) AS subtotal_amount,
     COALESCE(SUM(o.discount_amount), 0)::numeric(12,2) AS discount_amount,
     COALESCE(ARRAY_AGG(DISTINCT o.coupon_code) FILTER (WHERE o.coupon_code IS NOT NULL), ARRAY[]::text[]) AS coupon_codes
-  FROM public.table_sessions ts
-  LEFT JOIN public.orders o ON o.session_id = ts.id AND o.status <> 'cancelled'
-  GROUP BY ts.id
+  FROM public.table_session_invoices i2
+  LEFT JOIN public.orders o
+    ON o.session_id = i2.session_id
+   AND o.status <> 'cancelled'
+   AND (i2.guest_tab_id IS NULL OR o.guest_tab_id = i2.guest_tab_id)
+  GROUP BY i2.id
 ) rollup
-WHERE i.session_id = rollup.session_id
+WHERE i.id = rollup.invoice_id
   AND i.subtotal_amount = 0 AND i.discount_amount = 0 AND cardinality(i.coupon_codes) = 0;
 
 CREATE OR REPLACE FUNCTION public.khaavio_snapshot_offer_totals_on_invoice()
@@ -121,7 +124,9 @@ BEGIN
     COALESCE(ARRAY_AGG(DISTINCT o.coupon_code) FILTER (WHERE o.coupon_code IS NOT NULL), ARRAY[]::text[])
   INTO NEW.subtotal_amount, NEW.discount_amount, NEW.coupon_codes
   FROM public.orders o
-  WHERE o.session_id = NEW.session_id AND o.status <> 'cancelled';
+  WHERE o.session_id = NEW.session_id
+    AND o.status <> 'cancelled'
+    AND (NEW.guest_tab_id IS NULL OR o.guest_tab_id = NEW.guest_tab_id);
   RETURN NEW;
 END;
 $function$;

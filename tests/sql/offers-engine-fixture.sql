@@ -63,6 +63,7 @@ CREATE TABLE public.table_session_invoices (
   restaurant_id uuid NOT NULL,
   table_id uuid NOT NULL,
   session_id uuid NOT NULL,
+  guest_tab_id uuid,
   invoice_number text NOT NULL UNIQUE,
   total_amount numeric(12,2) NOT NULL,
   order_count integer NOT NULL,
