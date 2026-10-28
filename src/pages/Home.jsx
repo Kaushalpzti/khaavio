@@ -776,15 +776,15 @@ export default function Home() {
             </div>
 
             <h1>
-              Make room for
-              <span className="kh-headline-serif">better</span>
-              <span className="kh-headline-last">hospitality.</span>
+              A better
+              <span className="kh-headline-serif">restaurant</span>
+              <span className="kh-headline-last">experience.</span>
             </h1>
 
             <p>
-              Digital menus, QR ordering, reservations, kitchen workflows and
-              guest tools—all connected in one workspace built around your
-              restaurant and its own identity.
+              Turn every table into a smarter guest experience with QR menus,
+              online ordering, bookings and table-side service—all managed from
+              one beautifully connected workspace.
             </p>
 
             <div className="kh-hero-actions">
@@ -845,6 +845,29 @@ export default function Home() {
             </div>
 
             <DashboardPreview />
+
+            <div className="kh-phone-preview" aria-hidden="true">
+              <div className="kh-phone-notch" />
+              <div className="kh-phone-status"><span>9:41</span><span>•••</span></div>
+              <div className="kh-phone-brand">
+                <img src={khaavioIcon} alt="" />
+                <div><strong>Olive &amp; Ember</strong><small>Good food, good mood</small></div>
+              </div>
+              <span className="kh-phone-kicker">TODAY'S MENU</span>
+              <h3>Find your flavour.</h3>
+              <div className="kh-phone-tabs"><span>All</span><span>Popular</span><span>Drinks</span></div>
+              <div className="kh-phone-dish">
+                <span className="kh-phone-dish-art kh-phone-pasta">🍝</span>
+                <span><strong>Truffle Alfredo</strong><small>Chef's favourite</small></span>
+                <b>₹329</b>
+              </div>
+              <div className="kh-phone-dish">
+                <span className="kh-phone-dish-art kh-phone-pizza">🍕</span>
+                <span><strong>Garden Margherita</strong><small>Fresh from the oven</small></span>
+                <b>₹279</b>
+              </div>
+              <div className="kh-phone-cart"><span>2 items · ₹608</span><strong>View order <ArrowRight size={12} /></strong></div>
+            </div>
 
             <div className="kh-visual-label kh-label-right">
               <span /> A menu that evolves with you
