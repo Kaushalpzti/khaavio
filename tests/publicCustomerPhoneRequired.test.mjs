@@ -9,7 +9,8 @@ const legal = read("../src/pages/LegalPage.jsx");
 
 test("public QR checkout requires a mobile number and sends its normalized form", () => {
   assert.match(menu, /<span>Mobile number \*<\/span>/);
-  assert.match(menu, /autoComplete="tel"[\s\S]{0,180}required/);
+  assert.match(menu, /autoComplete="tel"/);
+  assert.match(menu, /placeholder="10-digit mobile number"[\\s\\S]{0,80}required/);
   assert.match(menu, /const phone = normalizeIndianMobilePhone\(customerPhone\)/);
   assert.match(menu, /p_customer_phone: phone/);
   assert.doesNotMatch(menu, /Phone number \(optional\)/);
