@@ -1033,6 +1033,20 @@ export default function Home() {
             </div>
           </div>
 
+          <section className="kh-footer-operator" aria-label="Platform operator and grievance contact">
+            <div className="kh-footer-operator-copy">
+              <strong>Platform operator &amp; grievance contact</strong>
+              <p>Consumer complaints are acknowledged within 48 hours and redressed within 30 days of receipt, or sooner where applicable law requires.</p>
+            </div>
+            <div className="kh-footer-operator-details">
+              <span><strong>Legal operator:</strong> Kaushal Kumar</span>
+              <span><strong>Principal address:</strong> Patna, Bihar – 800011, India</span>
+              <span><strong>Grievance Officer:</strong> Kaushal Kumar (Platform Operator)</span>
+              <a href="tel:+919471640485">+91 9471640485</a>
+              <a href="mailto:kaushalpzti@gmail.com">kaushalpzti@gmail.com</a>
+            </div>
+          </section>
+
           <div className="kh-footer-bottom">
             <span>© 2026 Khaavio. All rights reserved.</span>
             <span>Every Table, Digitally Connected.</span>

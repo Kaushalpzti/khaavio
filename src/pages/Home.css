@@ -3193,3 +3193,58 @@
         transition: none;
     }
 }
+
+
+/* Clearly visible business identity and grievance contact in the public footer. */
+.kh-home .kh-footer-operator {
+    display: grid;
+    grid-template-columns: minmax(220px, .85fr) minmax(0, 1.4fr);
+    gap: 20px 34px;
+    align-items: start;
+    margin: 26px 0 0;
+    padding: 22px 0 24px;
+    border-top: 1px solid rgba(207, 219, 203, .85);
+    border-bottom: 1px solid rgba(207, 219, 203, .85);
+}
+.kh-home .kh-footer-operator-copy > strong {
+    display: block;
+    color: #173e30;
+    font-size: 15px;
+    line-height: 1.5;
+}
+.kh-home .kh-footer-operator-copy > p {
+    margin: 7px 0 0;
+    color: #6a7b6b;
+    font-size: 13px;
+    line-height: 1.7;
+}
+.kh-home .kh-footer-operator-details {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px 18px;
+    min-width: 0;
+    color: #53695a;
+    font-size: 13px;
+    line-height: 1.65;
+}
+.kh-home .kh-footer-operator-details > * { min-width: 0; overflow-wrap: anywhere; }
+.kh-home .kh-footer-operator-details strong {
+    color: #264936;
+    font-weight: 750;
+}
+.kh-home .kh-footer-operator-details a {
+    color: #17543b;
+    font-size: 13px;
+    font-weight: 700;
+    text-underline-offset: 3px;
+}
+.kh-home .kh-footer-operator-details a:hover { color: #bf713c; }
+@media (max-width: 900px) {
+    .kh-home .kh-footer-operator { grid-template-columns: 1fr; gap: 15px; }
+}
+@media (max-width: 620px) {
+    .kh-home .kh-footer-operator { margin-top: 21px; padding: 19px 0 20px; }
+    .kh-home .kh-footer-operator-details { grid-template-columns: 1fr; gap: 7px; font-size: 13px; }
+    .kh-home .kh-footer-operator-copy > strong { font-size: 14px; }
+    .kh-home .kh-footer-operator-copy > p { font-size: 12.5px; }
+}

@@ -66,6 +66,27 @@ test("legal policies are reviewed against current Indian privacy and consumer gr
   assert.match(legal, /statutory right or remedy/);
 });
 
+test("operator identity and grievance contact are prominently displayed on legal pages and homepage", () => {
+  const legal = readRoot("src/pages/LegalPage.jsx");
+  const home = readRoot("src/pages/Home.jsx");
+  for (const text of [
+    "Kaushal Kumar",
+    "Patna, Bihar – 800011, India",
+    "Grievance Officer",
+    "+91 9471640485",
+    "kaushalpzti@gmail.com",
+    "48 hours",
+    "30 days",
+  ]) {
+    assert.ok(legal.includes(text), `legal pages should show ${text}`);
+    assert.ok(home.includes(text), `homepage footer should show ${text}`);
+  }
+  assert.match(legal, /href="tel:\+919471640485"/);
+  assert.match(legal, /href="mailto:kaushalpzti@gmail\.com"/);
+  assert.match(home, /href="tel:\+919471640485"/);
+  assert.match(home, /href="mailto:kaushalpzti@gmail\.com"/);
+});
+
 test("route navigation resets scroll to the top before paint", () => {
   const app = readRoot("src/App.jsx");
   assert.match(app, /function ScrollToTop\(\)/);

@@ -288,6 +288,22 @@ export default function LegalPage({ type }) {
         ))}
       </nav>
 
+      <section className="kh-legal-operator" aria-label="Legal operator and grievance contact">
+        <div className="kh-legal-operator-heading">
+          <span className="kh-legal-eyebrow"><ShieldCheck size={14} /> OPERATOR &amp; GRIEVANCE CONTACT</span>
+          <h2>Who operates Khaavio?</h2>
+          <p>For privacy requests, subscription concerns or consumer complaints, use the contact details below.</p>
+        </div>
+        <dl className="kh-legal-operator-details">
+          <div><dt>Legal operator</dt><dd>Kaushal Kumar</dd></div>
+          <div><dt>Principal business address</dt><dd>Patna, Bihar – 800011, India</dd></div>
+          <div><dt>Grievance Officer</dt><dd>Kaushal Kumar (Platform Operator)</dd></div>
+          <div><dt>Phone</dt><dd><a href="tel:+919471640485">+91 9471640485</a></dd></div>
+          <div><dt>Grievance email</dt><dd><a href="mailto:kaushalpzti@gmail.com">kaushalpzti@gmail.com</a></dd></div>
+        </dl>
+        <p className="kh-legal-operator-timing">We aim to acknowledge consumer complaints within 48 hours and redress them within 30 days of receipt, or sooner where applicable law requires.</p>
+      </section>
+
       <article className="kh-legal-document">
         {page.sections.map((section) => (
           <section className="kh-legal-section" key={section.title}>
