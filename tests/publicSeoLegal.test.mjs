@@ -88,7 +88,7 @@ test("operator identity and grievance contact appear on legal pages but not the 
 test("homepage uses vector social icons and includes comparison and motion sections", () => {
   const home = readRoot("src/pages/Home.jsx");
   const styles = readRoot("src/pages/Home.css");
-  assert.match(home, /Instagram[\s\S]*Linkedin[\s\S]*Youtube[\s\S]*Facebook|Facebook[\s\S]*Instagram[\s\S]*Linkedin[\s\S]*Youtube/);
+  assert.match(home, /name: "Instagram"[\\s\\S]*name: "LinkedIn"[\\s\\S]*name: "YouTube"[\\s\\S]*name: "Facebook"/);
   assert.match(home, /function SocialIcon\(\{ name \}\)/);
   assert.match(home, /<SocialIcon name=\{profile\.name\} \/>/);
   assert.doesNotMatch(home, /profile\.mark/);
