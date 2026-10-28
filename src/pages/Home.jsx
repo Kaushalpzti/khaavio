@@ -13,11 +13,8 @@ import {
   ChevronLeft,
   ChevronRight,
   CreditCard,
-  Facebook,
   Gift,
-  Instagram,
   LayoutDashboard,
-  Linkedin,
   Mail,
   Menu,
   MessageSquareText,
@@ -28,7 +25,6 @@ import {
   Store,
   UtensilsCrossed,
   X,
-  Youtube,
 } from "lucide-react";
 import khaavioIcon from "../assets/icon.png";
 
@@ -45,10 +41,10 @@ const BRAND_CONTACT = {
 };
 
 const socialProfiles = [
-  { name: "Instagram", Icon: Instagram, url: BRAND_CONTACT.instagram },
-  { name: "LinkedIn", Icon: Linkedin, url: BRAND_CONTACT.linkedin },
-  { name: "YouTube", Icon: Youtube, url: BRAND_CONTACT.youtube },
-  { name: "Facebook", Icon: Facebook, url: BRAND_CONTACT.facebook },
+  { name: "Instagram", url: BRAND_CONTACT.instagram },
+  { name: "LinkedIn", url: BRAND_CONTACT.linkedin },
+  { name: "YouTube", url: BRAND_CONTACT.youtube },
+  { name: "Facebook", url: BRAND_CONTACT.facebook },
 ];
 
 const features = [
@@ -256,7 +252,6 @@ function SocialLinks() {
   return (
     <div className="kh-social-links">
       {available.map((profile) => {
-        const Icon = profile.Icon;
         return (
           <a
             key={profile.name}
@@ -266,12 +261,60 @@ function SocialLinks() {
             aria-label={`Khaavio on ${profile.name}`}
             title={profile.name}
           >
-            <Icon size={19} strokeWidth={1.9} aria-hidden="true" />
+            <SocialIcon name={profile.name} />
           </a>
         );
       })}
     </div>
   );
+}
+
+function SocialIcon({ name }) {
+  const svgProps = {
+    viewBox: "0 0 24 24",
+    width: 19,
+    height: 19,
+    fill: "currentColor",
+    "aria-hidden": true,
+    focusable: "false",
+  };
+
+  if (name === "Instagram") {
+    return (
+      <svg {...svgProps} fill="none" stroke="currentColor" strokeWidth="1.8">
+        <rect x="3" y="3" width="18" height="18" rx="5" />
+        <circle cx="12" cy="12" r="4" />
+        <circle cx="17.5" cy="6.5" r="0.85" fill="currentColor" stroke="none" />
+      </svg>
+    );
+  }
+
+  if (name === "LinkedIn") {
+    return (
+      <svg {...svgProps}>
+        <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.35V9h3.414v1.561h.049c.476-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 1 1 .001-4.124 2.062 2.062 0 0 1-.001 4.124zM7.119 9H3.555v11.452H7.12V9zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" />
+      </svg>
+    );
+  }
+
+  if (name === "YouTube") {
+    return (
+      <svg {...svgProps}>
+        <path d="M23.5 6.2a3 3 0 0 0-2.1-2.12C19.5 3.55 12 3.55 12 3.55s-7.5 0-9.4.53A3 3 0 0 0 .5 6.2 31 31 0 0 0 0 12a31 31 0 0 0 .5 5.8 3 3 0 0 0 2.1 2.12c1.9.53 9.4.53 9.4.53s7.5 0 9.4-.53a3 3 0 0 0 2.1-2.12A31 31 0 0 0 24 12a31 31 0 0 0-.5-5.8Z" />
+        <path d="m9.6 8.7 6.2 3.3-6.2 3.3V8.7Z" fill="#112a21" />
+      </svg>
+    );
+  }
+
+  if (name === "Facebook") {
+    return (
+      <svg {...svgProps}>
+        <path d="M13.6 21v-8h2.7l.4-3.1h-3.1V8c0-.9.3-1.5 1.6-1.5h1.7V3.6c-.3 0-1.3-.1-2.4-.1-2.4 0-4 1.5-4 4.2v2.3H7.8V13h2.7v8h3.1Z" />
+      </svg>
+    );
+  }
+
+  return null;
 }
 
 function DashboardPreview() {
