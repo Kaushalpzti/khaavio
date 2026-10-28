@@ -72,7 +72,7 @@ export default function ReviewFeedbackDashboard() {
       if (feedbackError) throw feedbackError;
 
       // The app-level alert manager announces only the rating, never private feedback text.
-      setFeedback(nextFeedback);
+      setFeedback(data || []);
     } catch (loadError) {
       console.error("Could not load customer feedback:", loadError);
       setError(loadError?.message || "We couldn't load feedback right now.");

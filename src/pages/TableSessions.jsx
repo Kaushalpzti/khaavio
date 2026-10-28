@@ -104,7 +104,7 @@ export default function TableSessions() {
           .limit(100),
         supabase
           .from("table_session_invoices")
-          .select("id, restaurant_id, table_id, session_id, guest_tab_id, invoice_number, total_amount, subtotal_amount, discount_amount, coupon_codes, order_count, payment_status, issued_at, issued_by, paid_at, payment_method, voided_at, voided_by, void_reason")
+          .select("id, restaurant_id, table_id, session_id, guest_tab_id, invoice_number, total_amount, order_count, payment_status, issued_at, issued_by, paid_at, payment_method, voided_at, voided_by, void_reason")
           .eq("restaurant_id", restaurantData.id)
           .order("issued_at", { ascending: false })
           .limit(100),
@@ -150,7 +150,7 @@ export default function TableSessions() {
       if (sessionIds.length) {
         const { data, error: ordersError } = await supabase
           .from("orders")
-          .select("id, restaurant_id, table_id, session_id, guest_tab_id, customer_name, customer_phone, notes, status, total_amount, subtotal_amount, discount_amount, coupon_code, created_at")
+          .select("id, restaurant_id, table_id, session_id, guest_tab_id, customer_name, customer_phone, notes, status, total_amount, created_at")
           .eq("restaurant_id", restaurantData.id)
           .in("session_id", sessionIds)
           .order("created_at", { ascending: true });
@@ -393,18 +393,13 @@ export default function TableSessions() {
         : <p className="ts-empty-inline">No saved invoice line items are available.</p>;
     }
 
-    const ordersById = new Map(orders.map((order) => [order.id, order]));
     const grouped = new Map();
     for (const row of snapshotRows) {
-      const savedOrder = ordersById.get(row.order_id);
       const current = grouped.get(row.order_id) || {
         id: row.order_id,
         reference: row.order_reference || getReference(row.order_id),
         created_at: row.order_created_at,
         customer_name: row.customer_name || "Customer",
-        subtotal: Number(savedOrder?.subtotal_amount) || 0,
-        discount: Number(savedOrder?.discount_amount) || 0,
-        couponCode: savedOrder?.coupon_code || null,
         total: 0,
         items: [],
       };
@@ -431,15 +426,9 @@ export default function TableSessions() {
               {order.items.map((item) => (
                 <div className="ts-order-item" key={item.id}>
                   <span>{item.quantity} × {item.item_name}</span>
-                  <strong>{formatPrice(order.discount > 0 ? Number(item.unit_price) * Number(item.quantity) : item.line_total)}</strong>
+                  <strong>{formatPrice(item.line_total)}</strong>
                 </div>
               ))}
-              {order.discount > 0 && (
-                <div className="ts-order-discount-summary">
-                  <div><span>Subtotal</span><strong>{formatPrice(order.subtotal || order.total + order.discount)}</strong></div>
-                  <div><span>Coupon · {order.couponCode || "Offer"}</span><strong>−{formatPrice(order.discount)}</strong></div>
-                </div>
-              )}
             </div>
           </article>
         ))}
