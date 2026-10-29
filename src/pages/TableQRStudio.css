@@ -2589,3 +2589,74 @@
         width: min(330px, 100%);
     }
 }
+
+/* Keep the studio controls in the restaurant workspace's green and cream palette. */
+#root .restaurant-dashboard-layout .restaurant-dashboard-content .tqr-page {
+    --tqr-ink: #173a2e;
+    --tqr-muted: #718078;
+    --tqr-paper: #f4f6f1;
+    --tqr-card: #fffefa;
+    --tqr-line: #e2e9e1;
+    --tqr-accent: #08714f;
+    --tqr-accent-dark: #045239;
+    color: #173a2e;
+    background: transparent;
+    font-family: "DM Sans", Inter, ui-sans-serif, system-ui, sans-serif;
+}
+#root .restaurant-dashboard-layout .restaurant-dashboard-content .tqr-heading-icon,
+#root .restaurant-dashboard-layout .restaurant-dashboard-content .tqr-state-icon {
+    border-color: #cfe1d1;
+    color: #08714f;
+    background: #eaf4e9;
+}
+#root .restaurant-dashboard-layout .restaurant-dashboard-content .tqr-stat-icon:not(.tqr-stat-icon--green):not(.tqr-stat-icon--amber):not(.tqr-stat-icon--rose),
+#root .restaurant-dashboard-layout .restaurant-dashboard-content .tqr-restaurant-avatar {
+    border-color: #cfe1d1;
+    color: #08714f;
+    background: #eaf4e9;
+}
+#root .restaurant-dashboard-layout .restaurant-dashboard-content .tqr-restaurant-avatar { background: linear-gradient(145deg, #176b4d, #064834); }
+#root .restaurant-dashboard-layout .restaurant-dashboard-content .tqr-eyebrow { color: #628875; }
+#root .restaurant-dashboard-layout .restaurant-dashboard-content .tqr-back-link { color: #527260; }
+#root .restaurant-dashboard-layout .restaurant-dashboard-content .tqr-selected-restaurant,
+#root .restaurant-dashboard-layout .restaurant-dashboard-content .tqr-restaurant-picker {
+    border-color: #dfe7dd;
+    background: #fffefa;
+    box-shadow: 0 4px 15px rgba(20, 48, 34, .035);
+}
+#root .restaurant-dashboard-layout .restaurant-dashboard-content .tqr-selected-restaurant strong { color: #173a2e; }
+#root .restaurant-dashboard-layout .restaurant-dashboard-content .tqr-selected-restaurant small { color: #718078; }
+#root .restaurant-dashboard-layout .restaurant-dashboard-content .tqr-stat-card {
+    border-color: #e2e9e1;
+    background: #fffefa;
+    box-shadow: 0 4px 18px rgba(20, 48, 34, .025);
+}
+#root .restaurant-dashboard-layout .restaurant-dashboard-content .tqr-stat-icon:not(.tqr-stat-icon--green):not(.tqr-stat-icon--amber):not(.tqr-stat-icon--rose) { border: 0; }
+#root .restaurant-dashboard-layout .restaurant-dashboard-content .tqr-stat-card small { color: #718078; }
+#root .restaurant-dashboard-layout .restaurant-dashboard-content .tqr-stat-card strong { color: #173a2e; }
+#root .restaurant-dashboard-layout .restaurant-dashboard-content .tqr-button--primary {
+    border-color: #075b43;
+    color: #fffefa;
+    background: linear-gradient(135deg, #08714f, #075b43);
+    box-shadow: 0 4px 12px rgba(7, 91, 67, .14);
+}
+#root .restaurant-dashboard-layout .restaurant-dashboard-content .tqr-button--primary:hover:not(:disabled) { background: #064834; }
+#root .restaurant-dashboard-layout .restaurant-dashboard-content .tqr-button--secondary,
+#root .restaurant-dashboard-layout .restaurant-dashboard-content .tqr-icon-button {
+    border-color: #dce6da;
+    color: #42634f;
+    background: #fffefa;
+}
+#root .restaurant-dashboard-layout .restaurant-dashboard-content .tqr-template-option.is-selected {
+    border-color: #08714f;
+    background: #f2f8f0;
+    box-shadow: 0 0 0 2px rgba(8, 113, 79, .1);
+}
+#root .restaurant-dashboard-layout .restaurant-dashboard-content .tqr-field input:focus,
+#root .restaurant-dashboard-layout .restaurant-dashboard-content .tqr-field select:focus { border-color: #69a981; box-shadow: 0 0 0 3px rgba(42, 128, 79, .1); }
+#root .restaurant-dashboard-layout .restaurant-dashboard-content .tqr-preview-stage {
+    border-color: #e2e9e1;
+    background: radial-gradient(circle at 50% 0%, #fffefa 0, #f4f6f1 75%);
+}
+#root .restaurant-dashboard-layout .restaurant-dashboard-content .tqr-bulk-card { border-top-color: #e2e9e1; background: linear-gradient(115deg, #f2f8f0, #fffefa); }
+#root .restaurant-dashboard-layout .restaurant-dashboard-content .tqr-bulk-icon { border-color: #cfe1d1; color: #08714f; background: #eaf4e9; }

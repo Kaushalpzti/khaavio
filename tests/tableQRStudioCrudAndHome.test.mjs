@@ -91,6 +91,15 @@ test("table QR defaults to Signature Green while retaining the original table to
   assert.match(tableQrStyles, /\.tqr-card--signature/);
 });
 
+test("Table QR Studio matches the workspace palette and keeps page content clear of the sidebar", () => {
+  const bannersStyles = read("../src/pages/MenuBannersDashboard.css");
+  assert.match(bannersStyles, /restaurant-dashboard-content > \.menu-banners-page\{width:100%;margin:0;padding:clamp\(18px,2\.1vw,28px\) clamp\(24px,2\.5vw,36px\)/);
+  assert.match(bannersStyles, /@media\(max-width:600px\)\{#root \.restaurant-dashboard-layout \.restaurant-dashboard-content > \.menu-banners-page\{padding:14px 14px 24px\}/);
+  assert.match(studioStyles, /--tqr-accent: #08714f/);
+  assert.match(studioStyles, /\.tqr-button--primary \{[\s\S]*?background: linear-gradient\(135deg, #08714f, #075b43\)/);
+  assert.match(studioStyles, /\.tqr-template-option\.is-selected \{[\s\S]*?border-color: #08714f/);
+});
+
 
 test("main Menu QR is a branded poster preview and exports the branded print layout", () => {
   const menuQrStyles = read("../src/pages/QRStudio.css");

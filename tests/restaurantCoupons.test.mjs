@@ -6,6 +6,7 @@ const read = (path) => readFileSync(new URL(`../${path}`, import.meta.url), "utf
 const migration = read("supabase/migrations/20261029052442_restaurant_coupons.sql");
 const publicOffersMigration = read("supabase/migrations/20261029053115_public_restaurant_coupons.sql");
 const menuBannerMigration = read("supabase/migrations/20261029054206_restaurant_menu_banners.sql");
+const menuBannerImageOnlyMigration = read("supabase/migrations/20261029055945_menu_banner_image_only_mode.sql");
 const menu = read("src/pages/PublicMenu.jsx");
 const offers = read("src/pages/OffersDashboard.jsx");
 const app = read("src/App.jsx");
@@ -70,6 +71,19 @@ test("restaurant owners can upload ordered menu banners and only active banners 
   assert.match(layout, /label: "Menu banners", to: "\/dashboard\/menu-banners"/);
   assert.match(menu, /khaavio_public_restaurant_menu_banners/);
   assert.match(menu, /uploadedPromoSlides\.length \? uploadedPromoSlides : fallbackPromoSlides/);
+});
+
+test("restaurant owners can show uploaded banner artwork without app-rendered text", () => {
+  assert.match(menuBannerImageOnlyMigration, /ADD COLUMN display_mode text NOT NULL DEFAULT 'text_overlay'/);
+  assert.match(menuBannerImageOnlyMigration, /display_mode IN \('text_overlay', 'image_only'\)/);
+  assert.match(menuBannerImageOnlyMigration, /RETURNS TABLE\(id uuid, image_path text, display_mode text/);
+  assert.match(menuBanners, /value="image_only"/);
+  assert.match(menuBanners, /display_mode: form\.display_mode/);
+  assert.match(menuBanners, /display_mode === "image_only" \? "" : title/);
+  assert.match(menu, /displayMode: banner\.display_mode \|\| "text_overlay"/);
+  assert.match(menu, /data-display-mode=\{currentPromoSlide\.displayMode \|\| "text_overlay"\}/);
+  assert.match(menu, /currentPromoSlide\.displayMode !== "image_only"/);
+  assert.match(read("src/pages/PublicMenuExperience.css"), /\.public-menu-promo-slider\[data-display-mode="image_only"\]\s+\.public-menu-promo-image \{ inset:0; width:100%; \}/);
 });
 
 test("restaurant owners get a protected coupon dashboard and scoped coupon management", () => {

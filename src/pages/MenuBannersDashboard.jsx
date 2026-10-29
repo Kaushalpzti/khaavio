@@ -6,7 +6,7 @@ import "./MenuBannersDashboard.css";
 const BUCKET = "menu-images";
 const MAX_BANNERS = 5;
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
-const EMPTY_FORM = { id: "", image_path: "", eyebrow: "FROM OUR KITCHEN", title: "", description: "", sort_order: "0", is_active: true };
+const EMPTY_FORM = { id: "", image_path: "", display_mode: "text_overlay", eyebrow: "FROM OUR KITCHEN", title: "", description: "", sort_order: "0", is_active: true };
 
 function publicImageUrl(path) {
   return path ? supabase.storage.from(BUCKET).getPublicUrl(path).data.publicUrl : "";
@@ -50,7 +50,7 @@ export default function MenuBannersDashboard() {
       if (chosenId !== restaurantId) setRestaurantId(chosenId);
       if (!chosenId) { setBanners([]); return; }
       const { data, error: bannerError } = await supabase.from("restaurant_menu_banners")
-        .select("id, restaurant_id, image_path, eyebrow, title, description, sort_order, is_active, created_at")
+        .select("id, restaurant_id, image_path, display_mode, eyebrow, title, description, sort_order, is_active, created_at")
         .eq("restaurant_id", chosenId).order("sort_order").order("created_at", { ascending: false });
       if (bannerError) throw bannerError;
       const rows = data || [];
@@ -96,7 +96,7 @@ export default function MenuBannersDashboard() {
 
   function startEdit(banner) {
     setError(""); setNotice("");
-    setForm({ id: banner.id, image_path: banner.image_path, eyebrow: banner.eyebrow, title: banner.title, description: banner.description || "", sort_order: String(banner.sort_order), is_active: banner.is_active });
+    setForm({ id: banner.id, image_path: banner.image_path, display_mode: banner.display_mode || "text_overlay", eyebrow: banner.eyebrow || "", title: banner.title || "", description: banner.description || "", sort_order: String(banner.sort_order), is_active: banner.is_active });
     setImageFile(null);
     setImagePreview(publicImageUrl(banner.image_path));
     document.getElementById("menu-banner-editor")?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -115,8 +115,8 @@ export default function MenuBannersDashboard() {
     const title = form.title.trim();
     const description = form.description.trim();
     const sortOrder = Number(form.sort_order);
-    if (eyebrow.length < 2 || eyebrow.length > 32) { setError("Short label must be 2–32 characters."); return; }
-    if (title.length < 2 || title.length > 80) { setError("Banner heading must be 2–80 characters."); return; }
+    if (form.display_mode === "text_overlay" && (eyebrow.length < 2 || eyebrow.length > 32)) { setError("Short label must be 2–32 characters."); return; }
+    if (form.display_mode === "text_overlay" && (title.length < 2 || title.length > 80)) { setError("Banner heading must be 2–80 characters."); return; }
     if (description.length > 140) { setError("Description must be 140 characters or less."); return; }
     if (!Number.isInteger(sortOrder) || sortOrder < 0 || sortOrder >= MAX_BANNERS) { setError("Choose a banner position from 1 to 5."); return; }
     if (banners.some((banner) => banner.sort_order === sortOrder && banner.id !== form.id)) { setError("Another banner already uses that position. Choose a different one."); return; }
@@ -134,7 +134,7 @@ export default function MenuBannersDashboard() {
         if (uploadError) throw uploadError;
         imagePath = uploadedPath;
       }
-      const payload = { restaurant_id: restaurantId, image_path: imagePath, eyebrow, title, description, sort_order: sortOrder, is_active: form.is_active };
+      const payload = { restaurant_id: restaurantId, image_path: imagePath, display_mode: form.display_mode, eyebrow: form.display_mode === "image_only" ? "" : eyebrow, title: form.display_mode === "image_only" ? "" : title, description: form.display_mode === "image_only" ? "" : description, sort_order: sortOrder, is_active: form.is_active };
       const query = form.id
         ? supabase.from("restaurant_menu_banners").update(payload).eq("id", form.id).eq("restaurant_id", restaurantId)
         : supabase.from("restaurant_menu_banners").insert(payload);
@@ -197,13 +197,16 @@ export default function MenuBannersDashboard() {
             <div className="menu-banners-panel-heading"><span><Plus size={17} /></span><div><h2>{form.id ? "Edit banner" : "Add a banner"}</h2><p>{banners.length} of {MAX_BANNERS} banner slots used</p></div></div>
             <form className="menu-banner-form" onSubmit={saveBanner}>
               <label className="menu-banner-upload"><input type="file" accept="image/jpeg,image/png,image/webp" onChange={pickImage} /><Upload size={17} /><span>{imageFile ? imageFile.name : previewImage ? "Replace banner image" : "Upload JPG, PNG or WebP"}</span><small>Recommended 16:9 · up to 5 MB</small></label>
-              <div className={`menu-banner-preview${previewImage ? " has-image" : ""}`} style={previewImage ? { backgroundImage: `linear-gradient(90deg,rgba(0,52,38,.96),rgba(0,52,38,.69) 53%,rgba(0,52,38,.04)),url("${previewImage}")` } : undefined}>
-                {previewImage ? <><span>{form.eyebrow || "YOUR BANNER"}</span><strong>{form.title || "Your headline goes here"}</strong><p>{form.description || "A short line that invites guests to explore."}</p></> : <span className="menu-banner-placeholder"><ImagePlus size={24} />Live preview will appear here</span>}
+              <div className={`menu-banner-preview${previewImage ? " has-image" : ""}${form.display_mode === "image_only" ? " is-image-only" : ""}`} style={previewImage ? { backgroundImage: `${form.display_mode === "text_overlay" ? "linear-gradient(90deg,rgba(0,52,38,.96),rgba(0,52,38,.69) 53%,rgba(0,52,38,.04))," : ""}url("${previewImage}")` } : undefined}>
+                {previewImage ? form.display_mode === "image_only" ? null : <><span>{form.eyebrow || "YOUR BANNER"}</span><strong>{form.title || "Your headline goes here"}</strong><p>{form.description || "A short line that invites guests to explore."}</p></> : <span className="menu-banner-placeholder"><ImagePlus size={24} />Live preview will appear here</span>}
               </div>
               <div className="menu-banner-fields">
-                <label><span>Small label</span><input value={form.eyebrow} maxLength={32} onChange={(event) => setForm((current) => ({ ...current, eyebrow: event.target.value }))} required /></label>
-                <label><span>Headline</span><input value={form.title} maxLength={80} placeholder="Fresh favourites, just for you" onChange={(event) => setForm((current) => ({ ...current, title: event.target.value }))} required /></label>
-                <label><span>Description</span><textarea value={form.description} maxLength={140} rows={2} placeholder="Browse the menu and find your next favourite." onChange={(event) => setForm((current) => ({ ...current, description: event.target.value }))} /></label>
+                <fieldset className="menu-banner-display-mode"><legend>Banner style</legend><label><input type="radio" name="banner-display-mode" value="text_overlay" checked={form.display_mode === "text_overlay"} onChange={() => setForm((current) => ({ ...current, display_mode: "text_overlay" }))} /><span>Text over image</span></label><label><input type="radio" name="banner-display-mode" value="image_only" checked={form.display_mode === "image_only"} onChange={() => setForm((current) => ({ ...current, display_mode: "image_only" }))} /><span>Full image, no text</span></label></fieldset>
+                {form.display_mode === "text_overlay" && <>
+                  <label><span>Small label</span><input value={form.eyebrow} maxLength={32} onChange={(event) => setForm((current) => ({ ...current, eyebrow: event.target.value }))} required /></label>
+                  <label><span>Headline</span><input value={form.title} maxLength={80} placeholder="Fresh favourites, just for you" onChange={(event) => setForm((current) => ({ ...current, title: event.target.value }))} required /></label>
+                  <label><span>Description</span><textarea value={form.description} maxLength={140} rows={2} placeholder="Browse the menu and find your next favourite." onChange={(event) => setForm((current) => ({ ...current, description: event.target.value }))} /></label>
+                </>}
                 <div className="menu-banner-fields-row">
                   <label><span>Slider position</span><select value={form.sort_order} onChange={(event) => setForm((current) => ({ ...current, sort_order: event.target.value }))}>{Array.from({ length: MAX_BANNERS }, (_, index) => <option value={index} key={index} disabled={banners.some((banner) => banner.sort_order === index && banner.id !== form.id)}>Banner {index + 1}</option>)}</select></label>
                   <label className="menu-banner-active"><input type="checkbox" checked={form.is_active} onChange={(event) => setForm((current) => ({ ...current, is_active: event.target.checked }))} /><span>Show on public menu</span></label>
@@ -219,7 +222,7 @@ export default function MenuBannersDashboard() {
             {loading ? <div className="menu-banners-empty compact"><LoaderCircle size={22} className="menu-banners-spin" /> Loading banners…</div> : banners.length === 0 ? <div className="menu-banners-empty compact"><ImagePlus size={24} /><strong>No uploaded banners yet</strong><p>Your current menu photos remain in the slider until you add banners.</p></div> : (
               <div className="menu-banners-list">{banners.map((banner) => <article className={`menu-banner-card${banner.is_active ? " is-active" : ""}`} key={banner.id}>
                 <img src={publicImageUrl(banner.image_path)} alt="" />
-                <div className="menu-banner-card-copy"><span>Banner {banner.sort_order + 1} · {banner.eyebrow}</span><strong>{banner.title}</strong><small>{banner.description || "No description"}</small></div>
+                <div className="menu-banner-card-copy"><span>Banner {banner.sort_order + 1} · {banner.display_mode === "image_only" ? "Full image" : banner.eyebrow}</span><strong>{banner.display_mode === "image_only" ? "Image only" : banner.title}</strong><small>{banner.display_mode === "image_only" ? "No text overlay" : banner.description || "No description"}</small></div>
                 <div className="menu-banner-card-actions">{confirmRemoveId === banner.id ? <><span className="menu-banner-remove-prompt">Remove?</span><button type="button" aria-label={`Confirm remove ${banner.title}`} disabled={busyBannerId === banner.id} onClick={() => void removeBanner(banner)}><Trash2 size={15} /></button><button type="button" aria-label="Cancel removal" onClick={() => setConfirmRemoveId("")}>Cancel</button></> : <><button type="button" aria-label={`Edit ${banner.title}`} onClick={() => startEdit(banner)}><Pencil size={15} /></button><button type="button" aria-label={`${banner.is_active ? "Hide" : "Show"} ${banner.title}`} disabled={busyBannerId === banner.id} onClick={() => void toggleBanner(banner)}>{banner.is_active ? <ToggleRight size={23} /> : <ToggleLeft size={23} />}</button><button type="button" aria-label={`Remove ${banner.title}`} disabled={busyBannerId === banner.id} onClick={() => setConfirmRemoveId(banner.id)}><Trash2 size={15} /></button></>}</div>
               </article>)}</div>
             )}

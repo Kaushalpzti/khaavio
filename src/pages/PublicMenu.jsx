@@ -668,6 +668,7 @@ export default function PublicMenu() {
     },
   ];
   const uploadedPromoSlides = menuBanners.map((banner) => ({
+    displayMode: banner.display_mode || "text_overlay",
     eyebrow: banner.eyebrow,
     titleStart: banner.title,
     titleAccent: "",
@@ -1227,7 +1228,7 @@ export default function PublicMenu() {
         <>
           {activeBottomTab === "menu" && (
             <>
-          <section className="public-menu-promo-slider" aria-label="Restaurant food highlights">
+          <section className="public-menu-promo-slider" data-display-mode={currentPromoSlide.displayMode || "text_overlay"} aria-label="Restaurant food highlights">
             <div className="public-menu-promo-image" aria-hidden="true">
               {currentPromoSlide.imageItem?.image_url ? (
                 <img
@@ -1243,7 +1244,7 @@ export default function PublicMenu() {
               )}
             </div>
 
-            <div className="public-menu-promo-copy" key={activePromoSlide}>
+            {currentPromoSlide.displayMode !== "image_only" && <div className="public-menu-promo-copy" key={activePromoSlide}>
               <span className="public-menu-promo-eyebrow">
                 <span aria-hidden="true" />
                 {currentPromoSlide.eyebrow}
@@ -1253,7 +1254,7 @@ export default function PublicMenu() {
                   {currentPromoSlide.titleAccent && <strong>{currentPromoSlide.titleAccent}</strong>}
               </h1>
               <p>{currentPromoSlide.description}</p>
-            </div>
+            </div>}
 
             <div className="public-menu-promo-dots" aria-label="Choose banner">
               {promoSlides.map((slide, index) => (
