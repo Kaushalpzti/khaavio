@@ -1,5 +1,5 @@
 .menu-banners-page,.menu-banners-page *{box-sizing:border-box}
-.menu-banners-page{width:min(1320px,100%);margin:0 auto;padding:clamp(16px,2.1vw,28px);color:#12382d}
+#root .restaurant-dashboard-layout .restaurant-dashboard-content > .menu-banners-page{width:100%;margin:0;padding:clamp(18px,2.1vw,28px) clamp(24px,2.5vw,36px) 28px;color:#12382d}
 .menu-banners-header{display:flex;align-items:flex-end;justify-content:space-between;gap:18px;margin-bottom:20px}
 .menu-banners-eyebrow{display:inline-flex;align-items:center;gap:7px;color:#658575;font-size:10px;font-weight:900;letter-spacing:1.2px}
 .menu-banners-header h1{margin:7px 0 4px;color:#063e30;font-size:clamp(27px,3vw,36px);font-weight:900;letter-spacing:-1px;line-height:1.1}
@@ -30,8 +30,13 @@
 .menu-banner-preview>span:not(.menu-banner-placeholder){color:#d8ebbf;font-size:8px;font-weight:900;letter-spacing:1.1px}
 .menu-banner-preview>strong{max-width:72%;font-family:Georgia,"Times New Roman",serif;font-size:clamp(19px,2.2vw,26px);line-height:1.04;text-wrap:balance}
 .menu-banner-preview>p{max-width:68%;margin:0;color:rgba(255,250,241,.87);font-size:10px;line-height:1.45}
+.menu-banner-preview.is-image-only{padding:0;background-position:center;background-size:cover}
 .menu-banner-placeholder{display:flex;align-items:center;justify-content:center;gap:7px;color:#a6b4a8;font-size:10px}
 .menu-banner-fields{display:grid;gap:9px}
+.menu-banner-display-mode{display:flex;flex-wrap:wrap;gap:7px;margin:0;padding:0;border:0}
+.menu-banner-display-mode legend{margin-bottom:5px;color:#617568;font-size:10px;font-weight:800}
+.menu-banner-display-mode label{display:inline-flex;align-items:center;gap:6px;min-height:34px;padding:7px 9px;border:1px solid #dce6d9;border-radius:9px;color:#42634f;background:#fbfcf8;font-size:10px;font-weight:750;cursor:pointer}
+.menu-banner-display-mode input{margin:0;accent-color:#08714f}
 .menu-banner-fields>label,.menu-banner-fields-row>label{display:grid;gap:5px;color:#617568;font-size:10px;font-weight:800}
 .menu-banner-fields input:not([type=checkbox]),.menu-banner-fields textarea,.menu-banner-fields select{width:100%;min-width:0;min-height:38px;padding:8px 10px;border:1px solid #dce6d9;border-radius:10px;outline:none;color:#234432;background:#fffefa;font:inherit;font-size:11px;font-weight:600}
 .menu-banner-fields textarea{resize:vertical;line-height:1.5}
@@ -65,5 +70,5 @@
 .menu-banners-spin{animation:menu-banners-spin 1s linear infinite}
 @keyframes menu-banners-spin{to{transform:rotate(360deg)}}
 @media(max-width:950px){.menu-banners-layout{grid-template-columns:minmax(0,1fr)}.menu-banners-list-panel{order:2}}
-@media(max-width:600px){.menu-banners-page{padding:14px 12px 24px}.menu-banners-header{align-items:flex-start;flex-direction:column;gap:11px}.menu-banners-header-actions{width:100%;justify-content:space-between}.menu-banners-panel{padding:13px;border-radius:15px}.menu-banner-upload small{width:100%;margin-left:24px}.menu-banner-preview{min-height:132px;padding:15px}.menu-banner-card{grid-template-columns:70px minmax(0,1fr);gap:8px}.menu-banner-card>img{width:70px;height:54px}.menu-banner-card-actions{grid-column:1/-1;justify-content:flex-end;border-top:1px solid #eef0eb;padding-top:4px}.menu-banner-card-copy>strong{font-size:10px}.menu-banner-fields-row{grid-template-columns:minmax(0,1fr)}}
+@media(max-width:600px){#root .restaurant-dashboard-layout .restaurant-dashboard-content > .menu-banners-page{padding:14px 14px 24px}.menu-banners-header{align-items:flex-start;flex-direction:column;gap:11px}.menu-banners-header-actions{width:100%;justify-content:space-between}.menu-banners-panel{padding:13px;border-radius:15px}.menu-banner-upload small{width:100%;margin-left:24px}.menu-banner-preview{min-height:132px;padding:15px}.menu-banner-card{grid-template-columns:70px minmax(0,1fr);gap:8px}.menu-banner-card>img{width:70px;height:54px}.menu-banner-card-actions{grid-column:1/-1;justify-content:flex-end;border-top:1px solid #eef0eb;padding-top:4px}.menu-banner-card-copy>strong{font-size:10px}.menu-banner-fields-row{grid-template-columns:minmax(0,1fr)}}
 @media(prefers-reduced-motion:reduce){.menu-banners-spin{animation:none}}
