@@ -1,170 +1,173 @@
-import { useEffect, useRef, useState } from "react";
-import { Link } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { Link, useLocation } from "react-router-dom";
 import {
+  ArrowDownRight,
   ArrowRight,
   ArrowUpRight,
-  BarChart3,
-  BellRing,
-  Bot,
+  BadgeCheck,
   CalendarCheck,
   Check,
   ChefHat,
   ChevronDown,
-  ChevronLeft,
-  ChevronRight,
   CreditCard,
   Gift,
   LayoutDashboard,
   Mail,
+  MessageCircle,
   Menu,
-  MessageSquareText,
   QrCode,
   ReceiptText,
-  ShieldCheck,
+  Smartphone,
   Sparkles,
+  ShieldCheck,
   Store,
   UtensilsCrossed,
   X,
+  Zap,
 } from "lucide-react";
 import khaavioIcon from "../assets/icon.png";
-
 import "./Home.css";
 
+const CONTACT_EMAIL = "khaavioqr@gmail.com";
 
-/* Add actual Khaavio contact details here before public launch. */
-const BRAND_CONTACT = {
-  email: "khaavioqr@gmail.com",
-  instagram: "https://www.instagram.com/khaavio/",
-  linkedin: "",
-  youtube: "",
-  facebook: "",
-};
-
-const socialProfiles = [
-  { name: "Instagram", url: BRAND_CONTACT.instagram },
-  { name: "LinkedIn", url: BRAND_CONTACT.linkedin },
-  { name: "YouTube", url: BRAND_CONTACT.youtube },
-  { name: "Facebook", url: BRAND_CONTACT.facebook },
-];
-
-const features = [
+const featureCards = [
   {
     number: "01",
     label: "MENU + QR STUDIO",
-    title: "A menu that feels like your restaurant.",
+    title: "One workspace for your digital menu.",
     description:
-      "Organise dishes, categories, prices and photos, then generate shareable restaurant and table QR codes from one workspace.",
+      "Manage menu categories, dishes, photos, prices and availability, then create branded restaurant and table QR codes.",
     icon: UtensilsCrossed,
+    tint: "sage",
   },
   {
     number: "02",
     label: "QR ORDERING + TRACKING",
-    title: "From table scan to order updates.",
+    title: "From scan to order, smoothly.",
     description:
-      "Guests browse and order from their phone browser, then follow order progress and view their order details without downloading an app.",
+      "Guests scan a table QR code, browse the menu in their phone browser, place an order and follow its status without downloading an app.",
     icon: QrCode,
+    tint: "orange",
   },
   {
     number: "03",
     label: "BOOKINGS",
-    title: "Keep reservations in one place.",
+    title: "Keep booking requests organised.",
     description:
-      "Receive and manage table-booking requests from the dashboard. Growth adds an advanced calendar, search, date filters and CSV export.",
+      "Receive and manage table booking requests, with advanced calendar, search, date filters and CSV export on Growth.",
     icon: CalendarCheck,
+    tint: "sage",
   },
   {
     number: "04",
     label: "ORDERS + INSIGHTS",
-    title: "Stay close to every order.",
+    title: "Keep the whole team in sync.",
     description:
-      "Follow incoming orders in the Orders workspace and Kitchen Display, issue receipts, and review basic order analytics. Growth adds enhanced insights.",
+      "Follow incoming orders, kitchen progress and everyday performance from the restaurant workspace.",
     icon: ChefHat,
+    tint: "blue",
   },
   {
     number: "05",
     label: "TABLE-SIDE SERVICE",
-    title: "Help is one tap away.",
+    title: "Help reaches the right team.",
     description:
-      "From an active table QR, guests can ask for a waiter, water, cutlery or the bill. Staff can manage requests from the dashboard.",
-    icon: BellRing,
+      "Guests can request a waiter, water, cutlery or the bill from the table, helping your team respond from one workspace.",
+    icon: Zap,
+    tint: "cream",
   },
   {
     number: "06",
     label: "TABLE SESSIONS + BILLING",
     title: "Billing that fits the table.",
     description:
-      "Track table sessions and create numbered, printable invoices. Configure eligible tables for one combined bill or separate guest tabs and bills.",
+      "Manage table sessions, final bills and printable invoices, including separate guest tabs and bills where enabled.",
     icon: ReceiptText,
+    tint: "cream",
   },
   {
     number: "07",
     label: "LOYALTY + REWARDS",
-    title: "Give guests a reason to return.",
+    title: "Give regulars a reason to return.",
     description:
-      "Growth restaurants can offer digital stamp tracking and rewards from the public menu, helping make repeat visits more rewarding.",
+      "Growth adds digital loyalty stamps and rewards to support repeat visits without complicating the guest journey.",
     icon: Gift,
+    tint: "rose",
   },
   {
     number: "08",
     label: "GUEST REVIEWS + FEEDBACK",
-    title: "Keep the conversation going.",
+    title: "Make guest feedback useful.",
     description:
-      "Growth includes private guest ratings and feedback tools. A configured Google review link remains available to Starter and Growth restaurants.",
-    icon: MessageSquareText,
+      "Use a Google Business review link on the public menu when configured. Growth adds private guest ratings, a feedback inbox and review follow-up tools.",
+    icon: MessageCircle,
+    tint: "sage",
   },
   {
     number: "09",
     label: "ASK KHAAVIO AI",
-    title: "A menu assistant for every guest.",
+    title: "Get menu answers in your language.",
     description:
-      "Available with Growth: guests can ask about dishes and prices or get menu suggestions in English, Hindi or Hinglish, based on the restaurant menu (usage limits apply).",
-    icon: Bot,
+      "The Growth plan includes the Ask Khaavio AI menu assistant in English, Hindi and Hinglish, subject to usage limits.",
+    icon: Sparkles,
+    tint: "orange",
   },
 ];
 
-const comparisonBenefits = [
-  "Branded digital menu plus restaurant and table-specific QR codes.",
-  "Browser-based QR ordering with private order-status tracking.",
-  "Orders, Kitchen Display, receipts and booking requests in one workspace.",
-  "One combined table bill or separate guest tabs and invoices.",
-  "One-tap waiter, water, cutlery and bill requests from a table QR.",
-  "Growth adds loyalty stamps, private feedback, enhanced insights and multilingual menu AI.",
-];
-
-const comparisonAlternatives = [
-  "Full POS, inventory and purchasing tools may suit inventory-heavy outlets better.",
-  "Larger POS ecosystems can offer multi-outlet controls, extensive reports and deep integrations.",
-  "Some QR/POS products offer OTP order checks, CRM campaigns or automated messaging.",
-  "Capabilities, add-ons, setup and total pricing differ by provider and plan.",
-  "Choose a broader suite when those extra operational systems are requirements—not just nice-to-haves.",
+const workflowSteps = [
+  {
+    number: "01",
+    title: "Set up your restaurant",
+    description: "Add your business details, opening hours and restaurant identity.",
+    icon: Store,
+  },
+  {
+    number: "02",
+    title: "Build your digital menu",
+    description: "Upload dishes, set prices and create restaurant or table QR codes.",
+    icon: UtensilsCrossed,
+  },
+  {
+    number: "03",
+    title: "Let guests scan and order",
+    description: "Customers open the menu in their browser—no app download required.",
+    icon: Smartphone,
+  },
+  {
+    number: "04",
+    title: "Manage service from one place",
+    description: "Follow orders, kitchen progress, booking requests and table-side help.",
+    icon: LayoutDashboard,
+  },
 ];
 
 const plans = [
   {
     name: "Starter",
-    monthlyPrice: "499",
-    yearlyPrice: "4,990",
-    foundingPrice: "3,999",
-    description: "Everyday ordering, guest tools and table operations for independent restaurants.",
+    monthly: "499",
+    annual: "4,990",
+    founding: "3,999",
+    description: "Core digital ordering and table operations for independent food businesses.",
+    popular: false,
     features: [
-      "Digital menu management and restaurant/table QR codes",
-      "QR ordering, customer order tracking and receipts",
+      "Digital menu and restaurant/table QR codes",
+      "QR ordering, order tracking and receipts",
       "Orders workspace and Kitchen Display",
-      "Basic table-booking management",
+      "Basic table booking management",
       "Table-side service requests: waiter, water, cutlery and bill",
       "Table sessions, final bills and printable invoices",
       "Operational voice alerts for orders, kitchen and service requests",
+      "Basic order analytics and availability controls",
       "Google Business review link on the public menu (when configured)",
-      "Basic order analytics, business hours and pause-orders controls",
     ],
-    cta: "Start 7-day free trial",
   },
   {
     name: "Growth",
-    monthlyPrice: "899",
-    yearlyPrice: "8,990",
-    foundingPrice: "6,999",
-    description: "Everything in Starter, plus deeper booking tools and business insights.",
+    monthly: "899",
+    annual: "8,990",
+    founding: "6,999",
+    description: "More booking tools, insights and guest engagement for growing teams.",
+    popular: true,
     features: [
       "Everything in Starter",
       "Advanced booking calendar, search and date filters",
@@ -173,528 +176,253 @@ const plans = [
       "Digital loyalty stamps and rewards",
       "Private guest ratings, feedback inbox and review follow-up tools",
       "Ask Khaavio AI menu assistant in English, Hindi and Hinglish (usage limits apply)",
-      "Advanced voice alerts for Growth-specific workflows",
+      "Advanced voice alerts",
       "Priority support during the founding pilot",
     ],
-    cta: "Start 7-day free trial",
-    popular: true,
   },
 ];
 
 const faqs = [
   {
-    question: "Who can use Khaavio?",
+    question: "Who is Khaavio built for?",
     answer:
-      "Independent cafés, restaurants, bakeries, dessert shops and cloud kitchens can use Khaavio for digital menus, QR ordering, bookings, kitchen workflows, table-side requests and guest engagement.",
+      "Khaavio is designed for independent cafés, restaurants, bakeries, dessert shops and cloud kitchens that want a smoother digital menu, ordering and table-service experience.",
   },
   {
-    question: "Do my customers need to download an app?",
+    question: "Do customers need to download an app?",
     answer:
-      "No. Guests can scan a table QR code or open a restaurant link in their phone browser to view the menu and use the available customer features.",
+      "No. Guests can scan a table QR code or open the restaurant menu link in their phone browser to use the available customer features.",
   },
   {
-    question: "Can I update my menu and availability?",
+    question: "Can I update menu items and prices myself?",
     answer:
-      "Yes. Restaurant owners can manage menu items, availability, prices and photos from their workspace, configure business hours, and pause online orders when needed.",
+      "Yes. Restaurant owners can manage menu categories, dishes, photos, prices and availability from their Khaavio workspace.",
   },
   {
-    question: "Can customers place orders and reserve tables?",
+    question: "Does Khaavio include a full POS and inventory system?",
     answer:
-      "Published restaurants can offer QR-based table ordering and online table booking. The team can manage orders, kitchen progress, table-side service requests and booking requests from the workspace.",
+      "Khaavio focuses on digital menus, QR ordering, orders, kitchen workflows, bookings, guest tools and table-level billing. It is not positioned as a full replacement for inventory-heavy POS suites.",
   },
   {
-    question: "How does pricing work?",
+    question: "How much does Khaavio cost?",
     answer:
-      "Every new restaurant starts with a 7-day free trial. Starter is ₹499 per month or ₹4,990 per year; Growth is ₹899 per month or ₹8,990 per year. The first 10 restaurants can request a founding annual price. During the pilot, plan activation is handled manually and online payments or automatic renewals are not enabled yet.",
+      "Starter is ₹499/month or ₹4,990/year. Growth is ₹899/month or ₹8,990/year. Eligible first-ten founding restaurants can request a first-year annual offer. During the early-access pilot, plan activation is handled manually and online payment collection or automatic renewals are not enabled yet.",
   },
   {
-    question: "What guest-facing tools are available?",
+    question: "Can I see Khaavio before I sign up?",
     answer:
-      "All active plans can show a configured Google review link and support table-side requests from a valid table QR. Growth additionally unlocks loyalty stamps and rewards, private feedback, and Ask Khaavio AI for menu suggestions (subject to usage limits).",
-  },
-  {
-    question: "What is included in Starter and Growth?",
-    answer:
-      "Both plans include the core restaurant workflow: digital menus and QR codes, QR ordering, Kitchen Display, receipts, basic bookings and analytics, table-side requests, table sessions and bills, and a configurable Google review link. Growth adds advanced booking tools, CSV export, enhanced analytics, loyalty stamps and rewards, private guest feedback, Ask Khaavio AI (usage limits apply), advanced voice alerts and priority pilot support.",
-  },
-  {
-    question: "Can I try Khaavio before paying?",
-    answer:
-      "Yes. The 7-day trial is designed for you to set up your menu, try QR ordering, explore table-side requests, table billing, loyalty and Ask Khaavio AI, and test booking workflows before choosing a paid plan.",
+      "Yes. Use the free demo request form on this page. Share your restaurant details and preferred time, and the Khaavio team can coordinate a walkthrough with you.",
   },
 ];
 
-function Brand({ footer = false }) {
+function InstagramBrandIcon({ size = 18 }) {
   return (
-    <Link
-      to="/"
-      className={`kh-brand ${footer ? "kh-brand-footer" : ""}`}
-      aria-label="Khaavio homepage"
+    <svg
+      viewBox="0 0 24 24"
+      width={size}
+      height={size}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      focusable="false"
     >
-      <img src={khaavioIcon} alt="" />
-      <span>
-        Khaa<span>vio</span>
-      </span>
+      <rect x="3" y="3" width="18" height="18" rx="5" />
+      <circle cx="12" cy="12" r="4" />
+      <circle cx="17.5" cy="6.5" r="0.85" fill="currentColor" stroke="none" />
+    </svg>
+  );
+}
+
+function Brand({ light = false }) {
+  return (
+    <Link to="/" className={`kh2-brand ${light ? "kh2-brand-light" : ""}`} aria-label="Khaavio homepage">
+      <img src={khaavioIcon} alt="" width="40" height="40" />
+      <span>Khaa<span>vio</span></span>
     </Link>
   );
 }
 
-function SocialLinks() {
-  const available = socialProfiles.filter((profile) => profile.url);
+function MailRequestForm({ variant = "demo" }) {
+  const [status, setStatus] = useState("");
+  const isDemo = variant === "demo";
 
-  if (!available.length) {
-    return (
-      <p className="kh-social-pending">
-        Official social profiles will be announced here.
+  function submitRequest(event) {
+    event.preventDefault();
+    const form = event.currentTarget;
+    const data = new FormData(form);
+    const subject = isDemo ? "Khaavio — Free Demo Request" : "Khaavio — Contact Enquiry";
+    const rows = [
+      `${isDemo ? "FREE DEMO REQUEST" : "CONTACT ENQUIRY"}`,
+      "",
+      `Name: ${data.get("name") || "Not provided"}`,
+      `Phone: ${data.get("phone") || "Not provided"}`,
+      `Business: ${data.get("business") || "Not provided"}`,
+      `Business type: ${data.get("businessType") || "Not provided"}`,
+      `City: ${data.get("city") || "Not provided"}`,
+      `Email: ${data.get("email") || "Not provided"}`,
+      ...(isDemo ? [`Preferred time: ${data.get("preferredTime") || "Flexible"}`] : []),
+      ...(!isDemo ? [`Enquiry type: ${data.get("enquiryType") || "General enquiry"}`, `Message: ${data.get("message") || "Not provided"}`] : []),
+      "",
+      "Sent from the Khaavio website.",
+    ];
+    const mailto = `mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(rows.join("\n"))}`;
+    setStatus("Your email app should open with the request prepared. Send that email to complete your enquiry.");
+    window.location.href = mailto;
+  }
+
+  return (
+    <form className={`kh2-lead-form ${isDemo ? "kh2-demo-form" : "kh2-contact-form"}`} onSubmit={submitRequest}>
+      <div className="kh2-form-grid">
+        <label>
+          <span>Full name <b>*</b></span>
+          <input name="name" autoComplete="name" placeholder="Your name" required />
+        </label>
+        <label>
+          <span>Phone number <b>*</b></span>
+          <input name="phone" type="tel" autoComplete="tel" inputMode="tel" placeholder="+91 98765 43210" pattern="[+0-9() .-]{8,20}" title="Enter a valid phone number" required />
+        </label>
+        <label className="kh2-field-full">
+          <span>Restaurant / café name <b>*</b></span>
+          <input name="business" placeholder="Your business name" autoComplete="organization" required />
+        </label>
+        <label>
+          <span>Business type <b>*</b></span>
+          <select name="businessType" defaultValue="" required>
+            <option value="" disabled>Select type</option>
+            <option>Café</option>
+            <option>Restaurant</option>
+            <option>Bakery / dessert shop</option>
+            <option>Cloud kitchen</option>
+            <option>Other food business</option>
+          </select>
+        </label>
+        <label>
+          <span>City <b>*</b></span>
+          <input name="city" placeholder="e.g. Patna" autoComplete="address-level2" required />
+        </label>
+        <label className="kh2-field-full">
+          <span>Business email</span>
+          <input name="email" type="email" autoComplete="email" placeholder="you@yourrestaurant.com" />
+        </label>
+        {isDemo && (
+          <label className="kh2-field-full">
+            <span>Preferred demo time</span>
+            <select name="preferredTime" defaultValue="Flexible — please contact me">
+              <option>Flexible — please contact me</option>
+              <option>Morning (10 AM–12 PM IST)</option>
+              <option>Afternoon (12 PM–4 PM IST)</option>
+              <option>Evening (4 PM–7 PM IST)</option>
+            </select>
+          </label>
+        )}
+        {!isDemo && (
+          <>
+            <label className="kh2-field-full">
+              <span>What is your enquiry about? <b>*</b></span>
+              <select name="enquiryType" defaultValue="General enquiry" required>
+                <option>General enquiry</option>
+                <option>Product demo</option>
+                <option>Plans and pricing</option>
+                <option>Technical support</option>
+                <option>Account or billing</option>
+                <option>Partnership</option>
+              </select>
+            </label>
+            <label className="kh2-field-full">
+              <span>Message <b>*</b></span>
+              <textarea name="message" rows="4" placeholder="Tell us how we can help..." required />
+            </label>
+          </>
+        )}
+      </div>
+      <button className="kh2-button kh2-button-primary kh2-form-submit" type="submit">
+        {isDemo ? "Request my free demo" : "Prepare enquiry email"}
+        <ArrowUpRight size={18} />
+      </button>
+      <p className="kh2-form-note">
+        <Mail size={14} /> This opens your email app with your details prepared. You will need to send the email to submit the request.
       </p>
-    );
-  }
-
-  return (
-    <div className="kh-social-links">
-      {available.map((profile) => {
-        return (
-          <a
-            key={profile.name}
-            href={profile.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            aria-label={`Khaavio on ${profile.name}`}
-            title={profile.name}
-          >
-            <SocialIcon name={profile.name} />
-          </a>
-        );
-      })}
-    </div>
+      {status && <p className="kh2-form-status" role="status">{status}</p>}
+      <p className="kh2-privacy-note">By submitting, you agree that Khaavio may contact you about this enquiry. Please do not include sensitive personal information.</p>
+    </form>
   );
 }
 
-function SocialIcon({ name }) {
-  const svgProps = {
-    viewBox: "0 0 24 24",
-    width: 19,
-    height: 19,
-    fill: "currentColor",
-    "aria-hidden": true,
-    focusable: "false",
-  };
-
-  if (name === "Instagram") {
-    return (
-      <svg {...svgProps} fill="none" stroke="currentColor" strokeWidth="1.8">
-        <rect x="3" y="3" width="18" height="18" rx="5" />
-        <circle cx="12" cy="12" r="4" />
-        <circle cx="17.5" cy="6.5" r="0.85" fill="currentColor" stroke="none" />
-      </svg>
-    );
-  }
-
-  if (name === "LinkedIn") {
-    return (
-      <svg {...svgProps}>
-        <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.35V9h3.414v1.561h.049c.476-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 1 1 .001-4.124 2.062 2.062 0 0 1-.001 4.124zM7.119 9H3.555v11.452H7.12V9zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" />
-      </svg>
-    );
-  }
-
-  if (name === "YouTube") {
-    return (
-      <svg {...svgProps}>
-        <path d="M23.5 6.2a3 3 0 0 0-2.1-2.12C19.5 3.55 12 3.55 12 3.55s-7.5 0-9.4.53A3 3 0 0 0 .5 6.2 31 31 0 0 0 0 12a31 31 0 0 0 .5 5.8 3 3 0 0 0 2.1 2.12c1.9.53 9.4.53 9.4.53s7.5 0 9.4-.53a3 3 0 0 0 2.1-2.12A31 31 0 0 0 24 12a31 31 0 0 0-.5-5.8Z" />
-        <path d="m9.6 8.7 6.2 3.3-6.2 3.3V8.7Z" fill="#112a21" />
-      </svg>
-    );
-  }
-
-  if (name === "Facebook") {
-    return (
-      <svg {...svgProps}>
-        <path d="M13.6 21v-8h2.7l.4-3.1h-3.1V8c0-.9.3-1.5 1.6-1.5h1.7V3.6c-.3 0-1.3-.1-2.4-.1-2.4 0-4 1.5-4 4.2v2.3H7.8V13h2.7v8h3.1Z" />
-      </svg>
-    );
-  }
-
-  return null;
-}
-
-function DashboardPreview() {
+function ProductShowcase() {
   return (
-    <div className="kh-preview-window">
-      <div className="kh-preview-browser">
-        <div className="kh-browser-dots">
-          <i />
-          <i />
-          <i />
-        </div>
-        <span>app.khaavio.in / dashboard</span>
-        <ShieldCheck size={14} />
-      </div>
-
-      <div className="kh-preview-app">
-        <aside className="kh-preview-sidebar">
-          <div className="kh-preview-brand">
-            <img src={khaavioIcon} alt="" />
-            <strong>Atelier</strong>
-          </div>
-          <span className="kh-preview-side-label">WORKSPACE</span>
-          <div className="kh-preview-nav active">
-            <LayoutDashboard size={14} /> Overview
-          </div>
-          <div className="kh-preview-nav">
-            <UtensilsCrossed size={14} /> My Menu
-          </div>
-          <div className="kh-preview-nav">
-            <QrCode size={14} /> QR Studio
-          </div>
-          <div className="kh-preview-nav">
-            <CalendarCheck size={14} /> Bookings
-          </div>
-          <div className="kh-preview-nav">
-            <CreditCard size={14} /> Subscription
-          </div>
-
-          <div className="kh-preview-plan">
-            <Sparkles size={14} />
-            <span>Growth plan</span>
-          </div>
-        </aside>
-
-        <div className="kh-preview-main">
-          <div className="kh-preview-heading">
-            <div>
-              <span className="kh-preview-eyebrow">YOUR WORKSPACE</span>
-              <h3>
-                Good morning, Atelier <span>✳</span>
-              </h3>
-              <p>A little overview of your restaurant.</p>
-            </div>
-            <div className="kh-preview-avatar">A</div>
-          </div>
-
-          <div className="kh-preview-stats">
-            <div>
-              <span>MENU STATUS</span>
-              <strong>
-                <i /> Ready to customise
-              </strong>
-              <small>Illustrative preview</small>
-            </div>
-            <div>
-              <span>TABLE QR CODES</span>
-              <strong>
-                12 <small>tables</small>
-              </strong>
-              <small>Sample workspace</small>
+    <div className="kh2-showcase" aria-label="Khaavio restaurant dashboard preview">
+      <div className="kh2-showcase-glow" aria-hidden="true" />
+      <div className="kh2-showcase-orbit kh2-showcase-orbit-one" aria-hidden="true" />
+      <div className="kh2-showcase-orbit kh2-showcase-orbit-two" aria-hidden="true" />
+      <div className="kh2-laptop-wrap">
+        <div className="kh2-laptop">
+          <div className="kh2-laptop-bezel">
+            <span className="kh2-laptop-camera" aria-hidden="true" />
+            <div className="kh2-laptop-screen">
+              <img src="/images/khaavio-dashboard-desktop.png" alt="Restaurant dashboard showing Khaavio workspace, order tools and restaurant settings" />
+              <span className="kh2-screen-caption">Restaurant workspace preview</span>
             </div>
           </div>
-
-          <div className="kh-preview-menu">
-            <div className="kh-preview-menu-head">
-              <div>
-                <span className="kh-preview-eyebrow">A TASTE OF THE MENU</span>
-                <h4>House favourites</h4>
-              </div>
-              <span className="kh-preview-badge">SAMPLE</span>
-            </div>
-
-            <div className="kh-preview-dish">
-              <span className="kh-dish-art kh-dish-coffee">☕</span>
-              <span className="kh-dish-info">
-                <strong>Signature Latte</strong>
-                <small>Rich, smooth and made fresh</small>
-              </span>
-              <b>₹189</b>
-            </div>
-
-            <div className="kh-preview-dish">
-              <span className="kh-dish-art kh-dish-bakery">🥐</span>
-              <span className="kh-dish-info">
-                <strong>Butter Croissant</strong>
-                <small>Golden, flaky perfection</small>
-              </span>
-              <b>₹149</b>
-            </div>
-
-            <div className="kh-preview-dish">
-              <span className="kh-dish-art kh-dish-matcha">🍵</span>
-              <span className="kh-dish-info">
-                <strong>Matcha Cloud</strong>
-                <small>A little green goodness</small>
-              </span>
-              <b>₹219</b>
-            </div>
-          </div>
-
-          <div className="kh-preview-footer">
-            <span>
-              <Check size={12} /> Designed around your brand
-            </span>
-            <span>Powered by Khaavio</span>
-          </div>
+          <div className="kh2-laptop-chin"><span>KHAAVIO</span></div>
+          <div className="kh2-laptop-base" aria-hidden="true" />
         </div>
       </div>
-
-      <div className="kh-floating-card kh-floating-qr">
-        <span>
-          <QrCode size={18} />
-        </span>
-        <div>
-          <strong>One scan away.</strong>
-          <small>Your digital menu.</small>
-        </div>
-        <Check size={15} />
-      </div>
-
-      <div className="kh-floating-card kh-floating-booking">
-        <span>
-          <CalendarCheck size={18} />
-        </span>
-        <div>
-          <strong>Bookings, organised.</strong>
-          <small>One simple workspace.</small>
+      <div className="kh2-phone-wrap">
+        <div className="kh2-phone">
+          <div className="kh2-phone-screen">
+            <img src="/images/khaavio-dashboard-mobile.jpg" alt="Mobile view of Khaavio restaurant workspace tools" />
+          </div>
+          <span className="kh2-phone-side-button" aria-hidden="true" />
         </div>
       </div>
+      <div className="kh2-float-card kh2-float-card-top">
+        <span className="kh2-float-icon"><QrCode size={18} /></span>
+        <span><strong>One scan away</strong><small>Your digital menu</small></span>
+        <BadgeCheck size={17} className="kh2-float-check" />
+      </div>
+      <div className="kh2-float-card kh2-float-card-bottom">
+        <span className="kh2-live-dot" />
+        <span><strong>One connected workspace</strong><small>Menu · Orders · Bookings</small></span>
+      </div>
+      <div className="kh2-showcase-caption"><span /><span>PRODUCT PREVIEW</span><span>Actual Khaavio workspace</span></div>
     </div>
-  );
-}
-
-function PricingSection() {
-  const trackRef = useRef(null);
-  const [activePlan, setActivePlan] = useState(0);
-  const [billingCycle, setBillingCycle] = useState("yearly");
-
-  function updateActivePlan() {
-    const track = trackRef.current;
-    if (!track) return;
-
-    const cards = Array.from(track.children);
-    if (!cards.length) return;
-
-    const center = track.getBoundingClientRect().left + track.clientWidth / 2;
-    let nearestIndex = 0;
-    let nearestDistance = Infinity;
-
-    cards.forEach((card, index) => {
-      const rect = card.getBoundingClientRect();
-      const cardCenter = rect.left + rect.width / 2;
-      const distance = Math.abs(center - cardCenter);
-
-      if (distance < nearestDistance) {
-        nearestDistance = distance;
-        nearestIndex = index;
-      }
-    });
-
-    setActivePlan(nearestIndex);
-  }
-
-  function goToPlan(index) {
-    const track = trackRef.current;
-    if (!track || !track.children.length) return;
-
-    const boundedIndex = Math.max(0, Math.min(plans.length - 1, index));
-    const card = track.children[boundedIndex];
-
-    card.scrollIntoView({
-      behavior: "smooth",
-      block: "nearest",
-      inline: "center",
-    });
-
-    setActivePlan(boundedIndex);
-  }
-
-  return (
-    <section className="kh-pricing kh-section" id="pricing">
-      <div className="kh-section-wrap">
-        <div className="kh-pricing-heading">
-          <div className="kh-section-label">
-            <span /> SIMPLE BY DESIGN
-          </div>
-          <h2>
-            A plan for <em>your next chapter.</em>
-          </h2>
-          <p>
-            Try every core feature for 7 days, then choose monthly flexibility
-            or save with annual billing.
-          </p>
-        </div>
-
-        <div className="kh-pricing-trial-banner">
-          <span className="kh-pricing-trial-icon">
-            <Sparkles size={18} />
-          </span>
-          <div>
-            <strong>Start with 7 days on us.</strong>
-            <p>
-              Full trial access · No card required · Choose a plan when you're
-              ready
-            </p>
-          </div>
-        </div>
-
-        <div
-          className="kh-pricing-billing"
-          role="group"
-          aria-label="Billing frequency"
-        >
-          <button
-            type="button"
-            className={billingCycle === "monthly" ? "active" : ""}
-            aria-pressed={billingCycle === "monthly"}
-            onClick={() => setBillingCycle("monthly")}
-          >
-            Monthly
-          </button>
-          <button
-            type="button"
-            className={billingCycle === "yearly" ? "active" : ""}
-            aria-pressed={billingCycle === "yearly"}
-            onClick={() => setBillingCycle("yearly")}
-          >
-            Yearly <span>Save 2 months</span>
-          </button>
-        </div>
-
-        <div
-          className="kh-pricing-grid"
-          ref={trackRef}
-          onScroll={updateActivePlan}
-          aria-label="Subscription plans"
-        >
-          {plans.map((plan) => (
-            <article
-              className={`kh-price-card ${plan.popular ? "kh-price-popular" : ""}`}
-              key={plan.name}
-            >
-              {plan.popular && (
-                <div className="kh-popular-tag">
-                  <Sparkles size={12} /> MOST VERSATILE
-                </div>
-              )}
-
-              <h3>{plan.name}</h3>
-              <p className="kh-price-description">{plan.description}</p>
-
-              <div className="kh-price-amount">
-                <span>₹</span>
-                {billingCycle === "monthly"
-                  ? plan.monthlyPrice
-                  : plan.yearlyPrice}
-                <small>/ {billingCycle === "monthly" ? "month" : "year"}</small>
-              </div>
-
-              {billingCycle === "yearly" ? (
-                <div className="kh-plan-founders-offer">
-                  <span>FOUNDING OFFER · FIRST 10 RESTAURANTS</span>
-                  <strong>₹{plan.foundingPrice} for year one</strong>
-                  <small>Regular annual price ₹{plan.yearlyPrice}</small>
-                </div>
-              ) : (
-                <p className="kh-price-note">
-                  Flexible monthly billing · 7-day free trial included
-                </p>
-              )}
-
-              <Link
-                to="/signup"
-                className={`kh-button ${plan.popular ? "kh-button-dark" : "kh-button-outline"} kh-plan-cta`}
-              >
-                {plan.cta} <ArrowRight size={15} />
-              </Link>
-
-              <div className="kh-plan-divider" />
-              <span className="kh-includes-label">WHAT'S INCLUDED</span>
-              <ul>
-                {plan.features.map((feature) => (
-                  <li key={feature}>
-                    <Check size={15} /> {feature}
-                  </li>
-                ))}
-              </ul>
-            </article>
-          ))}
-        </div>
-
-        <div
-          className="kh-pricing-controls"
-          aria-label="Pricing carousel controls"
-        >
-          <button
-            type="button"
-            onClick={() => goToPlan(activePlan - 1)}
-            disabled={activePlan === 0}
-            aria-label="Previous pricing plan"
-          >
-            <ChevronLeft size={18} />
-          </button>
-
-          <div className="kh-pricing-dots">
-            {plans.map((plan, index) => (
-              <button
-                key={plan.name}
-                type="button"
-                className={activePlan === index ? "active" : ""}
-                onClick={() => goToPlan(index)}
-                aria-label={`Show ${plan.name} plan`}
-                aria-current={activePlan === index ? "true" : undefined}
-              />
-            ))}
-          </div>
-
-          <button
-            type="button"
-            onClick={() => goToPlan(activePlan + 1)}
-            disabled={activePlan === plans.length - 1}
-            aria-label="Next pricing plan"
-          >
-            <ChevronRight size={18} />
-          </button>
-        </div>
-
-        <p className="kh-pricing-disclaimer">
-          During the early-access pilot, subscriptions are activated manually.
-          Online payment collection and automatic renewals are not enabled yet.
-          Starter and Growth feature access follows the assigned active plan; plan
-          changes and founding-offer eligibility are confirmed manually. Founding
-          prices are for the first 10 restaurants for their first year; renewal is at
-          the then-current published annual price.
-        </p>
-      </div>
-    </section>
   );
 }
 
 export default function Home() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [activeFaq, setActiveFaq] = useState(0);
+  const [billing, setBilling] = useState("yearly");
+  const location = useLocation();
 
   useEffect(() => {
-    const animatedSections = document.querySelectorAll(
-      ".kh-home .kh-steps, .kh-home .kh-comparison-grid",
-    );
+    if (!location.hash) return undefined;
+    const targetId = decodeURIComponent(location.hash.slice(1));
+    const frame = requestAnimationFrame(() => {
+      document.getElementById(targetId)?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [location.hash]);
 
-    if (!animatedSections.length) return;
-
+  useEffect(() => {
+    const elements = document.querySelectorAll(".kh-home .kh2-reveal");
+    if (!elements.length) return undefined;
     if (typeof IntersectionObserver === "undefined") {
-      animatedSections.forEach((element) => element.classList.add("is-visible"));
-      return;
+      elements.forEach((element) => element.classList.add("is-visible"));
+      return undefined;
     }
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            entry.target.classList.add("is-visible");
-            observer.unobserve(entry.target);
-          }
-        });
-      },
-      { threshold: 0.16, rootMargin: "0px 0px -4% 0px" },
-    );
-
-    animatedSections.forEach((element) => observer.observe(element));
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add("is-visible");
+          observer.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.12, rootMargin: "0px 0px -30px 0px" });
+    elements.forEach((element) => observer.observe(element));
     return () => observer.disconnect();
   }, []);
 
@@ -704,505 +432,196 @@ export default function Home() {
 
   return (
     <main className="kh-home" id="top">
-      <div className="kh-announcement">
-        <span>
-          <Sparkles size={13} />
-        </span>
-        7 DAYS FREE · NO CARD REQUIRED
-        <a href="#features">
-          Meet Khaavio <ArrowRight size={13} />
-        </a>
+      <div className="kh2-announcement">
+        <span className="kh2-announcement-dot" />
+        <span>7-DAY FREE TRIAL</span>
+        <span className="kh2-announcement-separator">·</span>
+        <span>No card required</span>
+        <a href="#book-demo" onClick={closeMenu}>Book a free demo <ArrowUpRight size={13} /></a>
       </div>
 
-      <header className="kh-header">
-        <div className="kh-nav-inner">
+      <header className="kh2-header">
+        <div className="kh2-nav-wrap">
           <Brand />
-
-          <button
-            className="kh-mobile-menu"
-            type="button"
-            onClick={() => setMenuOpen((value) => !value)}
-            aria-label={menuOpen ? "Close navigation" : "Open navigation"}
-            aria-expanded={menuOpen}
-          >
-            {menuOpen ? <X size={21} /> : <Menu size={21} />}
+          <button className="kh2-mobile-toggle" type="button" onClick={() => setMenuOpen((open) => !open)} aria-label={menuOpen ? "Close navigation" : "Open navigation"} aria-expanded={menuOpen}>
+            {menuOpen ? <X size={22} /> : <Menu size={22} />}
           </button>
-
-          <nav className={`kh-nav-links ${menuOpen ? "kh-nav-open" : ""}`}>
-            <a href="#features" onClick={closeMenu}>
-              Features
-            </a>
-            <a href="#how-it-works" onClick={closeMenu}>
-              How it works
-            </a>
-            <a href="#pricing" onClick={closeMenu}>
-              Pricing
-            </a>
-            <a href="#faq" onClick={closeMenu}>
-              FAQs
-            </a>
-
-            <div className="kh-mobile-nav-actions">
-              <Link to="/login" onClick={closeMenu}>
-                Sign in
-              </Link>
-              <Link
-                to="/signup"
-                className="kh-button kh-button-dark"
-                onClick={closeMenu}
-              >
-                Get started <ArrowUpRight size={16} />
-              </Link>
+          <nav className={`kh2-nav ${menuOpen ? "kh2-nav-open" : ""}`} aria-label="Main navigation">
+            <a href="#platform" onClick={closeMenu}>Platform</a>
+            <a href="#how-it-works" onClick={closeMenu}>How it works</a>
+            <a href="#pricing" onClick={closeMenu}>Pricing</a>
+            <Link to="/contact" onClick={closeMenu}>Contact</Link>
+            <div className="kh2-mobile-nav-buttons">
+              <Link to="/login" className="kh2-nav-login" onClick={closeMenu}>Sign in</Link>
+              <a href="#book-demo" className="kh2-button kh2-button-primary" onClick={closeMenu}>Book a demo <ArrowUpRight size={16} /></a>
             </div>
           </nav>
-
-          <div className="kh-nav-actions">
-            <Link to="/login" className="kh-login-link">
-              Sign in
-            </Link>
-            <Link to="/signup" className="kh-button kh-button-dark">
-              Get started <ArrowUpRight size={16} />
-            </Link>
+          <div className="kh2-nav-actions">
+            <Link to="/login" className="kh2-nav-login">Sign in</Link>
+            <a href="#book-demo" className="kh2-button kh2-button-primary">Book a free demo <ArrowUpRight size={16} /></a>
           </div>
         </div>
       </header>
 
-      <section className="kh-hero">
-        <div className="kh-hero-grid">
-          <div className="kh-hero-copy">
-            <div className="kh-eyebrow">
-              <span />
-              BUILT FOR RESTAURANTS, MADE FOR PEOPLE
+      <section className="kh2-hero">
+        <div className="kh2-hero-grid">
+          <div className="kh2-hero-copy kh2-reveal">
+            <div className="kh2-eyebrow"><span className="kh2-eyebrow-line" /> BUILT FOR CAFÉS & RESTAURANTS</div>
+            <h1>Better service.<br /><em>Simpler tables.</em></h1>
+            <p className="kh2-hero-description">A beautiful digital menu, QR ordering, kitchen workflows and table bookings—connected in one easy restaurant workspace.</p>
+            <div className="kh2-hero-actions">
+              <a href="#book-demo" className="kh2-button kh2-button-primary kh2-button-large">Book a free demo <ArrowUpRight size={18} /></a>
+              <Link to="/signup" className="kh2-button kh2-button-light kh2-button-large">Start 7-day free trial <ArrowRight size={17} /></Link>
             </div>
-
-            <h1>
-              Make room for
-              <span className="kh-headline-serif">better</span>
-              <span className="kh-headline-last">hospitality.</span>
-            </h1>
-
-            <p>
-              Digital menus, QR ordering, reservations, kitchen workflows and
-              guest tools—all connected in one workspace built around your
-              restaurant and its own identity.
-            </p>
-
-            <div className="kh-hero-actions">
-              <Link
-                to="/signup"
-                className="kh-button kh-button-dark kh-button-large"
-              >
-                Start your 7-day free trial <ArrowUpRight size={17} />
-              </Link>
-              <a
-                href="#how-it-works"
-                className="kh-button kh-button-outline kh-button-large"
-              >
-                See how it works <ArrowRight size={16} />
-              </a>
+            <div className="kh2-trust-row">
+              <span className="kh2-trust-icon"><Check size={16} /></span>
+              <span><strong>No app for guests.</strong><small>Scan, browse and order in the phone browser.</small></span>
             </div>
-
-            <div className="kh-hero-proof">
-              <div className="kh-proof-symbols" aria-hidden="true">
-                <span>
-                  <Store size={14} />
-                </span>
-                <span>
-                  <QrCode size={14} />
-                </span>
-                <span>
-                  <CalendarCheck size={14} />
-                </span>
-              </div>
-              <div>
-                <strong>Made for independent food businesses</strong>
-                <p>From the first menu upload to everyday service.</p>
-              </div>
-            </div>
-
-            <div
-              className="kh-hero-capabilities"
-              aria-label="Khaavio essentials"
-            >
-              <span>
-                <Check size={13} /> Digital menu + QR studio
-              </span>
-              <span>
-                <Check size={13} /> Orders, kitchen + table billing
-              </span>
-              <span>
-                <Check size={13} /> Bookings + guest engagement tools
-              </span>
+            <div className="kh2-hero-tags">
+              <span><Check size={14} /> Branded menu + QR</span>
+              <span><Check size={14} /> Orders + kitchen</span>
+              <span><Check size={14} /> Bookings + billing</span>
             </div>
           </div>
-
-          <div className="kh-hero-visual">
-            <div className="kh-visual-orbit kh-orbit-one" />
-            <div className="kh-visual-orbit kh-orbit-two" />
-
-            <div className="kh-visual-label kh-label-left">
-              <Sparkles size={14} /> Thoughtfully simple.
-            </div>
-
-            <DashboardPreview />
-
-            <div className="kh-visual-label kh-label-right">
-              <span /> A menu that evolves with you
-            </div>
-          </div>
+          <div className="kh2-hero-visual kh2-reveal"><ProductShowcase /></div>
         </div>
-
-        <div className="kh-hero-bottom">
-          <span>BUILT FOR THE PEOPLE BEHIND THE FOOD</span>
-          <span className="kh-bottom-rule" />
-          <span>
-            MENU <i /> QR <i /> BOOKINGS <i /> GROWTH
-          </span>
+        <div className="kh2-hero-bottom">
+          <span>THE DIGITAL SIDE OF HOSPITALITY</span><span className="kh2-hero-bottom-rule" />
+          <span className="kh2-hero-bottom-list">MENU <i /> QR <i /> ORDERS <i /> BOOKINGS <i /> GUESTS</span>
         </div>
       </section>
 
-      <section className="kh-intro" id="about">
-        <div className="kh-section-wrap kh-intro-grid">
-          <div className="kh-section-label">
-            <span /> MEET KHAAVIO
-          </div>
+      <section className="kh2-logo-strip" aria-label="Khaavio capabilities">
+        <div className="kh2-logo-strip-inner">
+          <span><QrCode size={18} /> QR-FIRST ORDERING</span>
+          <span><LayoutDashboard size={18} /> ONE WORKSPACE</span>
+          <span><ChefHat size={18} /> KITCHEN VISIBILITY</span>
+          <span><CreditCard size={18} /> TABLE BILLING</span>
+          <span><CalendarCheck size={18} /> BOOKINGS</span>
+        </div>
+      </section>
 
-          <div>
-            <h2>
-              Less juggling tools.
-              <em> More welcoming people.</em>
-            </h2>
-            <p>
-              Running a restaurant is about the food and the people. Khaavio
-              brings your digital menu, table ordering, booking requests and
-              kitchen workflow into one workspace, so daily service feels easier
-              to manage.
-            </p>
-            <a href="#features" className="kh-text-link">
-              Get to know the platform <ArrowRight size={16} />
-            </a>
+      <section className="kh2-intro kh2-section" id="platform">
+        <div className="kh2-container kh2-intro-grid kh2-reveal">
+          <div><div className="kh2-section-kicker">MEET KHAAVIO <span /></div><h2>Less juggling tools.<br /><em>More welcoming people.</em></h2></div>
+          <div className="kh2-intro-copy"><p>Running a restaurant is about food and people—not chasing updates across different tools. Khaavio brings the digital guest journey and everyday table operations into one focused workspace.</p><a className="kh2-text-link" href="#how-it-works">See the workflow <ArrowRight size={16} /></a></div>
+        </div>
+      </section>
+
+      <section className="kh2-features kh2-section" id="features">
+        <div className="kh2-container">
+          <div className="kh2-section-heading kh2-reveal">
+            <div><div className="kh2-section-kicker">MADE FOR EVERYDAY SERVICE <span /></div><h2>Every table has a story.<br /><em>Make it run smoother.</em></h2></div>
+            <p>From the first scan to the final bill, give guests and staff a clearer digital experience without making the restaurant feel complicated.</p>
+          </div>
+          <div className="kh2-feature-grid">
+            {featureCards.map(({ number, label, title, description, icon: Icon, tint }) => (
+              <article className={`kh2-feature-card kh2-reveal kh2-tint-${tint}`} key={number}>
+                <div className="kh2-feature-top"><span className="kh2-feature-icon"><Icon size={23} strokeWidth={1.8} /></span><span>{number}</span></div>
+                <span className="kh2-feature-label">{label}</span><h3>{title}</h3><p>{description}</p>
+                <a href="#book-demo" className="kh2-feature-link" aria-label={`Ask for a demo of ${label}`}><ArrowUpRight size={18} /></a>
+              </article>
+            ))}
           </div>
         </div>
       </section>
 
-      <section className="kh-features kh-section" id="features">
-        <div className="kh-section-wrap">
-          <div className="kh-section-heading">
-            <div>
-              <div className="kh-section-label">
-                <span /> THE ESSENTIALS
-              </div>
-              <h2>
-                Everything in its
-                <br />
-                <em>right place.</em>
-              </h2>
-            </div>
-            <p>
-              From the first QR scan to the final bill, service request or repeat-visit
-              reward, manage restaurant operations and guest touchpoints in one workspace.
-            </p>
+      <section className="kh2-workflow kh2-section" id="how-it-works">
+        <div className="kh2-container kh2-workflow-grid">
+          <div className="kh2-workflow-copy kh2-reveal">
+            <div className="kh2-section-kicker">HOW KHAAVIO WORKS <span /></div>
+            <h2>From first scan<br />to <em>better service.</em></h2>
+            <p>Bring your menu, table orders and service touchpoints into one practical flow. Your guests use their phones; your team stays in control.</p>
+            <a href="#book-demo" className="kh2-button kh2-button-primary">See it in a free demo <ArrowUpRight size={17} /></a>
+            <div className="kh2-workflow-note"><Zap size={16} /><span><strong>Designed for quick onboarding</strong><small>Set up your menu, create QR codes and test your guest journey.</small></span></div>
           </div>
-
-          <div className="kh-feature-grid">
-            {features.map((feature) => {
-              const Icon = feature.icon;
-
-              return (
-                <article className="kh-feature-card" key={feature.number}>
-                  <div className="kh-feature-top">
-                    <span className="kh-feature-icon">
-                      <Icon size={22} strokeWidth={1.8} />
-                    </span>
-                    <span>{feature.number}</span>
-                  </div>
-                  <span className="kh-feature-label">{feature.label}</span>
-                  <h3>{feature.title}</h3>
-                  <p>{feature.description}</p>
-                  <Link
-                    to="/signup"
-                    className="kh-feature-link"
-                    aria-label={`Get started with ${feature.label}`}
-                  >
-                    <ArrowUpRight size={18} />
-                  </Link>
-                </article>
-              );
-            })}
+          <div className="kh2-steps">
+            {workflowSteps.map(({ number, title, description, icon: Icon }, index) => (
+              <article className="kh2-step kh2-reveal" key={number}>
+                <div className="kh2-step-number">{number}</div><div className="kh2-step-icon"><Icon size={22} /></div>
+                <div className="kh2-step-content"><h3>{title}</h3><p>{description}</p></div><ArrowDownRight className="kh2-step-arrow" size={20} />
+                {index < workflowSteps.length - 1 && <span className="kh2-step-connector" aria-hidden="true" />}
+              </article>
+            ))}
           </div>
         </div>
       </section>
 
-      <section className="kh-comparison kh-section" id="comparison">
-        <div className="kh-section-wrap">
-          <div className="kh-comparison-heading">
-            <div className="kh-section-label">
-              <span /> A PRACTICAL, HONEST COMPARISON
-            </div>
-            <h2>
-              A better fit for
-              <br />
-              <em>everyday hospitality.</em>
-            </h2>
-            <p>
-              Khaavio focuses on QR-first guest service and table-level operations. Full POS suites may be a better fit when you also need deep inventory, purchasing or multi-outlet controls.
-            </p>
+      <section className="kh2-product-band">
+        <div className="kh2-container kh2-product-band-inner kh2-reveal">
+          <div className="kh2-product-band-copy"><span className="kh2-product-band-kicker"><Sparkles size={15} /> ONE CONNECTED EXPERIENCE</span><h2>Made for your restaurant.<br /><em>Easy for your guests.</em></h2><p>Guests see your menu and brand. Your team gets a workspace to manage the digital side of service.</p><a href="#book-demo" className="kh2-button kh2-button-cream">Walk me through it <ArrowRight size={17} /></a></div>
+          <div className="kh2-product-points">
+            <div><span><Smartphone size={21} /></span><div><strong>Guest-friendly</strong><small>Browser-based menu and ordering flow</small></div><Check size={17} /></div>
+            <div><span><LayoutDashboard size={21} /></span><div><strong>Team-ready</strong><small>Menu, orders, bookings and table tools</small></div><Check size={17} /></div>
+            <div><span><ShieldCheck size={21} /></span><div><strong>Restaurant-controlled</strong><small>Manage your menu and availability</small></div><Check size={17} /></div>
           </div>
+        </div>
+      </section>
 
-          <div className="kh-comparison-grid">
-            <article className="kh-comparison-card kh-comparison-khaavio">
-              <div className="kh-comparison-card-heading">
-                <span className="kh-comparison-card-icon">
-                  <Store size={21} strokeWidth={1.8} />
-                </span>
-                <div>
-                  <span className="kh-comparison-eyebrow">KHAAVIO · QR-FIRST</span>
-                  <h3>Guest journey + table operations</h3>
+      <section className="kh2-pricing kh2-section" id="pricing">
+        <div className="kh2-container">
+          <div className="kh2-pricing-heading kh2-reveal"><div className="kh2-section-kicker kh2-kicker-center">STRAIGHTFORWARD PLANS <span /></div><h2>Start simple.<br /><em>Grow when you're ready.</em></h2><p>Explore Khaavio with a 7-day free trial, then choose the plan that fits your restaurant.</p></div>
+          <div className="kh2-trial-banner kh2-reveal"><span><Sparkles size={19} /></span><div><strong>Try Khaavio free for 7 days.</strong><small>No card required. Early-access subscriptions are activated manually.</small></div><a href="#book-demo">Questions? Book a demo <ArrowRight size={15} /></a></div>
+          <div className="kh2-billing-switch" role="group" aria-label="Billing frequency"><button type="button" className={billing === "monthly" ? "is-active" : ""} aria-pressed={billing === "monthly"} onClick={() => setBilling("monthly")}>Monthly</button><button type="button" className={billing === "yearly" ? "is-active" : ""} aria-pressed={billing === "yearly"} onClick={() => setBilling("yearly")}>Yearly <span>Save with annual billing</span></button></div>
+          <div className="kh2-pricing-grid">
+            {plans.map((plan) => (
+              <article className={`kh2-price-card kh2-reveal ${plan.popular ? "kh2-price-card-popular" : ""}`} key={plan.name}>
+                {plan.popular && <span className="kh2-popular-pill"><Sparkles size={13} /> MOST VERSATILE</span>}
+                <div className="kh2-plan-top"><span className="kh2-plan-icon"><Store size={20} /></span><span className="kh2-plan-audience">FOR {plan.name === "Starter" ? "ESSENTIALS" : "GROWING TEAMS"}</span></div>
+                <h3>{plan.name}</h3><p className="kh2-plan-description">{plan.description}</p>
+                <div className="kh2-plan-price"><span>₹</span>{billing === "monthly" ? plan.monthly : plan.annual}<small>/ {billing === "monthly" ? "month" : "year"}</small></div>
+                {billing === "yearly" ? <div className="kh2-founding-offer"><small>FOUNDING OFFER · FIRST 10 RESTAURANTS</small><strong>₹{plan.founding} for year one</strong><span>Regular annual price ₹{plan.annual}</span></div> : <div className="kh2-monthly-note">7-day free trial included</div>}
+                <Link to="/signup" className={`kh2-button ${plan.popular ? "kh2-button-primary" : "kh2-button-outline"} kh2-plan-cta`}>Start 7-day free trial <ArrowRight size={16} /></Link>
+                <div className="kh2-plan-divider" /><span className="kh2-includes-label">INCLUDES</span><ul>{plan.features.map((feature) => <li key={feature}><Check size={15} />{feature}</li>)}</ul>
+              </article>
+            ))}
+          </div>
+          <p className="kh2-pricing-disclaimer">During the early-access pilot, subscriptions are activated manually. Online payment collection and automatic renewals are not enabled yet. Founding prices apply to eligible first-ten restaurants for year one; renewal is at the then-current published annual price.</p>
+        </div>
+      </section>
+
+      <section className="kh2-demo kh2-section" id="book-demo">
+        <div className="kh2-container kh2-demo-grid">
+          <div className="kh2-demo-copy kh2-reveal">
+            <div className="kh2-section-kicker kh2-kicker-light">LET'S TALK ABOUT YOUR RESTAURANT <span /></div>
+            <h2>See how Khaavio<br /><em>could fit your service.</em></h2>
+            <p>Tell us a little about your business. Request a free walkthrough of QR menus, table ordering, kitchen workflows and the restaurant workspace.</p>
+            <div className="kh2-demo-benefits"><div><span><Check size={17} /></span><p><strong>Personalised walkthrough</strong><small>Explore the areas most relevant to your restaurant.</small></p></div><div><span><Check size={17} /></span><p><strong>Ask your real questions</strong><small>Talk through setup, plans and the guest experience.</small></p></div><div><span><Check size={17} /></span><p><strong>No card needed for the trial</strong><small>See the workflow before making a decision.</small></p></div></div>
+            <div className="kh2-demo-direct"><Mail size={18} /><span><small>Prefer email?</small><a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a></span></div>
+          </div>
+          <div className="kh2-demo-panel kh2-reveal"><div className="kh2-demo-panel-heading"><span className="kh2-demo-panel-icon"><CalendarCheck size={22} /></span><div><h3>Book a free demo</h3><p>Share your details and preferred time.</p></div></div><MailRequestForm variant="demo" /></div>
+        </div>
+      </section>
+
+      <section className="kh2-faq kh2-section" id="faq">
+        <div className="kh2-container kh2-faq-grid">
+          <div className="kh2-faq-intro kh2-reveal"><div className="kh2-section-kicker">GOOD TO KNOW <span /></div><h2>Questions before<br /><em>you get started?</em></h2><p>Here are a few useful details. Still unsure? Reach out and we'll help you work through it.</p><Link to="/contact" className="kh2-text-link">Contact Khaavio <ArrowUpRight size={16} /></Link></div>
+          <div className="kh2-faq-list kh2-reveal">{faqs.map((faq, index) => { const open = activeFaq === index; return <article className={`kh2-faq-item ${open ? "is-open" : ""}`} key={faq.question}><button type="button" onClick={() => setActiveFaq(open ? -1 : index)} aria-expanded={open}><span>{faq.question}</span><ChevronDown size={18} /></button>{open && <p>{faq.answer}</p>}</article>; })}</div>
+        </div>
+      </section>
+
+      <section className="kh2-bottom-cta"><div className="kh2-container kh2-bottom-cta-inner kh2-reveal"><span className="kh2-bottom-cta-mark"><Sparkles size={23} /></span><div><span className="kh2-section-kicker kh2-kicker-light">YOUR RESTAURANT, YOUR WAY <span /></span><h2>Make the digital side<br /><em>of service feel simpler.</em></h2><p>Explore the workflow, ask questions and find out whether Khaavio fits your restaurant.</p></div><div className="kh2-bottom-cta-actions"><a href="#book-demo" className="kh2-button kh2-button-cream">Book a free demo <ArrowUpRight size={17} /></a><Link to="/signup" className="kh2-button kh2-button-ghost">Start free trial</Link></div></div></section>
+
+      <footer className="kh2-footer">
+        <div className="kh2-container">
+          <div className="kh2-footer-grid">
+            <div className="kh2-footer-brand">
+              <Brand light />
+              <p>Digital menus, QR ordering and thoughtful table operations for independent food businesses.</p>
+              <a className="kh2-footer-email" href={`mailto:${CONTACT_EMAIL}`}><Mail size={16} />{CONTACT_EMAIL}</a>
+              <div className="kh2-footer-social" aria-label="Khaavio social and contact links">
+                <span>FOLLOW KHAAVIO</span>
+                <div className="kh2-social-icons">
+                  <a href="https://www.instagram.com/khaavio/" target="_blank" rel="noopener noreferrer" aria-label="Khaavio on Instagram" title="Instagram"><InstagramBrandIcon size={18} /></a>
+                  <a href="https://wa.me/917324883263" target="_blank" rel="noopener noreferrer" aria-label="Contact Khaavio on WhatsApp" title="WhatsApp"><MessageCircle size={18} strokeWidth={1.8} /></a>
                 </div>
               </div>
-              <ul>
-                {comparisonBenefits.map((benefit) => (
-                  <li key={benefit}>
-                    <span className="kh-comparison-check">
-                      <Check size={15} strokeWidth={2.2} />
-                    </span>
-                    <span>{benefit}</span>
-                  </li>
-                ))}
-              </ul>
-            </article>
-
-            <article className="kh-comparison-card kh-comparison-scattered">
-              <div className="kh-comparison-card-heading">
-                <span className="kh-comparison-card-icon">
-                  <LayoutDashboard size={21} strokeWidth={1.8} />
-                </span>
-                <div>
-                  <span className="kh-comparison-eyebrow">BROADER POS ECOSYSTEMS</span>
-                  <h3>More depth in other areas</h3>
-                </div>
-              </div>
-              <ul>
-                {comparisonAlternatives.map((alternative) => (
-                  <li key={alternative}>
-                    <span className="kh-comparison-alternative-mark">
-                      <ArrowRight size={14} />
-                    </span>
-                    <span>{alternative}</span>
-                  </li>
-                ))}
-              </ul>
-            </article>
-          </div>
-
-          <p className="kh-comparison-note">
-            Starter starts at ₹499/month and Growth at ₹899/month, with a 7-day free trial. Competitor features and pricing vary by product and plan; compare the exact tools your restaurant needs before deciding.
-          </p>
-        </div>
-      </section>
-
-      <section className="kh-workflow kh-section" id="how-it-works">
-        <div className="kh-section-wrap kh-workflow-grid">
-          <div className="kh-workflow-copy">
-            <div className="kh-section-label">
-              <span /> A FRESH START
             </div>
-            <h2>
-              From first click
-              <br />
-              to <em>fully yours.</em>
-            </h2>
-            <p>
-              Create your restaurant workspace, add your menu, then share your
-              QR code with guests. Start with a 7-day free trial.
-            </p>
-            <Link to="/signup" className="kh-button kh-button-dark">
-              Start your journey <ArrowUpRight size={16} />
-            </Link>
+            <div className="kh2-footer-column"><strong>EXPLORE</strong><a href="#platform">Platform</a><a href="#features">Features</a><a href="#how-it-works">How it works</a><a href="#pricing">Pricing</a><a href="#faq">FAQs</a></div>
+            <div className="kh2-footer-column"><strong>GET STARTED</strong><a href="#book-demo">Book a free demo</a><Link to="/signup">Create account</Link><Link to="/login">Sign in</Link><Link to="/contact">Contact us</Link><Link to="/about">About Khaavio</Link></div>
+            <div className="kh2-footer-column"><strong>LEGAL</strong><Link to="/privacy">Privacy Policy</Link><Link to="/terms">Terms &amp; Conditions</Link><Link to="/refund-policy">Cancellation &amp; Refund</Link></div>
           </div>
-
-          <div className="kh-steps">
-            {[
-              {
-                number: "01",
-                title: "Create your space",
-                description:
-                  "Set up your restaurant profile and business details.",
-                icon: Store,
-              },
-              {
-                number: "02",
-                title: "Make it yours",
-                description:
-                  "Add your dishes, prices, photos and visual identity.",
-                icon: UtensilsCrossed,
-              },
-              {
-                number: "03",
-                title: "Go live with a scan",
-                description:
-                  "Publish your menu and share your QR code with guests.",
-                icon: QrCode,
-              },
-            ].map((step) => {
-              const Icon = step.icon;
-
-              return (
-                <div className="kh-step" key={step.number}>
-                  <span className="kh-step-number">{step.number}</span>
-                  <div>
-                    <h3>{step.title}</h3>
-                    <p>{step.description}</p>
-                  </div>
-                  <Icon size={21} />
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </section>
-
-      <PricingSection />
-
-      <section className="kh-faq kh-section" id="faq">
-        <div className="kh-section-wrap kh-faq-grid">
-          <div>
-            <div className="kh-section-label">
-              <span /> GOOD TO KNOW
-            </div>
-            <h2>
-              A few things
-              <br />
-              <em>you might wonder.</em>
-            </h2>
-            <p>
-              We want to make running the digital side of your restaurant feel
-              straightforward from day one.
-            </p>
-
-            <div className="kh-faq-contact">
-              <span>
-                <Mail size={17} />
-              </span>
-              <div>
-                <strong>Need more information?</strong>
-                <small>Find contact options in the footer.</small>
-              </div>
-            </div>
-          </div>
-
-          <div className="kh-faq-list">
-            {faqs.map((faq, index) => {
-              const isOpen = activeFaq === index;
-
-              return (
-                <article
-                  className={`kh-faq-item ${isOpen ? "kh-faq-open" : ""}`}
-                  key={faq.question}
-                >
-                  <button
-                    type="button"
-                    onClick={() => setActiveFaq(isOpen ? -1 : index)}
-                    aria-expanded={isOpen}
-                  >
-                    <span>{faq.question}</span>
-                    <ChevronDown size={17} />
-                  </button>
-
-                  {isOpen && <p>{faq.answer}</p>}
-                </article>
-              );
-            })}
-          </div>
-        </div>
-      </section>
-
-      <section className="kh-final-cta" id="get-started">
-        <div className="kh-final-cta-inner">
-          <span className="kh-cta-emblem">
-            <Sparkles size={22} />
-          </span>
-          <div className="kh-cta-kicker">YOUR RESTAURANT, YOUR WAY</div>
-          <h2>
-            Let’s make your
-            <br />
-            <em>next chapter delicious.</em>
-          </h2>
-          <p>Try Khaavio free for 7 days. No card required.</p>
-
-          <div className="kh-final-actions">
-            <Link to="/signup" className="kh-button kh-button-cream">
-              Get started with Khaavio <ArrowUpRight size={17} />
-            </Link>
-            <Link to="/login" className="kh-button kh-button-ghost">
-              Already have an account? Sign in
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      <footer className="kh-footer" id="contact">
-        <div className="kh-section-wrap">
-          <div className="kh-footer-main">
-            <div className="kh-footer-brand">
-              <Brand footer />
-              <p>
-                Helping food businesses create thoughtful digital experiences,
-                one table at a time.
-              </p>
-
-              <div className="kh-footer-contact">
-                {BRAND_CONTACT.email ? (
-                  <a href={`mailto:${BRAND_CONTACT.email}`}>
-                    <Mail size={15} /> {BRAND_CONTACT.email}
-                  </a>
-                ) : (
-                  <span className="kh-contact-unset">
-                    <Mail size={15} /> Contact email to be configured
-                  </span>
-                )}
-              </div>
-            </div>
-
-            <div className="kh-footer-column">
-              <span>QUICK LINKS</span>
-              <Link to="/about">About Khaavio</Link>
-              <a href="#features">Features</a>
-              <a href="#comparison">Why Khaavio</a>
-              <a href="#how-it-works">How it works</a>
-              <a href="#pricing">Pricing</a>
-              <a href="#faq">FAQs</a>
-            </div>
-
-            <div className="kh-footer-column">
-              <span>YOUR ACCOUNT</span>
-              <Link to="/signup">Create account</Link>
-              <Link to="/login">Sign in</Link>
-              {/* <Link to="/reset-password">Reset password</Link> */}
-              <Link to="/onboarding">Restaurant setup</Link>
-            </div>
-
-            <div className="kh-footer-column">
-              <span>LEGAL</span>
-              <Link to="/privacy">Privacy Policy</Link>
-              <Link to="/terms">Terms &amp; Conditions</Link>
-              <Link to="/refund-policy">Refund Policy</Link>
-            </div>
-
-            <div className="kh-footer-social">
-              <span>LET'S CONNECT</span>
-              <p>Follow Khaavio's journey.</p>
-              <SocialLinks />
-              {/* <small>Follow official Khaavio channels as they launch.</small> */}
-            </div>
-          </div>
-
-
-          <div className="kh-footer-bottom">
-            <span>© 2026 Khaavio. All rights reserved.</span>
-            <span>Every Table, Digitally Connected.</span>
-            <a href="#top">Back to top ↑</a>
-          </div>
+          <div className="kh2-footer-bottom"><span>© {new Date().getFullYear()} Khaavio. All rights reserved.</span><span>Every Table, Digitally Connected.</span><a href="#top">Back to top ↑</a></div>
         </div>
       </footer>
     </main>

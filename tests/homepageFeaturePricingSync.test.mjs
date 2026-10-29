@@ -48,11 +48,12 @@ test("homepage advertises the current shipped restaurant and guest modules", () 
   assert.match(indexHtml, /AI menu help in one workspace/);
 });
 
-test("homepage marketing copy uses readable body text and labels on desktop and mobile", () => {
-  assert.match(homeCss, /\.kh-home \.kh-hero-copy > p\s*\{[^}]*font-size:\s*clamp\(16px, 1\.15vw, 18px\)/s);
-  assert.match(homeCss, /\.kh-home \.kh-feature-card > p,[\s\S]*?font-size:\s*15px/);
-  assert.match(homeCss, /\.kh-home \.kh-footer-column > a\s*\{[^}]*font-size:\s*14px/s);
-  assert.match(homeCss, /@media \(max-width: 620px\)[\s\S]*?\.kh-home \.kh-hero-copy > p[\s\S]*?font-size:\s*15px/);
+test("redesigned homepage uses readable type and responsive spacing", () => {
+  assert.match(homeCss, /\.kh2-hero-description\s*\{[^}]*font-size:\s*16px/s);
+  assert.match(homeCss, /\.kh2-feature-card > p\s*\{[^}]*font-size:\s*14px/s);
+  assert.match(homeCss, /\.kh2-footer-column > a\s*\{[^}]*font-size:\s*12px/s);
+  assert.match(homeCss, /@media \(max-width: 620px\)[\s\S]*?\.kh2-hero-description\s*\{[^}]*font-size:\s*15px/s);
+  assert.match(homeCss, /@media \(max-width: 620px\)[\s\S]*?\.kh2-feature-card > p\s*\{[^}]*font-size:\s*13px/s);
 });
 
 test("homepage Starter and Growth plan copy reflects the current product and tier split", () => {
@@ -71,10 +72,10 @@ test("homepage Starter and Growth plan copy reflects the current product and tie
   assert.match(home, /Booking CSV export/);
   assert.match(home, /Enhanced analytics and menu performance insights/);
   assert.match(home, /Priority support during the founding pilot/);
-  assert.match(home, /monthlyPrice: "499"/);
-  assert.match(home, /yearlyPrice: "4,990"/);
-  assert.match(home, /monthlyPrice: "899"/);
-  assert.match(home, /yearlyPrice: "8,990"/);
+  assert.match(home, /monthly: "499"/);
+  assert.match(home, /annual: "4,990"/);
+  assert.match(home, /monthly: "899"/);
+  assert.match(home, /annual: "8,990"/);
 });
 
 test("database plan catalog migration refreshes only plan descriptions and feature lists", () => {
@@ -120,7 +121,7 @@ test("forward gating migration aligns the live catalog with Starter/Growth entit
 });
 
 test("expanded homepage feature grid remains responsive", () => {
-  assert.match(homeCss, /\.kh-feature-grid\s*\{[^}]*grid-template-columns:\s*repeat\(3,\s*minmax\(0,\s*1fr\)\)/s);
-  assert.match(homeCss, /@media\s*\(max-width:\s*1080px\)[\s\S]*?\.kh-feature-grid,[\s\S]*?grid-template-columns:\s*repeat\(2,\s*minmax\(0,\s*1fr\)\)/);
-  assert.match(homeCss, /@media\s*\(max-width:\s*760px\)[\s\S]*?\.kh-feature-grid\s*\{\s*grid-template-columns:\s*1fr;/);
+  assert.match(homeCss, /\.kh2-feature-grid\s*\{[^}]*grid-template-columns:\s*repeat\(3,\s*minmax\(0,\s*1fr\)\)/s);
+  assert.match(homeCss, /@media\s*\(max-width:\s*700px\)[\s\S]*?\.kh2-feature-grid\s*\{[^}]*grid-template-columns:\s*1fr/);
+  assert.match(homeCss, /@media\s*\(max-width:\s*620px\)[\s\S]*?\.kh2-feature-grid\s*\{[^}]*grid-template-columns:\s*1fr/);
 });

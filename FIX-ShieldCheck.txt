@@ -1,0 +1,11 @@
+FIX FOR: ShieldCheck is not defined
+
+In src/pages/Home.jsx, include ShieldCheck in the named imports from lucide-react.
+The corrected import block includes:
+  Smartphone,
+  Sparkles,
+  ShieldCheck,
+  Store,
+
+No App.jsx, Supabase, database or dashboard changes are needed for this error.
+After saving, Vite should hot-reload. If it doesn't, reload the browser tab.

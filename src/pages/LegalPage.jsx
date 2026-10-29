@@ -4,101 +4,97 @@ import khaavioIcon from "../assets/icon.png";
 import "./LegalPage.css";
 
 const SUPPORT_EMAIL = "khaavioqr@gmail.com";
+const GRIEVANCE_EMAIL = "kaushalpzti@gmail.com";
 const SUPPORT_WHATSAPP = "917324883263";
-const LAST_UPDATED = "28 October 2026";
+const OPERATOR_PHONE = "+919471640485";
+const LAST_UPDATED = "29 October 2026";
 
 const LEGAL_CONTENT = {
   privacy: {
     eyebrow: "YOUR DATA, TREATED WITH CARE",
     title: "Privacy Policy",
     description:
-      "Learn what information Khaavio handles, why it is used, and how restaurant teams and guests can contact us about privacy.",
+      "What information Khaavio handles, why it is used, and how restaurant teams and guests can contact us about privacy.",
     intro:
-      "This policy explains how Khaavio handles information when you visit khaavio.in, create a restaurant workspace, or use Khaavio-powered menus, QR ordering, bookings and order tracking.",
+      "This policy explains how Khaavio handles information when you visit khaavio.in, create a restaurant workspace, send us an enquiry, or use Khaavio-powered menus, QR ordering, bookings and order tracking.",
     sections: [
       {
-        title: "1. Who this policy covers",
+        title: "1. Who this policy applies to",
         paragraphs: [
-          "Khaavio is a digital platform that helps restaurants manage digital menus, table QR codes, online order requests, bookings, kitchen updates and subscription access. This policy applies to the Khaavio website and platform.",
-          "When a restaurant collects guest details through its own Khaavio-powered menu, order or booking page, that restaurant generally decides why it needs those details and how it uses them. Khaavio provides the technology that processes those details to deliver the restaurant's requested service. For a question about a specific restaurant's use of your details, contact the restaurant first; we will help route a request where appropriate.",
+          "Khaavio is a software platform for restaurant digital menus, table QR codes, order requests, order tracking, kitchen workflows, bookings, table-service requests and subscription access. This policy applies to the Khaavio website and services operated by Khaavio.",
+          "When a guest uses a restaurant's Khaavio-powered menu, order or booking flow, the restaurant generally determines why it collects the guest's information and how it uses it. Khaavio provides technology to process and display that information so the restaurant can manage its service. For a request about a restaurant's own use of guest information, contact that restaurant first; we will help route requests where appropriate.",
         ],
       },
       {
         title: "2. Information we may handle",
         bullets: [
-          "Account information: name, email address, authentication identifiers and account or access status.",
-          "Restaurant workspace information: restaurant name, slug, contact or address details supplied by the operator, menu items, prices, opening hours, table settings, logos and other content the operator uploads.",
-          "Guest order and booking information: name, a mobile number for public menu orders, email when provided, party size, requested date and time, order items, notes, booking/order status and reference identifiers.",
-          "Subscription and support information: selected plan, request notes, amount and payment reference/UTR supplied for manual verification, activation status, support messages and related records.",
-          "Technical information: basic request, device, browser, diagnostic and security information needed to operate, protect and troubleshoot the service.",
+          "Account and authentication information: name, email address, authentication identifiers, account status and access permissions.",
+          "Restaurant workspace information: business name, menu slug, contact details, address, opening hours, menu items, prices, photos, logos, table settings and content uploaded by the restaurant team.",
+          "Guest order and booking information: name, mobile number, email if supplied, party size, requested date and time, order items, notes, order or booking status, reference identifiers and related service requests. Khaavio requires a mobile number for public menu orders so the restaurant can process the order and provide order-related updates.",
+          "Subscription and support information: selected plan, renewal requests, payment amount and reference/UTR provided for manual verification, activation status, enquiry details and support correspondence.",
+          "Technical and security information: basic browser/device information, request and diagnostic records, and information needed to protect, troubleshoot and maintain the service.",
         ],
       },
       {
         title: "3. How we use information",
         bullets: [
-          "Create and secure accounts and restaurant workspaces.",
-          "Display restaurant menus and pass orders or booking requests to the relevant restaurant workspace.",
-          "Provide order tracking, kitchen updates, receipts, subscription administration and customer support.",
-          "Group submitted orders by the guest-provided mobile number to show the relevant restaurant repeat-visit and order trends. Promotional messages require any consent that applicable law requires; submitting an order is not marketing consent.",
-          "Verify manual subscription payments, prevent fraud or misuse, maintain records and resolve disputes.",
-          "Maintain platform reliability, troubleshoot failures, protect the service and meet legal obligations.",
+          "Create, authenticate and secure accounts and restaurant workspaces.",
+          "Publish restaurant menus and deliver order, booking and service requests to the relevant restaurant workspace.",
+          "Provide order tracking, kitchen updates, receipts, table sessions, subscription administration and support.",
+          "Verify manual subscription payments, prevent misuse, resolve payment questions and maintain appropriate business records.",
+          "Understand repeat-visit and order trends for the relevant restaurant where the product feature uses guest-provided identifiers. Where relevant, submitting an order is not marketing consent and does not, by itself, authorise promotional marketing messages.",
+          "Troubleshoot errors, maintain service reliability, protect users and meet applicable legal obligations.",
         ],
         paragraphs: [
-          "We use information for the purposes described here and as otherwise explained when information is collected. Where required by applicable law, we will seek valid consent and provide a practical way to withdraw it.",
-        ],
-      },
-      {
-        title: "4. How information is shared",
-        paragraphs: [
-          "Guest information submitted on a restaurant's page is made available to the relevant restaurant so it can manage the order or booking. Restaurant owners and authorised team members are responsible for controlling who in their organisation can access it.",
-          "We use service providers to host and operate the platform, including Vercel for website hosting and Supabase for authentication and database services. These providers may process information as needed to provide their services under their applicable terms and safeguards. We may also disclose information where reasonably necessary to address legal process, protect users or the service, or handle a business reorganisation. We do not sell personal information as a business model.",
+          "We use information for the purposes described in this policy or explained when it is collected. Where applicable law requires consent or another notice, we will follow the requirements that apply to the relevant processing.",
         ],
       },
       {
-        title: "5. Payments and payment references",
+        title: "4. Restaurant responsibilities for guest information",
         paragraphs: [
-          "Khaavio subscription renewals may be reviewed manually. To verify a subscription payment, we may record the plan, amount, payment reference/UTR, verification status and related dates. Do not send us your password, card PIN, banking password or one-time password (OTP).",
-          "Food, beverage, booking deposits and other restaurant charges are managed by the restaurant unless a particular flow clearly states otherwise. Khaavio does not act as the restaurant or prepare or deliver food.",
+          "Restaurant owners and authorised team members can access the information needed to manage their menus, orders, bookings and table-service requests. Restaurants are responsible for limiting staff access, keeping their own notices and practices appropriate, and using guest information only for legitimate purposes and in accordance with applicable law.",
+          "If you are a guest and want a restaurant to correct or delete details it collected, contact that restaurant. Khaavio can assist when the request concerns platform systems or information for which Khaavio is responsible.",
         ],
       },
       {
-        title: "6. Cookies and browser storage",
+        title: "5. Sharing and service providers",
         paragraphs: [
-          "The platform may use essential browser storage and session technologies to keep you signed in, remember necessary settings and protect account access. Your browser may also retain technical data needed for security and troubleshooting. If optional analytics or advertising technologies are introduced, we will update this policy and provide choices or notices where required by law.",
+          "We share guest order or booking details with the restaurant that needs those details to respond to the guest. We use technology providers, including Supabase for authentication and database services and Vercel for website hosting, to operate the platform. They may process information as necessary to provide their services under their applicable terms and safeguards.",
+          "We may disclose information where reasonably necessary to comply with law or valid legal process, protect the rights and security of users or the service, investigate abuse, or manage a permitted business reorganisation. We do not sell personal information as a business model.",
+        ],
+      },
+      {
+        title: "6. Website forms, email and browser storage",
+        paragraphs: [
+          "The Book a Free Demo and Contact Us forms on the current website prepare an email in the visitor's email application. The visitor must send that email to complete the enquiry. The website form does not itself save the request to a Khaavio database or automatically book a calendar slot. If you send an email, we receive and use the information you include to respond to your enquiry.",
+          "Khaavio may use essential browser storage and session technologies to keep users signed in, remember necessary settings and protect account access. If optional analytics, advertising or other non-essential tracking technologies are introduced, we will update this policy and provide any choices or notices required by applicable law.",
         ],
       },
       {
         title: "7. Retention and security",
         paragraphs: [
-          "We retain information for as long as reasonably needed to provide the service, maintain business and security records, resolve issues, enforce agreements or comply with applicable law. Retention can vary by data type and the restaurant's settings and obligations. Deletion from an active system may not immediately remove every backup or record we must retain.",
-          "We use reasonable technical and organisational safeguards designed to protect information. No online service or transmission can be guaranteed to be completely secure. Restaurant operators must protect their credentials and limit workspace access to people who need it.",
+          "We retain information for as long as reasonably necessary to provide the service, maintain security and business records, resolve disputes, enforce agreements or meet legal obligations. Retention varies by data type, purpose and the restaurant's settings and obligations. Information removed from an active system may remain in backups or records that must be retained for a legitimate or legal reason for a limited period.",
+          "We use reasonable technical and organisational safeguards designed to protect information. No online service or method of transmission can be guaranteed completely secure. Keep credentials confidential, use strong authentication where available and restrict workspace access to people who need it.",
         ],
       },
       {
-        title: "8. Your choices and requests",
+        title: "8. Your choices and privacy requests",
         paragraphs: [
-          "You can ask us to access, correct or delete Khaavio account information, or raise a privacy question, by emailing us from the address associated with the account. We may need to verify your identity and may retain information where permitted or required for security, legal or recordkeeping purposes.",
-          "If your information was submitted by a restaurant guest through a restaurant's menu, booking or order flow, contact that restaurant first for requests relating to the restaurant's use of the information. We will assist where the request concerns systems operated by Khaavio.",
+          "You can contact us to ask about Khaavio account information, request correction or deletion where appropriate, or raise a privacy concern. Email the address below and identify the relevant account or request. We may ask for reasonable information to verify your identity. Some records may need to be retained where permitted or required by law, for security or to resolve disputes.",
+          "Where processing is handled on behalf of a restaurant, the restaurant may need to decide or respond to the request. We will assist with routing the request where appropriate and handle platform-side requests according to applicable law.",
         ],
       },
       {
-        title: "9. Children",
+        title: "9. Children and sensitive information",
         paragraphs: [
-          "Khaavio restaurant workspaces are designed for business operators and authorised team members, not for children to create business accounts. Restaurants are responsible for ensuring that guest information they collect through their own workflows is collected and used lawfully, including any applicable requirements relating to children or guardians.",
+          "Khaavio restaurant workspaces are intended for business operators and authorised team members, not for children to create business accounts. Please do not send passwords, card PINs, banking passwords or one-time passwords (OTPs) to Khaavio. Restaurants must handle guest information lawfully, including any requirements that apply to children or guardians.",
         ],
       },
       {
-        title: "10. Indian data protection framework and privacy requests",
+        title: "10. Indian privacy law and policy updates",
         paragraphs: [
-          "Khaavio reviews its personal-data handling against applicable Indian privacy law, including the Digital Personal Data Protection Act, 2023 and the Digital Personal Data Protection Rules, 2025. Different provisions have different commencement dates under the notified schedule. This policy does not represent a provision as currently in force before its legal commencement; we will update notices and workflows as requirements applicable to our service take effect.",
-          "To request access to, correction of, or erasure of Khaavio account information—or to withdraw consent where processing is based on consent—email khaavioqr@gmail.com. Describe the request and identify the account using the associated email address. We may need to verify identity, coordinate with a restaurant where it determines how guest information is used, and retain certain records where permitted or required by law. We will handle verified requests within the timelines required by applicable law.",
-          "Where Khaavio provides technical processing on behalf of a restaurant, that restaurant may be the right first contact for decisions about guest data. We will assist with routing a request where appropriate."
-        ],
-      },
-      {
-        title: "11. Updates and contact",
-        paragraphs: [
-          "We may update this policy when the service or legal requirements change. The latest version will be published on this page with its updated date. Material changes will be communicated through the platform or another reasonable channel where appropriate.",
+          "Khaavio reviews its data-handling practices against applicable Indian privacy law, including the Digital Personal Data Protection Act, 2023 and the Digital Personal Data Protection Rules, 2025. The notified framework has phased commencement dates. We will implement and update the notices and workflows required as the relevant provisions applicable to the service come into effect; this policy does not state that a provision is in force before its applicable commencement date.",
+          "We may update this policy when the service, our providers or applicable requirements change. The latest version and update date will be published on this page. Material changes may also be communicated through the platform or another reasonable channel where appropriate.",
         ],
       },
     ],
@@ -107,141 +103,143 @@ const LEGAL_CONTENT = {
     eyebrow: "A CLEAR WAY TO WORK TOGETHER",
     title: "Terms & Conditions",
     description:
-      "The terms for using Khaavio's restaurant software, digital menus, QR ordering, bookings and subscription services.",
+      "The terms that apply to access and use of Khaavio's restaurant software, digital menus, QR ordering, bookings and subscription services.",
     intro:
-      "These Terms govern your access to the Khaavio website and platform. By creating an account or using the service, you agree to these Terms. If you use Khaavio for a restaurant or business, you confirm that you are authorised to bind that business to these Terms.",
+      "These Terms govern your access to the Khaavio website and platform. By creating an account or using the service, you agree to these Terms. If you use Khaavio for a restaurant or business, you confirm that you are authorised to act for that business.",
     sections: [
       {
-        title: "1. What Khaavio provides",
+        title: "1. The Khaavio service",
         paragraphs: [
-          "Khaavio provides digital tools that may include restaurant-branded menus, table QR codes, online order requests, order tracking, kitchen updates, table bookings, receipts, analytics and subscription management. Features and limits depend on the plan and the functionality available at the time.",
-          "Khaavio is a technology platform, not a restaurant, food manufacturer, delivery provider or agent of any restaurant. A restaurant remains responsible for its food, prices, availability, hygiene, allergens, fulfilment, booking acceptance and guest service.",
+          "Khaavio provides digital tools that may include restaurant-branded menus, restaurant and table QR codes, QR-based order requests, order tracking, kitchen updates, table-side service requests, bookings, receipts, analytics and subscription management. Available features, limits and eligibility depend on the plan and the functionality available at the time.",
+          "Khaavio is a technology provider, not a restaurant, food manufacturer, delivery provider or agent of a restaurant. The restaurant remains responsible for its food, menu descriptions, prices, availability, hygiene, allergen information, order acceptance and fulfilment, booking decisions, guest service and restaurant-side charges or refunds.",
         ],
       },
       {
-        title: "2. Accounts and access",
+        title: "2. Accounts and authorised access",
         bullets: [
-          "Provide accurate account and restaurant information and keep it updated.",
-          "Keep your password and authentication methods confidential and promptly tell us if you suspect unauthorised access.",
-          "Only invite team members who are authorised to access the workspace, and promptly remove access when it is no longer needed.",
-          "You are responsible for activity performed through your account, except where applicable law provides otherwise.",
+          "Provide accurate account and restaurant details and update them when they change.",
+          "Keep passwords and authentication methods confidential and tell us promptly if you suspect unauthorised access.",
+          "Only grant workspace access to team members who are authorised to use it, and remove access when no longer needed.",
+          "Do not impersonate another person, bypass access controls or use another person's account without permission.",
+          "You are responsible for activity through your account except where applicable law provides otherwise.",
         ],
       },
       {
-        title: "3. Free trial, plans and subscriptions",
+        title: "3. Free trial, plans and subscription access",
         paragraphs: [
-          "The website currently advertises a 7-day free trial without a card requirement. Trial access begins when it is assigned to the restaurant workspace and may end or become limited after the trial period unless an eligible plan is activated.",
-          "Plan names, prices, billing intervals, feature limits and availability are shown in the product or communicated by Khaavio. Prices are shown in Indian rupees (INR). Applicable taxes, if any, will be communicated or shown before payment where required.",
-          "Khaavio may use a manual renewal-request and payment-verification process. Submitting a renewal request is not itself confirmation that a paid plan is active. Access is updated after the payment and request are verified and the plan is assigned. Unless a checkout or written offer clearly says otherwise, do not assume that a subscription automatically renews or that a payment method will be charged automatically.",
-          "Changes to plan prices or features will apply prospectively and will not remove rights that applicable law gives you for a paid period already purchased.",
+          "Khaavio currently advertises a 7-day free trial without a card requirement. Trial access begins when it is assigned to the restaurant workspace. When the trial ends, access may be limited unless an eligible paid plan is activated.",
+          "Plan names, features, limits, billing periods, prices and promotional offers are shown on the website or communicated by Khaavio. Prices are stated in Indian rupees (INR). Applicable taxes, if any, will be communicated before payment where required.",
+          "During the current early-access pilot, subscription activation and renewal requests are handled manually; online payment collection and automatic recurring renewals are not enabled. A renewal request or payment reference is not confirmation that a plan is active. Access changes after the request and payment (if any) have been verified and the plan is assigned.",
+          "Changes to price or features apply prospectively and do not remove rights applicable law gives you for a paid period already purchased. Offers, including founding offers, are subject to the eligibility and duration displayed when they are offered.",
         ],
       },
       {
-        title: "4. Restaurant responsibilities",
+        title: "4. Restaurant duties and customer information",
         bullets: [
-          "Ensure that menu descriptions, prices, availability, opening hours, booking rules and restaurant details are accurate and lawful.",
-          "Handle food preparation, allergen information, order acceptance and fulfilment, guest complaints, cancellations and restaurant-side refunds.",
-          "Use guest information only for legitimate restaurant operations and protect it from unauthorised access.",
-          "Ensure that uploaded logos, photographs, menu text and other content may lawfully be used and displayed.",
+          "Keep menu items, prices, opening hours, stock or availability, booking rules and business details accurate and lawful.",
+          "Handle food safety, allergens, preparation, order acceptance, fulfilment, cancellations, guest complaints and restaurant-side refunds.",
+          "Use guest information only for legitimate restaurant operations, protect it from unauthorised access and comply with privacy obligations that apply to your business.",
+          "Only upload logos, images, descriptions and other material you have the right to use and display.",
         ],
       },
       {
-        title: "5. Guest orders and bookings",
+        title: "5. Guest orders, service requests and bookings",
         paragraphs: [
-          "A guest order or booking request made through a Khaavio-powered page is directed to the relevant restaurant. The restaurant determines availability, accepts or rejects requests, prepares the order and communicates any restaurant-specific payment or cancellation conditions. Guests should contact the restaurant about food, fulfilment, allergens, reservation changes or restaurant charges.",
+          "A guest order or booking request through a Khaavio-powered page is directed to the relevant restaurant. The restaurant determines availability, accepts or rejects requests, prepares and fulfils orders, handles guest service and communicates its own payment, cancellation and refund terms. Guests should contact the restaurant about food, fulfilment, allergens, reservation changes or restaurant charges.",
         ],
       },
       {
-        title: "6. Acceptable use and content",
+        title: "6. Content and intellectual property",
         paragraphs: [
-          "Do not misuse the service, attempt unauthorised access, interfere with platform security, upload unlawful or deceptive content, submit malicious code, or use the platform to violate another person's rights. We may remove content or restrict access where reasonably necessary to protect the service, users or compliance with law.",
-          "You keep your rights in content you upload. You grant Khaavio permission to host, process, display and transmit that content only as reasonably needed to provide, maintain and support the service. You are responsible for the accuracy and legality of your content.",
+          "You retain rights you hold in content you upload. You permit Khaavio to host, process, display and transmit that content only as reasonably needed to provide, maintain, secure and support the service. You remain responsible for the accuracy and legality of your content and for respecting third-party rights.",
+          "Do not misuse the service, attempt unauthorised access, interfere with security, upload unlawful or deceptive material, submit malicious code, disrupt other users or use Khaavio to violate another person's rights. Where reasonably necessary, we may remove content or restrict access to protect users, the platform or compliance with law.",
         ],
       },
       {
-        title: "7. Availability and changes",
+        title: "7. Availability and third-party services",
         paragraphs: [
-          "We aim to keep Khaavio useful and reliable, but uninterrupted or error-free operation cannot be guaranteed. Maintenance, network issues, third-party service failures or changes outside our reasonable control may temporarily affect access. We may update or discontinue features where reasonably necessary, while taking reasonable steps to communicate material changes to users who may be affected.",
+          "We aim to keep Khaavio useful and reliable, but uninterrupted or error-free operation cannot be guaranteed. Maintenance, internet or device issues, third-party service failures and events outside our reasonable control may affect access. We may update or discontinue features when reasonably necessary and will take reasonable steps to communicate material changes to affected users where appropriate.",
+          "The platform relies on third-party infrastructure and services that may have their own terms and availability. This does not exclude responsibilities Khaavio has under applicable law.",
         ],
       },
       {
-        title: "8. Privacy and third-party services",
+        title: "8. Cancellation, suspension and account closure",
         paragraphs: [
-          "Our Privacy Policy explains how information is handled. The platform relies on third-party infrastructure and services, which may be subject to their own terms. We are not responsible for independent third-party services beyond the responsibilities imposed on us by applicable law.",
+          "You may stop using Khaavio and request account closure through support. If you have a paid subscription, send a cancellation request before requesting or paying for a further renewal and ask support to confirm your access end date. Under the current pilot, subscriptions are not automatically renewed or charged automatically.",
+          "We may suspend or restrict access when reasonably necessary to address security risks, unlawful use, non-payment, a material breach of these Terms or a serious risk to the service or other users. Where appropriate, we will provide notice and an opportunity to resolve the issue. Records may be retained as permitted or required by law, and terms that by their nature should continue will survive account closure.",
         ],
       },
       {
-        title: "9. Suspension and termination",
+        title: "9. Disclaimers and liability",
         paragraphs: [
-          "You may stop using Khaavio and request account closure through support. We may suspend or restrict access if reasonably necessary to address security risks, unlawful use, non-payment, a material breach of these Terms or a risk to other users. Where appropriate, we will provide notice and an opportunity to resolve the issue. Outstanding obligations and provisions that by their nature should continue will survive termination.",
+          "Khaavio is provided on an as-available basis, subject to warranties and rights that cannot be excluded under applicable law. To the maximum extent permitted by law, Khaavio is not responsible for losses caused by a restaurant's own food, pricing, availability, bookings, fulfilment or business decisions. Nothing in these Terms excludes or limits liability or consumer rights that cannot lawfully be excluded or limited.",
         ],
       },
       {
-        title: "10. Disclaimers and liability",
+        title: "10. Complaints, governing law and contact",
         paragraphs: [
-          "Khaavio is supplied on an as-available basis, subject to warranties and rights that cannot be excluded under applicable law. To the maximum extent permitted by law, Khaavio is not responsible for indirect or consequential loss arising from a restaurant's own food, pricing, booking, fulfilment or business decisions. Nothing in these Terms excludes or limits liability or consumer rights that cannot lawfully be excluded or limited.",
-        ],
-      },
-      {
-        title: "11. Consumer complaints and grievance handling",
-        paragraphs: [
-          "Send complaints about Khaavio software, account access or subscription billing to khaavioqr@gmail.com. Include your account email, a clear description of the issue and relevant dates or payment references. Do not send passwords, card PINs, banking passwords or OTPs.",
-          "We aim to acknowledge consumer complaints within 48 hours and resolve them within 30 days, or sooner where a different deadline is required by applicable law. This process does not limit any statutory right or remedy. For food quality, fulfilment, restaurant-side cancellations, bookings or charges collected by a restaurant, contact the restaurant directly; Khaavio can assist with issues relating to the platform itself."
-        ],
-      },
-      {
-        title: "12. Law, changes and contact",
-        paragraphs: [
-          "These Terms are governed by the laws of India, subject to any mandatory protections and jurisdictional rights available under applicable law. We may update the Terms as the platform evolves; the latest version and its updated date will appear here.",
+          "For complaints about Khaavio software, account access or subscription billing, email the grievance contact displayed on this page with your account email, a clear description and relevant dates or payment references. Do not include passwords, card PINs, banking passwords or OTPs. We aim to acknowledge consumer complaints within 48 hours and redress them within 30 days of receipt, or sooner where applicable law requires.",
+          "These Terms are governed by the laws of India, subject to mandatory consumer protections and jurisdictional rights available under applicable law. If a provision is unenforceable, the remaining provisions continue to the extent permitted by law. We may update these Terms as the service changes; the current version and update date will be published on this page.",
         ],
       },
     ],
   },
   refund: {
     eyebrow: "STRAIGHTFORWARD BILLING, CLEAR EXPECTATIONS",
-    title: "Refund & Cancellation Policy",
+    title: "Cancellation & Refund Policy",
     description:
-      "How Khaavio handles subscription cancellations, manual payment verification and refund requests.",
+      "How to cancel Khaavio subscription access, request a subscription refund and raise billing concerns.",
     intro:
-      "This policy covers fees paid to Khaavio for its software subscriptions. It does not replace a restaurant's own policy for food orders, table bookings, deposits or other restaurant charges.",
+      "This policy covers payments made to Khaavio for its software subscriptions. It does not replace a restaurant's own policy for food orders, table bookings, deposits or other restaurant charges.",
     sections: [
       {
-        title: "1. Free trial",
+        title: "1. Free trial and current billing setup",
         paragraphs: [
-          "Khaavio currently advertises a 7-day free trial without a card requirement. If no payment was collected for the trial, there is no trial fee to refund. A paid plan is activated only when the applicable plan and payment process have been completed.",
+          "Khaavio currently advertises a 7-day free trial without a card requirement. If no fee was collected for the trial, there is no trial payment to refund. Trial access begins when it is assigned to the restaurant workspace.",
+          "During the current early-access pilot, plan activation and renewal requests are handled manually. Online payment collection and automatic recurring renewals are not enabled. We will not describe an account as paid or renewed until the relevant request and payment (if applicable) have been verified and the plan has been assigned.",
         ],
       },
       {
-        title: "2. Subscription renewals and cancellation",
+        title: "2. How to cancel a subscription",
         paragraphs: [
-          "Subscription renewals may be requested and verified manually. Sending a renewal request does not guarantee activation and does not, by itself, authorise an automatic charge. If you do not want to continue after your current access period, do not submit or pay for a further renewal request. Contact support if you need help confirming your current plan or end date.",
+          "To stop using a paid plan or close your account, email the support contact below from the email address associated with your workspace. Include the restaurant name, account email, plan and the date you want cancellation to take effect. Ask us to confirm the effective date and any remaining access.",
+          "Because automatic renewals are not enabled in the current pilot, a subscription will not be automatically charged for a new period. If you do not want to continue after your current access period, do not request or pay for another renewal. Contact support if you need help confirming your plan status or end date.",
         ],
       },
       {
-        title: "3. When a refund may be available",
+        title: "3. When a subscription refund may be approved",
         paragraphs: [
-          "We review refund requests individually. Subject to verification and applicable law, a refund may be approved for a duplicate payment, an amount charged or received in error, or a verified subscription payment where access was not activated because of a Khaavio-side issue and we cannot resolve the activation problem within five business days after you notify support. We will also consider other cases where a refund is required by law or is expressly approved by Khaavio in writing.",
-          "Except where required by law or expressly agreed in writing, partial-period or pro-rata refunds are not automatic after a subscription has been activated. Unused days, low usage, a restaurant's decision to stop using the platform, or a change of business plans do not by themselves guarantee a refund.",
+          "Refund requests are reviewed individually and verified before a decision is made. Subject to applicable law, a refund may be approved for a duplicate payment, a payment received or recorded in error, or a verified subscription payment where access was not activated because of a Khaavio-side issue and we cannot resolve the activation problem within five business days after you notify support. We will also consider other cases where a refund is required by law or expressly approved by Khaavio in writing.",
+          "A partial-period or pro-rata refund is not automatic after subscription access has been activated. Unused days, low usage, a restaurant's decision to stop using the platform or a change in business plans do not by themselves guarantee a refund, subject always to rights that cannot lawfully be excluded.",
         ],
       },
       {
-        title: "4. Restaurant guest payments are handled by restaurants",
-        paragraphs: [
-          "Khaavio provides ordering and booking technology; it does not prepare or deliver restaurant food. Requests for refunds, cancellations, booking deposits, incorrect dishes or restaurant-side payments must be directed to the restaurant that accepted the order or booking. The restaurant is responsible for its own guest-facing policy and applicable obligations.",
+        title: "4. How to request a refund",
+        bullets: [
+          "Email khaavioqr@gmail.com from the email associated with the account.",
+          "Include the restaurant name, account email, plan, payment date, amount and payment reference/UTR if applicable.",
+          "Explain the reason for the request and attach a receipt or payment confirmation if available.",
+          "Never send passwords, card PINs, banking passwords or OTPs. We may request reasonable additional information to verify the payment and prevent fraud.",
         ],
       },
       {
-        title: "5. How to request a refund",
+        title: "5. Review and refund processing time",
         paragraphs: [
-          "Email khaavioqr@gmail.com with the account email, restaurant name, plan, payment date, amount and payment reference/UTR (if applicable). Explain the issue and include any receipt or confirmation that supports the request. Do not send passwords, card PINs, banking passwords or OTPs. We may request reasonable information to verify the payment and prevent fraud.",
-          "We aim to review complete requests within five business days. If approved, we aim to initiate the refund within 7–10 business days using the original payment method where possible or another verified method agreed with you. Banks and payment providers may take additional time to credit the funds. We will explain the outcome if a request is declined.",
+          "We aim to review complete refund requests within five business days. If approved, we aim to initiate a refund within 7–10 business days using the original payment method where possible, or another verified method agreed with you. A bank or payment provider may need additional time to credit the amount. We will explain the outcome if a request is declined.",
+          "These are service targets, not a reduction of any shorter deadline or right that applies under law or the payment method used. A refund may require payment verification and may be delayed while we reasonably investigate an unclear or potentially fraudulent transaction.",
         ],
       },
       {
-        title: "6. Legal rights, complaints and updates",
+        title: "6. Restaurant guest orders and bookings",
         paragraphs: [
-          "Subscription billing complaints and policy concerns can be sent to khaavioqr@gmail.com with the account email, relevant dates, amount and payment reference where applicable. We aim to acknowledge consumer complaints within 48 hours and resolve them within 30 days, or sooner where a different deadline is required by applicable law.",
-          "Nothing in this policy limits any refund, cancellation or consumer right that cannot lawfully be excluded. Any mandatory statutory right or applicable payment-system requirement takes precedence over a conflicting statement in this policy. This policy may be updated as billing workflows or legal requirements change; the current version and its updated date will be published here.",
+          "Khaavio provides ordering and booking technology and does not prepare or deliver restaurant food. Refunds or cancellations for food, incorrect dishes, restaurant deposits, no-shows, restaurant bookings or amounts collected by a restaurant must be requested from that restaurant. The restaurant is responsible for its guest-facing policy and applicable obligations. Khaavio can help with technical issues involving the platform but cannot promise a restaurant-side refund.",
+        ],
+      },
+      {
+        title: "7. Complaints, legal rights and updates",
+        paragraphs: [
+          "For subscription billing complaints, email the grievance contact displayed on this page. We aim to acknowledge consumer complaints within 48 hours and redress them within 30 days of receipt, or sooner where applicable law requires. Include relevant dates, the account email and payment reference where applicable.",
+          "Nothing in this policy limits a cancellation, refund or consumer right that cannot lawfully be excluded, including any statutory right or remedy that cannot lawfully be excluded. If a mandatory legal requirement conflicts with this policy, the mandatory requirement takes precedence. We may update this policy as billing workflows or applicable requirements change; the latest version and update date will be published here.",
         ],
       },
     ],
@@ -250,11 +248,10 @@ const LEGAL_CONTENT = {
 
 export default function LegalPage({ type }) {
   const page = LEGAL_CONTENT[type] || LEGAL_CONTENT.privacy;
-
-  const otherLinks = [
-    { label: "Privacy", to: "/privacy", active: type === "privacy" },
-    { label: "Terms", to: "/terms", active: type === "terms" },
-    { label: "Refunds", to: "/refund-policy", active: type === "refund" },
+  const links = [
+    { label: "Privacy Policy", to: "/privacy", active: type === "privacy" },
+    { label: "Terms & Conditions", to: "/terms", active: type === "terms" },
+    { label: "Cancellation & Refund", to: "/refund-policy", active: type === "refund" },
   ];
 
   return (
@@ -264,9 +261,7 @@ export default function LegalPage({ type }) {
           <img src={khaavioIcon} alt="" width="42" height="42" />
           <span>Khaa<span>vio</span></span>
         </Link>
-        <Link to="/" className="kh-legal-back">
-          <ArrowLeft size={16} /> Back to Khaavio
-        </Link>
+        <Link to="/" className="kh-legal-back"><ArrowLeft size={16} /> Back to Khaavio</Link>
       </header>
 
       <section className="kh-legal-hero">
@@ -277,13 +272,8 @@ export default function LegalPage({ type }) {
       </section>
 
       <nav className="kh-legal-tabs" aria-label="Legal pages">
-        {otherLinks.map((item) => (
-          <Link
-            key={item.to}
-            to={item.to}
-            className={item.active ? "is-active" : ""}
-            aria-current={item.active ? "page" : undefined}
-          >
+        {links.map((item) => (
+          <Link key={item.to} to={item.to} className={item.active ? "is-active" : ""} aria-current={item.active ? "page" : undefined}>
             {item.label}
           </Link>
         ))}
@@ -299,8 +289,9 @@ export default function LegalPage({ type }) {
           <div><dt>Legal operator</dt><dd>Kaushal Kumar</dd></div>
           <div><dt>Principal business address</dt><dd>Patna, Bihar – 800011, India</dd></div>
           <div><dt>Grievance Officer</dt><dd>Kaushal Kumar (Platform Operator)</dd></div>
-          <div><dt>Phone</dt><dd><a href="tel:+919471640485">+91 9471640485</a></dd></div>
-          <div><dt>Grievance email</dt><dd><a href="mailto:kaushalpzti@gmail.com">kaushalpzti@gmail.com</a></dd></div>
+          <div><dt>Phone</dt><dd><a href={`tel:${OPERATOR_PHONE}`}>+91 9471640485</a></dd></div>
+          <div><dt>Grievance email</dt><dd><a href={`mailto:${GRIEVANCE_EMAIL}`}>{GRIEVANCE_EMAIL}</a></dd></div>
+          <div><dt>Support email</dt><dd><a href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL}</a></dd></div>
         </dl>
         <p className="kh-legal-operator-timing">We aim to acknowledge consumer complaints within 48 hours and redress them within 30 days of receipt, or sooner where applicable law requires.</p>
       </section>
@@ -310,19 +301,14 @@ export default function LegalPage({ type }) {
           <section className="kh-legal-section" key={section.title}>
             <h2>{section.title}</h2>
             {section.paragraphs?.map((paragraph) => <p key={paragraph}>{paragraph}</p>)}
-            {section.bullets && (
-              <ul>
-                {section.bullets.map((item) => <li key={item}>{item}</li>)}
-              </ul>
-            )}
+            {section.bullets && <ul>{section.bullets.map((item) => <li key={item}>{item}</li>)}</ul>}
           </section>
         ))}
-
         <aside className="kh-legal-contact">
           <div className="kh-legal-contact-icon"><Mail size={20} /></div>
           <div>
             <h2>Support &amp; grievance contact</h2>
-            <p>For privacy requests, subscription questions or consumer complaints, contact Khaavio Support. We aim to acknowledge consumer complaints within 48 hours and address them within 30 days, or sooner where applicable law requires.</p>
+            <p>For privacy requests, cancellation questions, subscription billing or consumer complaints, contact Khaavio. Please do not send passwords, card PINs, banking passwords or OTPs.</p>
             <div className="kh-legal-contact-actions">
               <a href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL} <ArrowUpRight size={14} /></a>
               <a href={`https://wa.me/${SUPPORT_WHATSAPP}`} target="_blank" rel="noreferrer">WhatsApp support <ArrowUpRight size={14} /></a>
@@ -333,7 +319,11 @@ export default function LegalPage({ type }) {
 
       <footer className="kh-legal-footer">
         <span>© {new Date().getFullYear()} Khaavio. Every Table, Digitally Connected.</span>
-        <div className="kh-legal-footer-links"><Link to="/about">About Khaavio</Link><Link to="/">Back to homepage <ArrowUpRight size={14} /></Link></div>
+        <div className="kh-legal-footer-links">
+          <Link to="/about">About Khaavio</Link>
+          <Link to="/contact">Contact Us</Link>
+          <Link to="/">Back to homepage <ArrowUpRight size={14} /></Link>
+        </div>
       </footer>
     </main>
   );

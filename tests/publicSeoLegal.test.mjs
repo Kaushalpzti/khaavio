@@ -40,6 +40,7 @@ test("application routes and footer expose all legal pages", () => {
     assert.ok(home.includes(`to="${route}"`), `Missing footer link ${route}`);
     assert.ok(auth.includes(`to="${route}"`), `Missing auth legal link ${route}`);
   }
+  assert.match(app, /path="\/contact" element=\{<Contact \/>\}/);
   assert.match(app, /<SeoManager\s*\/>/);
 });
 
@@ -58,7 +59,7 @@ test("About page has a public route, metadata and homepage quick link", () => {
 
 test("legal policies are reviewed against current Indian privacy and consumer grievance requirements", () => {
   const legal = readRoot("src/pages/LegalPage.jsx");
-  assert.match(legal, /28 October 2026/);
+  assert.match(legal, /29 October 2026/);
   assert.match(legal, /Digital Personal Data Protection Act, 2023/);
   assert.match(legal, /Digital Personal Data Protection Rules, 2025/);
   assert.match(legal, /48 hours/);
@@ -80,31 +81,34 @@ test("operator identity and grievance contact appear on legal pages but not the 
   ]) {
     assert.ok(legal.includes(text), `legal pages should show ${text}`);
   }
-  assert.match(legal, /href="tel:\+919471640485"/);
-  assert.match(legal, /href="mailto:kaushalpzti@gmail\.com"/);
+  assert.ok(legal.includes('const OPERATOR_PHONE = "+919471640485";'));
+  assert.ok(legal.includes('href={`tel:${OPERATOR_PHONE}`}'));
+  assert.match(legal, /href=\{`mailto:\$\{GRIEVANCE_EMAIL\}`\}/);
   assert.doesNotMatch(home, /kh-footer-operator|Kaushal Kumar|Patna, Bihar|Grievance Officer|tel:\+919471640485|mailto:kaushalpzti@gmail\.com/);
 });
 
-test("homepage uses vector social icons and includes comparison and motion sections", () => {
+test("redesigned homepage exposes vector social links, product sections and responsive motion", () => {
   const home = readRoot("src/pages/Home.jsx");
   const styles = readRoot("src/pages/Home.css");
-  assert.ok(home.indexOf('name: "Instagram"') < home.indexOf('name: "LinkedIn"'));
-  assert.ok(home.indexOf('name: "LinkedIn"') < home.indexOf('name: "YouTube"'));
-  assert.ok(home.indexOf('name: "YouTube"') < home.indexOf('name: "Facebook"'));
-  assert.match(home, /function SocialIcon\(\{ name \}\)/);
-  assert.match(home, /<SocialIcon name=\{profile\.name\} \/>/);
-  assert.doesNotMatch(home, /profile\.mark/);
-  assert.match(home, /id="comparison"/);
-  assert.match(home, /kh-comparison-grid/);
-  assert.match(styles, /@keyframes kh-hero-reveal/);
-  assert.match(styles, /kh-steps\.is-visible::before/);
-  assert.match(styles, /kh-comparison-grid\.is-visible/);
+  assert.match(home, /FOLLOW KHAAVIO/);
+  assert.match(home, /function InstagramBrandIcon/);
+  assert.match(home, /<InstagramBrandIcon size=\{18\} \/>/);
+  assert.match(home, /MessageCircle size=\{18\}/);
+  assert.match(home, /https:\/\/www\.instagram\.com\/khaavio\//);
+  assert.match(home, /https:\/\/wa\.me\/917324883263/);
+  assert.match(home, /id="features"/);
+  assert.match(home, /id="how-it-works"/);
+  assert.match(home, /id="book-demo"/);
+  assert.match(styles, /@keyframes kh2-laptop-float/);
+  assert.match(styles, /\.kh2-reveal\.is-visible/);
+  assert.match(styles, /@media \(max-width: 620px\)/);
 });
 
 test("route navigation resets scroll to the top before paint", () => {
   const app = readRoot("src/App.jsx");
   assert.match(app, /function ScrollToTop\(\)/);
-  assert.match(app, /useLayoutEffect\(\(\) => \{\s*window\.scrollTo\(\{ top: 0, left: 0, behavior: "instant" \}\);/);
+  assert.match(app, /useLayoutEffect\(\(\) => \{[\s\S]*?window\.scrollTo\(\{ top: 0, left: 0, behavior: "instant" \}\);[\s\S]*?\}, \[pathname, hash\]\);/);
+  assert.match(app, /if \(hash\) return;/);
   assert.match(app, /<ScrollToTop\s*\/>/);
 });
 

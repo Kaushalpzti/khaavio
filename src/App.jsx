@@ -13,6 +13,7 @@ import "./PageLoader.css";
 // Public pages
 const Home = lazy(() => import("./pages/Home"));
 const About = lazy(() => import("./pages/About"));
+const Contact = lazy(() => import("./pages/Contact"));
 const Auth = lazy(() => import("./pages/Auth"));
 const PublicMenu = lazy(() => import("./pages/PublicMenu"));
 const PublicBooking = lazy(() => import("./pages/PublicBooking"));
@@ -47,11 +48,14 @@ const KitchenDisplay = lazy(() => import("./pages/KitchenDisplay"));
 // Reset scroll after client-side navigation so links from a page footer open
 // the destination at the top instead of preserving the previous page's offset.
 function ScrollToTop() {
-  const { pathname } = useLocation();
+  const { pathname, hash } = useLocation();
 
   useLayoutEffect(() => {
+    // Hash navigation is handled by the destination page after its lazy chunk mounts.
+    // This avoids a race where the target section does not exist yet.
+    if (hash) return;
     window.scrollTo({ top: 0, left: 0, behavior: "instant" });
-  }, [pathname]);
+  }, [pathname, hash]);
 
   return null;
 }
@@ -133,9 +137,11 @@ export default function App() {
           {/* Public marketing and legal pages */}
           <Route path="/" element={<Home />} />
           <Route path="/about" element={<About />} />
+          <Route path="/contact" element={<Contact />} />
           <Route path="/privacy" element={<LegalPage type="privacy" />} />
           <Route path="/terms" element={<LegalPage type="terms" />} />
           <Route path="/refund-policy" element={<LegalPage type="refund" />} />
+          <Route path="/cancellation-refund" element={<Navigate to="/refund-policy" replace />} />
           <Route path="/refunds" element={<Navigate to="/refund-policy" replace />} />
 
           {/* Authentication */}
