@@ -215,7 +215,7 @@ export default function KitchenDisplay() {
         const { data: orderData, error: ordersError } = await supabase
           .from("orders")
           .select(
-            "id, restaurant_id, table_id, guest_tab_id, customer_name, customer_phone, notes, status, total_amount, created_at",
+            "id, restaurant_id, table_id, guest_tab_id, customer_name, customer_phone, notes, status, total_amount, created_at, service_mode, pickup_eta_minutes",
           )
           .eq("restaurant_id", restaurantId)
           .in("status", ACTIVE_STATUSES)
@@ -236,7 +236,7 @@ export default function KitchenDisplay() {
           orderIds.length
             ? supabase
                 .from("order_items")
-                .select("id, order_id, item_name, unit_price, quantity, line_total")
+                .select("id, order_id, item_name, unit_price, quantity, line_total, selected_options")
                 .in("order_id", orderIds)
             : Promise.resolve({ data: [], error: null }),
           tableIds.length
@@ -548,7 +548,7 @@ export default function KitchenDisplay() {
                   <div className="kitchen-order-card-top">
                     <div>
                       <span className="kitchen-order-reference">ORDER #{getReference(order.id)}</span>
-                      <h2>{tableNumber ? `Table ${tableNumber}${order.guestTabName ? " · " + order.guestTabName : ""}` : "Restaurant order"}</h2>
+                      <h2>{order.service_mode === "pickup" ? `Pickup${order.pickup_eta_minutes === 0 ? " · ASAP" : order.pickup_eta_minutes ? ` · ${order.pickup_eta_minutes} min` : ""}` : tableNumber ? `Table ${tableNumber}${order.guestTabName ? " · " + order.guestTabName : ""}` : "Dine-in"}</h2>
                     </div>
                     <span className={`kitchen-status-pill status-${order.status}`}>
                       {STATUS_LABELS[order.status] || order.status}
@@ -574,6 +574,7 @@ export default function KitchenDisplay() {
                       <div className="kitchen-item-row" key={item.id}>
                         <span className="kitchen-quantity">{item.quantity}×</span>
                         <span className="kitchen-item-name">{item.item_name}</span>
+                        <span className="kitchen-item-options">{item.selected_options?.map((option) => `${option.group_name}: ${option.name}`).join(" · ")}</span>
                         <strong>{formatPrice(item.line_total)}</strong>
                       </div>
                     ))}

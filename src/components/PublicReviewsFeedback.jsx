@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ExternalLink, MessageCircle, Send, Star, X } from "lucide-react";
+import { ExternalLink, LoaderCircle, MessageCircle, Send, Sparkles, Star, X } from "lucide-react";
 import { supabase } from "../lib/supabaseClient";
 import PublicRestaurantSocialLinks from "./PublicRestaurantSocialLinks";
 import "./PublicReviewsFeedback.css";
@@ -44,6 +44,12 @@ export default function PublicReviewsFeedback({
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState("");
+  const [reviewOpen, setReviewOpen] = useState(false);
+  const [reviewRating, setReviewRating] = useState(0);
+  const [reviewNotes, setReviewNotes] = useState("");
+  const [reviewDraft, setReviewDraft] = useState("");
+  const [reviewBusy, setReviewBusy] = useState(false);
+  const [reviewStatus, setReviewStatus] = useState("");
 
   const showGoogleReview = allowGoogleReviewLink === true && isValidGoogleReviewUrl(googleReviewUrl);
 
@@ -83,6 +89,53 @@ export default function PublicReviewsFeedback({
     }
   }
 
+  async function generateReviewDraft() {
+    if (!restaurantSlug || !reviewRating || reviewBusy) return;
+    setReviewBusy(true);
+    setError("");
+    setReviewStatus("");
+    try {
+      const { data, error: aiError } = await supabase.functions.invoke("khaavio-ai-chat", {
+        body: {
+          mode: "review_draft",
+          restaurantSlug,
+          restaurantName: restaurantName || "the restaurant",
+          rating: reviewRating,
+          notes: reviewNotes.trim(),
+        },
+      });
+      if (aiError) throw aiError;
+      if (!data?.draft || typeof data.draft !== "string") {
+        throw new Error(data?.message || "Could not create a draft. Please write your review yourself.");
+      }
+      setReviewDraft(data.draft.slice(0, 1200));
+      setReviewStatus("Draft ready. Please check and edit it so it reflects your own experience.");
+    } catch (draftError) {
+      console.error("Google review draft failed:", draftError);
+      setError(draftError?.message || "Could not create a draft. You can still write your own review.");
+    } finally {
+      setReviewBusy(false);
+    }
+  }
+
+  async function continueToGoogle() {
+    if (!isValidGoogleReviewUrl(googleReviewUrl)) return;
+    // Open synchronously from the user's click so popup blockers don't eat the link.
+    const googleWindow = window.open(googleReviewUrl, "_blank");
+    if (googleWindow) googleWindow.opener = null;
+    const draft = reviewDraft.trim();
+    if (draft) {
+      try {
+        await navigator.clipboard.writeText(draft);
+        setReviewStatus(googleWindow ? "Draft copied. Paste it into Google, edit it if needed, then submit your review." : "Your draft is copied, but the browser blocked the new tab. Open Google using the link below, then paste and submit your review.");
+      } catch {
+        setReviewStatus(googleWindow ? "Google is open. Copy your draft below, then paste, edit and submit it there." : "The browser blocked the new tab. Open Google using the link below, then copy and submit your draft.");
+      }
+    } else {
+      setReviewStatus(googleWindow ? "Google is open. Write and submit your honest review there." : "The browser blocked the new tab. Open Google using the link below to write your review.");
+    }
+  }
+
   return (
     <section className="public-reviews" aria-labelledby="public-reviews-title">
       <div className="public-reviews-intro">
@@ -95,17 +148,17 @@ export default function PublicReviewsFeedback({
 
       <div className="public-reviews-actions">
         {showGoogleReview && (
-          <a
+          <button
+            type="button"
             className="public-reviews-google"
-            href={googleReviewUrl}
-            target="_blank"
-            rel="noopener noreferrer nofollow"
+            onClick={() => { setReviewOpen((open) => !open); setReviewStatus(""); setError(""); }}
+            aria-expanded={reviewOpen}
             aria-label={`Write an honest Google review for ${restaurantName || "this restaurant"}`}
           >
             <span className="public-reviews-google-mark" aria-hidden="true">G</span>
-            <span>Review us on Google</span>
+            <span>Write a Google review</span>
             <ExternalLink size={16} aria-hidden="true" />
-          </a>
+          </button>
         )}
         {allowPrivateFeedback && (
           <button
@@ -122,6 +175,37 @@ export default function PublicReviewsFeedback({
           </button>
         )}
       </div>
+
+      {showGoogleReview && reviewOpen && (
+        <div className="public-reviews-form-wrap" aria-label="Google review draft">
+          <div className="public-review-draft-form">
+            <div className="public-reviews-rating">
+              <span className="public-reviews-field-label">Your honest rating</span>
+              <div className="public-reviews-stars" role="group" aria-label="Choose a rating from 1 to 5 stars">
+                {[1, 2, 3, 4, 5].map((value) => (
+                  <button key={value} type="button" className={`public-reviews-star${value <= reviewRating ? " is-active" : ""}`} onClick={() => setReviewRating(value)} aria-label={`${value} stars`} aria-pressed={reviewRating === value}>
+                    <Star size={25} fill={value <= reviewRating ? "currentColor" : "none"} />
+                  </button>
+                ))}
+              </div>
+            </div>
+            <label className="public-reviews-field">
+              <span className="public-reviews-field-label">What would you like your review to mention? <span>(optional)</span></span>
+              <textarea value={reviewNotes} onChange={(event) => setReviewNotes(event.target.value.slice(0, 500))} placeholder="Only share details from your own visit" maxLength={500} rows={3} />
+            </label>
+            <button type="button" className="public-reviews-submit" onClick={() => void generateReviewDraft()} disabled={!reviewRating || reviewBusy}>
+              {reviewBusy ? <LoaderCircle size={16} className="public-menu-spinner" /> : <Sparkles size={16} />}
+              {reviewBusy ? "Preparing draft…" : reviewDraft ? "Refresh AI draft" : "Create an AI draft"}
+            </button>
+            {reviewDraft && <label className="public-reviews-field public-review-draft-field"><span className="public-reviews-field-label">Your draft — edit it in your own words</span><textarea value={reviewDraft} onChange={(event) => setReviewDraft(event.target.value.slice(0, 1200))} rows={5} maxLength={1200} /></label>}
+            {error && reviewOpen && <p className="public-reviews-error" role="alert">{error}</p>}
+            {reviewStatus && <p className="public-reviews-status" role="status">{reviewStatus}</p>}
+            <button type="button" className="public-reviews-google" onClick={() => void continueToGoogle()}><span>Continue to Google</span><ExternalLink size={16} /></button>
+            <a className="public-reviews-text-button" href={googleReviewUrl} target="_blank" rel="noopener noreferrer nofollow">Open the Google review page</a>
+            <p className="public-reviews-privacy-note">The draft is only a suggestion and stays in this browser. Google opens separately; please review, edit and submit it yourself. No reward is offered for a review.</p>
+          </div>
+        </div>
+      )}
 
       {allowPrivateFeedback && isOpen && (
         <div className="public-reviews-form-wrap">

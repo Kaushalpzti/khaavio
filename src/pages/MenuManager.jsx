@@ -30,6 +30,10 @@ const emptyForm = {
   is_available: true,
 };
 
+function createOptionGroup() {
+  return { name: "", min_selections: 0, max_selections: 1, options: [{ name: "", price_delta: 0, is_available: true }] };
+}
+
 function formatPrice(value) {
   return new Intl.NumberFormat("en-IN", {
     style: "currency",
@@ -127,6 +131,7 @@ export default function MenuManager() {
 
   const [categoryName, setCategoryName] = useState("");
   const [form, setForm] = useState(emptyForm);
+  const [optionGroups, setOptionGroups] = useState([]);
   const [imageFile, setImageFile] = useState(null);
   const [editingItem, setEditingItem] = useState(null);
   const [filterCategory, setFilterCategory] = useState("all");
@@ -332,7 +337,7 @@ export default function MenuManager() {
     }
   }
 
-  function startEditing(item) {
+  async function startEditing(item) {
     setEditingItem(item);
     setForm({
       name: item.name || "",
@@ -343,8 +348,25 @@ export default function MenuManager() {
       is_available: Boolean(item.is_available),
     });
     setImageFile(null);
+    setOptionGroups([]);
     setError("");
     setNotice("");
+
+    const { data: groups, error: groupsError } = await supabase
+      .from("menu_item_option_groups")
+      .select("id, name, min_selections, max_selections, sort_order, menu_item_options(id, name, price_delta, is_available, sort_order)")
+      .eq("menu_item_id", item.id)
+      .order("sort_order", { ascending: true });
+    if (groupsError) {
+      setError(groupsError.message || "Could not load this dish's options. Apply the menu options database update first.");
+      return;
+    }
+    setOptionGroups((groups || []).map((group) => ({
+      name: group.name,
+      min_selections: group.min_selections,
+      max_selections: group.max_selections,
+      options: (group.menu_item_options || []).sort((a, b) => a.sort_order - b.sort_order).map(({ name, price_delta, is_available }) => ({ name, price_delta: Number(price_delta) || 0, is_available })),
+    })));
 
     document
       .getElementById("menu-item-form")
@@ -355,6 +377,7 @@ export default function MenuManager() {
     setEditingItem(null);
     setForm(emptyForm);
     setImageFile(null);
+    setOptionGroups([]);
   }
 
   async function saveItem(event) {
@@ -445,9 +468,28 @@ export default function MenuManager() {
             .update(payload)
             .eq("id", editingItem.id)
             .eq("restaurant_id", restaurant.id)
-        : await supabase.from("menu_items").insert(payload);
+        : await supabase.from("menu_items").insert(payload).select("id").single();
 
       if (result.error) throw result.error;
+
+      const itemId = wasEditing ? editingItem.id : result.data?.id || result.data?.[0]?.id;
+      if (itemId) {
+        const { error: optionsError } = await supabase.rpc("khaavio_replace_menu_item_options", {
+          p_menu_item_id: itemId,
+          p_groups: optionGroups.map((group, groupIndex) => ({
+            ...group,
+            sort_order: groupIndex,
+            min_selections: Number(group.min_selections) || 0,
+            max_selections: Number(group.max_selections) || 1,
+            options: group.options.map((option, optionIndex) => ({
+              ...option,
+              price_delta: Number(option.price_delta) || 0,
+              sort_order: optionIndex,
+            })),
+          })),
+        });
+        if (optionsError) throw optionsError;
+      }
 
       await refreshMenu(restaurant.id);
       resetItemForm();
@@ -1206,6 +1248,30 @@ export default function MenuManager() {
                   <small>Turn off when this dish is unavailable.</small>
                 </span>
               </label>
+
+              <section className="menu-option-editor menu-field-wide" aria-labelledby="menu-option-editor-title">
+                <div className="menu-option-editor-heading">
+                  <div><h3 id="menu-option-editor-title">Dish choices and add-ons</h3><p>Set required or optional choices. Added prices are calculated again when an order is placed.</p></div>
+                  <button type="button" className="menu-secondary-button" onClick={() => setOptionGroups((current) => current.length < 10 ? [...current, createOptionGroup()] : current)} disabled={busy || optionGroups.length >= 10}><Plus size={15} /> Add choice group</button>
+                </div>
+                {optionGroups.map((group, groupIndex) => (
+                  <div className="menu-option-group-editor" key={groupIndex}>
+                    <div className="menu-option-group-fields">
+                      <label className="menu-field"><span>Group name *</span><input value={group.name} maxLength={60} placeholder="e.g. Size" onChange={(event) => setOptionGroups((current) => current.map((item, index) => index === groupIndex ? { ...item, name: event.target.value } : item))} /></label>
+                      <label className="menu-field"><span>Minimum choices</span><input type="number" min="0" max={group.options.length} value={group.min_selections} onChange={(event) => setOptionGroups((current) => current.map((item, index) => index === groupIndex ? { ...item, min_selections: Number(event.target.value) } : item))} /></label>
+                      <label className="menu-field"><span>Maximum choices</span><input type="number" min="1" max={group.options.length || 1} value={group.max_selections} onChange={(event) => setOptionGroups((current) => current.map((item, index) => index === groupIndex ? { ...item, max_selections: Number(event.target.value) } : item))} /></label>
+                      <button type="button" className="menu-secondary-button" onClick={() => setOptionGroups((current) => current.filter((_, index) => index !== groupIndex))}><Trash2 size={15} /> Remove group</button>
+                    </div>
+                    {group.options.map((option, optionIndex) => <div className="menu-option-row" key={optionIndex}>
+                      <label className="menu-field"><span>Choice *</span><input value={option.name} maxLength={60} placeholder="e.g. Large" onChange={(event) => setOptionGroups((current) => current.map((item, index) => index === groupIndex ? { ...item, options: item.options.map((choice, choiceIndex) => choiceIndex === optionIndex ? { ...choice, name: event.target.value } : choice) } : item))} /></label>
+                      <label className="menu-field"><span>Price change (₹)</span><input type="number" step="0.01" value={option.price_delta} onChange={(event) => setOptionGroups((current) => current.map((item, index) => index === groupIndex ? { ...item, options: item.options.map((choice, choiceIndex) => choiceIndex === optionIndex ? { ...choice, price_delta: event.target.value } : choice) } : item))} /></label>
+                      <button type="button" className="menu-secondary-button" onClick={() => setOptionGroups((current) => current.map((item, index) => index === groupIndex ? { ...item, options: item.options.filter((_, choiceIndex) => choiceIndex !== optionIndex), max_selections: Math.max(1, Math.min(item.max_selections, item.options.length - 1)), min_selections: Math.min(item.min_selections, item.options.length - 1) } : item))} disabled={group.options.length <= 1} aria-label="Remove choice"><X size={15} /></button>
+                    </div>)}
+                    <button type="button" className="menu-text-button" onClick={() => setOptionGroups((current) => current.map((item, index) => index === groupIndex && item.options.length < 10 ? { ...item, options: [...item.options, { name: "", price_delta: 0, is_available: true }] } : item))} disabled={group.options.length >= 10}><Plus size={14} /> Add choice</button>
+                  </div>
+                ))}
+                {!optionGroups.length && <p className="menu-option-empty">No choices added. Customers can order this dish at its listed price.</p>}
+              </section>
 
               <div className="menu-form-actions">
                 <button

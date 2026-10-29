@@ -765,4 +765,4 @@
         justify-content: flex-start;
         flex-direction: column;
     }
-}
+}.order-item-line small { display: block; margin-top: 3px; color: #778477; font-size: 11px; }

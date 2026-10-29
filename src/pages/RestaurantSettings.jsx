@@ -17,7 +17,7 @@ import "./RestaurantSettings.css";
 import "./RestaurantSettingsLogo.css";
 
 const RESTAURANT_FIELDS =
-  "id, name, slug, restaurant_type, logo_url, phone, contact_email, address, city, state, postal_code, description, google_review_url, social_links, table_billing_mode, gst_enabled, gstin, gst_rate, gst_price_inclusive, is_published";
+  "id, name, slug, restaurant_type, logo_url, phone, contact_email, address, city, state, postal_code, description, google_review_url, social_links, table_billing_mode, pickup_enabled, dine_in_enabled, gst_enabled, gstin, gst_rate, gst_price_inclusive, is_published";
 
 const GOOGLE_REVIEW_HOSTS = new Set([
   "g.page",
@@ -122,6 +122,8 @@ const INITIAL_FORM = {
   google_review_url: "",
   social_links: {},
   table_billing_mode: "combined",
+  pickup_enabled: true,
+  dine_in_enabled: true,
   gst_enabled: false,
   gstin: "",
   gst_rate: "",
@@ -150,6 +152,8 @@ function formFromRestaurant(restaurant) {
     google_review_url: restaurant.google_review_url || "",
     social_links: normalizeSocialLinks(restaurant.social_links),
     table_billing_mode: restaurant.table_billing_mode === "per_guest" ? "per_guest" : "combined",
+    pickup_enabled: restaurant.pickup_enabled !== false,
+    dine_in_enabled: restaurant.dine_in_enabled !== false,
     gst_enabled: restaurant.gst_enabled === true,
     gstin: restaurant.gstin || "",
     gst_rate: restaurant.gst_rate == null ? "" : String(restaurant.gst_rate),
@@ -405,6 +409,8 @@ export default function RestaurantSettings() {
         google_review_url: googleReviewUrl || null,
         social_links: socialValidation.value,
         table_billing_mode: form.table_billing_mode === "per_guest" ? "per_guest" : "combined",
+        pickup_enabled: form.pickup_enabled,
+        dine_in_enabled: form.dine_in_enabled,
         gst_enabled: form.gst_enabled,
         gstin: gstin || null,
         gst_rate: form.gst_enabled ? gstRate : 0,
@@ -653,6 +659,21 @@ export default function RestaurantSettings() {
                     <span className="restaurant-settings-field-hint">
                       Applies to new table sessions only. Existing sessions keep their original billing mode.
                     </span>
+                  </div>
+
+                  <div className="restaurant-settings-field full-width">
+                    <label>Online ordering modes</label>
+                    <div className="restaurant-settings-grid">
+                      <label className="restaurant-settings-checkbox" htmlFor="settings-pickup-enabled">
+                        <input id="settings-pickup-enabled" type="checkbox" checked={form.pickup_enabled} onChange={(event) => setForm((current) => ({ ...current, pickup_enabled: event.target.checked }))} />
+                        <span><strong>Pickup</strong><small>Customers can order ahead and collect from the restaurant.</small></span>
+                      </label>
+                      <label className="restaurant-settings-checkbox" htmlFor="settings-dine-in-enabled">
+                        <input id="settings-dine-in-enabled" type="checkbox" checked={form.dine_in_enabled} onChange={(event) => setForm((current) => ({ ...current, dine_in_enabled: event.target.checked }))} />
+                        <span><strong>Dine in</strong><small>Allow table QR orders and dine-in orders without a table QR.</small></span>
+                      </label>
+                    </div>
+                    {!form.pickup_enabled && !form.dine_in_enabled && <span className="restaurant-settings-field-hint">Customers cannot place online orders until at least one mode is enabled.</span>}
                   </div>
 
                   <div className="restaurant-settings-field">

@@ -207,6 +207,9 @@ export default function PublicMenu() {
   const [restaurant, setRestaurant] = useState(null);
   const [categories, setCategories] = useState([]);
   const [items, setItems] = useState([]);
+  const [menuOptionGroups, setMenuOptionGroups] = useState([]);
+  const [optionPickerItem, setOptionPickerItem] = useState(null);
+  const [selectedOptionIds, setSelectedOptionIds] = useState([]);
   const [menuBanners, setMenuBanners] = useState([]);
   const [publicOffers, setPublicOffers] = useState([]);
   const [tableContext, setTableContext] = useState(null);
@@ -232,6 +235,8 @@ export default function PublicMenu() {
   const [customerPhone, setCustomerPhone] = useState("");
   const [loyaltyPhone, setLoyaltyPhone] = useState(() => getStoredKhaavioLoyaltyPhone(slug));
   const [orderNotes, setOrderNotes] = useState("");
+  const [serviceMode, setServiceMode] = useState("dine_in");
+  const [pickupEtaMinutes, setPickupEtaMinutes] = useState(30);
 
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -318,6 +323,8 @@ export default function PublicMenu() {
       setRestaurant(null);
       setCategories([]);
       setItems([]);
+      setMenuOptionGroups([]);
+      setOptionPickerItem(null);
       setMenuBanners([]);
       setPublicOffers([]);
       setTableContext(null);
@@ -446,6 +453,16 @@ export default function PublicMenu() {
         const publicItems = Array.isArray(menuSnapshot?.items)
           ? menuSnapshot.items
           : [];
+        let resolvedOptionGroups = [];
+        try {
+          const { data: optionData, error: optionError } = await supabase.rpc(
+            "khaavio_public_menu_item_options",
+            { p_slug: slug },
+          );
+          if (!optionError && Array.isArray(optionData)) resolvedOptionGroups = optionData;
+        } catch {
+          resolvedOptionGroups = [];
+        }
 
         // Public offer details are limited to active coupons on a published menu.
         // If the optional RPC is unavailable, menu browsing remains unaffected.
@@ -491,6 +508,8 @@ export default function PublicMenu() {
             a.name.localeCompare(b.name),
           ),
         );
+        setMenuOptionGroups(resolvedOptionGroups);
+        setServiceMode(resolvedTable ? "dine_in" : restaurantData.pickup_enabled ? "pickup" : "dine_in");
 
         setTableContext(resolvedTable);
         setGuestTabToken(resolvedGuestTabToken);
@@ -683,12 +702,12 @@ export default function PublicMenu() {
   const currentPromoSlide = promoSlides[activePromoIndex] || promoSlides[0];
 
   const cartTotal = cart.reduce(
-    (total, entry) => total + Number(entry.price) * entry.quantity,
+    (total, entry) => total + Number(entry.unitPrice ?? entry.price) * entry.quantity,
     0,
   );
 
   const cartQuantity = cart.reduce((total, entry) => total + entry.quantity, 0);
-  const cartFingerprint = JSON.stringify(cart.map((entry) => [entry.id, entry.quantity]));
+  const cartFingerprint = JSON.stringify(cart.map((entry) => [entry.id, entry.optionIds || [], entry.quantity]));
   const activeCoupon = appliedCoupon?.fingerprint === cartFingerprint ? appliedCoupon : null;
   const cartDiscount = Number(activeCoupon?.discountAmount) || 0;
   const cartFinalTotal = Math.max(0, cartTotal - cartDiscount);
@@ -708,14 +727,26 @@ export default function PublicMenu() {
       : baseOrderingAvailability;
 
   function addToCart(item) {
+    const groups = menuOptionGroups.filter((group) => group.menu_item_id === item.id);
+    if (groups.length) {
+      setOptionPickerItem(item);
+      setSelectedOptionIds([]);
+      return;
+    }
+    addConfiguredItem(item, []);
+  }
+
+  function addConfiguredItem(item, optionIds) {
     setCheckoutError("");
     setOrderResult(null);
     setAppliedCoupon(null);
     setCouponFeedback("");
 
-    const existing = cart.find((entry) => entry.id === item.id);
+    const sortedOptionIds = [...optionIds].sort();
+    const cartKey = `${item.id}:${sortedOptionIds.join(",")}`;
+    const existingDishQuantity = cart.filter((entry) => entry.id === item.id).reduce((sum, entry) => sum + entry.quantity, 0);
 
-    if (existing && existing.quantity >= 20) {
+    if (existingDishQuantity >= 20) {
       setCheckoutError(
         "You can order up to 20 units of a single dish per order.",
       );
@@ -723,27 +754,50 @@ export default function PublicMenu() {
     }
 
     setCart((current) => {
-      const entry = current.find((row) => row.id === item.id);
+      const entry = current.find((row) => row.cartKey === cartKey);
 
       if (entry) {
         return current.map((row) =>
-          row.id === item.id ? { ...row, quantity: row.quantity + 1 } : row,
+          row.cartKey === cartKey ? { ...row, quantity: row.quantity + 1 } : row,
         );
       }
 
-      return [...current, { ...item, quantity: 1 }];
+      const options = menuOptionGroups.filter((group) => group.menu_item_id === item.id)
+        .flatMap((group) => group.options.filter((option) => sortedOptionIds.includes(option.id)));
+      return [...current, {
+        ...item,
+        cartKey,
+        optionIds: sortedOptionIds,
+        selectedOptions: options.map((option) => ({ ...option, group_name: menuOptionGroups.find((group) => group.menu_item_id === item.id && group.options.some((candidate) => candidate.id === option.id))?.name })),
+        unitPrice: Number(item.price) + options.reduce((sum, option) => sum + Number(option.price_delta || 0), 0),
+        quantity: 1,
+      }];
     });
+  }
+
+  function confirmOptionSelection() {
+    if (!optionPickerItem) return;
+    const groups = menuOptionGroups.filter((group) => group.menu_item_id === optionPickerItem.id);
+    for (const group of groups) {
+      const selectedCount = group.options.filter((option) => selectedOptionIds.includes(option.id)).length;
+      if (selectedCount < group.min_selections || selectedCount > group.max_selections) {
+        setCheckoutError(`Choose ${group.min_selections === group.max_selections ? group.min_selections : `${group.min_selections} to ${group.max_selections}`} options for ${group.name}.`);
+        return;
+      }
+    }
+    addConfiguredItem(optionPickerItem, selectedOptionIds);
+    setOptionPickerItem(null);
+    setSelectedOptionIds([]);
+    setCheckoutError("");
   }
 
   function choosePublicOffer(offer) {
     setCouponInput(offer.code);
     setAppliedCoupon(null);
     setCouponFeedback(
-      tableContext
-        ? cart.length > 0
-          ? `${offer.code} added. Apply it in your cart.`
-          : `${offer.code} saved. Add dishes, then apply it in your cart.`
-        : `Scan a table QR to use ${offer.code} at checkout.`,
+      cart.length > 0
+        ? `${offer.code} added. Apply it in your cart.`
+        : `${offer.code} saved. Add dishes, then apply it in your cart.`,
     );
     if (tableContext && cart.length > 0) {
       setIsCartOpen(true);
@@ -752,13 +806,13 @@ export default function PublicMenu() {
     }
   }
 
-  function changeQuantity(itemId, difference) {
+  function changeQuantity(cartKey, difference) {
     setCheckoutError("");
     setOrderResult(null);
     setAppliedCoupon(null);
     setCouponFeedback("");
 
-    const existing = cart.find((entry) => entry.id === itemId);
+    const existing = cart.find((entry) => entry.cartKey === cartKey);
 
     if (!existing) return;
 
@@ -771,7 +825,7 @@ export default function PublicMenu() {
 
     setCart((current) =>
       current.flatMap((entry) => {
-        if (entry.id !== itemId) return [entry];
+        if (entry.cartKey !== cartKey) return [entry];
 
         const nextQuantity = entry.quantity + difference;
 
@@ -780,8 +834,8 @@ export default function PublicMenu() {
     );
   }
 
-  function removeFromCart(itemId) {
-    setCart((current) => current.filter((entry) => entry.id !== itemId));
+  function removeFromCart(cartKey) {
+    setCart((current) => current.filter((entry) => entry.cartKey !== cartKey));
     setCheckoutError("");
     setOrderResult(null);
     setAppliedCoupon(null);
@@ -795,8 +849,8 @@ export default function PublicMenu() {
       setAppliedCoupon(null);
       return;
     }
-    if (!tableToken || !tableContext || cart.length === 0) {
-      setCouponFeedback("Scan this restaurant's table QR and add items before applying a coupon.");
+    if (cart.length === 0) {
+      setCouponFeedback("Add items before applying a coupon.");
       setAppliedCoupon(null);
       return;
     }
@@ -806,9 +860,9 @@ export default function PublicMenu() {
     try {
       const { data, error: quoteError } = await supabase.rpc("khaavio_validate_coupon", {
         p_slug: slug,
-        p_table_token: tableToken,
+        p_table_token: tableContext ? tableToken : null,
         p_code: code,
-        p_items: cart.map((entry) => ({ item_id: entry.id, quantity: entry.quantity })),
+        p_items: cart.map((entry) => ({ item_id: entry.id, quantity: entry.quantity, option_ids: entry.optionIds || [] })),
       });
       if (quoteError) throw quoteError;
       const quote = Array.isArray(data) ? data[0] : data;
@@ -858,10 +912,17 @@ export default function PublicMenu() {
       return;
     }
 
-    if (!tableContext || !tableToken) {
-      setCheckoutError(
-        "To place an order, scan the QR code assigned to your restaurant table.",
-      );
+    if (tableToken && !tableContext) {
+      setCheckoutError("This table QR is unavailable. Please ask staff for help.");
+      return;
+    }
+    const selectedMode = tableContext ? "dine_in" : serviceMode;
+    if (selectedMode === "pickup" && restaurant?.pickup_enabled !== true) {
+      setCheckoutError("Pickup is not available at this restaurant.");
+      return;
+    }
+    if (selectedMode === "dine_in" && restaurant?.dine_in_enabled !== true) {
+      setCheckoutError("Dine-in is not available at this restaurant.");
       return;
     }
 
@@ -930,11 +991,36 @@ export default function PublicMenu() {
         p_items: cart.map((entry) => ({
           item_id: entry.id,
           quantity: entry.quantity,
+          option_ids: entry.optionIds || [],
         })),
         p_loyalty_member_token: getOrCreateKhaavioLoyaltyToken(slug),
         p_loyalty_phone: loyaltyPhone || null,
         p_coupon_code: activeCoupon?.code || null,
       };
+
+      if (!tableContext) {
+        const { data, error: orderError } = await supabase.rpc("place_public_order_for_service_mode", {
+          p_slug: slug,
+          p_customer_name: name,
+          p_customer_phone: phone,
+          p_notes: orderNotes.trim() || null,
+          p_items: payload.p_items,
+          p_service_mode: selectedMode,
+          p_pickup_eta_minutes: selectedMode === "pickup" ? pickupEtaMinutes : null,
+          p_coupon_code: activeCoupon?.code || null,
+          p_loyalty_phone: loyaltyPhone || null,
+        });
+        if (orderError) throw orderError;
+        const result = Array.isArray(data) ? data[0] : data;
+        if (!result?.order_id) throw new Error("We couldn't confirm the order reference. Please contact the restaurant before trying again.");
+        setOrderResult({ id: result.order_id, reference: result.order_reference, total: Number(result.total_amount) || 0, trackingToken: result.tracking_token || null, couponCode: activeCoupon?.code || null, discountAmount: cartDiscount, serviceMode: selectedMode, pickupEtaMinutes: selectedMode === "pickup" ? pickupEtaMinutes : null });
+        setCart([]);
+        setOrderNotes("");
+        setCouponInput("");
+        setAppliedCoupon(null);
+        setCouponFeedback("");
+        return;
+      }
 
       if (useGuestBilling && !activeGuestToken) {
         throw new Error("Your guest bill is still being prepared. Please wait a moment and try again.");
@@ -996,6 +1082,7 @@ export default function PublicMenu() {
         trackingToken: result.tracking_token || null,
         couponCode: activeCoupon?.code || null,
         discountAmount: cartDiscount,
+        serviceMode: "dine_in",
       });
 
       if (guestOrderRequest) {
@@ -1375,7 +1462,8 @@ export default function PublicMenu() {
                   const category = categories.find(
                     (entry) => entry.id === item.category_id,
                   );
-                  const cartEntry = cart.find((entry) => entry.id === item.id);
+                  const cartEntries = cart.filter((entry) => entry.id === item.id);
+                  const itemQuantity = cartEntries.reduce((sum, entry) => sum + entry.quantity, 0);
 
                   return (
                     <article className="public-menu-card" key={item.id}>
@@ -1413,21 +1501,21 @@ export default function PublicMenu() {
 
                         <div className="public-menu-item-footer">
                           <strong>{formatPrice(item.price)}</strong>
-                          {cartEntry ? (
+                          {itemQuantity > 0 ? (
                             <div className="public-menu-add-controls">
                               <button
                                 type="button"
                                 aria-label={`Remove one ${item.name}`}
-                                onClick={() => changeQuantity(item.id, -1)}
+                                onClick={() => changeQuantity(cartEntries[0].cartKey, -1)}
                               >
                                 <Minus size={14} />
                               </button>
-                              <strong>{cartEntry.quantity}</strong>
+                              <strong>{itemQuantity}</strong>
                               <button
                                 type="button"
                                 aria-label={`Add one ${item.name}`}
-                                onClick={() => changeQuantity(item.id, 1)}
-                                disabled={cartEntry.quantity >= 20}
+                                onClick={() => addToCart(item)}
+                                disabled={itemQuantity >= 20}
                               >
                                 <Plus size={14} />
                               </button>
@@ -1444,9 +1532,9 @@ export default function PublicMenu() {
                             </button>
                           )}
                         </div>
-                        {cartEntry && (
+                        {itemQuantity > 0 && (
                           <span className="public-menu-quantity-hint">
-                            {cartEntry.quantity} in your cart
+                            {itemQuantity} in your cart
                           </span>
                         )}
                       </div>
@@ -1591,6 +1679,7 @@ export default function PublicMenu() {
                       Your order was saved successfully. Please share the
                       reference below with restaurant staff.
                     </p>
+                    <p className="public-order-fulfillment-confirmed">{orderResult.serviceMode === "pickup" ? `Pickup · ${orderResult.pickupEtaMinutes === 0 ? "as soon as possible" : `in ${orderResult.pickupEtaMinutes} minutes`}` : tableContext ? `Dine in · Table ${normalizeTableNumber(tableContext.table_number)}` : "Dine-in order"}</p>
 
                     <div className="public-order-reference">
                       <span>Order reference</span>
@@ -1680,17 +1769,18 @@ export default function PublicMenu() {
                       </div>
 
                       {cart.map((entry) => (
-                        <div className="public-order-line" key={entry.id}>
+                        <div className="public-order-line" key={entry.cartKey}>
                           <div className="public-order-line-info">
                             <strong>{entry.name}</strong>
-                            <span>{formatPrice(entry.price)} each</span>
+                            <span>{formatPrice(entry.unitPrice ?? entry.price)} each</span>
+                            {entry.selectedOptions?.map((option) => <small key={option.id}>{option.group_name}: {option.name}{Number(option.price_delta) ? ` (+${formatPrice(option.price_delta)})` : ""}</small>)}
                           </div>
 
                           <div className="public-order-line-controls">
                             <button
                               type="button"
                               aria-label={`Decrease ${entry.name} quantity`}
-                              onClick={() => changeQuantity(entry.id, -1)}
+                              onClick={() => changeQuantity(entry.cartKey, -1)}
                             >
                               <Minus size={14} />
                             </button>
@@ -1698,7 +1788,7 @@ export default function PublicMenu() {
                             <button
                               type="button"
                               aria-label={`Increase ${entry.name} quantity`}
-                              onClick={() => changeQuantity(entry.id, 1)}
+                              onClick={() => changeQuantity(entry.cartKey, 1)}
                               disabled={entry.quantity >= 20}
                             >
                               <Plus size={14} />
@@ -1706,14 +1796,14 @@ export default function PublicMenu() {
                           </div>
 
                           <strong className="public-order-line-total">
-                            {formatPrice(Number(entry.price) * entry.quantity)}
+                            {formatPrice(Number(entry.unitPrice ?? entry.price) * entry.quantity)}
                           </strong>
 
                           <button
                             className="public-order-remove"
                             type="button"
                             aria-label={`Remove ${entry.name} from cart`}
-                            onClick={() => removeFromCart(entry.id)}
+                            onClick={() => removeFromCart(entry.cartKey)}
                           >
                             <Trash2 size={16} />
                           </button>
@@ -1742,12 +1832,14 @@ export default function PublicMenu() {
                             <strong>{normalizeTableNumber(tableContext.table_number)}</strong>
                           </span>
                         </div>
-                      ) : (
-                        <div className="public-order-table-warning">
-                          Open this menu by scanning the QR code assigned to
-                          your restaurant table to place an order.
-                        </div>
-                      )}
+                      ) : (restaurant?.pickup_enabled || restaurant?.dine_in_enabled) ? (
+                        <fieldset className="public-order-service-modes">
+                          <legend>How would you like your order?</legend>
+                          {restaurant?.pickup_enabled && <label><input type="radio" name="service_mode" value="pickup" checked={serviceMode === "pickup"} onChange={() => setServiceMode("pickup")} /> Pickup</label>}
+                          {restaurant?.dine_in_enabled && <label><input type="radio" name="service_mode" value="dine_in" checked={serviceMode === "dine_in"} onChange={() => setServiceMode("dine_in")} /> Dine in</label>}
+                          {serviceMode === "pickup" && <label className="public-order-pickup-time"><span>Pickup in</span><select value={pickupEtaMinutes} onChange={(event) => setPickupEtaMinutes(Number(event.target.value))}><option value={0}>As soon as possible</option><option value={15}>15 minutes</option><option value={30}>30 minutes</option><option value={45}>45 minutes</option><option value={60}>60 minutes</option></select></label>}
+                        </fieldset>
+                      ) : <div className="public-order-table-warning">Online pickup and dine-in ordering are currently disabled.</div>}
 
                       <div className="public-order-coupon">
                         <label htmlFor="public-order-coupon-code"><span>Coupon code</span></label>
@@ -1837,7 +1929,8 @@ export default function PublicMenu() {
                           submitting ||
                           subscriptionAllowsTransactions !== true ||
                           cart.length === 0 ||
-                          !tableContext ||
+                          (tableToken && !tableContext) ||
+                          (!restaurant?.pickup_enabled && !restaurant?.dine_in_enabled) ||
                           !orderingAvailability.canOrder
                         }
                       >
@@ -1928,6 +2021,37 @@ export default function PublicMenu() {
               </button>
             )}
           </nav>
+
+          {optionPickerItem && (
+            <div className="public-option-modal-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setOptionPickerItem(null); }}>
+              <section className="public-option-modal" role="dialog" aria-modal="true" aria-labelledby="public-option-title">
+                <button type="button" className="public-option-modal-close" aria-label="Close choices" onClick={() => setOptionPickerItem(null)}><X size={19} /></button>
+                <h2 id="public-option-title">Customize {optionPickerItem.name}</h2>
+                <p>Choose the options for this dish.</p>
+                {menuOptionGroups.filter((group) => group.menu_item_id === optionPickerItem.id).map((group) => {
+                  const selectedInGroup = group.options.filter((option) => selectedOptionIds.includes(option.id)).length;
+                  const singleChoice = group.max_selections === 1;
+                  return <fieldset className="public-option-group" key={group.id}>
+                    <legend>{group.name} <small>{group.min_selections ? `Required · choose ${group.min_selections === group.max_selections ? group.min_selections : `${group.min_selections}–${group.max_selections}`}` : `Optional · choose up to ${group.max_selections}`}</small></legend>
+                    {group.options.map((option) => {
+                      const checked = selectedOptionIds.includes(option.id);
+                      const canSelect = singleChoice || checked || selectedInGroup < group.max_selections;
+                      return <label key={option.id} className="public-option-choice">
+                        <input type={singleChoice ? "radio" : "checkbox"} name={`option-${group.id}`} checked={checked} disabled={!canSelect} onChange={() => setSelectedOptionIds((current) => {
+                          if (singleChoice) return checked ? current.filter((id) => !group.options.some((entry) => entry.id === id)) : [...current.filter((id) => !group.options.some((entry) => entry.id === id)), option.id];
+                          return checked ? current.filter((id) => id !== option.id) : [...current, option.id];
+                        })} />
+                        <span>{option.name}</span>
+                        <strong>{Number(option.price_delta) > 0 ? `+${formatPrice(option.price_delta)}` : Number(option.price_delta) < 0 ? `−${formatPrice(Math.abs(Number(option.price_delta)))}` : "Included"}</strong>
+                      </label>;
+                    })}
+                  </fieldset>;
+                })}
+                {checkoutError && <p className="public-order-error" role="alert">{checkoutError}</p>}
+                <button type="button" className="public-order-submit" onClick={confirmOptionSelection}>Add to order</button>
+              </section>
+            </div>
+          )}
 
           <PublicTableService
             slug={slug}
