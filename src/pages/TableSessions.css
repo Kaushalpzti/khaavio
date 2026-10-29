@@ -567,6 +567,25 @@
     color: #334c3a;
 }
 
+.ts-print-tax-summary {
+    display: grid;
+    gap: 7px;
+    max-width: 320px;
+    margin: 14px 0 0 auto;
+    color: #607267;
+    font-size: 11px;
+}
+
+.ts-print-tax-summary > div {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.ts-print-tax-summary strong {
+    color: #294b35;
+}
+
 .ts-print-grand-total {
     display: flex;
     align-items: center;

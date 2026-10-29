@@ -992,7 +992,7 @@ export default function PublicMenu() {
       setOrderResult({
         id: result.order_id,
         reference: result.order_reference,
-        total: result.total_amount,
+        total: Number(result.total_amount) || 0,
         trackingToken: result.tracking_token || null,
         couponCode: activeCoupon?.code || null,
         discountAmount: cartDiscount,
@@ -1184,6 +1184,8 @@ export default function PublicMenu() {
                 {guestTabSnapshot.invoice ? (
                   <div className="public-guest-bill-invoice">
                     <strong>{guestTabSnapshot.invoice.invoice_number}</strong>
+                    {guestTabSnapshot.invoice.gstin_snapshot && <span>GSTIN: {guestTabSnapshot.invoice.gstin_snapshot}</span>}
+                    {Number(guestTabSnapshot.invoice.tax_amount) > 0 && <span>GST {guestTabSnapshot.invoice.gst_inclusive ? "included" : "added"}: {formatPrice(guestTabSnapshot.invoice.tax_amount)}</span>}
                     <span>Status: {guestTabSnapshot.invoice.payment_status}</span>
                     {guestTabSnapshot.invoice.payment_status === "paid" ? (
                       <p>Your bill is paid. Thank you for dining with us!</p>
@@ -1725,7 +1727,7 @@ export default function PublicMenu() {
                       {activeCoupon && <div className="public-order-discount-row"><span>Coupon {activeCoupon.code}</span><strong>−{formatPrice(cartDiscount)}</strong></div>}
                       <div className="public-order-final-total"><span>Estimated total</span><strong>{formatPrice(cartFinalTotal)}</strong></div>
                       <p className="public-order-estimate-note">
-                        Coupon eligibility and the final total are checked again when you submit.
+                        Coupon eligibility and the final order total are checked again when you submit. GST, if enabled, is calculated on the final bill.
                       </p>
                     </div>
 

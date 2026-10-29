@@ -204,6 +204,27 @@
     grid-column: 1 / -1;
 }
 
+.settings-gst-control {
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0 12px;
+    border: 1px solid #dfe5dd;
+    border-radius: 10px;
+    background: #f8faf6;
+    color: #52665a;
+    font-size: 12px;
+}
+
+.settings-gst-control input {
+    width: 17px;
+    height: 17px;
+    min-height: 0;
+    margin: 0;
+    accent-color: #00765c;
+}
+
 .restaurant-settings-field label {
     color: #34483b;
     font-size: 12px;
@@ -225,6 +246,14 @@
     font-family: inherit;
     font-size: 13px;
     transition: border-color 160ms ease, box-shadow 160ms ease;
+}
+
+.restaurant-settings-field .settings-gst-control input[type="checkbox"] {
+    width: 17px;
+    min-height: 17px;
+    padding: 0;
+    border: 0;
+    border-radius: 3px;
 }
 
 .restaurant-settings-field textarea {
