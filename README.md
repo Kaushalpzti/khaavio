@@ -1,38 +1,113 @@
 # Khaavio
 
-Khaavio is a React + Vite restaurant QR menu, ordering, table-session billing, booking, and subscription-management app backed by Supabase.
+Khaavio is a restaurant operations platform built with React and Vite, with Supabase for authentication, database, storage, and server-side functions. It provides public QR menus and ordering, table and booking workflows, and a restaurant management dashboard.
+
+## Product features
+
+### Customer experience
+
+- Public restaurant menus with categories, search, offers, coupons, and image banners.
+- Pickup and dine-in ordering modes, controlled by each restaurant's settings.
+- Customers using the regular menu can select a table and continue to its table-linked menu while keeping their cart.
+- Table QR ordering with configurable item add-ons and price adjustments.
+- Order tracking, restaurant bookings, table-service requests, and loyalty rewards.
+- Private feedback and Google review drafts. Khaavio can copy the customer's draft and open the restaurant's Google review page; the customer reviews, edits, and submits it themselves. Khaavio does not post reviews on a customer's behalf.
+- A phone number is required for public orders, but it is not verified by SMS or OTP.
+- Restaurant food orders are submitted to the restaurant; Khaavio does not collect payment for those orders at checkout.
+
+### Restaurant dashboard
+
+- Restaurant profile, ordering-mode, menu, add-on, banner, coupon, and QR-code management.
+- Order dashboard and Kitchen Display System (KDS).
+- Table sessions, combined or per-guest tabs, final invoices, and GST settings.
+- Bookings, service requests, reviews and private feedback, loyalty, and analytics.
+- Subscription and plan management, including a seven-day trial for eligible new trial assignments.
+- Razorpay recurring checkout for paid Khaavio subscriptions when its server-side credentials and plan IDs are configured. Legacy manual plan requests remain available for admin review.
+
+## Tech stack
+
+- React 19, Vite 8, and React Router
+- Supabase JS for the application backend
+- Supabase Edge Functions for AI chat and subscription billing
+- Vercel API functions for public SEO metadata and QR image generation
+- Node.js and npm
 
 ## Local development
 
-1. Install a supported Node.js LTS release and npm.
-2. Create `.env.local` from `.env.example` and set `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY` for your own Supabase project.
-3. Install dependencies with `npm ci`.
-4. Run `npm run dev` (Vite uses `http://localhost:5173` by default).
+Use Node.js **20.19+** or **22.12+** (Node 22 LTS is recommended).
 
-Useful verification commands:
+1. Create **.env.local** from **.env.example**.
+2. Set **VITE_SUPABASE_URL** and **VITE_SUPABASE_PUBLISHABLE_KEY** for your Supabase project.
+3. Optionally set **VITE_KHAAVIO_SUPPORT_EMAIL** and **VITE_KHAAVIO_SUPPORT_WHATSAPP**.
+4. Install the locked dependencies and start Vite:
 
-- `npm test` — runs the repository's Node test suite.
-- `npm run lint` — runs Oxlint.
-- `npm run build` — creates the production Vite build in `dist/`.
+~~~sh
+npm ci
+npm run dev
+~~~
 
-## Supabase database notes
+Vite serves the app at **http://localhost:5173** by default. On Windows PowerShell, use **npm.cmd** if the **npm** script launcher is blocked.
 
-The SQL in this repository assumes the core Khaavio application schema already exists in Supabase. In particular, the core `restaurants`, `restaurant_tables`, `orders`, `order_items`, `menu_items`, and `bookings` tables are not recreated by these incremental migrations. Some booking-specific database objects are also not included: the `khaavio_prevent_booking_conflicts_before_write` and `khaavio_validate_booking_hours_before_write` triggers/functions, plus the `get_public_booking_tables` and `create_public_booking` RPCs. The entitlement migration checks for those two booking triggers and will stop if they are absent. Apply/verify the core app schema and those booking safeguards first in a development/staging project. A fresh `supabase db reset` is not yet a full-from-zero setup until that core schema and helpers are represented as migrations.
+Useful commands:
 
-For an existing project that has not yet installed subscription tables, review and apply `supabase/khaavio-subscriptions-migration.sql` once before applying the numbered migrations. This baseline SQL is retained for compatibility with the existing setup. Then apply the files in `supabase/migrations/` in timestamp order; do not apply the standalone `supabase/khaavio-platform-admin-migration.sql` or `khaavio-superadmin-pwa/supabase/khaavio-superadmin-pwa-migration.sql` a second time when the numbered platform-admin migration has already been applied.
+~~~sh
+npm test       # Run the Node test suite
+npm run lint   # Run Oxlint
+npm run build  # Build the production app into dist/
+npm run preview
+~~~
 
-The latest subscription migration creates the manual plan-request RPCs and enforces a seven-day trial for **new** trial assignments. The numbered platform-admin migration also includes the protected audit-log reader used by Khaavio Control. The latest migration supplies the public subscription-status and ordering-hours helpers referenced by the public QR ordering flow. These migrations deliberately preserve existing subscription rows and their current `ends_at` values. No payment is collected by Khaavio; a platform admin must independently verify an offline payment before activating a paid plan. Local Auth callback URLs are configured for Vite at port 5173; configure the production site URL and allowlist separately in hosted Supabase Auth settings.
+Never put a Supabase service-role key, Razorpay secret, or other server credential in a variable exposed to the browser or in browser code. The main browser app uses only the Supabase publishable key.
 
-To enable the platform-admin panel, bootstrap only your own trusted account after signing in and checking its user UUID in Supabase Dashboard → Authentication → Users:
+## Supabase setup
 
-```sql
-insert into public.platform_admins (user_id)
-values ('YOUR_AUTH_USER_UUID'::uuid)
-on conflict (user_id) do nothing;
-```
+### Database and migrations
 
-Never place the Supabase service-role key or other server secrets in `VITE_*` variables or in browser code. The browser should use only the publishable/anon key.
+The numbered SQL files in supabase/migrations/ are incremental migrations for an existing Khaavio application schema. They do not create every core table from scratch. The core restaurants, restaurant_tables, orders, order_items, menu_items, and bookings tables, plus some booking safeguards and RPCs, are expected to exist before all migrations can run.
+
+In particular, the repository does not currently define the booking triggers khaavio_prevent_booking_conflicts_before_write and khaavio_validate_booking_hours_before_write, or the get_public_booking_tables and create_public_booking RPCs. The subscription-entitlement migration checks for the booking triggers and stops if they are missing. Set up and verify the core schema and booking objects in a development or staging project first. A fresh supabase db reset is not a complete from-zero installation yet.
+
+For a project that does not have the subscription baseline, review and apply supabase/khaavio-subscriptions-migration.sql once before the numbered migrations. Then apply the numbered migrations in timestamp order. First compare repository migration files with the target project's migration history; do not blindly reapply SQL or mark a migration applied without checking its contents.
+
+The numbered platform-admin migration already includes functionality from the legacy standalone migration files. Do not apply supabase/khaavio-platform-admin-migration.sql or khaavio-superadmin-pwa/supabase/khaavio-superadmin-pwa-migration.sql a second time after the numbered platform-admin migration is present.
+
+The migrations preserve existing subscription rows and their current ends_at values. New trial assignments use the configured seven-day trial. Public ordering also relies on subscription-status and restaurant-hours helper functions supplied by the migrations.
+
+### Edge Functions and secrets
+
+The supabase/functions/ folder contains the Khaavio AI chat and Razorpay subscription functions. Deploy the functions required by the features you enable. Configure server-only secrets in Supabase Edge Function secrets, never in the Vite environment:
+
+- GROQ_API_KEY for AI chat.
+- RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET for subscription checkout.
+- RAZORPAY_WEBHOOK_SECRET for webhook signature verification.
+- Razorpay plan IDs: RAZORPAY_PLAN_STARTER_MONTHLY, RAZORPAY_PLAN_STARTER_YEARLY, RAZORPAY_PLAN_GROWTH_MONTHLY, and RAZORPAY_PLAN_GROWTH_YEARLY.
+
+The Supabase Edge Function runtime also needs its project URL and server-side Supabase credentials. Confirm the required secrets are configured before enabling the corresponding production feature.
+
+### Storage
+
+The app uses the menu-images and restaurant-logos Supabase Storage buckets. Public reads are used to display restaurant assets; uploads are restricted to authenticated owners' folders. The menu-images bucket is limited to 5 MB per file and image content types.
+
+### Authentication and production URLs
+
+Local Auth callback URLs are configured for Vite on port 5173. Configure the production site URL and redirect allowlist separately in hosted Supabase Auth settings. Keep local and production callback URLs aligned with the URLs actually used by each environment.
 
 ## Khaavio Control PWA
 
-The optional `khaavio-superadmin-pwa/` folder is a separate Vite app. For local development, create `khaavio-superadmin-pwa/.env.local` from its `.env.example`, then run `npm ci` and `npm run dev` from that folder. Use a trusted allowlisted admin account only; the PWA calls server-side RPCs that enforce membership in `public.platform_admins`.
+The optional khaavio-superadmin-pwa/ directory contains a separate Vite app. It uses the same Supabase project and its own .env.local, created from khaavio-superadmin-pwa/.env.example.
+
+~~~sh
+cd khaavio-superadmin-pwa
+npm ci
+npm run dev
+~~~
+
+Use a trusted, allowlisted admin account only. The PWA calls server-side RPCs that verify membership in public.platform_admins.
+
+To bootstrap your own trusted platform-admin account, sign in and confirm your user UUID in Supabase Dashboard → Authentication → Users, then run this once in the trusted project's SQL editor:
+
+~~~sql
+insert into public.platform_admins (user_id)
+values ('YOUR_AUTH_USER_UUID'::uuid)
+on conflict (user_id) do nothing;
+~~~
