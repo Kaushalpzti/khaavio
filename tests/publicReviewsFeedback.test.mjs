@@ -8,7 +8,7 @@ const feedbackDashboard = read("../src/pages/ReviewFeedbackDashboard.jsx");
 const migration = read("../supabase/migrations/20261025040000_restaurant_reviews_feedback.sql");
 
 test("Google review link is independent from private feedback rating", () => {
-  assert.match(publicWidget, /Review us on Google/);
+  assert.match(publicWidget, /Write a Google review/);
   assert.match(publicWidget, /Share private feedback/);
   assert.match(publicWidget, /useState\(0\)/);
   assert.match(publicWidget, /disabled=\{submitting \|\| rating === 0\}/);

@@ -16,10 +16,13 @@ test("public menu has the requested four in-shell tabs and no Home tab", () => {
   assert.match(menu, /activeBottomTab === "reviews"/);
 });
 
-test("table number is displayed as a non-interactive badge, not a selector", () => {
+test("regular dine-in can select a table and continue on its QR menu", () => {
   assert.match(menu, /className="public-menu-table-badge"/);
   assert.match(menu, /<span>Table \{normalizeTableNumber\(tableContext\.table_number\)\}<\/span>/);
-  assert.doesNotMatch(menu, /select[^>]+tableContext|tableContext[^<]+<select/i);
+  assert.match(menu, /className="public-menu-table-picker"/);
+  assert.match(menu, /className="public-menu-table-chooser-continue"/);
+  assert.match(menu, /navigate\(`\/menu\/\$\{encodeURIComponent\(slug\)\}\?table=/);
+  assert.match(menu, /getPendingTableMenuCartKey\(slug\)/);
 });
 
 test("booking is embedded in the public menu while the standalone route remains supported", () => {
