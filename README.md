@@ -111,3 +111,4 @@ insert into public.platform_admins (user_id)
 values ('YOUR_AUTH_USER_UUID'::uuid)
 on conflict (user_id) do nothing;
 ~~~
+~~~
