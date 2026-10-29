@@ -75,7 +75,8 @@
   letter-spacing: 1.6px;
 }
 
-.kitchen-title-row h1 {
+.kitchen-title-row h1,
+.kitchen-title-row h2 {
   margin: 9px 0 7px;
   color: #193b2a;
   font-family: Georgia, "Times New Roman", serif;

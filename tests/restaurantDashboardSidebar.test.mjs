@@ -24,6 +24,7 @@ test("sidebar provides active navigation links for every restaurant dashboard ro
     "/dashboard/qr",
     "/dashboard/table-qr",
     "/dashboard/orders",
+    "/dashboard/offers",
     "/dashboard/kitchen",
     "/dashboard/table-sessions",
     "/dashboard/receipts",

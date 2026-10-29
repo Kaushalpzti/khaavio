@@ -17,10 +17,12 @@ import {
   LifeBuoy,
   LogOut,
   Menu,
+  ImagePlus,
   QrCode,
   Receipt,
   Settings,
   Store,
+  Tag,
   UtensilsCrossed,
   X,
 } from "lucide-react";
@@ -41,6 +43,7 @@ const NAV_GROUPS = [
     items: [
       { label: "Restaurant settings", to: "/dashboard/settings", icon: Settings },
       { label: "Menu manager", to: "/dashboard/menu", icon: UtensilsCrossed },
+      { label: "Menu banners", to: "/dashboard/menu-banners", icon: ImagePlus },
       { label: "Menu QR", to: "/dashboard/qr", icon: QrCode },
       { label: "Table QR codes", to: "/dashboard/table-qr", icon: Store },
     ],
@@ -50,6 +53,7 @@ const NAV_GROUPS = [
     items: [
       { label: "Orders", to: "/dashboard/orders", icon: ClipboardList },
       { label: "Service requests", to: "/dashboard/service-requests", icon: BellRing },
+      { label: "Offers & Coupons", to: "/dashboard/offers", icon: Tag },
       { label: "Loyalty & rewards", to: "/dashboard/loyalty", icon: Gift },
       { label: "Kitchen display", to: "/dashboard/kitchen", icon: ChefHat },
       { label: "Table sessions & billing", to: "/dashboard/table-sessions", icon: Receipt },

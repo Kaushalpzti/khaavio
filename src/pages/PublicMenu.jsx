@@ -14,6 +14,7 @@ import {
   ShoppingBag,
   Gift,
   Star,
+  Tag,
   Trash2,
   UtensilsCrossed,
   X,
@@ -206,6 +207,8 @@ export default function PublicMenu() {
   const [restaurant, setRestaurant] = useState(null);
   const [categories, setCategories] = useState([]);
   const [items, setItems] = useState([]);
+  const [menuBanners, setMenuBanners] = useState([]);
+  const [publicOffers, setPublicOffers] = useState([]);
   const [tableContext, setTableContext] = useState(null);
   const [publicFeatures, setPublicFeatures] = useState({ ...DEFAULT_PUBLIC_FEATURES });
 
@@ -213,6 +216,10 @@ export default function PublicMenu() {
   const [categoryId, setCategoryId] = useState("all");
 
   const [cart, setCart] = useState([]);
+  const [couponInput, setCouponInput] = useState("");
+  const [appliedCoupon, setAppliedCoupon] = useState(null);
+  const [couponFeedback, setCouponFeedback] = useState("");
+  const [validatingCoupon, setValidatingCoupon] = useState(false);
   const [guestTabToken, setGuestTabToken] = useState("");
   const [guestTabSnapshot, setGuestTabSnapshot] = useState(null);
   const [guestBillOpen, setGuestBillOpen] = useState(false);
@@ -311,9 +318,14 @@ export default function PublicMenu() {
       setRestaurant(null);
       setCategories([]);
       setItems([]);
+      setMenuBanners([]);
+      setPublicOffers([]);
       setTableContext(null);
       setCategoryId("all");
       setCart([]);
+      setCouponInput("");
+      setAppliedCoupon(null);
+      setCouponFeedback("");
       setGuestTabToken("");
       setGuestTabSnapshot(null);
       setGuestBillOpen(false);
@@ -324,6 +336,7 @@ export default function PublicMenu() {
       setSubscriptionAllowsTransactions(null);
       setPublicFeatures({ ...DEFAULT_PUBLIC_FEATURES });
       setActiveBottomTab("menu");
+      setActivePromoSlide(0);
 
       try {
         const { data: menuSnapshot, error: restaurantError } = await supabase.rpc(
@@ -434,9 +447,35 @@ export default function PublicMenu() {
           ? menuSnapshot.items
           : [];
 
+        // Public offer details are limited to active coupons on a published menu.
+        // If the optional RPC is unavailable, menu browsing remains unaffected.
+        let resolvedPublicOffers = [];
+        try {
+          const { data: offersData, error: offersError } = await supabase.rpc(
+            "khaavio_public_restaurant_coupons",
+            { p_slug: slug },
+          );
+          if (!offersError && Array.isArray(offersData)) resolvedPublicOffers = offersData;
+        } catch {
+          resolvedPublicOffers = [];
+        }
+
+        let resolvedMenuBanners = [];
+        try {
+          const { data: bannerData, error: bannerError } = await supabase.rpc(
+            "khaavio_public_restaurant_menu_banners",
+            { p_slug: slug },
+          );
+          if (!bannerError && Array.isArray(bannerData)) resolvedMenuBanners = bannerData;
+        } catch {
+          resolvedMenuBanners = [];
+        }
+
         if (cancelled) return;
 
         setRestaurant(restaurantData);
+        setMenuBanners(resolvedMenuBanners);
+        setPublicOffers(resolvedPublicOffers);
         setPublicFeatures(resolvedPublicFeatures);
         setSubscriptionAllowsTransactions(transactionAccess);
         setAvailabilityNow(Date.now());
@@ -489,11 +528,12 @@ export default function PublicMenu() {
     }
 
     const intervalId = window.setInterval(() => {
-      setActivePromoSlide((current) => (current + 1) % 3);
+      const slideCount = menuBanners.length || 3;
+      setActivePromoSlide((current) => (current + 1) % slideCount);
     }, 5200);
 
     return () => window.clearInterval(intervalId);
-  }, [activeBottomTab]);
+  }, [activeBottomTab, menuBanners.length]);
 
   // The table QR has already been validated by resolve_public_table.
   // Do not depend on a particular ID field name in that RPC's result shape:
@@ -604,7 +644,7 @@ export default function PublicMenu() {
   });
 
   const promoImageItems = items.filter((item) => Boolean(item.image_url));
-  const promoSlides = [
+  const fallbackPromoSlides = [
     {
       eyebrow: "FRESH FAVOURITES",
       titleStart: "Good food,",
@@ -627,7 +667,19 @@ export default function PublicMenu() {
       imageItem: promoImageItems[2] || promoImageItems[0],
     },
   ];
-  const currentPromoSlide = promoSlides[activePromoSlide] || promoSlides[0];
+  const uploadedPromoSlides = menuBanners.map((banner) => ({
+    eyebrow: banner.eyebrow,
+    titleStart: banner.title,
+    titleAccent: "",
+    description: banner.description,
+    imageItem: {
+      id: banner.id,
+      image_url: supabase.storage.from("menu-images").getPublicUrl(banner.image_path).data.publicUrl,
+    },
+  }));
+  const promoSlides = uploadedPromoSlides.length ? uploadedPromoSlides : fallbackPromoSlides;
+  const activePromoIndex = activePromoSlide % promoSlides.length;
+  const currentPromoSlide = promoSlides[activePromoIndex] || promoSlides[0];
 
   const cartTotal = cart.reduce(
     (total, entry) => total + Number(entry.price) * entry.quantity,
@@ -635,6 +687,10 @@ export default function PublicMenu() {
   );
 
   const cartQuantity = cart.reduce((total, entry) => total + entry.quantity, 0);
+  const cartFingerprint = JSON.stringify(cart.map((entry) => [entry.id, entry.quantity]));
+  const activeCoupon = appliedCoupon?.fingerprint === cartFingerprint ? appliedCoupon : null;
+  const cartDiscount = Number(activeCoupon?.discountAmount) || 0;
+  const cartFinalTotal = Math.max(0, cartTotal - cartDiscount);
 
   const baseOrderingAvailability = getRestaurantAvailability(
     restaurant,
@@ -653,6 +709,8 @@ export default function PublicMenu() {
   function addToCart(item) {
     setCheckoutError("");
     setOrderResult(null);
+    setAppliedCoupon(null);
+    setCouponFeedback("");
 
     const existing = cart.find((entry) => entry.id === item.id);
 
@@ -676,9 +734,28 @@ export default function PublicMenu() {
     });
   }
 
+  function choosePublicOffer(offer) {
+    setCouponInput(offer.code);
+    setAppliedCoupon(null);
+    setCouponFeedback(
+      tableContext
+        ? cart.length > 0
+          ? `${offer.code} added. Apply it in your cart.`
+          : `${offer.code} saved. Add dishes, then apply it in your cart.`
+        : `Scan a table QR to use ${offer.code} at checkout.`,
+    );
+    if (tableContext && cart.length > 0) {
+      setIsCartOpen(true);
+    } else {
+      document.getElementById("menu")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }
+
   function changeQuantity(itemId, difference) {
     setCheckoutError("");
     setOrderResult(null);
+    setAppliedCoupon(null);
+    setCouponFeedback("");
 
     const existing = cart.find((entry) => entry.id === itemId);
 
@@ -706,12 +783,56 @@ export default function PublicMenu() {
     setCart((current) => current.filter((entry) => entry.id !== itemId));
     setCheckoutError("");
     setOrderResult(null);
+    setAppliedCoupon(null);
+    setCouponFeedback("");
+  }
+
+  async function validateCoupon() {
+    const code = couponInput.trim().toUpperCase();
+    if (!code) {
+      setCouponFeedback("Enter a coupon code.");
+      setAppliedCoupon(null);
+      return;
+    }
+    if (!tableToken || !tableContext || cart.length === 0) {
+      setCouponFeedback("Scan this restaurant's table QR and add items before applying a coupon.");
+      setAppliedCoupon(null);
+      return;
+    }
+    setValidatingCoupon(true);
+    setCouponFeedback("");
+    setAppliedCoupon(null);
+    try {
+      const { data, error: quoteError } = await supabase.rpc("khaavio_validate_coupon", {
+        p_slug: slug,
+        p_table_token: tableToken,
+        p_code: code,
+        p_items: cart.map((entry) => ({ item_id: entry.id, quantity: entry.quantity })),
+      });
+      if (quoteError) throw quoteError;
+      const quote = Array.isArray(data) ? data[0] : data;
+      if (!quote?.is_valid) {
+        setCouponFeedback(quote?.message || "This coupon cannot be used for your cart.");
+        return;
+      }
+      const discountAmount = Number(quote.discount_amount) || 0;
+      setAppliedCoupon({ code, discountAmount, fingerprint: cartFingerprint });
+      setCouponInput(code);
+      setCouponFeedback(`${code} applied — you save ${formatPrice(discountAmount)}.`);
+    } catch (couponError) {
+      setCouponFeedback(getErrorMessage(couponError, "Could not check that coupon. Please try again."));
+    } finally {
+      setValidatingCoupon(false);
+    }
   }
 
   function resetOrderForm() {
     setOrderResult(null);
     setCheckoutError("");
     setCart([]);
+    setCouponInput("");
+    setAppliedCoupon(null);
+    setCouponFeedback("");
   }
 
   async function placeOrder(event) {
@@ -811,6 +932,7 @@ export default function PublicMenu() {
         })),
         p_loyalty_member_token: getOrCreateKhaavioLoyaltyToken(slug),
         p_loyalty_phone: loyaltyPhone || null,
+        p_coupon_code: activeCoupon?.code || null,
       };
 
       if (useGuestBilling && !activeGuestToken) {
@@ -829,21 +951,32 @@ export default function PublicMenu() {
               items: payload.p_items,
               loyaltyMemberToken: payload.p_loyalty_member_token,
               loyaltyPhone: payload.p_loyalty_phone,
+              couponCode: payload.p_coupon_code,
             }),
           )
         : null;
 
-      const { data, error: orderError } = await supabase.rpc(
-        useGuestBilling ? "place_public_order_for_guest_with_loyalty" : "place_public_order_with_loyalty",
-        useGuestBilling
-          ? {
-              ...payload,
-              p_guest_tab_token: activeGuestToken,
-              p_guest_display_name: name,
-              p_guest_order_request_token: guestOrderRequest.token,
-            }
-          : payload,
-      );
+      const couponAwareRpc = useGuestBilling
+        ? "place_public_order_for_guest_with_coupon"
+        : "place_public_order_with_coupon_and_loyalty";
+      const legacyRpc = useGuestBilling
+        ? "place_public_order_for_guest_with_loyalty"
+        : "place_public_order_with_loyalty";
+      const rpcPayload = useGuestBilling
+        ? {
+            ...payload,
+            p_guest_tab_token: activeGuestToken,
+            p_guest_display_name: name,
+            p_guest_order_request_token: guestOrderRequest.token,
+          }
+        : payload;
+      let { data, error: orderError } = await supabase.rpc(couponAwareRpc, rpcPayload);
+      const couponRpcNotInstalled = orderError && !payload.p_coupon_code
+        && (orderError.code === "PGRST202" || orderError.code === "42883");
+      if (couponRpcNotInstalled) {
+        // Keep current ordering available while an administrator applies the new migration.
+        ({ data, error: orderError } = await supabase.rpc(legacyRpc, rpcPayload));
+      }
 
       if (orderError) throw orderError;
 
@@ -860,6 +993,8 @@ export default function PublicMenu() {
         reference: result.order_reference,
         total: result.total_amount,
         trackingToken: result.tracking_token || null,
+        couponCode: activeCoupon?.code || null,
+        discountAmount: cartDiscount,
       });
 
       if (guestOrderRequest) {
@@ -871,6 +1006,9 @@ export default function PublicMenu() {
       }
       setCart([]);
       setOrderNotes("");
+      setCouponInput("");
+      setAppliedCoupon(null);
+      setCouponFeedback("");
       if (useGuestBilling) void refreshGuestBillSnapshot(activeGuestToken);
     } catch (err) {
       setCheckoutError(
@@ -1096,7 +1234,7 @@ export default function PublicMenu() {
                   key={currentPromoSlide.imageItem.id}
                   src={currentPromoSlide.imageItem.image_url}
                   alt=""
-                  fetchPriority={activePromoSlide === 0 ? "high" : "auto"}
+                  fetchPriority={activePromoIndex === 0 ? "high" : "auto"}
                 />
               ) : (
                 <div className="public-menu-promo-image-placeholder">
@@ -1112,7 +1250,7 @@ export default function PublicMenu() {
               </span>
               <h1>
                 <span>{currentPromoSlide.titleStart}</span>
-                <strong>{currentPromoSlide.titleAccent}</strong>
+                  {currentPromoSlide.titleAccent && <strong>{currentPromoSlide.titleAccent}</strong>}
               </h1>
               <p>{currentPromoSlide.description}</p>
             </div>
@@ -1122,14 +1260,43 @@ export default function PublicMenu() {
                 <button
                   key={slide.eyebrow}
                   type="button"
-                  className={index === activePromoSlide ? "is-active" : ""}
+                  className={index === activePromoIndex ? "is-active" : ""}
                   aria-label={`Show banner ${index + 1}`}
-                  aria-pressed={index === activePromoSlide}
+                  aria-pressed={index === activePromoIndex}
                   onClick={() => setActivePromoSlide(index)}
                 />
               ))}
             </div>
           </section>
+
+          {publicOffers.length > 0 && (
+            <section className="public-menu-offers" aria-label="Current restaurant offers">
+              <div className="public-menu-offers-heading">
+                <span><Tag size={14} /> OFFERS FOR YOU</span>
+                <p>Use a code at table QR checkout</p>
+              </div>
+              <div className="public-menu-offers-list">
+                {publicOffers.slice(0, 3).map((offer) => (
+                  <article className="public-menu-offer-card" key={offer.code}>
+                    <div className="public-menu-offer-copy">
+                      <strong>{offer.title}</strong>
+                      <span className="public-menu-offer-discount">
+                        {offer.discount_type === "percent"
+                          ? `${Number(offer.discount_value)}% off`
+                          : `${formatPrice(offer.discount_value)} off`}
+                      </span>
+                      <span className="public-menu-offer-details">
+                        Code <code>{offer.code}</code>
+                        {Number(offer.minimum_order_amount) > 0 && ` · Min. ${formatPrice(offer.minimum_order_amount)}`}
+                        {offer.maximum_discount_amount != null && ` · Up to ${formatPrice(offer.maximum_discount_amount)}`}
+                      </span>
+                    </div>
+                    <button type="button" onClick={() => choosePublicOffer(offer)}>Use code</button>
+                  </article>
+                ))}
+              </div>
+            </section>
+          )}
 
           <section className="public-menu-content" id="menu">
             <div className="public-menu-tools">
@@ -1427,6 +1594,7 @@ export default function PublicMenu() {
                       <strong>{orderResult.reference}</strong>
                     </div>
 
+                    {orderResult.discountAmount > 0 && <p className="public-order-confirmed-discount">Coupon {orderResult.couponCode} saved {formatPrice(orderResult.discountAmount)}</p>}
                     <div className="public-order-confirmed-total">
                       <span>Confirmed total</span>
                       <strong>{formatPrice(orderResult.total)}</strong>
@@ -1497,6 +1665,9 @@ export default function PublicMenu() {
                           className="public-order-clear"
                           onClick={() => {
                             setCart([]);
+                            setCouponInput("");
+                            setAppliedCoupon(null);
+                            setCouponFeedback("");
                             setCheckoutError("");
                             setOrderResult(null);
                           }}
@@ -1547,12 +1718,13 @@ export default function PublicMenu() {
                       ))}
 
                       <div className="public-order-total">
-                        <span>Estimated total</span>
+                        <span>Subtotal</span>
                         <strong>{formatPrice(cartTotal)}</strong>
                       </div>
+                      {activeCoupon && <div className="public-order-discount-row"><span>Coupon {activeCoupon.code}</span><strong>−{formatPrice(cartDiscount)}</strong></div>}
+                      <div className="public-order-final-total"><span>Estimated total</span><strong>{formatPrice(cartFinalTotal)}</strong></div>
                       <p className="public-order-estimate-note">
-                        Final amount is recalculated using current menu prices
-                        when you submit your order.
+                        Coupon eligibility and the final total are checked again when you submit.
                       </p>
                     </div>
 
@@ -1573,6 +1745,33 @@ export default function PublicMenu() {
                           your restaurant table to place an order.
                         </div>
                       )}
+
+                      <div className="public-order-coupon">
+                        <label htmlFor="public-order-coupon-code"><span>Coupon code</span></label>
+                        <div className="public-order-coupon-entry">
+                          <input
+                            id="public-order-coupon-code"
+                            value={couponInput}
+                            onChange={(event) => {
+                              setCouponInput(event.target.value.toUpperCase().replace(/[^A-Z0-9_-]/g, "").slice(0, 24));
+                              setAppliedCoupon(null);
+                              setCouponFeedback("");
+                            }}
+                            maxLength={24}
+                            autoCapitalize="characters"
+                            placeholder="Enter coupon code"
+                            aria-describedby="public-order-coupon-feedback"
+                          />
+                          {activeCoupon ? (
+                            <button type="button" onClick={() => { setAppliedCoupon(null); setCouponFeedback("Coupon removed."); }} disabled={validatingCoupon}>Remove</button>
+                          ) : (
+                            <button type="button" onClick={() => void validateCoupon()} disabled={validatingCoupon || !couponInput.trim() || cart.length === 0}>
+                              {validatingCoupon ? <LoaderCircle size={14} className="public-menu-spinner" /> : "Apply"}
+                            </button>
+                          )}
+                        </div>
+                        {couponFeedback && <p className={`public-order-coupon-feedback${activeCoupon ? " is-success" : ""}`} id="public-order-coupon-feedback" role="status">{couponFeedback}</p>}
+                      </div>
 
                       <label>
                         <span>Your name *</span>
@@ -1649,7 +1848,7 @@ export default function PublicMenu() {
                         )}
                         {submitting
                           ? "Submitting order..."
-                          : `Place order - ${formatPrice(cartTotal)}`}
+                          : `Place order - ${formatPrice(cartFinalTotal)}`}
                       </button>
 
                       <p className="public-order-disclaimer">
@@ -1748,7 +1947,7 @@ export default function PublicMenu() {
             <button
               type="button"
               className="public-menu-sticky-cart"
-              aria-label={`View cart with ${cartQuantity} items, total ${formatPrice(cartTotal)}`}
+              aria-label={`View cart with ${cartQuantity} items, total ${formatPrice(cartFinalTotal)}`}
               onClick={() => setIsCartOpen(true)}
             >
               <span className="public-menu-sticky-cart-count">
@@ -1761,7 +1960,7 @@ export default function PublicMenu() {
                     ? "1 ITEM ADDED"
                     : `${cartQuantity} ITEMS ADDED`}
                 </small>
-                <strong>{formatPrice(cartTotal)}</strong>
+                <strong>{formatPrice(cartFinalTotal)}</strong>
               </span>
               <span className="public-menu-sticky-cart-action">
                 View cart

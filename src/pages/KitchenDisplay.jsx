@@ -425,6 +425,7 @@ export default function KitchenDisplay() {
         <Link to="/dashboard" className="kitchen-back-link">
           <ArrowLeft size={17} /> Dashboard
         </Link>
+        <h1 className="kitchen-header-title">Kitchen Display <span>KDS</span></h1>
         <div className="kitchen-header-actions">
           <button
             type="button"
@@ -479,7 +480,7 @@ export default function KitchenDisplay() {
         <div className="kitchen-title-row">
           <div>
             <span className="kitchen-eyebrow">SERVICE IN PROGRESS</span>
-            <h1>Kitchen display</h1>
+            <h2>Active order queue</h2>
             <p>
               {restaurant?.name || "Your restaurant"} · Active orders stay here until completed.
             </p>

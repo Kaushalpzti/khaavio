@@ -1,0 +1,79 @@
+.offers-page { width: min(1360px, calc(100% - 72px)); margin: 0 auto; padding: 22px 0 36px; color: #173e2d; }
+.offers-header { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 18px; padding-bottom: 14px; border-bottom: 1px solid #e2e9e0; }
+.offers-header h1 { margin: 2px 0 4px; color: #173e2d; font-size: clamp(24px, 2.4vw, 30px); font-weight: 800; letter-spacing: -.8px; line-height: 1.15; }
+.offers-header p { margin: 0; color: #718078; font-size: 12px; line-height: 1.5; }
+.offers-eyebrow { display: inline-flex; align-items: center; gap: 6px; color: #668273; font-size: 9px; font-weight: 850; letter-spacing: 1.1px; }
+.offers-header-actions { display: flex; align-items: center; gap: 9px; }
+.offers-restaurant-select { display: grid; gap: 4px; color: #687a6e; font-size: 10px; font-weight: 700; }
+.offers-restaurant-select select,.offers-form input,.offers-form select { min-width: 0; min-height: 38px; padding: 8px 10px; border: 1px solid #dfe7dd; border-radius: 9px; outline: none; background: #fffefa; color: #173e2d; font: inherit; font-size: 12px; }
+.offers-restaurant-select select:focus,.offers-form input:focus,.offers-form select:focus { border-color: #5f9b79; box-shadow: 0 0 0 3px rgb(59 129 88 / 11%); }
+.offers-refresh,.offers-primary-button { display: inline-flex; align-items: center; justify-content: center; gap: 7px; min-height: 38px; padding: 0 13px; border: 1px solid #d5e3d6; border-radius: 10px; background: #fffefa; color: #176143; font: inherit; font-size: 11px; font-weight: 800; cursor: pointer; }
+.offers-refresh:disabled,.offers-primary-button:disabled { cursor: wait; opacity: .65; }
+.offers-stats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-bottom: 13px; }
+.offers-stats article { display: grid; grid-template-columns: 35px minmax(0,1fr); align-items: center; column-gap: 10px; padding: 12px 14px; border: 1px solid #e3e9df; border-radius: 12px; background: #fffefa; }
+.offers-stats article > span { grid-row: span 2; display: grid; width: 35px; height: 35px; place-items: center; border-radius: 10px; background: #eaf3e9; color: #08734c; }
+.offers-stats small { color: #718078; font-size: 10px; }
+.offers-stats strong { color: #173e2d; font-size: 19px; line-height: 1.1; }
+.offers-layout { display: grid; grid-template-columns: minmax(300px, .92fr) minmax(360px, 1.08fr); align-items: start; gap: 13px; }
+.offers-panel { min-width: 0; padding: 16px; border: 1px solid #e3e9df; border-radius: 14px; background: #fffefa; box-shadow: 0 3px 13px rgb(23 63 45 / 3%); }
+.offers-panel-heading { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+.offers-panel-heading > div { min-width: 0; }
+.offers-panel-heading h2 { margin: 0 0 3px; color: #173e2d; font-size: 15px; font-weight: 800; letter-spacing: -.25px; }
+.offers-panel-heading p { margin: 0; color: #718078; font-size: 10px; line-height: 1.45; }
+.offers-icon { display: grid; flex: 0 0 34px; width: 34px; height: 34px; place-items: center; border-radius: 10px; background: #eaf3e9; color: #08734c; }
+.offers-icon.is-gold { background: #fff2d9; color: #a77721; }
+.offers-count { margin-left: auto; padding: 5px 8px; border: 1px solid #e2e9df; border-radius: 999px; color: #617a68; font-size: 10px; font-weight: 800; }
+.offers-form { display: grid; gap: 12px; }
+.offers-fields { display: grid; min-width: 0; gap: 9px; }
+.offers-fields.two-cols { grid-template-columns: repeat(2, minmax(0,1fr)); }
+.offers-fields.three-cols { grid-template-columns: repeat(3, minmax(0,1fr)); }
+.offers-form label { display: grid; min-width: 0; gap: 5px; color: #385b48; font-size: 10px; font-weight: 750; }
+.offers-form label > span { overflow-wrap: anywhere; }
+.offers-form input,.offers-form select { width: 100%; box-sizing: border-box; }
+.offers-form small { color: #829087; font-size: 9px; font-weight: 500; line-height: 1.4; }
+.offers-safety-note { display: flex; align-items: flex-start; gap: 7px; padding: 9px; border: 1px solid #e0ebdf; border-radius: 9px; background: #f5f8f1; color: #63776a; font-size: 9px; line-height: 1.45; }
+.offers-safety-note svg { flex: 0 0 15px; color: #168052; }
+.offers-primary-button { justify-self: start; border-color: #075b43; background: #075b43; color: white; }
+.offers-alert { margin-bottom: 12px; padding: 10px 12px; border: 1px solid #e3e9df; border-radius: 10px; font-size: 11px; line-height: 1.5; }
+.offers-alert.is-error { border-color: #f0c9c4; background: #fff5f3; color: #9b3f34; }
+.offers-alert.is-success { border-color: #c9e6d2; background: #f0f8f1; color: #246345; }
+.offers-list { display: grid; gap: 9px; }
+.offers-coupon-card { min-width: 0; padding: 12px; border: 1px solid #e5eade; border-radius: 12px; background: #fffefa; }
+.offers-coupon-card.is-live { border-color: #cfe4d1; background: linear-gradient(120deg, #fbfdf8, #fffefa 60%); }
+.offers-coupon-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
+.offers-coupon-top > div { display: grid; gap: 3px; }
+.offers-coupon-kicker { color: #718078; font-size: 9px; font-weight: 700; }
+.offers-coupon-top strong { color: #075b43; font-size: 16px; letter-spacing: -.2px; }
+.offers-toggle { display: grid; place-items: center; padding: 0; border: 0; background: transparent; color: #128253; cursor: pointer; }
+.offers-code-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 9px 0; padding: 7px 9px; border: 1px dashed #d6e4d5; border-radius: 8px; background: #f7faf5; }
+.offers-code-row code { color: #173e2d; font-size: 13px; font-weight: 850; letter-spacing: 1px; overflow-wrap: anywhere; }
+.offers-code-row button { display: inline-flex; align-items: center; gap: 4px; padding: 4px; border: 0; background: transparent; color: #347456; font: inherit; font-size: 9px; font-weight: 800; cursor: pointer; }
+.offers-coupon-meta { display: flex; flex-wrap: wrap; gap: 6px; }
+.offers-coupon-meta span { padding: 4px 6px; border: 1px solid #edf0e8; border-radius: 6px; color: #718078; font-size: 9px; }
+.offers-coupon-footer { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 10px; padding-top: 8px; border-top: 1px solid #edf0e8; color: #7d8a80; font-size: 9px; }
+.offers-coupon-footer > span:last-child { display: inline-flex; align-items: center; gap: 4px; text-align: right; }
+.offers-status { padding: 4px 7px; border-radius: 999px; background: #f2f3ed; color: #728075; font-size: 9px; font-weight: 800; }
+.offers-status.is-live { background: #eaf5ec; color: #18704c; }
+.offers-state,.offers-empty { display: grid; justify-items: center; gap: 8px; padding: 25px 16px; color: #718078; text-align: center; }
+.offers-empty { min-height: 210px; align-content: center; border: 1px dashed #dce5da; border-radius: 12px; background: #fbfcf8; }
+.offers-empty.compact { min-height: 150px; border-radius: 10px; }
+.offers-empty h2,.offers-empty strong { margin: 0; color: #315d45; font-size: 14px; }
+.offers-empty p { max-width: 330px; margin: 0; color: #7c8a80; font-size: 10px; line-height: 1.55; }
+.offers-spin { animation: offers-spin .9s linear infinite; }
+@keyframes offers-spin { to { transform: rotate(360deg); } }
+
+@media (max-width: 1000px) { .offers-layout { grid-template-columns: minmax(0,1fr); } }
+@media (max-width: 780px) { .offers-page { width: calc(100% - 28px); padding-top: 16px; padding-bottom: 28px; } }
+@media (max-width: 560px) {
+  .offers-header { align-items: flex-start; flex-direction: column; }
+  .offers-header-actions { width: 100%; align-items: flex-end; justify-content: space-between; }
+  .offers-fields.three-cols { grid-template-columns: repeat(2, minmax(0,1fr)); }
+  .offers-fields.three-cols label:last-child:nth-child(odd) { grid-column: 1 / -1; }
+  .offers-panel { padding: 12px; }
+  .offers-coupon-footer { align-items: flex-start; flex-direction: column; }
+}
+@media (max-width: 360px) {
+  .offers-page { width: calc(100% - 20px); }
+  .offers-fields.two-cols,.offers-fields.three-cols { grid-template-columns: minmax(0,1fr); }
+  .offers-fields.three-cols label:last-child:nth-child(odd) { grid-column: auto; }
+}

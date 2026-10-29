@@ -33,11 +33,11 @@ test("table QR editor has accessible edit dialog and responsive management actio
   assert.match(studioStyles, /\.tqr-card-qr-shell/);
 });
 
-test("restaurant dashboard exposes quick actions for table QR, menu and kitchen", () => {
+test("restaurant dashboard quick actions link directly to Orders and KDS", () => {
   assert.match(dashboard, /dashboard-quick-actions/);
-  assert.match(dashboard, /Manage table QR/);
-  assert.match(dashboard, /Update your menu/);
-  assert.match(dashboard, /Open kitchen display/);
+  assert.match(dashboard, /to="\/dashboard\/orders" className="dashboard-quick-action"[\s\S]*?<strong>Orders<\/strong>/);
+  assert.match(dashboard, /to="\/dashboard\/kitchen" className="dashboard-quick-action"[\s\S]*?<strong>KDS<\/strong>/);
+  assert.doesNotMatch(dashboard, /<strong>Manage table QR<\/strong>|<strong>Update your menu<\/strong>/);
   assert.match(dashboardStyles, /\.dashboard-quick-action/);
 });
 

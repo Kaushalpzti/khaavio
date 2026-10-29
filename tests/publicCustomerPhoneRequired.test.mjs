@@ -18,7 +18,7 @@ test("public QR checkout requires a mobile number and sends its normalized form"
 });
 
 test("public order button label uses a clean text separator", () => {
-  assert.ok(menu.includes("`Place order - ${formatPrice(cartTotal)}`"));
+  assert.ok(menu.includes("`Place order - ${formatPrice(cartFinalTotal)}`"));
   assert.doesNotMatch(menu, /Â·/);
 });
 

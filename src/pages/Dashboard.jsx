@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
   ArrowUpRight,
+  Banknote,
   CalendarDays,
   ChefHat,
   BarChart3,
@@ -98,6 +99,61 @@ const modules = [
   },
 ];
 
+const EMPTY_OVERVIEW_STATS = { orders: null, sales: null, bookings: null, kitchen: null };
+const ACTIVE_ORDER_STATUSES = new Set(["pending", "accepted", "preparing", "ready"]);
+
+function getLocalDayRange() {
+  const start = new Date();
+  start.setHours(0, 0, 0, 0);
+  const end = new Date(start);
+  end.setDate(end.getDate() + 1);
+  return { start: start.toISOString(), end: end.toISOString() };
+}
+
+async function loadOverviewStats(restaurantId) {
+  const { start, end } = getLocalDayRange();
+  const [ordersResult, bookingsResult] = await Promise.all([
+    supabase
+      .from("orders")
+      .select("status, total_amount")
+      .eq("restaurant_id", restaurantId)
+      .gte("created_at", start)
+      .lt("created_at", end),
+    supabase
+      .from("bookings")
+      .select("status")
+      .eq("restaurant_id", restaurantId)
+      .gte("booking_time", start)
+      .lt("booking_time", end),
+  ]);
+
+  return {
+    orders: ordersResult.error ? null : (ordersResult.data || []).length,
+    sales: ordersResult.error
+      ? null
+      : (ordersResult.data || []).reduce(
+          (total, order) => total + (order.status === "completed" ? Number(order.total_amount) || 0 : 0),
+          0,
+        ),
+    kitchen: ordersResult.error
+      ? null
+      : (ordersResult.data || []).filter((order) => ACTIVE_ORDER_STATUSES.has(order.status)).length,
+    bookings: bookingsResult.error
+      ? null
+      : (bookingsResult.data || []).filter((booking) => ["pending", "confirmed"].includes(booking.status)).length,
+  };
+}
+
+function formatDashboardPrice(value) {
+  if (value == null) return "—";
+  return new Intl.NumberFormat("en-IN", {
+    style: "currency",
+    currency: "INR",
+    notation: value >= 100000 ? "compact" : "standard",
+    maximumFractionDigits: value >= 100000 ? 1 : 0,
+  }).format(value);
+}
+
 export default function Dashboard() {
   const navigate = useNavigate();
 
@@ -107,6 +163,7 @@ export default function Dashboard() {
   const [loadError, setLoadError] = useState("");
   const [actionError, setActionError] = useState("");
   const [isPublishing, setIsPublishing] = useState(false);
+  const [overviewStats, setOverviewStats] = useState(EMPTY_OVERVIEW_STATS);
 
   useEffect(() => {
     let active = true;
@@ -140,6 +197,12 @@ export default function Dashboard() {
 
         setEmail(user.email || "");
         setRestaurant(data);
+        setOverviewStats(EMPTY_OVERVIEW_STATS);
+        if (data?.id) {
+          void loadOverviewStats(data.id).then((stats) => {
+            if (active) setOverviewStats(stats);
+          });
+        }
       } catch (err) {
         if (active) {
           setLoadError(
@@ -230,6 +293,10 @@ export default function Dashboard() {
 
       setEmail(user.email || "");
       setRestaurant(data);
+      setOverviewStats(EMPTY_OVERVIEW_STATS);
+      if (data?.id) {
+        void loadOverviewStats(data.id).then(setOverviewStats);
+      }
     } catch (err) {
       setLoadError(err?.message || "Could not load your restaurant workspace.");
     } finally {
@@ -284,8 +351,8 @@ export default function Dashboard() {
 
             <section className="dashboard-welcome">
               <div>
-                <h1>Welcome to {restaurant.name}.</h1>
-                <p>Your restaurant's digital workspace starts here.</p>
+                <h1>Welcome back, {restaurant.name}.</h1>
+                <p>Here’s your restaurant at a glance.</p>
               </div>
 
               <div className="database-badge">
@@ -294,20 +361,38 @@ export default function Dashboard() {
               </div>
             </section>
 
-            <nav className="dashboard-quick-actions" aria-label="Quick actions">
-              <Link to="/dashboard/table-qr" className="dashboard-quick-action">
-                <span className="dashboard-quick-action-icon"><QrCode size={19} /></span>
-                <span><strong>Manage table QR</strong><small>Edit tables, preview and print branded cards.</small></span>
-                <ArrowUpRight size={16} />
+            <section className="dashboard-today" aria-label="Today's restaurant snapshot">
+              <Link to="/dashboard/orders" className="dashboard-today-card">
+                <span className="dashboard-today-icon"><ClipboardList size={17} /></span>
+                <span className="dashboard-today-copy"><small>ORDERS TODAY</small><strong>{overviewStats.orders ?? "—"}</strong></span>
+                <ArrowUpRight size={14} aria-hidden="true" />
               </Link>
-              <Link to="/dashboard/menu" className="dashboard-quick-action">
-                <span className="dashboard-quick-action-icon"><UtensilsCrossed size={19} /></span>
-                <span><strong>Update your menu</strong><small>Keep dishes, prices and availability current.</small></span>
+              <Link to="/dashboard/analytics" className="dashboard-today-card">
+                <span className="dashboard-today-icon"><Banknote size={17} /></span>
+                <span className="dashboard-today-copy"><small>SALES TODAY</small><strong>{formatDashboardPrice(overviewStats.sales)}</strong></span>
+                <ArrowUpRight size={14} aria-hidden="true" />
+              </Link>
+              <Link to="/dashboard/bookings" className="dashboard-today-card">
+                <span className="dashboard-today-icon"><CalendarDays size={17} /></span>
+                <span className="dashboard-today-copy"><small>ACTIVE BOOKINGS</small><strong>{overviewStats.bookings ?? "—"}</strong></span>
+                <ArrowUpRight size={14} aria-hidden="true" />
+              </Link>
+              <Link to="/dashboard/kitchen" className="dashboard-today-card">
+                <span className="dashboard-today-icon"><ChefHat size={17} /></span>
+                <span className="dashboard-today-copy"><small>IN KITCHEN</small><strong>{overviewStats.kitchen ?? "—"}</strong></span>
+                <ArrowUpRight size={14} aria-hidden="true" />
+              </Link>
+            </section>
+
+            <nav className="dashboard-quick-actions" aria-label="Quick actions">
+              <Link to="/dashboard/orders" className="dashboard-quick-action">
+                <span className="dashboard-quick-action-icon"><ClipboardList size={19} /></span>
+                <span><strong>Orders</strong><small>Review orders and update their status.</small></span>
                 <ArrowUpRight size={16} />
               </Link>
               <Link to="/dashboard/kitchen" className="dashboard-quick-action">
                 <span className="dashboard-quick-action-icon"><ChefHat size={19} /></span>
-                <span><strong>Open kitchen display</strong><small>Track active orders and preparation progress.</small></span>
+                <span><strong>KDS</strong><small>Track preparation and update kitchen orders.</small></span>
                 <ArrowUpRight size={16} />
               </Link>
             </nav>

@@ -7,8 +7,9 @@ const styles = readFileSync(new URL("../src/pages/PublicMenuExperience.css", imp
 
 test("oversized intro hero is replaced by a compact three-slide food banner", () => {
   assert.match(menu, /className="public-menu-promo-slider"/);
-  assert.match(menu, /const promoSlides = \[/);
-  assert.match(menu, /setActivePromoSlide\(\(current\) => \(current \+ 1\) % 3\)/);
+  assert.match(menu, /const fallbackPromoSlides = \[/);
+  assert.match(menu, /uploadedPromoSlides\.length \? uploadedPromoSlides : fallbackPromoSlides/);
+  assert.match(menu, /const slideCount = menuBanners\.length \|\| 3/);
   assert.doesNotMatch(menu, /className="public-menu-hero"/);
   assert.doesNotMatch(menu, /public-menu-hero-status/);
   assert.match(styles, /\.public-menu-promo-slider\s*\{/);

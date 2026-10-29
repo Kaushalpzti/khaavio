@@ -36,6 +36,8 @@ const TableQRStudio = lazy(() => import("./pages/TableQRStudio"));
 const TableSessions = lazy(() => import("./pages/TableSessions"));
 const ServiceRequestsDashboard = lazy(() => import("./pages/ServiceRequestsDashboard"));
 const LoyaltyDashboard = lazy(() => import("./pages/LoyaltyDashboard"));
+const OffersDashboard = lazy(() => import("./pages/OffersDashboard"));
+const MenuBannersDashboard = lazy(() => import("./pages/MenuBannersDashboard"));
 const ReviewFeedbackDashboard = lazy(() => import("./pages/ReviewFeedbackDashboard"));
 
 // Orders, receipts, bookings and analytics
@@ -229,6 +231,14 @@ export default function App() {
             }
           />
           <Route
+            path="/dashboard/menu-banners"
+            element={
+              <ProtectedRestaurantPage>
+                <MenuBannersDashboard />
+              </ProtectedRestaurantPage>
+            }
+          />
+          <Route
             path="/dashboard/qr"
             element={
               <ProtectedRestaurantPage>
@@ -324,6 +334,15 @@ export default function App() {
             element={
               <ProtectedRestaurantPage>
                 <LoyaltyDashboard />
+              </ProtectedRestaurantPage>
+            }
+          />
+          {/* Restaurant coupon management */}
+          <Route
+            path="/dashboard/offers"
+            element={
+              <ProtectedRestaurantPage>
+                <OffersDashboard />
               </ProtectedRestaurantPage>
             }
           />
