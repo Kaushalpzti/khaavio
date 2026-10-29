@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
-import { Link, useParams, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import {
   ArrowLeft,
   CalendarDays,
   CheckCircle2,
+  ChevronDown,
   ChevronRight,
   Leaf,
   LoaderCircle,
@@ -62,6 +63,10 @@ function createGuestTabToken() {
 
 function getGuestTabStorageKey(slug, tableToken) {
   return "khaavio-guest-tab:" + slug + ":" + tableToken;
+}
+
+function getPendingTableMenuCartKey(slug) {
+  return "khaavio-table-menu-cart:" + slug;
 }
 
 function getGuestOrderRequestStorageKey(slug, tableToken, guestTabToken) {
@@ -199,6 +204,7 @@ function getRestaurantAvailability(restaurant, timestamp) {
 
 export default function PublicMenu() {
   const { slug } = useParams();
+  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
   const hasTableParam = searchParams.has("table");
@@ -213,6 +219,11 @@ export default function PublicMenu() {
   const [menuBanners, setMenuBanners] = useState([]);
   const [publicOffers, setPublicOffers] = useState([]);
   const [tableContext, setTableContext] = useState(null);
+  const [availableTables, setAvailableTables] = useState([]);
+  const [selectedTableToken, setSelectedTableToken] = useState("");
+  const [isTablePickerOpen, setIsTablePickerOpen] = useState(false);
+  const [tableListLoaded, setTableListLoaded] = useState(false);
+  const [tableSelectionError, setTableSelectionError] = useState("");
   const [publicFeatures, setPublicFeatures] = useState({ ...DEFAULT_PUBLIC_FEATURES });
 
   const [search, setSearch] = useState("");
@@ -317,6 +328,26 @@ export default function PublicMenu() {
   useEffect(() => {
     let cancelled = false;
 
+    let pendingCart = [];
+    if (hasTableParam && tableToken) {
+      try {
+        const storageKey = getPendingTableMenuCartKey(slug);
+        const pending = JSON.parse(window.sessionStorage.getItem(storageKey) || "null");
+        if (
+          pending?.tableToken === tableToken &&
+          Date.now() - Number(pending.savedAt) < 30 * 60 * 1000 &&
+          Array.isArray(pending.cart)
+        ) {
+          pendingCart = pending.cart
+            .filter((entry) => entry && typeof entry.id === "string" && Number(entry.quantity) > 0)
+            .slice(0, 50);
+        }
+        window.sessionStorage.removeItem(storageKey);
+      } catch {
+        pendingCart = [];
+      }
+    }
+
     async function loadMenu() {
       setLoading(true);
       setError("");
@@ -328,8 +359,13 @@ export default function PublicMenu() {
       setMenuBanners([]);
       setPublicOffers([]);
       setTableContext(null);
+      setAvailableTables([]);
+      setSelectedTableToken("");
+      setIsTablePickerOpen(false);
+      setTableListLoaded(false);
+      setTableSelectionError("");
       setCategoryId("all");
-      setCart([]);
+      setCart(pendingCart);
       setCouponInput("");
       setAppliedCoupon(null);
       setCouponFeedback("");
@@ -490,7 +526,12 @@ export default function PublicMenu() {
 
         if (cancelled) return;
 
+        const resolvedTables = Array.isArray(menuSnapshot?.tables)
+          ? menuSnapshot.tables.filter((table) => table?.table_number && table?.qr_token)
+          : [];
         setRestaurant(restaurantData);
+        setAvailableTables(resolvedTables);
+        setTableListLoaded(true);
         setMenuBanners(resolvedMenuBanners);
         setPublicOffers(resolvedPublicOffers);
         setPublicFeatures(resolvedPublicFeatures);
@@ -531,6 +572,25 @@ export default function PublicMenu() {
       cancelled = true;
     };
   }, [slug, tableToken, hasTableParam]);
+
+  function continueToSelectedTable() {
+    const selectedTable = availableTables.find((table) => table.qr_token === selectedTableToken);
+    if (!selectedTable?.qr_token || !slug) return;
+    setTableSelectionError("");
+    try {
+      window.sessionStorage.setItem(getPendingTableMenuCartKey(slug), JSON.stringify({
+        tableToken: selectedTable.qr_token,
+        savedAt: Date.now(),
+        cart,
+      }));
+    } catch {
+      if (cart.length) {
+        setTableSelectionError("Your cart could not be saved on this device. Please try again or clear your cart before continuing.");
+        return;
+      }
+    }
+    navigate(`/menu/${encodeURIComponent(slug)}?table=${encodeURIComponent(selectedTable.qr_token)}`);
+  }
 
   useEffect(() => {
     const intervalId = window.setInterval(() => {
@@ -917,6 +977,10 @@ export default function PublicMenu() {
       return;
     }
     const selectedMode = tableContext ? "dine_in" : serviceMode;
+    if (!tableContext && selectedMode === "dine_in") {
+      setCheckoutError("Choose your table and continue to its menu before placing a dine-in order.");
+      return;
+    }
     if (selectedMode === "pickup" && restaurant?.pickup_enabled !== true) {
       setCheckoutError("Pickup is not available at this restaurant.");
       return;
@@ -1393,6 +1457,74 @@ export default function PublicMenu() {
                     </select>
                   </label>
                 )}
+                {serviceMode === "dine_in" && restaurant?.dine_in_enabled && (
+                  <div className="public-menu-table-chooser">
+                    {tableSelectionError && <p className="public-menu-table-chooser-error" role="alert">{tableSelectionError}</p>}
+                    {tableListLoaded && availableTables.length === 0 && (
+                      <p role="status">No active tables are available. Please ask staff or choose Pickup.</p>
+                    )}
+                    {availableTables.length > 0 && (
+                      <>
+                        <div
+                          className="public-menu-table-picker"
+                          onBlur={(event) => {
+                            if (!event.currentTarget.contains(event.relatedTarget)) setIsTablePickerOpen(false);
+                          }}
+                          onKeyDown={(event) => {
+                            if (event.key === "Escape") setIsTablePickerOpen(false);
+                          }}
+                        >
+                          <span>Select your table</span>
+                          <button
+                            type="button"
+                            className="public-menu-table-picker-trigger"
+                            aria-haspopup="listbox"
+                            aria-expanded={isTablePickerOpen}
+                            aria-label={selectedTableToken ? `Table ${normalizeTableNumber(availableTables.find((table) => table.qr_token === selectedTableToken)?.table_number)}` : "Choose a table"}
+                            onClick={() => setIsTablePickerOpen((open) => !open)}
+                          >
+                            <span>{selectedTableToken
+                              ? `Table ${normalizeTableNumber(availableTables.find((table) => table.qr_token === selectedTableToken)?.table_number)}`
+                              : "Choose a table"}</span>
+                            <ChevronDown size={16} aria-hidden="true" />
+                          </button>
+                          {isTablePickerOpen && (
+                            <div className="public-menu-table-picker-options" role="listbox" aria-label="Available tables">
+                              {availableTables.map((table) => {
+                                const isSelected = selectedTableToken === table.qr_token;
+                                return (
+                                  <button
+                                    type="button"
+                                    role="option"
+                                    aria-selected={isSelected}
+                                    className={isSelected ? "is-selected" : ""}
+                                    key={table.qr_token}
+                                    onClick={() => {
+                                      setSelectedTableToken(table.qr_token);
+                                      setIsTablePickerOpen(false);
+                                      setTableSelectionError("");
+                                    }}
+                                  >
+                                    <span className="public-menu-table-picker-indicator" aria-hidden="true">{isSelected ? "✓" : ""}</span>
+                                    <span>Table {normalizeTableNumber(table.table_number)}</span>
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          )}
+                        </div>
+                        <button
+                          type="button"
+                          className="public-menu-table-chooser-continue"
+                          disabled={!selectedTableToken}
+                          onClick={continueToSelectedTable}
+                        >
+                          Continue with table
+                        </button>
+                      </>
+                    )}
+                  </div>
+                )}
               </>
             ) : <p className="public-menu-fulfillment-disabled">Online ordering is currently unavailable.</p>}
           </section>}
@@ -1401,7 +1533,7 @@ export default function PublicMenu() {
             <section className="public-menu-offers" aria-label="Current restaurant offers">
               <div className="public-menu-offers-heading">
                 <span><Tag size={14} /> OFFERS FOR YOU</span>
-                <p>Use a code at table QR checkout</p>
+                <p>Use a code at checkout</p>
               </div>
               <div className="public-menu-offers-list">
                 {publicOffers.slice(0, 3).map((offer) => (
@@ -1966,6 +2098,7 @@ export default function PublicMenu() {
                           subscriptionAllowsTransactions !== true ||
                           cart.length === 0 ||
                           (tableToken && !tableContext) ||
+                          (!tableContext && serviceMode === "dine_in") ||
                           (!restaurant?.pickup_enabled && !restaurant?.dine_in_enabled) ||
                           !orderingAvailability.canOrder
                         }
