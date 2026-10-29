@@ -473,3 +473,8 @@
 .restaurant-settings-social-section .restaurant-settings-section-heading p { max-width: 660px; }
 .restaurant-settings-social-section .restaurant-settings-field-hint { line-height: 1.55; }
 .restaurant-settings-social-section .restaurant-settings-field label .restaurant-settings-field-hint { font-weight: 500; }
+.restaurant-settings-checkbox { display: flex; align-items: flex-start; gap: 10px; min-height: 48px; padding: 13px; border: 1px solid #e1e8df; border-radius: 13px; background: #fbfdf9; cursor: pointer; }
+.restaurant-settings-checkbox input { margin-top: 3px; accent-color: #477b5b; }
+.restaurant-settings-checkbox span { display: grid; gap: 3px; }
+.restaurant-settings-checkbox strong { color: #324638; font-size: 13px; }
+.restaurant-settings-checkbox small { color: #738074; font-size: 11px; line-height: 1.45; }

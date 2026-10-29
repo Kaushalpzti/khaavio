@@ -20,6 +20,7 @@
 .public-reviews-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin-top: 22px; }
 .public-reviews-google, .public-reviews-private, .public-reviews-submit { min-height: 46px; display: inline-flex; justify-content: center; align-items: center; gap: 9px; border: 1px solid transparent; border-radius: 14px; padding: 0 16px; font: inherit; font-size: 13px; font-weight: 750; text-decoration: none; cursor: pointer; transition: transform 180ms ease, box-shadow 180ms ease, background 180ms ease; }
 .public-reviews-google { background: #fff; color: #2e4135; border-color: #dbe4d8; box-shadow: 0 5px 16px rgba(39, 69, 46, 0.06); }
+.public-reviews-google { font-family: inherit; }
 .public-reviews-google:hover, .public-reviews-private:hover, .public-reviews-submit:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 9px 20px rgba(39, 69, 46, 0.11); }
 .public-reviews-google-mark { display: grid; width: 22px; height: 22px; place-items: center; border: 1px solid #e2e6df; border-radius: 50%; color: #4285f4; font-size: 14px; font-weight: 900; }
 .public-reviews-private { background: #477b5b; color: #fff; box-shadow: 0 7px 18px rgba(71, 123, 91, 0.18); }
@@ -48,6 +49,9 @@
 .public-reviews-success h3 { margin: 13px 0 6px; color: var(--reviews-ink); font-size: 21px; }
 .public-reviews-success p { margin: 0; color: var(--reviews-muted); font-size: 13px; line-height: 1.6; }
 .public-reviews-text-button { margin-top: 13px; border: 0; background: transparent; color: #477b5b; font: inherit; font-size: 12px; font-weight: 800; cursor: pointer; }
+.public-review-draft-form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; max-width: 760px; }
+.public-review-draft-field { grid-column: 1 / -1; }
+.public-reviews-status { grid-column: 1 / -1; margin: 0; color: #42694b; font-size: 12px; line-height: 1.55; }
 
 @keyframes publicReviewsReveal { from { opacity: 0; transform: translateY(7px); } to { opacity: 1; transform: translateY(0); } }
 @media (max-width: 600px) {
@@ -55,6 +59,8 @@
   .public-reviews-actions { display: grid; grid-template-columns: 1fr; }
   .public-reviews-google, .public-reviews-private { width: 100%; box-sizing: border-box; }
   .public-reviews-form { grid-template-columns: minmax(0, 1fr); gap: 15px; }
+  .public-review-draft-form { grid-template-columns: minmax(0, 1fr); gap: 15px; }
+  .public-review-draft-field, .public-reviews-status { grid-column: auto; }
   .public-reviews-field:has(textarea), .public-reviews-error { grid-column: auto; }
   .public-reviews-submit { width: 100%; }
   .public-reviews-privacy-note { line-height: 1.55; }

@@ -550,3 +550,5 @@
 @media (max-width: 680px) {
   .kitchen-summary-strip { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
+.kitchen-item-options { grid-column: 2 / 4; color: #7b715f; font-size: 11px; line-height: 1.4; }
+.order-item-line small { display: block; margin-top: 3px; color: #778477; font-size: 11px; }

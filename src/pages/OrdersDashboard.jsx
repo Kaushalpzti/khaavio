@@ -128,6 +128,11 @@ function formatTableLabel(value) {
   return `Table ${table}`;
 }
 
+function formatFulfillment(order) {
+  if (order.service_mode === "pickup") return `Pickup${order.pickup_eta_minutes === 0 ? " · ASAP" : order.pickup_eta_minutes ? ` · ${order.pickup_eta_minutes} min` : ""}`;
+  return formatTableLabel(order.table_number);
+}
+
 function getWhatsAppUrl(order, restaurant) {
   const phone = normalizeWhatsAppPhone(order.customer_phone);
   if (!phone) return "";
@@ -265,7 +270,7 @@ export default function OrdersDashboard() {
         const { data: orderData, error: ordersError } = await supabase
           .from("orders")
           .select(
-            "id, restaurant_id, table_id, guest_tab_id, customer_name, customer_phone, notes, status, total_amount, created_at",
+            "id, restaurant_id, table_id, guest_tab_id, customer_name, customer_phone, notes, status, total_amount, created_at, service_mode, pickup_eta_minutes",
           )
           .eq("restaurant_id", restaurantData.id)
           .order("created_at", { ascending: false });
@@ -281,7 +286,7 @@ export default function OrdersDashboard() {
             ? supabase
                 .from("order_items")
                 .select(
-                  "id, order_id, menu_item_id, item_name, unit_price, quantity, line_total",
+                  "id, order_id, menu_item_id, item_name, unit_price, quantity, line_total, selected_options",
                 )
                 .in("order_id", orderIds)
             : Promise.resolve({ data: [], error: null }),
@@ -813,7 +818,7 @@ export default function OrdersDashboard() {
                           <div className="order-meta">
                             <span>
                               <Store size={14} />
-                              {formatTableLabel(order.table_number)}{order.guest_tab_name ? " · " + order.guest_tab_name : ""}
+                              {formatFulfillment(order)}{order.guest_tab_name ? " · " + order.guest_tab_name : ""}
                             </span>
 
                             <span>
@@ -861,6 +866,7 @@ export default function OrdersDashboard() {
                                     {formatPrice(item.unit_price)} ×{" "}
                                     {item.quantity}
                                   </span>
+                                  {item.selected_options?.map((option) => <small key={option.id}>{option.group_name}: {option.name}</small>)}
                                 </div>
 
                                 <strong>{formatPrice(item.line_total)}</strong>

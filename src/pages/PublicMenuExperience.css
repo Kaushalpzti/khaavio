@@ -1114,3 +1114,23 @@
     flex-basis: 21px;
   }
 }
+.public-option-modal-backdrop { position: fixed; inset: 0; z-index: 1000; display: grid; place-items: center; padding: 18px; background: rgba(18, 30, 22, .58); }
+.public-option-modal { position: relative; width: min(100%, 520px); max-height: min(88dvh, 740px); overflow: auto; box-sizing: border-box; border-radius: 22px; padding: 25px; background: #fff; box-shadow: 0 24px 80px rgba(0,0,0,.24); }
+.public-option-modal h2 { margin: 0 38px 5px 0; font-size: 21px; color: #25372b; }
+.public-option-modal > p { margin: 0 0 18px; color: #718176; font-size: 13px; }
+.public-option-modal-close { position: absolute; top: 15px; right: 15px; display: grid; place-items: center; width: 36px; height: 36px; border: 1px solid #e3e9e1; border-radius: 50%; color: #4a5c4e; background: #fff; }
+.public-option-group { display: grid; gap: 8px; margin: 14px 0; padding: 0; border: 0; }
+.public-option-group legend { width: 100%; margin-bottom: 4px; color: #334b39; font-size: 13px; font-weight: 800; }
+.public-option-group legend small { display: block; margin-top: 3px; color: #7b897d; font-weight: 500; }
+.public-option-choice { display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 0 11px; border: 1px solid #e2e9df; border-radius: 11px; color: #344338; font-size: 13px; }
+.public-option-choice input { accent-color: #477b5b; }
+.public-option-choice span { flex: 1; }
+.public-option-choice strong { font-size: 12px; }
+.public-order-service-modes { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin: 0 0 18px; padding: 14px; border: 1px solid #e2e9df; border-radius: 14px; }
+.public-order-service-modes legend { padding: 0 5px; color: #405749; font-size: 12px; font-weight: 800; }
+.public-order-service-modes > label:not(.public-order-pickup-time) { display: flex; align-items: center; gap: 7px; padding: 10px 12px; border-radius: 10px; background: #f6f9f4; font-size: 13px; }
+.public-order-service-modes input[type="radio"] { accent-color: #477b5b; }
+.public-order-pickup-time { display: flex; flex: 1 1 100%; align-items: center; gap: 10px; font-size: 12px; }
+.public-order-pickup-time select { min-height: 38px; border: 1px solid #dce5d8; border-radius: 9px; padding: 0 10px; background: white; font: inherit; }
+.public-order-line-info small { display: block; margin-top: 3px; color: #748176; font-size: 11px; }
+@media (max-width: 560px) { .public-option-modal { padding: 21px 16px; } }
