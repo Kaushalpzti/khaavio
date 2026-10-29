@@ -1359,6 +1359,44 @@ export default function PublicMenu() {
             </div>
           </section>
 
+          {!tableContext && <section className="public-menu-fulfillment" id="public-menu-fulfillment" aria-label="Order mode">
+            <div className="public-menu-fulfillment-heading">
+              <span className="public-menu-eyebrow">ORDER MODE</span>
+              <h2>How would you like your order?</h2>
+            </div>
+            {(restaurant?.pickup_enabled || restaurant?.dine_in_enabled) ? (
+              <>
+                <fieldset className="public-menu-fulfillment-options">
+                  <legend className="sr-only">Choose pickup or dine in</legend>
+                  {restaurant?.pickup_enabled && (
+                    <label className={serviceMode === "pickup" ? "is-selected" : ""}>
+                      <input type="radio" name="public_menu_service_mode" value="pickup" checked={serviceMode === "pickup"} onChange={() => setServiceMode("pickup")} />
+                      <span><strong>Pickup</strong><small>Order ahead and collect</small></span>
+                    </label>
+                  )}
+                  {restaurant?.dine_in_enabled && (
+                    <label className={serviceMode === "dine_in" ? "is-selected" : ""}>
+                      <input type="radio" name="public_menu_service_mode" value="dine_in" checked={serviceMode === "dine_in"} onChange={() => setServiceMode("dine_in")} />
+                      <span><strong>Dine in</strong><small>Enjoy your order here</small></span>
+                    </label>
+                  )}
+                </fieldset>
+                {serviceMode === "pickup" && restaurant?.pickup_enabled && (
+                  <label className="public-menu-fulfillment-time">
+                    <span>Pickup time</span>
+                    <select value={pickupEtaMinutes} onChange={(event) => setPickupEtaMinutes(Number(event.target.value))}>
+                      <option value={0}>As soon as possible</option>
+                      <option value={15}>In 15 minutes</option>
+                      <option value={30}>In 30 minutes</option>
+                      <option value={45}>In 45 minutes</option>
+                      <option value={60}>In 60 minutes</option>
+                    </select>
+                  </label>
+                )}
+              </>
+            ) : <p className="public-menu-fulfillment-disabled">Online ordering is currently unavailable.</p>}
+          </section>}
+
           {publicOffers.length > 0 && (
             <section className="public-menu-offers" aria-label="Current restaurant offers">
               <div className="public-menu-offers-heading">
@@ -1833,12 +1871,10 @@ export default function PublicMenu() {
                           </span>
                         </div>
                       ) : (restaurant?.pickup_enabled || restaurant?.dine_in_enabled) ? (
-                        <fieldset className="public-order-service-modes">
-                          <legend>How would you like your order?</legend>
-                          {restaurant?.pickup_enabled && <label><input type="radio" name="service_mode" value="pickup" checked={serviceMode === "pickup"} onChange={() => setServiceMode("pickup")} /> Pickup</label>}
-                          {restaurant?.dine_in_enabled && <label><input type="radio" name="service_mode" value="dine_in" checked={serviceMode === "dine_in"} onChange={() => setServiceMode("dine_in")} /> Dine in</label>}
-                          {serviceMode === "pickup" && <label className="public-order-pickup-time"><span>Pickup in</span><select value={pickupEtaMinutes} onChange={(event) => setPickupEtaMinutes(Number(event.target.value))}><option value={0}>As soon as possible</option><option value={15}>15 minutes</option><option value={30}>30 minutes</option><option value={45}>45 minutes</option><option value={60}>60 minutes</option></select></label>}
-                        </fieldset>
+                        <div className="public-order-fulfillment-summary">
+                          <span>{serviceMode === "pickup" ? `Pickup · ${pickupEtaMinutes === 0 ? "As soon as possible" : `in ${pickupEtaMinutes} minutes`}` : "Dine in"}</span>
+                          <button type="button" onClick={() => document.getElementById("public-menu-fulfillment")?.scrollIntoView({ behavior: "smooth", block: "center" })}>Change</button>
+                        </div>
                       ) : <div className="public-order-table-warning">Online pickup and dine-in ordering are currently disabled.</div>}
 
                       <div className="public-order-coupon">

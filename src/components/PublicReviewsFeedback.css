@@ -74,13 +74,14 @@
 .public-reviews-social-icons {
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   flex-wrap: wrap;
   gap: 11px;
   margin-top: 18px;
   padding-top: 14px;
   border-top: 1px solid rgba(87, 119, 91, 0.14);
 }
+.public-reviews-social-label { margin-right: auto; color: #718176; font-size: 10px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
 .public-reviews-social-icon {
   display: inline-flex;
   align-items: center;
@@ -89,7 +90,7 @@
   height: 40px;
   flex: 0 0 40px;
   border: 1px solid #dce6d9;
-  border-radius: 50%;
+  border-radius: 13px;
   background: rgba(255, 255, 255, 0.92);
   color: #477b5b;
   text-decoration: none;
@@ -105,24 +106,24 @@
   outline: 3px solid rgba(71, 123, 91, 0.35);
   outline-offset: 3px;
 }
-.public-reviews-social-icon.is-instagram { color: #bf347d; background: #fff7fb; }
-.public-reviews-social-icon.is-facebook { color: #1877f2; background: #f5f9ff; }
-.public-reviews-social-icon.is-youtube { color: #d93025; background: #fff7f6; }
-.public-reviews-social-icon.is-tiktok { color: #171717; background: #fbfbfb; }
-.public-reviews-social-icon.is-x { color: #171717; background: #fbfbfb; }
-.public-reviews-social-icon.is-whatsapp { color: #159653; background: #f4fff8; }
+.public-reviews-social-icon.is-instagram { color: #fff; border-color: transparent; background: linear-gradient(135deg, #f9ce34 0%, #ee2a7b 52%, #6228d7 100%); }
+.public-reviews-social-icon.is-facebook { color: #fff; border-color: #1877f2; background: #1877f2; }
+.public-reviews-social-icon.is-youtube { color: #fff; border-color: #d93025; background: #d93025; }
+.public-reviews-social-icon.is-tiktok { color: #fff; border-color: #171717; background: #171717; }
+.public-reviews-social-icon.is-x { color: #fff; border-color: #171717; background: #171717; }
+.public-reviews-social-icon.is-whatsapp { color: #fff; border-color: #159653; background: #159653; }
 .public-reviews-social-icon.is-website { color: #477b5b; background: #f6fbf4; }
 
 @media (max-width: 600px) {
   .public-reviews-social-icons {
-    gap: 12px;
-    margin-top: 16px;
-    padding-top: 13px;
+    gap: 9px;
+    margin-top: 14px;
+    padding-top: 12px;
   }
   .public-reviews-social-icon {
-    width: 38px;
-    height: 38px;
-    flex-basis: 38px;
+    width: 36px;
+    height: 36px;
+    flex-basis: 36px;
   }
 }
 @media (prefers-reduced-motion: reduce) {
