@@ -104,7 +104,7 @@ export default function TableSessions() {
           .limit(100),
         supabase
           .from("table_session_invoices")
-          .select("id, restaurant_id, table_id, session_id, guest_tab_id, invoice_number, total_amount, order_count, payment_status, issued_at, issued_by, paid_at, payment_method, voided_at, voided_by, void_reason")
+          .select("id, restaurant_id, table_id, session_id, guest_tab_id, invoice_number, total_amount, subtotal_amount, discount_amount, tax_amount, gstin_snapshot, gst_inclusive, order_count, payment_status, issued_at, issued_by, paid_at, payment_method, voided_at, voided_by, void_reason")
           .eq("restaurant_id", restaurantData.id)
           .order("issued_at", { ascending: false })
           .limit(100),
@@ -150,7 +150,7 @@ export default function TableSessions() {
       if (sessionIds.length) {
         const { data, error: ordersError } = await supabase
           .from("orders")
-          .select("id, restaurant_id, table_id, session_id, guest_tab_id, customer_name, customer_phone, notes, status, total_amount, created_at")
+          .select("id, restaurant_id, table_id, session_id, guest_tab_id, customer_name, customer_phone, notes, status, total_amount, discount_amount, created_at")
           .eq("restaurant_id", restaurantData.id)
           .in("session_id", sessionIds)
           .order("created_at", { ascending: true });
@@ -646,9 +646,9 @@ export default function TableSessions() {
                         </div>
                         {expanded && (
                           <section className={`ts-session-details ts-invoice-print-surface ${printingInvoiceId === invoice.id ? "print-target" : ""}`}>
-                            <div className="ts-print-heading">
+                              <div className="ts-print-heading">
                               <img src={khaavioIcon} alt="" />
-                              <div><span>{invoice.guest_tab_id ? "GUEST INVOICE" : "FINAL TABLE INVOICE"}</span><h2>{restaurant?.name || "Restaurant"}</h2><p>{invoice.invoice_number}</p>{invoice.guest_tab_id && <p>{guestTabNames.get(invoice.guest_tab_id) || "Guest"}</p>}</div>
+                                <div><span>{invoice.guest_tab_id ? "GUEST INVOICE" : "FINAL TABLE INVOICE"}</span><h2>{restaurant?.name || "Restaurant"}</h2><p>{invoice.invoice_number}</p>{invoice.gstin_snapshot && <p>GSTIN: {invoice.gstin_snapshot}</p>}{invoice.guest_tab_id && <p>{guestTabNames.get(invoice.guest_tab_id) || "Guest"}</p>}</div>
                             </div>
                             <div className="ts-print-meta"><span>Table <strong>{normalizeTableNumber(tableNumber)}</strong></span><span>Issued <strong>{formatDate(invoice.issued_at)}</strong></span><span>Payment <strong>{titleCase(invoice.payment_status)}</strong></span></div>
                             {invoice.payment_status === "void" && (
@@ -657,6 +657,13 @@ export default function TableSessions() {
                               </p>
                             )}
                             {renderInvoiceSnapshot(invoice, session)}
+                            {Number(invoice.tax_amount) > 0 && (
+                              <div className="ts-print-tax-summary">
+                                {Number(invoice.subtotal_amount) > 0 && <div><span>Items subtotal</span><strong>{formatPrice(invoice.subtotal_amount)}</strong></div>}
+                                {Number(invoice.discount_amount) > 0 && <div><span>Discounts</span><strong>−{formatPrice(invoice.discount_amount)}</strong></div>}
+                                <div><span>GST {invoice.gst_inclusive ? "included in prices" : "added"}</span><strong>{formatPrice(invoice.tax_amount)}</strong></div>
+                              </div>
+                            )}
                             <div className="ts-print-grand-total"><span>FINAL TOTAL</span><strong>{formatPrice(invoice.total_amount)}</strong></div>
                             {invoice.payment_status === "paid" && <p className="ts-paid-note">Paid {invoice.payment_method ? `via ${invoice.payment_method}` : ""}{invoice.paid_at ? ` · ${formatDate(invoice.paid_at)}` : ""}</p>}
                             <p className="ts-print-footer">Thank you for dining with us · Powered by Khaavio</p>

@@ -17,7 +17,7 @@ import "./RestaurantSettings.css";
 import "./RestaurantSettingsLogo.css";
 
 const RESTAURANT_FIELDS =
-  "id, name, slug, restaurant_type, logo_url, phone, contact_email, address, city, state, postal_code, description, google_review_url, social_links, table_billing_mode, is_published";
+  "id, name, slug, restaurant_type, logo_url, phone, contact_email, address, city, state, postal_code, description, google_review_url, social_links, table_billing_mode, gst_enabled, gstin, gst_rate, gst_price_inclusive, is_published";
 
 const GOOGLE_REVIEW_HOSTS = new Set([
   "g.page",
@@ -122,6 +122,10 @@ const INITIAL_FORM = {
   google_review_url: "",
   social_links: {},
   table_billing_mode: "combined",
+  gst_enabled: false,
+  gstin: "",
+  gst_rate: "",
+  gst_price_inclusive: false,
 };
 
 const BUSINESS_TYPES = [
@@ -146,6 +150,10 @@ function formFromRestaurant(restaurant) {
     google_review_url: restaurant.google_review_url || "",
     social_links: normalizeSocialLinks(restaurant.social_links),
     table_billing_mode: restaurant.table_billing_mode === "per_guest" ? "per_guest" : "combined",
+    gst_enabled: restaurant.gst_enabled === true,
+    gstin: restaurant.gstin || "",
+    gst_rate: restaurant.gst_rate == null ? "" : String(restaurant.gst_rate),
+    gst_price_inclusive: restaurant.gst_price_inclusive === true,
   };
 }
 
@@ -362,6 +370,17 @@ export default function RestaurantSettings() {
       return;
     }
 
+    const gstRate = Number(form.gst_rate);
+    const gstin = form.gstin.trim().toUpperCase();
+    if (form.gst_enabled && (!Number.isFinite(gstRate) || gstRate <= 0 || gstRate > 100)) {
+      setError("Enter a GST rate greater than 0 and no more than 100%.");
+      return;
+    }
+    if (form.gst_enabled && gstin && !/^[0-9A-Z]{15}$/.test(gstin)) {
+      setError("GSTIN must contain 15 letters or numbers.");
+      return;
+    }
+
     const socialValidation = validateSocialLinks(form.social_links);
     if (!socialValidation.ok) {
       setError(socialValidation.message);
@@ -386,6 +405,10 @@ export default function RestaurantSettings() {
         google_review_url: googleReviewUrl || null,
         social_links: socialValidation.value,
         table_billing_mode: form.table_billing_mode === "per_guest" ? "per_guest" : "combined",
+        gst_enabled: form.gst_enabled,
+        gstin: gstin || null,
+        gst_rate: form.gst_enabled ? gstRate : 0,
+        gst_price_inclusive: form.gst_price_inclusive,
       };
 
       const { data, error: updateError } = await supabase
@@ -659,6 +682,41 @@ export default function RestaurantSettings() {
                       maxLength={254}
                     />
                   </div>
+                </div>
+              </section>
+
+              <section className="restaurant-settings-section" aria-labelledby="settings-gst-heading">
+                <div className="restaurant-settings-section-heading">
+                  <div>
+                    <h2 id="settings-gst-heading">GST &amp; billing</h2>
+                    <p>Show your GST on new QR orders and bills. Confirm your GST details and rate with your accountant.</p>
+                  </div>
+                </div>
+                <div className="restaurant-settings-grid">
+                  <div className="restaurant-settings-field full-width settings-gst-toggle">
+                    <label htmlFor="settings-gst-enabled">Enable GST</label>
+                    <div className="settings-gst-control">
+                      <input id="settings-gst-enabled" name="gst_enabled" type="checkbox" checked={form.gst_enabled} onChange={(event) => setForm((current) => ({ ...current, gst_enabled: event.target.checked }))} />
+                      <span>{form.gst_enabled ? "GST will be calculated when the final bill is created" : "GST is off on final bills"}</span>
+                    </div>
+                  </div>
+                  {form.gst_enabled && <>
+                    <div className="restaurant-settings-field">
+                      <label htmlFor="settings-gstin">GSTIN <span className="restaurant-settings-field-hint">(optional)</span></label>
+                      <input id="settings-gstin" name="gstin" value={form.gstin} onChange={updateField} placeholder="15-character GSTIN" maxLength={15} autoCapitalize="characters" />
+                    </div>
+                    <div className="restaurant-settings-field">
+                      <label htmlFor="settings-gst-rate">GST rate (%) *</label>
+                      <input id="settings-gst-rate" name="gst_rate" type="number" inputMode="decimal" min="0.01" max="100" step="0.01" value={form.gst_rate} onChange={updateField} placeholder="e.g. 5" required />
+                    </div>
+                    <div className="restaurant-settings-field full-width settings-gst-toggle">
+                      <label htmlFor="settings-gst-inclusive">Menu prices include GST</label>
+                      <div className="settings-gst-control">
+                        <input id="settings-gst-inclusive" name="gst_price_inclusive" type="checkbox" checked={form.gst_price_inclusive} onChange={(event) => setForm((current) => ({ ...current, gst_price_inclusive: event.target.checked }))} />
+                        <span>{form.gst_price_inclusive ? "Menu prices already include GST; show its amount on the final bill" : "Add GST to the discounted subtotal on the final bill"}</span>
+                      </div>
+                    </div>
+                  </>}
                 </div>
               </section>
 
