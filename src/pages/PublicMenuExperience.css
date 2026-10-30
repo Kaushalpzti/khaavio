@@ -1199,3 +1199,111 @@
   .public-menu-offer-details { grid-column: 1 / -1; font-size: 8px; }
   .public-menu-offer-card > button { min-height: 28px; padding: 5px 8px; font-size: 8px; }
 }
+
+
+/* Smart food discovery filters and trustworthy dish metadata. */
+.public-menu-smart-filters {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 12px 0 2px;
+  padding: 2px 0 7px;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+}
+.public-menu-smart-filters::-webkit-scrollbar { display: none; }
+.public-menu-smart-filters button {
+  flex: 0 0 auto;
+  min-height: 36px;
+  padding: 8px 13px;
+  border: 1px solid #e3e9df;
+  border-radius: 999px;
+  color: #526454;
+  background: #fffefa;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 750;
+  white-space: nowrap;
+  transition: background 160ms ease, border-color 160ms ease, color 160ms ease, transform 160ms ease;
+}
+.public-menu-smart-filters button:hover { transform: translateY(-1px); border-color: #a8c4a6; }
+.public-menu-smart-filters button.is-active {
+  border-color: #285c41;
+  color: #fff;
+  background: #285c41;
+  box-shadow: 0 5px 13px rgba(40, 92, 65, .15);
+}
+.public-menu-item-tags {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 5px;
+  margin-top: 9px;
+}
+.public-menu-food-tag {
+  display: inline-flex;
+  align-items: center;
+  min-height: 20px;
+  padding: 3px 7px;
+  border: 1px solid #d6e8d6;
+  border-radius: 6px;
+  color: #24633c;
+  background: #eef8ef;
+  font-size: 8px;
+  font-weight: 850;
+  letter-spacing: .35px;
+  line-height: 1.2;
+}
+.public-menu-food-tag.is-non_vegetarian {
+  border-color: #f0cfc9;
+  color: #a53e2e;
+  background: #fff1ed;
+}
+.public-menu-food-tag.is-egg {
+  border-color: #eadbb3;
+  color: #846018;
+  background: #fff8e3;
+}
+.public-menu-food-tag.is-vegan {
+  border-color: #cce5c8;
+  color: #286b38;
+  background: #e9f7e7;
+}
+.public-menu-food-tag.is-jain {
+  border-color: #d8d2f2;
+  color: #62509b;
+  background: #f3f0ff;
+}
+.public-menu-food-tag.is-spice-hot {
+  border-color: #f0c7bd;
+  color: #a43d2b;
+  background: #fff0eb;
+}
+.public-menu-food-tag.is-spice-medium {
+  border-color: #f0dfbd;
+  color: #8e621f;
+  background: #fff8e9;
+}
+.public-menu-food-tag.is-spice-mild {
+  border-color: #dce7d2;
+  color: #61734d;
+  background: #f5f8ef;
+}
+.public-menu-allergens {
+  margin: 6px 0 0;
+  color: #8a6254;
+  font-size: 9px;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+@media (max-width: 680px) {
+  .public-menu-smart-filters { gap: 6px; margin-top: 9px; }
+  .public-menu-smart-filters button { min-height: 34px; padding: 7px 11px; font-size: 10px; }
+  .public-menu-item-tags { gap: 4px; margin-top: 7px; }
+  .public-menu-food-tag { min-height: 18px; padding: 3px 5px; font-size: 7px; }
+  .public-menu-allergens { font-size: 8px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .public-menu-smart-filters button { transition: none; }
+}
