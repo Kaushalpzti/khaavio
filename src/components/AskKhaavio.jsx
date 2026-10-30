@@ -7,6 +7,7 @@ import {
   LoaderCircle,
   MessageCircle,
   ReceiptText,
+  Search,
   Send,
   Sparkles,
   Utensils,
@@ -289,6 +290,7 @@ export default function AskKhaavio({
         id: makeId(),
         role: "assistant",
         content: reply,
+        usedWebResearch: result?.usedWebResearch === true,
         suggestedItems: suggestions,
       }]);
     } catch (error) {
@@ -344,7 +346,10 @@ export default function AskKhaavio({
       setServiceNote("");
       setShowServiceNote(false);
     } catch (error) {
-      setServiceError(error?.message || copy.requestFailed);
+      const message = String(error?.message || "").toLowerCase();
+      setServiceError(message.includes("rate") || message.includes("too many")
+        ? "A few requests were just sent. Please wait a moment."
+        : copy.requestFailed);
     } finally {
       setServiceSubmitting(false);
     }
@@ -445,6 +450,11 @@ export default function AskKhaavio({
                 )}
                 <div className={`ask-khaavio-bubble ${message.isError ? "has-error" : ""}`}>
                   <p>{message.content}</p>
+                  {message.usedWebResearch && (
+                    <small className="ask-khaavio-research-note">
+                      <Search size={11} /> General dish background checked online
+                    </small>
+                  )}
                   {message.suggestedItems?.length > 0 && (
                     <div className="ask-khaavio-suggestions">
                       {message.suggestedItems.map((item) => (
