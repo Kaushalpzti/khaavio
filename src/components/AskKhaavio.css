@@ -580,3 +580,25 @@
     max-height: calc(100dvh - 237px);
   }
 }
+
+.ask-khaavio-quick-prompts .ask-khaavio-service-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  border-color: #cfe3d2;
+  color: #176447;
+  background: #edf7ee;
+}
+.ask-khaavio-quick-prompts .ask-khaavio-service-chip:hover:not(:disabled) {
+  border-color: #9ec9a8;
+  background: #e3f2e5;
+}
+.ask-khaavio-quick-prompts .ask-khaavio-service-chip:disabled {
+  opacity: .55;
+  cursor: not-allowed;
+}
+.ask-khaavio-concierge-prompts {
+  border-top: 1px solid #e5eee5;
+  padding-top: 9px;
+}
