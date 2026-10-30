@@ -1786,18 +1786,22 @@ export default function PublicMenu() {
                   <button
                     type="button"
                     className={dietFilter === "veg" ? "is-active" : ""}
+                    aria-label="Vegetarian"
                     aria-pressed={dietFilter === "veg"}
                     onClick={() => setDietFilter((current) => current === "veg" ? "all" : "veg")}
                   >
-                    <Leaf size={13} aria-hidden="true" /> Veg
+                    <Leaf className="public-menu-diet-icon public-menu-diet-icon-veg" size={15} aria-hidden="true" />
+                    <span className="public-menu-diet-label">Veg</span>
                   </button>
                   <button
                     type="button"
                     className={dietFilter === "non_veg" ? "is-active" : ""}
+                    aria-label="Non-vegetarian"
                     aria-pressed={dietFilter === "non_veg"}
                     onClick={() => setDietFilter((current) => current === "non_veg" ? "all" : "non_veg")}
                   >
-                    <UtensilsCrossed size={13} aria-hidden="true" /> Non-Veg
+                    <UtensilsCrossed className="public-menu-diet-icon public-menu-diet-icon-nonveg" size={15} aria-hidden="true" />
+                    <span className="public-menu-diet-label">Non-Veg</span>
                   </button>
                 </div>
               </div>
