@@ -211,7 +211,7 @@ export default function AskKhaavio({
 
   async function sendMessage(optionalText) {
     const text = (optionalText ?? draft).trim();
-    if (!text || sending || text.length > 500) return;
+    if (!aiEnabled || !text || sending || text.length > 500) return;
 
     const userMessage = {
       id: makeId(),
@@ -261,6 +261,52 @@ export default function AskKhaavio({
     }
   }
 
+  async function sendServiceRequest(requestType, note = "") {
+    const cleanNote = note.trim();
+    if (!showService || serviceSubmitting || !slug || !tableToken || !tableContext?.restaurant_id) return;
+    if (requestType === "other" && !cleanNote) {
+      setServiceError(copy.otherPlaceholder);
+      return;
+    }
+
+    const option = copy.tableActions.find((item) => item.value === requestType);
+    const actionLabel = requestType === "other" ? copy.other : option?.label || copy.tableActionsTitle;
+    setServiceSubmitting(true);
+    setServiceError("");
+
+    setMessages((current) => [...current, {
+      id: makeId(),
+      role: "user",
+      content: requestType === "other" ? cleanNote : actionLabel,
+      suggestedItems: [],
+    }]);
+
+    try {
+      const { data, error } = await supabase.rpc("create_public_table_service_request", {
+        p_slug: slug,
+        p_table_token: tableToken,
+        p_request_type: requestType,
+        p_note: cleanNote || null,
+      });
+      if (error) throw error;
+      const row = Array.isArray(data) ? data[0] : data;
+      if (!row?.request_id) throw new Error("The restaurant team did not confirm this request.");
+
+      setMessages((current) => [...current, {
+        id: makeId(),
+        role: "assistant",
+        content: row.already_open === true ? copy.requestAlreadyOpen : copy.requestSent,
+        suggestedItems: [],
+      }]);
+      setServiceNote("");
+      setShowServiceNote(false);
+    } catch (error) {
+      setServiceError(error?.message || copy.requestFailed);
+    } finally {
+      setServiceSubmitting(false);
+    }
+  }
+
   function handleLanguageChange(event) {
     const nextLanguage = event.target.value;
     if (!Object.prototype.hasOwnProperty.call(COPY, nextLanguage) || nextLanguage === language) {
@@ -290,7 +336,7 @@ export default function AskKhaavio({
         <section
           className="ask-khaavio-panel"
           role="dialog"
-          aria-label="Ask Khaavio AI menu assistant"
+          aria-label="Khaavio Concierge menu and table assistant"
           aria-modal="false"
         >
           <header className="ask-khaavio-header">
@@ -299,7 +345,7 @@ export default function AskKhaavio({
               <span />
             </div>
             <div className="ask-khaavio-header-copy">
-              <strong>Ask Khaavio</strong>
+              <strong>{aiEnabled ? "Ask Khaavio" : "Table assistance"}</strong>
               <small>{copy.subtitle}</small>
             </div>
             <label className="ask-khaavio-language">
@@ -328,9 +374,19 @@ export default function AskKhaavio({
 
           <div className="ask-khaavio-context">
             <Utensils size={14} aria-hidden="true" />
-            <span>{restaurant?.name || "Restaurant menu"}</span>
-            <span className="ask-khaavio-context-dot" />
-            <span>{preparedMenu.length} {language === "hi" ? "डिश" : language === "en" ? "dishes" : "dishes"}</span>
+            <span>{restaurant?.name || "Restaurant"}</span>
+            {aiEnabled && (
+              <>
+                <span className="ask-khaavio-context-dot" />
+                <span>{preparedMenu.length} {language === "hi" ? "डिश" : "dishes"}</span>
+              </>
+            )}
+            {showService && tableContext?.table_number && (
+              <>
+                <span className="ask-khaavio-context-dot" />
+                <span>Table {tableContext.table_number}</span>
+              </>
+            )}
           </div>
 
           <div className="ask-khaavio-messages" ref={messageListRef} aria-live="polite">
@@ -381,11 +437,21 @@ export default function AskKhaavio({
             )}
           </div>
 
-          {messages.length === 1 && !sending && (
+          {messages.length === 1 && !sending && aiEnabled && (
             <div className="ask-khaavio-quick-prompts">
               <span>{copy.quickTitle}</span>
               <div>
-                {copy.quickPrompts.map((prompt) => (
+                {[
+                  preparedMenu[0]?.name
+                    ? language === "hi"
+                      ? preparedMenu[0].name + " के बारे में बताओ"
+                      : language === "en"
+                        ? "Tell me about " + preparedMenu[0].name
+                        : preparedMenu[0].name + " ke baare mein batao"
+                    : copy.quickPrompts[0],
+                  copy.quickPrompts[1],
+                  copy.quickPrompts[2],
+                ].map((prompt) => (
                   <button key={prompt} type="button" onClick={() => void sendMessage(prompt)}>
                     {prompt}
                   </button>
@@ -394,28 +460,94 @@ export default function AskKhaavio({
             </div>
           )}
 
-          <form className="ask-khaavio-composer" onSubmit={handleSubmit}>
-            <input
-              ref={inputRef}
-              value={draft}
-              onChange={(event) => setDraft(event.target.value.slice(0, 500))}
-              placeholder={copy.placeholder}
-              aria-label={copy.placeholder}
-              maxLength={500}
-              disabled={sending}
-            />
-            <button
-              type="submit"
-              disabled={sending || !draft.trim()}
-              aria-label={copy.send}
-              title={copy.send}
-            >
-              {sending ? <LoaderCircle size={17} className="ask-khaavio-spin" /> : <Send size={17} />}
-            </button>
-          </form>
+          {showService && (
+            <div className="ask-khaavio-table-actions">
+              <span>{copy.tableActionsTitle}</span>
+              <div className="ask-khaavio-table-action-chips">
+                {copy.tableActions.map((action) => {
+                  const Icon = action.value === "waiter"
+                    ? BellRing
+                    : action.value === "water"
+                      ? Droplets
+                      : action.value === "bill"
+                        ? ReceiptText
+                        : UtensilsCrossed;
+                  return (
+                    <button
+                      key={action.value}
+                      type="button"
+                      onClick={() => void sendServiceRequest(action.value)}
+                      disabled={serviceSubmitting || sending}
+                    >
+                      <Icon size={13} />
+                      {action.label}
+                    </button>
+                  );
+                })}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowServiceNote((current) => !current);
+                    setServiceError("");
+                  }}
+                  disabled={serviceSubmitting || sending}
+                >
+                  <MessageCircle size={13} />
+                  {copy.other}
+                </button>
+              </div>
+              {showServiceNote && (
+                <form
+                  className="ask-khaavio-other-request"
+                  onSubmit={(event) => {
+                    event.preventDefault();
+                    void sendServiceRequest("other", serviceNote);
+                  }}
+                >
+                  <input
+                    value={serviceNote}
+                    onChange={(event) => setServiceNote(event.target.value.slice(0, 240))}
+                    placeholder={copy.otherPlaceholder}
+                    maxLength={240}
+                    aria-label={copy.otherPlaceholder}
+                  />
+                  <button type="submit" disabled={serviceSubmitting || !serviceNote.trim()}>
+                    {serviceSubmitting ? <LoaderCircle size={14} className="ask-khaavio-spin" /> : <Send size={14} />}
+                  </button>
+                </form>
+              )}
+              {serviceError && <p className="ask-khaavio-service-error" role="alert">{serviceError}</p>}
+            </div>
+          )}
+
+          {aiEnabled ? (
+            <form className="ask-khaavio-composer" onSubmit={handleSubmit}>
+              <input
+                ref={inputRef}
+                value={draft}
+                onChange={(event) => setDraft(event.target.value.slice(0, 500))}
+                placeholder={copy.placeholder}
+                aria-label={copy.placeholder}
+                maxLength={500}
+                disabled={sending}
+              />
+              <button
+                type="submit"
+                disabled={sending || !draft.trim()}
+                aria-label={copy.send}
+                title={copy.send}
+              >
+                {sending ? <LoaderCircle size={17} className="ask-khaavio-spin" /> : <Send size={17} />}
+              </button>
+            </form>
+          ) : (
+            <div className="ask-khaavio-service-only-note">
+              Choose a table action above and the restaurant team will receive it directly.
+            </div>
+          )}
           <div className="ask-khaavio-footer-note">
             <Sparkles size={11} />
-            <span>{language === "hi" ? "मेन्यू पर आधारित सुझाव · एलर्जी की जानकारी स्टाफ से पुष्टि करें" : language === "en" ? "Menu-based suggestions · Confirm allergen details with staff" : "Menu ke basis par suggestions · Allergy details staff se confirm karein"}</span>
+            <span>{language === "hi" ? "मेन्यू की जानकारी पहले · सामान्य डिश जानकारी के लिए वेब रिसर्च · एलर्जी स्टाफ से ज़रूर कन्फर्म करें" : language === "en" ? "Restaurant menu first · Web research for general dish knowledge · Confirm allergies with staff" : "Pehle restaurant menu ki details · General dish info ke liye web research · Allergy staff se confirm karein"}</span>
           </div>
         </section>
       )}
