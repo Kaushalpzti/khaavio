@@ -30,6 +30,7 @@ import { getStoredKhaavioLoyaltyPhone, setStoredKhaavioLoyaltyPhone } from "../l
 import { DEFAULT_PUBLIC_FEATURES, normalizePublicFeatureFlags, shouldShowPublicReviewsTab } from "../lib/publicPlanFeatures";
 import { hasSocialLinks } from "../lib/restaurantSocialLinks.js";
 import PublicTableService from "../components/PublicTableService";
+import PublicInvoicePayment from "../components/PublicInvoicePayment";
 import PublicLoyaltyClub from "../components/PublicLoyaltyClub";
 import PublicReviewsFeedback, { isValidGoogleReviewUrl } from "../components/PublicReviewsFeedback";
 import PublicBooking from "./PublicBooking";
@@ -259,6 +260,10 @@ export default function PublicMenu() {
   const [guestBillOpen, setGuestBillOpen] = useState(false);
   const [guestBillLoading, setGuestBillLoading] = useState(false);
   const [guestBillError, setGuestBillError] = useState("");
+  const [tableBillSnapshot, setTableBillSnapshot] = useState(null);
+  const [tableBillOpen, setTableBillOpen] = useState(false);
+  const [tableBillLoading, setTableBillLoading] = useState(false);
+  const [tableBillError, setTableBillError] = useState("");
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [activeBottomTab, setActiveBottomTab] = useState("menu");
   const [activePromoSlide, setActivePromoSlide] = useState(0);
@@ -659,6 +664,34 @@ export default function PublicMenu() {
     } finally {
       setGuestBillLoading(false);
     }
+  }
+
+  async function refreshTableBillSnapshot() {
+    if (!slug || !tableToken || !tableContext) return;
+    setTableBillLoading(true);
+    setTableBillError("");
+    try {
+      const { data, error: snapshotError } = await supabase.rpc(
+        "khaavio_public_table_invoice_snapshot",
+        { p_slug: slug, p_table_token: tableToken },
+      );
+      if (snapshotError) throw snapshotError;
+      setTableBillSnapshot(data || null);
+    } catch (snapshotError) {
+      setTableBillError(getErrorMessage(snapshotError, "Could not load the table bill. Please ask restaurant staff for help."));
+    } finally {
+      setTableBillLoading(false);
+    }
+  }
+
+  function openMyBill() {
+    if (isGuestBilling) {
+      setGuestBillOpen(true);
+      void refreshGuestBillSnapshot();
+      return;
+    }
+    setTableBillOpen(true);
+    void refreshTableBillSnapshot();
   }
 
   async function requestGuestBill() {
@@ -1301,19 +1334,20 @@ export default function PublicMenu() {
               <span>Table {normalizeTableNumber(tableContext.table_number)}</span>
             </span>
           )}
-          {isGuestBilling ? (
+          {tableContext ? (
             <button
               type="button"
               className="public-menu-header-bill"
-              onClick={() => {
-                setGuestBillOpen(true);
-                void refreshGuestBillSnapshot();
-              }}
+              onClick={openMyBill}
               aria-label="Open My Bill"
             >
               <ReceiptText size={17} aria-hidden="true" />
               <span>My Bill</span>
-              <b>{formatPrice(Number(guestTabSnapshot?.invoice?.total_amount ?? guestTabSnapshot?.tab?.total_amount) || 0)}</b>
+              <b>{formatPrice(Number(
+                isGuestBilling
+                  ? (guestTabSnapshot?.invoice?.total_amount ?? guestTabSnapshot?.tab?.total_amount)
+                  : (tableBillSnapshot?.invoice?.total_amount)
+              ) || 0)}</b>
             </button>
           ) : (
             <button
@@ -1415,9 +1449,18 @@ export default function PublicMenu() {
                     {guestTabSnapshot.invoice.payment_status === "paid" ? (
                       <p>Your bill is paid. Thank you for dining with us!</p>
                     ) : (
-                      <p>Your final bill has been requested. Please pay with restaurant staff.</p>
+                      <p>Your final bill is ready. Choose UPI or pay directly at the counter.</p>
                     )}
                   </div>
+                  <PublicInvoicePayment
+                    slug={slug}
+                    tableToken={tableToken}
+                    guestTabToken={guestTabToken}
+                    invoice={guestTabSnapshot.invoice}
+                    paymentSettings={guestTabSnapshot.payment_settings}
+                    paymentSubmission={guestTabSnapshot.payment_submission}
+                    onRefresh={() => refreshGuestBillSnapshot(guestTabToken)}
+                  />
                 ) : guestTabSnapshot.tab?.status === "open" ? (
                   <button
                     type="button"
@@ -1432,6 +1475,96 @@ export default function PublicMenu() {
                 {canStartFreshGuestBill(guestTabSnapshot) && (
                   <button type="button" className="public-order-submit" onClick={startNewGuestBill}>Start a new bill</button>
                 )}
+              </>
+            )}
+          </section>
+        </div>
+      )}
+
+      {tableBillOpen && tableContext && !isGuestBilling && (
+        <div
+          className="public-cart-backdrop"
+          role="presentation"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget && !tableBillLoading) setTableBillOpen(false);
+          }}
+        >
+          <section
+            className="public-order-section public-cart-drawer public-guest-bill-drawer"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="public-table-bill-heading"
+            tabIndex={-1}
+          >
+            <div className="public-cart-drawer-topbar">
+              <span className="public-menu-eyebrow">TABLE {normalizeTableNumber(tableContext?.table_number)}</span>
+              <button
+                type="button"
+                className="public-cart-drawer-close"
+                aria-label="Close my bill"
+                onClick={() => setTableBillOpen(false)}
+                disabled={tableBillLoading}
+              ><X size={19} /></button>
+            </div>
+            <div className="public-order-heading">
+              <div>
+                <span className="public-menu-eyebrow">TABLE BILL</span>
+                <h2 id="public-table-bill-heading">My Bill</h2>
+                <p>Your table's final bill and payment status appear here.</p>
+              </div>
+              <button
+                type="button"
+                className="public-cart-drawer-close"
+                aria-label="Refresh bill"
+                onClick={() => void refreshTableBillSnapshot()}
+                disabled={tableBillLoading}
+              ><LoaderCircle size={17} className={tableBillLoading ? "public-menu-spinner" : ""} /></button>
+            </div>
+            {tableBillError && <div className="public-order-error" role="alert">{tableBillError}</div>}
+            {tableBillLoading && (
+              <p className="public-guest-bill-loading">
+                <LoaderCircle className="public-menu-spinner" size={17} /> Updating your bill…
+              </p>
+            )}
+            {!tableBillSnapshot?.exists ? (
+              <div className="public-order-empty">
+                <div className="public-menu-empty-icon"><ReceiptText size={24} /></div>
+                <h3>Your final bill is not ready yet</h3>
+                <p>Restaurant staff will generate the final bill after all table orders are completed. Refresh here to check for the bill.</p>
+                <button type="button" className="public-order-submit" onClick={() => void refreshTableBillSnapshot()} disabled={tableBillLoading}>Refresh bill</button>
+              </div>
+            ) : (
+              <>
+                <div className="public-guest-bill-orders">
+                  {(tableBillSnapshot.items || []).map((item) => (
+                    <article className="public-guest-bill-order" key={item.id}>
+                      <div className="public-guest-bill-order-heading">
+                        <div>
+                          <strong>{item.quantity}× {item.item_name}</strong>
+                          <small>Order #{item.order_reference}</small>
+                        </div>
+                        <span>{formatPrice(item.line_total)}</span>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+                <div className="public-guest-bill-total">
+                  <span>Final bill · {tableBillSnapshot.invoice.invoice_number}</span>
+                  <strong>{formatPrice(tableBillSnapshot.invoice.total_amount)}</strong>
+                </div>
+                <div className="public-guest-bill-invoice">
+                  {tableBillSnapshot.invoice.gstin_snapshot && <span>GSTIN: {tableBillSnapshot.invoice.gstin_snapshot}</span>}
+                  {Number(tableBillSnapshot.invoice.tax_amount) > 0 && <span>GST {tableBillSnapshot.invoice.gst_inclusive ? "included" : "added"}: {formatPrice(tableBillSnapshot.invoice.tax_amount)}</span>}
+                  <span>Status: {tableBillSnapshot.invoice.payment_status}</span>
+                </div>
+                <PublicInvoicePayment
+                  slug={slug}
+                  tableToken={tableToken}
+                  invoice={tableBillSnapshot.invoice}
+                  paymentSettings={tableBillSnapshot.payment_settings}
+                  paymentSubmission={tableBillSnapshot.payment_submission}
+                  onRefresh={refreshTableBillSnapshot}
+                />
               </>
             )}
           </section>
