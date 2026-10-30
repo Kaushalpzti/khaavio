@@ -1,12 +1,16 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
+  BellRing,
   Bot,
   ChevronDown,
+  Droplets,
   LoaderCircle,
   MessageCircle,
+  ReceiptText,
   Send,
   Sparkles,
   Utensils,
+  UtensilsCrossed,
   X,
 } from "lucide-react";
 import { supabase } from "../lib/supabaseClient";
@@ -15,7 +19,7 @@ import "./AskKhaavio.css";
 const COPY = {
   en: {
     welcome: "Hi! I'm Ask Khaavio. I can help you explore this menu. What are you craving?",
-    subtitle: "Your friendly menu assistant",
+    subtitle: "Menu & table concierge",
     placeholder: "Ask about dishes, prices…",
     send: "Send message",
     open: "Open Ask Khaavio chat",
@@ -27,10 +31,17 @@ const COPY = {
     add: "Add",
     language: "Reply language",
     offline: "I couldn't connect right now. Please try again in a moment.",
+    tableActionsTitle: "Need something at your table?",
+    tableActions: [{ value: "waiter", label: "Call waiter" }, { value: "water", label: "Water" }, { value: "bill", label: "Request bill" }, { value: "cutlery", label: "Plates / cutlery" }],
+    other: "Something else",
+    otherPlaceholder: "Tell the restaurant team what you need…",
+    requestSent: "Your request has been sent to the restaurant team.",
+    requestAlreadyOpen: "Your earlier request is already open. The team can see it.",
+    requestFailed: "We couldn't send that request. Please try again.",
   },
   hi: {
     welcome: "नमस्ते! मैं Ask Khaavio हूँ। इस मेन्यू में आपके लिए क्या अच्छा रहेगा?",
-    subtitle: "आपका मेन्यू असिस्टेंट",
+    subtitle: "मेन्यू और टेबल सहायता",
     placeholder: "डिश या कीमत के बारे में पूछें…",
     send: "मैसेज भेजें",
     open: "Ask Khaavio चैट खोलें",
@@ -42,10 +53,17 @@ const COPY = {
     add: "जोड़ें",
     language: "जवाब की भाषा",
     offline: "अभी कनेक्ट नहीं हो पाया। कृपया थोड़ी देर बाद फिर कोशिश करें।",
+    tableActionsTitle: "टेबल पर कुछ चाहिए?",
+    tableActions: [{ value: "waiter", label: "वेटर बुलाएँ" }, { value: "water", label: "पानी" }, { value: "bill", label: "बिल मँगाएँ" }, { value: "cutlery", label: "प्लेट / कटलरी" }],
+    other: "कुछ और",
+    otherPlaceholder: "रेस्टोरेंट टीम को बताएं कि क्या चाहिए…",
+    requestSent: "आपकी रिक्वेस्ट रेस्टोरेंट टीम को भेज दी गई है।",
+    requestAlreadyOpen: "आपकी पिछली रिक्वेस्ट अभी भी खुली है। टीम उसे देख सकती है।",
+    requestFailed: "रिक्वेस्ट नहीं भेज पाए। कृपया फिर कोशिश करें।",
   },
   hinglish: {
     welcome: "Hey! Main Ask Khaavio hoon 😊 Menu mein kya try karna chahoge?",
-    subtitle: "Tumhara friendly menu assistant",
+    subtitle: "Menu aur table help, ek hi chat mein",
     placeholder: "Dish, price ya recommendation poochho…",
     send: "Message bhejo",
     open: "Ask Khaavio chat kholo",
@@ -57,6 +75,13 @@ const COPY = {
     add: "Add karo",
     language: "Reply ki language",
     offline: "Abhi connect nahi ho paya. Ek baar phir try karo.",
+    tableActionsTitle: "Table par kuch chahiye?",
+    tableActions: [{ value: "waiter", label: "Waiter bulao" }, { value: "water", label: "Paani" }, { value: "bill", label: "Bill mango" }, { value: "cutlery", label: "Plate / cutlery" }],
+    other: "Kuch aur",
+    otherPlaceholder: "Restaurant team ko batao kya chahiye…",
+    requestSent: "Tumhari request restaurant team ko bhej di gayi hai.",
+    requestAlreadyOpen: "Tumhari pehle wali request abhi open hai. Team use dekh sakti hai.",
+    requestFailed: "Request send nahi ho payi. Ek baar phir try karo.",
   },
 };
 
@@ -89,6 +114,11 @@ export default function AskKhaavio({
   launcherHidden = false,
   externalOpen,
   onExternalOpenChange,
+  aiEnabled = true,
+  showService = false,
+  slug = "",
+  tableToken = "",
+  tableContext = null,
 }) {
   const [localIsOpen, setLocalIsOpen] = useState(false);
   const isControlledOpen = typeof externalOpen === "boolean";
@@ -101,6 +131,10 @@ export default function AskKhaavio({
   const [language, setLanguage] = useState("hinglish");
   const [draft, setDraft] = useState("");
   const [sending, setSending] = useState(false);
+  const [serviceSubmitting, setServiceSubmitting] = useState(false);
+  const [serviceNote, setServiceNote] = useState("");
+  const [showServiceNote, setShowServiceNote] = useState(false);
+  const [serviceError, setServiceError] = useState("");
   const [messages, setMessages] = useState(() => [{
     id: "greeting",
     role: "assistant",
@@ -140,17 +174,23 @@ export default function AskKhaavio({
   }, [isOpen]);
 
   const preparedMenu = useMemo(
-    () => menuItems
-      .filter((item) => item && item.name && item.is_available !== false)
-      .slice(0, 80)
-      .map((item) => ({
-        name: item.name,
-        description: item.description || "",
-        category: categoryById.get(item.category_id) || "Menu",
-        price: Number(item.price) || 0,
-        available: item.is_available !== false,
-      })),
-    [menuItems, categoryById],
+    () => aiEnabled
+      ? menuItems
+        .filter((item) => item && item.name && item.is_available !== false)
+        .slice(0, 120)
+        .map((item) => ({
+          name: item.name,
+          description: item.description || "",
+          category: categoryById.get(item.category_id) || "Menu",
+          price: Number(item.price) || 0,
+          available: item.is_available !== false,
+          foodType: item.food_type || "unspecified",
+          spiceLevel: item.spice_level || "unspecified",
+          isJainFriendly: item.is_jain_friendly === true,
+          allergens: Array.isArray(item.allergens) ? item.allergens : [],
+        }))
+      : [],
+    [menuItems, categoryById, aiEnabled],
   );
 
   async function requestAI(messageText, history) {
@@ -161,7 +201,10 @@ export default function AskKhaavio({
       restaurant: {
         name: restaurant?.name || "Restaurant",
         cuisine: restaurant?.restaurant_type || "",
+        address: restaurant?.address || "",
+        businessHours: restaurant?.business_hours || null,
       },
+      table: tableContext?.table_number ? { number: String(tableContext.table_number) } : null,
       menuItems: preparedMenu,
       history,
     };
