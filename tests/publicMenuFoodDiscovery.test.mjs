@@ -30,7 +30,7 @@ test("restaurant menu editor saves and imports food discovery metadata", () => {
   assert.match(menuManager, /food_type: form\.food_type/);
   assert.match(menuManager, /spice_level: form\.spice_level/);
   assert.match(menuManager, /is_jain_friendly: form\.is_jain_friendly/);
-  assert.match(menuManager, /allergens: form\.allergens/);
+  assert.match(menuManager, /allergens: Array\.isArray\(form\.allergens\)/);
   assert.match(menuManager, /ALLERGEN_OPTIONS/);
   assert.match(menuManager, /food_type,spice_level,is_jain_friendly,allergens/);
 });
