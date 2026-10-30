@@ -27,7 +27,7 @@ const checks = [
   ['order wrapper delegates to existing validated public order RPC', /public\.place_public_order\(p_slug, p_table_token, p_customer_name, p_customer_phone, p_notes, p_items\)/.test(migration) && /place_public_order_with_loyalty/.test(menu)],
   ['reward is revealed immediately at unlock; no scratch RPC in Phase 1', /reward_name, redemption_code, revealed_at/.test(migration) && /v_reward_name, v_code, pg_catalog\.now\(\)/.test(migration) && !/CREATE OR REPLACE FUNCTION public\.reveal_public_loyalty_reward/.test(migration) && !/Scratch to reveal/i.test(publicClub)],
   ['only authenticated restaurant owner can redeem unlocked reward', /owner_redeem_loyalty_reward/.test(migration) && /r\.owner_id = \(SELECT auth\.uid\(\)\)/.test(migration) && /GRANT EXECUTE ON FUNCTION public\.owner_redeem_loyalty_reward\(uuid\) TO authenticated/.test(migration)],
-  ['public menu includes the stamp card without replacing table-service widget', /PublicLoyaltyClub/.test(menu) && /PublicTableService/.test(menu) && /getOrCreateKhaavioLoyaltyToken/.test(menu)],
+  ['public menu includes the stamp card and unified concierge table actions', /PublicLoyaltyClub/.test(menu) && /PublicHelpLauncher/.test(menu) && /getOrCreateKhaavioLoyaltyToken/.test(menu) && /create_public_table_service_request/.test(concierge)],
   ['owner dashboard is route-protected and linked in navigation', /path="\/dashboard\/loyalty"[\s\S]*?<ProtectedRestaurantPage>[\s\S]*?<LoyaltyDashboard\s*\/>/.test(app) && /Loyalty & rewards/.test(layout)],
   ['dashboard config is backed by owner-scoped RLS and reward redemption RPC', /restaurant_loyalty_programs/.test(dashboard) && /owner_redeem_loyalty_reward/.test(dashboard)],
 ];
