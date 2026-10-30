@@ -13,11 +13,12 @@ import {
 } from "lucide-react";
 import { supabase } from "../lib/supabaseClient";
 import { normalizeSocialLinks, SOCIAL_LINK_FIELDS, validateSocialLinks } from "../lib/restaurantSocialLinks.js";
+import { isValidUpiId, normalizeUpiId } from "../lib/upiPayment.js";
 import "./RestaurantSettings.css";
 import "./RestaurantSettingsLogo.css";
 
 const RESTAURANT_FIELDS =
-  "id, name, slug, restaurant_type, logo_url, phone, contact_email, address, city, state, postal_code, description, google_review_url, social_links, table_billing_mode, pickup_enabled, dine_in_enabled, gst_enabled, gstin, gst_rate, gst_price_inclusive, is_published";
+  "id, name, slug, restaurant_type, logo_url, phone, contact_email, address, city, state, postal_code, description, google_review_url, social_links, table_billing_mode, pickup_enabled, dine_in_enabled, gst_enabled, gstin, gst_rate, gst_price_inclusive, upi_payment_enabled, counter_payment_enabled, upi_id, is_published";
 
 const GOOGLE_REVIEW_HOSTS = new Set([
   "g.page",
@@ -128,6 +129,9 @@ const INITIAL_FORM = {
   gstin: "",
   gst_rate: "",
   gst_price_inclusive: false,
+  upi_payment_enabled: false,
+  counter_payment_enabled: true,
+  upi_id: "",
 };
 
 const BUSINESS_TYPES = [
@@ -158,6 +162,9 @@ function formFromRestaurant(restaurant) {
     gstin: restaurant.gstin || "",
     gst_rate: restaurant.gst_rate == null ? "" : String(restaurant.gst_rate),
     gst_price_inclusive: restaurant.gst_price_inclusive === true,
+    upi_payment_enabled: restaurant.upi_payment_enabled === true,
+    counter_payment_enabled: restaurant.counter_payment_enabled !== false,
+    upi_id: restaurant.upi_id || "",
   };
 }
 
@@ -376,12 +383,17 @@ export default function RestaurantSettings() {
 
     const gstRate = Number(form.gst_rate);
     const gstin = form.gstin.trim().toUpperCase();
+    const upiId = normalizeUpiId(form.upi_id);
     if (form.gst_enabled && (!Number.isFinite(gstRate) || gstRate <= 0 || gstRate > 100)) {
       setError("Enter a GST rate greater than 0 and no more than 100%.");
       return;
     }
     if (form.gst_enabled && gstin && !/^[0-9A-Z]{15}$/.test(gstin)) {
       setError("GSTIN must contain 15 letters or numbers.");
+      return;
+    }
+    if (form.upi_payment_enabled && !isValidUpiId(upiId)) {
+      setError("Enter a valid UPI ID before enabling UPI QR payments.");
       return;
     }
 
@@ -415,6 +427,9 @@ export default function RestaurantSettings() {
         gstin: gstin || null,
         gst_rate: form.gst_enabled ? gstRate : 0,
         gst_price_inclusive: form.gst_price_inclusive,
+        upi_payment_enabled: form.upi_payment_enabled,
+        counter_payment_enabled: form.counter_payment_enabled,
+        upi_id: upiId || null,
       };
 
       const { data, error: updateError } = await supabase
@@ -738,6 +753,66 @@ export default function RestaurantSettings() {
                       </div>
                     </div>
                   </>}
+                </div>
+              </section>
+
+              <section className="restaurant-settings-section" aria-labelledby="settings-payments-heading">
+                <div className="restaurant-settings-section-heading">
+                  <div>
+                    <h2 id="settings-payments-heading">Customer payment methods</h2>
+                    <p>Let customers pay the restaurant directly. Khaavio does not collect or hold food-order payments.</p>
+                  </div>
+                </div>
+                <div className="restaurant-settings-grid">
+                  <label className="restaurant-settings-checkbox" htmlFor="settings-upi-enabled">
+                    <input
+                      id="settings-upi-enabled"
+                      type="checkbox"
+                      checked={form.upi_payment_enabled}
+                      onChange={(event) => setForm((current) => ({ ...current, upi_payment_enabled: event.target.checked }))}
+                    />
+                    <span>
+                      <strong>UPI QR payment</strong>
+                      <small>Show an amount-specific UPI QR and UPI app link on the customer's final bill.</small>
+                    </span>
+                  </label>
+                  <label className="restaurant-settings-checkbox" htmlFor="settings-counter-payment-enabled">
+                    <input
+                      id="settings-counter-payment-enabled"
+                      type="checkbox"
+                      checked={form.counter_payment_enabled}
+                      onChange={(event) => setForm((current) => ({ ...current, counter_payment_enabled: event.target.checked }))}
+                    />
+                    <span>
+                      <strong>Pay at counter</strong>
+                      <small>Customers can settle the bill with restaurant staff using cash or the counter's accepted method.</small>
+                    </span>
+                  </label>
+                  {form.upi_payment_enabled && (
+                    <div className="restaurant-settings-field full-width">
+                      <label htmlFor="settings-upi-id">Restaurant UPI ID *</label>
+                      <input
+                        id="settings-upi-id"
+                        name="upi_id"
+                        value={form.upi_id}
+                        onChange={updateField}
+                        placeholder="restaurant@bank"
+                        maxLength={320}
+                        autoCapitalize="none"
+                        autoCorrect="off"
+                        spellCheck={false}
+                        required
+                      />
+                      <span className="restaurant-settings-field-hint">
+                        Khaavio creates the QR with the exact invoice amount. Customer-submitted UPI references remain pending until your staff confirms the credit in the restaurant's UPI/bank app.
+                      </span>
+                    </div>
+                  )}
+                  {!form.upi_payment_enabled && !form.counter_payment_enabled && (
+                    <p className="restaurant-settings-field-hint full-width">
+                      Both payment options are off. Customers will be asked to contact restaurant staff for payment instructions.
+                    </p>
+                  )}
                 </div>
               </section>
 
