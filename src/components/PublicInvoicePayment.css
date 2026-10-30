@@ -1,0 +1,160 @@
+.public-invoice-payment {
+  display: grid;
+  gap: 14px;
+  margin-top: 16px;
+  padding: 15px;
+  border: 1px solid #e1e9df;
+  border-radius: 17px;
+  background: #fbfdfb;
+}
+.public-invoice-payment-heading { display: grid; gap: 4px; }
+.public-invoice-payment-eyebrow { color: #718373; font-size: 9px; font-weight: 850; letter-spacing: .12em; }
+.public-invoice-payment-heading h3 { margin: 0; color: #244733; font-size: 19px; }
+.public-invoice-payment-heading p,
+.public-invoice-upi-hint,
+.public-invoice-counter-card p { margin: 0; color: #758176; font-size: 11px; line-height: 1.55; }
+.public-invoice-upi-card,
+.public-invoice-counter-card,
+.public-invoice-no-methods {
+  display: grid;
+  gap: 11px;
+  padding: 13px;
+  border: 1px solid #e4ebe2;
+  border-radius: 13px;
+  background: #fff;
+}
+.public-invoice-payment-method-title { display: flex; align-items: center; gap: 8px; color: #28523a; font-size: 13px; }
+.public-invoice-upi-exact-amount { margin: 0; color: #6f7f72; font-size: 11px; }
+.public-invoice-upi-exact-amount strong { color: #234a33; font-size: 14px; }
+.public-invoice-upi-qr,
+.public-invoice-upi-qr-placeholder {
+  width: 208px;
+  height: 208px;
+  max-width: 100%;
+  justify-self: center;
+  object-fit: contain;
+  border: 1px solid #edf1eb;
+  border-radius: 11px;
+  background: #fff;
+}
+.public-invoice-upi-qr-placeholder { display: grid; place-items: center; padding: 18px; color: #778579; text-align: center; font-size: 11px; }
+.public-invoice-upi-payee { display: grid; gap: 3px; text-align: center; }
+.public-invoice-upi-payee > span { color: #778579; font-size: 10px; }
+.public-invoice-upi-payee > strong { color: #2c4334; font-size: 13px; }
+.public-invoice-upi-payee code { color: #315d42; font-size: 12px; overflow-wrap: anywhere; }
+.public-invoice-upi-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
+.public-invoice-upi-open,
+.public-invoice-upi-copy,
+.public-invoice-upi-reference-form button {
+  display: inline-flex;
+  min-height: 40px;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 9px 12px;
+  border: 1px solid #dce7dc;
+  border-radius: 10px;
+  background: #f7faf6;
+  color: #31543c;
+  text-decoration: none;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 750;
+  cursor: pointer;
+}
+.public-invoice-upi-open { background: #285c3c; border-color: #285c3c; color: #fff; }
+.public-invoice-upi-hint { text-align: center; }
+.public-invoice-upi-reference-form { display: grid; gap: 8px; padding-top: 11px; border-top: 1px dashed #e3eae1; }
+.public-invoice-upi-reference-form label { color: #304b39; font-size: 11px; font-weight: 750; }
+.public-invoice-upi-reference-form input {
+  width: 100%;
+  min-height: 42px;
+  padding: 10px 12px;
+  border: 1px solid #dce6da;
+  border-radius: 10px;
+  background: #fff;
+  color: #243c2c;
+  font: inherit;
+  font-size: 13px;
+}
+.public-invoice-upi-reference-form button { width: 100%; background: #285c3c; border-color: #285c3c; color: #fff; }
+.public-invoice-upi-reference-form button:disabled { opacity: .55; cursor: not-allowed; }
+.public-invoice-upi-reference-form small { color: #788478; font-size: 10px; line-height: 1.5; }
+.public-invoice-submission-pending { display: flex; align-items: flex-start; gap: 9px; padding: 11px; border: 1px solid #f1dfb5; border-radius: 10px; background: #fff9ec; color: #886020; }
+.public-invoice-submission-pending span { display: grid; gap: 3px; }
+.public-invoice-submission-pending strong { font-size: 12px; }
+.public-invoice-submission-pending small { color: #8b744d; font-size: 10px; line-height: 1.45; }
+.public-invoice-counter-card > strong { color: #304b39; font-size: 12px; }
+.public-invoice-no-methods { color: #778579; font-size: 11px; line-height: 1.5; }
+.public-invoice-payment-notice,
+.public-invoice-payment-error { margin: 0; border-radius: 9px; padding: 10px 11px; font-size: 11px; line-height: 1.5; }
+.public-invoice-payment-notice { background: #eaf6ed; color: #2c7045; }
+.public-invoice-payment-error { background: #fff0ed; color: #ad4635; }
+.public-invoice-payment-paid { display: flex; align-items: center; gap: 10px; background: #f1faf3; border-color: #d8ecdd; }
+.public-invoice-payment-paid strong { color: #2d7448; font-size: 13px; }
+.public-invoice-payment-paid p { margin: 3px 0 0; color: #68816e; font-size: 11px; }
+.public-invoice-payment-status-icon { display: grid; width: 34px; height: 34px; place-items: center; border-radius: 50%; background: #e0f2e4; color: #2e7a4a; flex: 0 0 auto; }
+.public-invoice-payment-spin { animation: public-invoice-payment-spin 1s linear infinite; }
+@keyframes public-invoice-payment-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .public-invoice-payment-spin { animation: none; } }
+@media (max-width: 420px) {
+  .public-invoice-payment { padding: 12px; }
+  .public-invoice-upi-card,
+  .public-invoice-counter-card { padding: 11px; }
+  .public-invoice-upi-qr,
+  .public-invoice-upi-qr-placeholder { width: 190px; height: 190px; }
+}
+.public-invoice-payment-choices {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 9px;
+}
+.public-invoice-payment-choice {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-width: 0;
+  min-height: 64px;
+  padding: 11px;
+  border: 1px solid #dce7dc;
+  border-radius: 12px;
+  background: #fff;
+  color: #31543c;
+  text-align: left;
+  cursor: pointer;
+}
+.public-invoice-payment-choice[aria-pressed="true"] {
+  border-color: #4a875d;
+  background: #f0f8f1;
+  box-shadow: 0 0 0 2px rgba(74, 135, 93, .1);
+}
+.public-invoice-payment-choice:disabled { opacity: .65; cursor: wait; }
+.public-invoice-payment-choice > span { display: grid; min-width: 0; gap: 3px; }
+.public-invoice-payment-choice strong { color: #2d4a36; font-size: 11px; }
+.public-invoice-payment-choice small { color: #7a887d; font-size: 9px; line-height: 1.4; }
+.public-invoice-selected-method {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+  padding: 10px 12px;
+  border: 1px solid #dce9dd;
+  border-radius: 11px;
+  background: #f4faf5;
+}
+.public-invoice-selected-method > span { color: #748478; font-size: 10px; }
+.public-invoice-selected-method > strong { color: #2b623e; font-size: 12px; }
+.public-invoice-selected-method > button {
+  margin-left: auto;
+  border: 0;
+  background: transparent;
+  color: #406c4e;
+  font: inherit;
+  font-size: 10px;
+  font-weight: 750;
+  text-decoration: underline;
+  cursor: pointer;
+}
+@media (max-width: 390px) {
+  .public-invoice-payment-choices { grid-template-columns: minmax(0, 1fr); }
+}

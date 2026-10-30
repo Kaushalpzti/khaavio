@@ -775,3 +775,144 @@
   color: var(--ts-muted, #6b7280);
   font-size: 12px;
 }
+
+
+.ts-payment-submissions {
+  display: grid;
+  gap: 11px;
+  padding: 14px 16px;
+  border-top: 1px solid #e5ebe2;
+  background: #f9fbf8;
+}
+.ts-payment-submissions-heading {
+  display: grid;
+  gap: 3px;
+}
+.ts-payment-submissions-heading strong {
+  color: #294b35;
+  font-size: 13px;
+}
+.ts-payment-submissions-heading span {
+  color: #758176;
+  font-size: 11px;
+  line-height: 1.5;
+}
+.ts-payment-submission {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid #e1e8df;
+  border-radius: 12px;
+  background: #fff;
+}
+.ts-payment-submission-info {
+  display: grid;
+  gap: 4px;
+  min-width: 180px;
+}
+.ts-payment-submission-info > strong {
+  color: #263d2e;
+  font-size: 13px;
+  letter-spacing: .04em;
+  overflow-wrap: anywhere;
+}
+.ts-payment-submission-info > span,
+.ts-payment-submission-info > small {
+  color: #748075;
+  font-size: 11px;
+  line-height: 1.45;
+}
+.ts-payment-submission-info .ts-submission-status {
+  width: fit-content;
+  border-radius: 999px;
+  padding: 3px 8px;
+  background: #fff7e8;
+  color: #98621e;
+  font-weight: 750;
+}
+.ts-payment-submission-info .ts-submission-status-verified {
+  background: #eaf6ee;
+  color: #267247;
+}
+.ts-payment-submission-info .ts-submission-status-rejected {
+  background: #fff0ed;
+  color: #ad4635;
+}
+.ts-payment-submission-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+@media (max-width: 640px) {
+  .ts-payment-submission {
+    align-items: stretch;
+  }
+  .ts-payment-submission-actions {
+    width: 100%;
+  }
+  .ts-payment-submission-actions button {
+    flex: 1;
+  }
+}
+
+.ts-print-width-select-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: #718073;
+  font-size: 11px;
+  font-weight: 700;
+}
+.ts-print-width-select-label select {
+  min-height: 36px;
+  border: 1px solid #dce6da;
+  border-radius: 9px;
+  padding: 6px 9px;
+  background: #fff;
+  color: #36513d;
+  font: inherit;
+}
+@media print {
+  body.khaavio-printing-session-invoice-58 .ts-invoice-print-surface.print-target {
+    width: 50mm !important;
+    max-width: 50mm !important;
+    padding: 3mm !important;
+  }
+  body.khaavio-printing-session-invoice-80 .ts-invoice-print-surface.print-target {
+    width: 72mm !important;
+    max-width: 72mm !important;
+    padding: 4mm !important;
+  }
+  body.khaavio-printing-session-invoice-58 .ts-print-heading {
+    gap: 5px;
+    padding-bottom: 8px;
+  }
+  body.khaavio-printing-session-invoice-58 .ts-print-heading img {
+    width: 26px;
+    height: 26px;
+  }
+  body.khaavio-printing-session-invoice-58 .ts-print-heading h2 {
+    font-size: 13px;
+  }
+  body.khaavio-printing-session-invoice-58 .ts-print-heading span,
+  body.khaavio-printing-session-invoice-58 .ts-print-heading p,
+  body.khaavio-printing-session-invoice-58 .ts-print-meta,
+  body.khaavio-printing-session-invoice-58 .ts-order-heading,
+  body.khaavio-printing-session-invoice-58 .ts-order-item,
+  body.khaavio-printing-session-invoice-58 .ts-print-tax-summary,
+  body.khaavio-printing-session-invoice-58 .ts-paid-note,
+  body.khaavio-printing-session-invoice-58 .ts-print-footer {
+    font-size: 8px !important;
+  }
+  body.khaavio-printing-session-invoice-58 .ts-print-grand-total strong {
+    font-size: 17px;
+  }
+  body.khaavio-printing-session-invoice-58 .ts-order-block {
+    padding: 5px;
+    margin-top: 6px;
+  }
+}
