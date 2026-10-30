@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Banknote, CheckCircle2, Copy, ExternalLink, LoaderCircle, QrCode, ShieldCheck } from "lucide-react";
+import { Banknote, CheckCircle2, Copy, Download, ExternalLink, LoaderCircle, QrCode, ShieldCheck } from "lucide-react";
 import QRCode from "qrcode";
 import { supabase } from "../lib/supabaseClient";
 import { buildUpiIntentUrl, isValidUpiTransactionReference } from "../lib/upiPayment.js";
@@ -20,6 +20,10 @@ export default function PublicInvoicePayment({
   invoice,
   paymentSettings,
   paymentSubmission = null,
+  receiptItems = [],
+  restaurantName = "",
+  tableNumber = "",
+  guestName = "",
   onRefresh,
 }) {
   const [qrState, setQrState] = useState(null);
@@ -38,6 +42,22 @@ export default function PublicInvoicePayment({
   const selectedMethod = localPaymentChoice?.invoiceId === invoice?.id
     ? localPaymentChoice.method
     : invoice?.payment_choice || "";
+
+  useEffect(() => {
+    const clearPrintState = () => {
+      document.body.classList.remove("khaavio-printing-public-invoice");
+    };
+    window.addEventListener("afterprint", clearPrintState);
+    return () => {
+      window.removeEventListener("afterprint", clearPrintState);
+      clearPrintState();
+    };
+  }, []);
+
+  function printPaidReceipt() {
+    document.body.classList.add("khaavio-printing-public-invoice");
+    window.setTimeout(() => window.print(), 150);
+  }
 
   const qrKey = [
     invoice?.id || "",
@@ -178,14 +198,65 @@ export default function PublicInvoicePayment({
   if (!invoice) return null;
 
   if (invoice.payment_status === "paid") {
+    const receiptLines = Array.isArray(receiptItems) ? receiptItems : [];
     return (
-      <section className="public-invoice-payment public-invoice-payment-paid" aria-live="polite">
-        <div className="public-invoice-payment-status-icon"><CheckCircle2 size={20} /></div>
-        <div>
-          <strong>Payment received</strong>
-          <p>This bill is marked paid by the restaurant.</p>
-        </div>
-      </section>
+      <>
+        <section className="public-invoice-payment public-invoice-payment-paid" aria-live="polite">
+          <div className="public-invoice-payment-status-icon"><CheckCircle2 size={20} /></div>
+          <div className="public-invoice-payment-paid-copy">
+            <strong>Payment received</strong>
+            <p>This bill is confirmed as paid by the restaurant.</p>
+          </div>
+          <button type="button" className="public-invoice-receipt-download" onClick={printPaidReceipt}>
+            <Download size={16} />
+            Download bill / Save PDF
+          </button>
+        </section>
+
+        <section className="public-invoice-receipt-print-surface" aria-label="Paid invoice receipt">
+          <header className="public-invoice-receipt-heading">
+            <span>PAYMENT RECEIPT</span>
+            <h1>{restaurantName || paymentSettings?.payee_name || "Restaurant"}</h1>
+            {tableNumber && <p>Table {tableNumber}{guestName ? " · " + guestName : ""}</p>}
+          </header>
+
+          <div className="public-invoice-receipt-meta">
+            <div><span>Invoice number</span><strong>{invoice.invoice_number || "—"}</strong></div>
+            <div><span>Bill issued</span><strong>{invoice.issued_at ? new Intl.DateTimeFormat("en-IN", { dateStyle: "medium", timeStyle: "short" }).format(new Date(invoice.issued_at)) : "—"}</strong></div>
+            <div><span>Payment status</span><strong>PAID</strong></div>
+            <div><span>Payment method</span><strong>{invoice.payment_method || "Confirmed by restaurant"}</strong></div>
+            {invoice.paid_at && <div><span>Paid at</span><strong>{new Intl.DateTimeFormat("en-IN", { dateStyle: "medium", timeStyle: "short" }).format(new Date(invoice.paid_at))}</strong></div>}
+            {invoice.gstin_snapshot && <div><span>GSTIN</span><strong>{invoice.gstin_snapshot}</strong></div>}
+          </div>
+
+          <div className="public-invoice-receipt-items">
+            <div className="public-invoice-receipt-items-heading"><span>ITEM</span><span>AMOUNT</span></div>
+            {receiptLines.length ? receiptLines.map((item) => (
+              <div className="public-invoice-receipt-item" key={item.id || [item.order_reference, item.item_name, item.quantity].join("-")}>
+                <div>
+                  <strong>{Number(item.quantity) || 1} × {item.item_name || "Item"}</strong>
+                  {item.order_reference && <small>Order #{item.order_reference}</small>}
+                </div>
+                <strong>{formatPrice(item.line_total ?? ((Number(item.unit_price) || 0) * (Number(item.quantity) || 1)))}</strong>
+              </div>
+            )) : (
+              <p className="public-invoice-receipt-no-items">Item details are unavailable for this bill.</p>
+            )}
+          </div>
+
+          <div className="public-invoice-receipt-totals">
+            {Number(invoice.subtotal_amount) > 0 && <div><span>Subtotal</span><strong>{formatPrice(invoice.subtotal_amount)}</strong></div>}
+            {Number(invoice.discount_amount) > 0 && <div><span>Discount</span><strong>−{formatPrice(invoice.discount_amount)}</strong></div>}
+            {Number(invoice.tax_amount) > 0 && <div><span>GST {invoice.gst_inclusive ? "included" : "added"}</span><strong>{formatPrice(invoice.tax_amount)}</strong></div>}
+            <div className="public-invoice-receipt-grand-total"><span>TOTAL PAID</span><strong>{formatPrice(invoice.total_amount)}</strong></div>
+          </div>
+
+          <footer className="public-invoice-receipt-footer">
+            <strong>Thank you for dining with us!</strong>
+            <span>Powered by Khaavio</span>
+          </footer>
+        </section>
+      </>
     );
   }
 

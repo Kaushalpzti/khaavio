@@ -1464,6 +1464,16 @@ export default function PublicMenu() {
                     invoice={guestTabSnapshot.invoice}
                     paymentSettings={guestTabSnapshot.payment_settings}
                     paymentSubmission={guestTabSnapshot.payment_submission}
+                    receiptItems={(guestTabSnapshot.orders || [])
+                      .filter((order) => order.status !== "cancelled")
+                      .flatMap((order) => (order.items || []).map((item) => ({
+                        ...item,
+                        order_reference: order.reference,
+                        order_created_at: order.created_at,
+                      })))}
+                    restaurantName={restaurant?.name}
+                    tableNumber={normalizeTableNumber(tableContext?.table_number)}
+                    guestName={guestTabSnapshot.tab?.display_name}
                     onRefresh={() => refreshGuestBillSnapshot(guestTabToken)}
                   />
                   </>
@@ -1569,6 +1579,9 @@ export default function PublicMenu() {
                   invoice={tableBillSnapshot.invoice}
                   paymentSettings={tableBillSnapshot.payment_settings}
                   paymentSubmission={tableBillSnapshot.payment_submission}
+                  receiptItems={tableBillSnapshot.items || []}
+                  restaurantName={restaurant?.name}
+                  tableNumber={normalizeTableNumber(tableContext?.table_number)}
                   onRefresh={refreshTableBillSnapshot}
                 />
               </>
