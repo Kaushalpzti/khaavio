@@ -80,3 +80,16 @@ test("mobile menu controls use a search/filter row and a category/diet row", () 
   assert.match(publicStyles, /\.public-menu-category-toolbar/);
   assert.match(publicStyles, /\.public-menu-tools\s*\{[^}]*flex-direction:\s*row/s);
 });
+
+
+test("mobile Veg and Non-Veg controls show color-coded icons without text labels", () => {
+  assert.ok(publicMenu.includes('className="public-menu-diet-icon public-menu-diet-icon-veg"'));
+  assert.ok(publicMenu.includes('className="public-menu-diet-icon public-menu-diet-icon-nonveg"'));
+  assert.ok(publicMenu.includes('className="public-menu-diet-label">Veg</span>'));
+  assert.ok(publicMenu.includes('className="public-menu-diet-label">Non-Veg</span>'));
+  assert.ok(publicMenu.includes('aria-label="Vegetarian"'));
+  assert.ok(publicMenu.includes('aria-label="Non-vegetarian"'));
+  assert.ok(publicStyles.includes(".public-menu-diet-label"));
+  assert.ok(publicStyles.includes("color: #16803d"));
+  assert.ok(publicStyles.includes("color: #dc2626"));
+});
