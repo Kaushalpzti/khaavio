@@ -1521,5 +1521,9 @@
   .public-menu-allergens { font-size: 8px; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .public-menu-smart-filters button { transition: none; }
+  .public-menu-diet-toggle button,
+  .public-menu-filter-trigger,
+  .public-menu-filter-option { transition: none; }
+  .public-menu-filter-backdrop,
+  .public-menu-filter-sheet { animation: none; }
 }
