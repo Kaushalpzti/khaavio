@@ -29,7 +29,6 @@ import { getOrCreateKhaavioLoyaltyToken } from "../lib/loyaltyToken";
 import { getStoredKhaavioLoyaltyPhone, setStoredKhaavioLoyaltyPhone } from "../lib/loyaltyPhone";
 import { DEFAULT_PUBLIC_FEATURES, normalizePublicFeatureFlags, shouldShowPublicReviewsTab } from "../lib/publicPlanFeatures";
 import { hasSocialLinks } from "../lib/restaurantSocialLinks.js";
-import PublicTableService from "../components/PublicTableService";
 import PublicHelpLauncher from "../components/PublicHelpLauncher";
 import PublicInvoicePayment from "../components/PublicInvoicePayment";
 import PublicLoyaltyClub from "../components/PublicLoyaltyClub";
@@ -2600,21 +2599,10 @@ export default function PublicMenu() {
             showAI={canUseAskKhaavio}
             isPanelOpen={Boolean(activeFloatingHelpPanel)}
             hasStickyCart={activeBottomTab === "menu" && cart.length > 0 && !orderResult && !isCartOpen}
-            onSelectService={() => setActiveFloatingHelpPanel("service")}
-            onSelectAI={() => setActiveFloatingHelpPanel("ai")}
+            onOpen={() => setActiveFloatingHelpPanel("concierge")}
           />
 
-          <PublicTableService
-            slug={slug}
-            tableToken={tableToken}
-            tableContext={tableContext}
-            hasStickyCart={activeBottomTab === "menu" && cart.length > 0 && !orderResult && !isCartOpen}
-            launcherHidden
-            externalOpen={activeFloatingHelpPanel === "service"}
-            onExternalOpenChange={(open) => setActiveFloatingHelpPanel(open ? "service" : null)}
-          />
-
-          {canUseAskKhaavio && (
+          {(canUseAskKhaavio || Boolean(slug && tableToken && tableContext?.restaurant_id)) && (
             <AskKhaavio
               restaurant={restaurant}
               menuItems={items}
@@ -2622,8 +2610,13 @@ export default function PublicMenu() {
               onAddToCart={addToCart}
               hasStickyCart={activeBottomTab === "menu" && cart.length > 0 && !orderResult && !isCartOpen}
               launcherHidden
-              externalOpen={activeFloatingHelpPanel === "ai"}
-              onExternalOpenChange={(open) => setActiveFloatingHelpPanel(open ? "ai" : null)}
+              externalOpen={activeFloatingHelpPanel === "concierge"}
+              onExternalOpenChange={(open) => setActiveFloatingHelpPanel(open ? "concierge" : null)}
+              aiEnabled={canUseAskKhaavio}
+              showService={Boolean(slug && tableToken && tableContext?.restaurant_id)}
+              slug={slug}
+              tableToken={tableToken}
+              tableContext={tableContext}
             />
           )}
 
