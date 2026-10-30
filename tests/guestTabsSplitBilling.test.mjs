@@ -64,7 +64,7 @@ test("public menu stores a device-scoped tab token, rechecks the mode and render
   assert.match(menu, /isGuestBilling\s*\?/);
   assert.match(menu, /khaavio_public_table_invoice_snapshot/);
   assert.match(menu, /<PublicInvoicePayment/);
-  assert.match(menu, /khaavio_submit_public_invoice_upi_payment/);
+  assert.match(menu, /components\/PublicInvoicePayment/);
   assert.match(menu, /<ReceiptText size=\{17\} aria-hidden="true" \/>/);
   assert.doesNotMatch(menu, /className="public-menu-header-cart public-menu-header-bill"/);
   assert.match(menu, /<span>My Bill<\/span>/);
