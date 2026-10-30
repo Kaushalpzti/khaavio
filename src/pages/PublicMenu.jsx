@@ -1445,6 +1445,7 @@ export default function PublicMenu() {
                   <strong>{formatPrice(guestTabSnapshot.invoice?.total_amount ?? guestTabSnapshot.tab?.total_amount)}</strong>
                 </div>
                 {guestTabSnapshot.invoice ? (
+                  <>
                   <div className="public-guest-bill-invoice">
                     <strong>{guestTabSnapshot.invoice.invoice_number}</strong>
                     {guestTabSnapshot.invoice.gstin_snapshot && <span>GSTIN: {guestTabSnapshot.invoice.gstin_snapshot}</span>}
@@ -1465,6 +1466,7 @@ export default function PublicMenu() {
                     paymentSubmission={guestTabSnapshot.payment_submission}
                     onRefresh={() => refreshGuestBillSnapshot(guestTabToken)}
                   />
+                  </>
                 ) : guestTabSnapshot.tab?.status === "open" ? (
                   <button
                     type="button"
