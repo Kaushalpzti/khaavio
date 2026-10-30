@@ -1629,3 +1629,30 @@
   .public-menu-category-toolbar .public-menu-categories button { padding-inline: 10px; }
   .public-menu-category-toolbar .public-menu-diet-toggle button { padding-inline: 6px; font-size: 9px; }
 }
+
+
+/* Mobile dietary controls use recognizable, color-coded icons only. */
+@media (max-width: 680px) {
+  .public-menu-category-toolbar .public-menu-diet-toggle .public-menu-diet-label {
+    display: none;
+  }
+  .public-menu-category-toolbar .public-menu-diet-toggle .public-menu-diet-icon {
+    display: block;
+    width: 16px;
+    height: 16px;
+    flex: 0 0 16px;
+    stroke-width: 2.5;
+  }
+  .public-menu-category-toolbar .public-menu-diet-toggle .public-menu-diet-icon-veg {
+    color: #16803d;
+  }
+  .public-menu-category-toolbar .public-menu-diet-toggle .public-menu-diet-icon-nonveg {
+    color: #dc2626;
+  }
+  .public-menu-category-toolbar .public-menu-diet-toggle button {
+    min-width: 34px;
+    justify-content: center;
+    gap: 0;
+    padding-inline: 8px;
+  }
+}
