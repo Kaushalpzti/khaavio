@@ -45,7 +45,7 @@ test("customers submit UPI references but cannot mark an invoice paid", () => {
 test("restaurant staff review submitted references and verify through existing paid invoice RPCs", () => {
   assert.match(sessions, /khaavio_verify_invoice_upi_payment/);
   assert.match(sessions, /khaavio_reject_invoice_upi_payment/);
-  assert.match(sessions, /check the credit in the restaurant's UPI or bank app/i);
+  assert.match(sessions, /checking the credit in the restaurant's UPI or bank app/i);
   assert.match(migration, /public\.mark_table_invoice_paid\(v_invoice_id, 'UPI'\)/);
   assert.match(migration, /public\.mark_guest_tab_invoice_paid\(v_invoice_id, 'UPI'\)/);
 });
