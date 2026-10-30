@@ -24,7 +24,7 @@ const COPY = {
     send: "Send message",
     open: "Open Ask Khaavio chat",
     close: "Close chat",
-    quickTitle: "Try asking",
+    quickTitle: "Try a question or quick action",
     quickPrompts: ["Suggest something spicy", "Vegetarian options", "Under ₹200"],
     typing: "Finding a helpful answer…",
     unavailable: "Sorry, the assistant is temporarily unavailable. Please try again shortly.",
@@ -46,7 +46,7 @@ const COPY = {
     send: "मैसेज भेजें",
     open: "Ask Khaavio चैट खोलें",
     close: "चैट बंद करें",
-    quickTitle: "ये पूछकर देखें",
+    quickTitle: "कोई सवाल या क्विक एक्शन चुनें",
     quickPrompts: ["कुछ spicy सुझाओ", "शाकाहारी विकल्प", "₹200 से कम में"],
     typing: "जवाब ढूँढ रहा हूँ…",
     unavailable: "माफ़ कीजिए, असिस्टेंट अभी उपलब्ध नहीं है। थोड़ी देर बाद कोशिश करें।",
@@ -68,7 +68,7 @@ const COPY = {
     send: "Message bhejo",
     open: "Ask Khaavio chat kholo",
     close: "Chat band karo",
-    quickTitle: "Yeh poochh sakte ho",
+    quickTitle: "Sawaal poochho ya quick action chuno",
     quickPrompts: ["Kuch spicy suggest karo", "Veg options batao", "₹200 ke andar"],
     typing: "Achha answer dhoondh raha hoon…",
     unavailable: "Sorry bhai, assistant abhi available nahi hai. Thodi der baad try karo.",
@@ -480,11 +480,11 @@ export default function AskKhaavio({
             )}
           </div>
 
-          {messages.length === 1 && !sending && aiEnabled && (
-            <div className="ask-khaavio-quick-prompts">
+          {(aiEnabled || showService) && (
+            <div className="ask-khaavio-quick-prompts ask-khaavio-concierge-prompts">
               <span>{copy.quickTitle}</span>
               <div>
-                {[
+                {aiEnabled && messages.length === 1 && !sending && [
                   preparedMenu[0]?.name
                     ? language === "hi"
                       ? preparedMenu[0].name + " के बारे में बताओ"
@@ -495,19 +495,11 @@ export default function AskKhaavio({
                   copy.quickPrompts[1],
                   copy.quickPrompts[2],
                 ].map((prompt) => (
-                  <button key={prompt} type="button" onClick={() => void sendMessage(prompt)}>
+                  <button key={prompt} type="button" onClick={() => void sendMessage(prompt)} disabled={sending || serviceSubmitting}>
                     {prompt}
                   </button>
                 ))}
-              </div>
-            </div>
-          )}
-
-          {showService && (
-            <div className="ask-khaavio-table-actions">
-              <span>{copy.tableActionsTitle}</span>
-              <div className="ask-khaavio-table-action-chips">
-                {copy.tableActions.map((action) => {
+                {showService && copy.tableActions.map((action) => {
                   const Icon = action.value === "waiter"
                     ? BellRing
                     : action.value === "water"
@@ -519,6 +511,7 @@ export default function AskKhaavio({
                     <button
                       key={action.value}
                       type="button"
+                      className="ask-khaavio-service-chip"
                       onClick={() => void sendServiceRequest(action.value)}
                       disabled={serviceSubmitting || sending}
                     >
@@ -527,19 +520,22 @@ export default function AskKhaavio({
                     </button>
                   );
                 })}
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowServiceNote((current) => !current);
-                    setServiceError("");
-                  }}
-                  disabled={serviceSubmitting || sending}
-                >
-                  <MessageCircle size={13} />
-                  {copy.other}
-                </button>
+                {showService && (
+                  <button
+                    type="button"
+                    className="ask-khaavio-service-chip"
+                    onClick={() => {
+                      setShowServiceNote((current) => !current);
+                      setServiceError("");
+                    }}
+                    disabled={serviceSubmitting || sending}
+                  >
+                    <MessageCircle size={13} />
+                    {copy.other}
+                  </button>
+                )}
               </div>
-              {showServiceNote && (
+              {showService && showServiceNote && (
                 <form
                   className="ask-khaavio-other-request"
                   onSubmit={(event) => {
