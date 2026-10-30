@@ -50,6 +50,7 @@ test("rate-limit keys are bounded and raw IPs are not stored", () => {
 test("AI menu context includes the complete public dietary metadata and a bounded full-menu window", () => {
   assert.match(functionSource, /const MAX_MENU_ITEMS = 120/);
   assert.match(functionSource, /const MAX_BODY_LENGTH = 64_000/);
+  assert.match(functionSource, /const MAX_BODY_LENGTH = 64_000/);
   assert.match(functionSource, /foodType/);
   assert.match(functionSource, /spiceLevel/);
   assert.match(functionSource, /isJainFriendly/);
