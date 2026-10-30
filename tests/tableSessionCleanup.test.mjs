@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 
 const read = (path) => readFileSync(new URL("../" + path, import.meta.url), "utf8");
-const migration = read("supabase/migrations/20261031021500_empty_session_cleanup.sql");
+const migration = read("supabase/migrations/20261030204300_empty_session_cleanup.sql");
 const sessions = read("src/pages/TableSessions.jsx");
 
 test("empty guest tabs can be closed only by their restaurant owner", () => {
