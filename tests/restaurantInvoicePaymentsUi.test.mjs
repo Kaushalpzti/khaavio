@@ -9,7 +9,7 @@ const menu = read("src/pages/PublicMenu.jsx");
 const payment = read("src/components/PublicInvoicePayment.jsx");
 const paymentCss = read("src/components/PublicInvoicePayment.css");
 const sessionCss = read("src/pages/TableSessions.css");
-const migration = read("supabase/migrations/20261030194000_restaurant_invoice_upi_payments.sql");
+const migration = read("supabase/migrations/20261030203552_restaurant_invoice_upi_payments.sql");
 
 test("restaurant owners can enable UPI QR and counter payment without connecting a gateway", () => {
   assert.match(settings, /upi_payment_enabled/);

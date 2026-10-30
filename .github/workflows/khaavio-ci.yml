@@ -6,8 +6,6 @@ on:
       - main
       - fix/public-menu-voice-alerts-billing-control
   pull_request:
-    branches:
-      - main
 
 permissions:
   contents: read
@@ -143,7 +141,7 @@ jobs:
       - name: Create disposable Khaavio billing fixture
         run: psql -v ON_ERROR_STOP=1 -f tests/sql/restaurant-invoice-payments-fixture.sql
       - name: Apply invoice payment migration to disposable PostgreSQL
-        run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261030194000_restaurant_invoice_upi_payments.sql
+        run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261030203552_restaurant_invoice_upi_payments.sql
       - name: Verify grants, public snapshot and staff-verified UPI settlement
         run: |
           psql -v ON_ERROR_STOP=1 <<'SQL'
