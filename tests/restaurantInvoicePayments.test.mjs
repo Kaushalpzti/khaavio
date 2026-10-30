@@ -19,6 +19,9 @@ test("public UPI submissions are pending until an authenticated owner verifies t
   assert.match(migration, /CREATE POLICY table_session_invoice_payment_submissions_owner_read/);
   assert.match(migration, /REVOKE ALL ON TABLE public\.table_session_invoice_payment_submissions\s+FROM PUBLIC, anon, authenticated/);
   assert.match(migration, /GRANT SELECT ON TABLE public\.table_session_invoice_payment_submissions\s+TO authenticated/);
+  assert.match(migration, /CREATE OR REPLACE FUNCTION public\.khaavio_select_public_invoice_payment_method/);
+  assert.match(migration, /payment_choice text/);
+  assert.match(migration, /payment_choice = p_payment_method/);
   assert.match(migration, /CREATE OR REPLACE FUNCTION public\.khaavio_verify_invoice_upi_payment/);
   assert.match(migration, /public\.mark_guest_tab_invoice_paid\(v_invoice_id, 'UPI'\)/);
   assert.match(migration, /public\.mark_table_invoice_paid\(v_invoice_id, 'UPI'\)/);
