@@ -31,6 +31,9 @@ test("customer combined and guest bills both use the shared invoice payment comp
 });
 
 test("customers submit UPI references but cannot mark an invoice paid", () => {
+  assert.match(payment, /khaavio_select_public_invoice_payment_method/);
+  assert.match(payment, /Pay via UPI/);
+  assert.match(payment, /Pay at counter/);
   assert.match(payment, /khaavio_submit_public_invoice_upi_payment/);
   assert.match(payment, /Submit for verification/);
   assert.match(payment, /does not mark the bill as paid/i);
