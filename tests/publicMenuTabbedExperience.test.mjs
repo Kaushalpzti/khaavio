@@ -38,9 +38,10 @@ test("private feedback and Google review UI are isolated to the review tab", () 
 });
 
 test("Help and Ask Khaavio remain mounted across tab views", () => {
-  assert.match(menu, /<PublicTableService[\s\S]*?<AskKhaavio/);
-  assert.match(menuStyles, /public-menu-bottom-navigation ~ \.public-table-service \.public-table-service-fab/);
-  assert.match(menuStyles, /public-menu-bottom-navigation ~ \.ask-khaavio-root/);
+  assert.match(menu, /<PublicHelpLauncher[\s\S]*?<AskKhaavio/);
+  assert.match(menu, /activeFloatingHelpPanel === "concierge"/);
+  assert.match(menuStyles, /public-menu-bottom-navigation~\.public-help-launcher/);
+  assert.match(menuStyles, /public-menu-bottom-navigation~\.ask-khaavio-root/);
 });
 
 test("sticky cart is limited to the Menu tab and shared navigation remains responsive", () => {
