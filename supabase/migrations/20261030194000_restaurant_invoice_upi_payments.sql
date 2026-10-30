@@ -71,7 +71,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS table_session_invoice_payment_submissions_one_
   WHERE status = 'pending';
 
 CREATE UNIQUE INDEX IF NOT EXISTS table_session_invoice_payment_submissions_reference_idx
-  ON public.table_session_invoice_payment_submissions (invoice_id, pg_catalog.lower(payment_reference));
+  ON public.table_session_invoice_payment_submissions (restaurant_id, pg_catalog.lower(payment_reference));
 
 ALTER TABLE public.table_session_invoice_payment_submissions ENABLE ROW LEVEL SECURITY;
 
