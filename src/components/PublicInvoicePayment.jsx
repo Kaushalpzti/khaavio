@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { CheckCircle2, Copy, ExternalLink, LoaderCircle, QrCode, ShieldCheck } from "lucide-react";
+import { Banknote, CheckCircle2, Copy, ExternalLink, LoaderCircle, QrCode, ShieldCheck } from "lucide-react";
 import QRCode from "qrcode";
 import { supabase } from "../lib/supabaseClient";
 import { buildUpiIntentUrl, isValidUpiTransactionReference } from "../lib/upiPayment.js";
@@ -26,17 +26,21 @@ export default function PublicInvoicePayment({
   const [upiIntent, setUpiIntent] = useState("");
   const [qrError, setQrError] = useState("");
   const [reference, setReference] = useState("");
+  const [selectedMethod, setSelectedMethod] = useState(invoice?.payment_choice || "");
+  const [selectingMethod, setSelectingMethod] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
 
-  const upiEnabled = paymentSettings?.upi_enabled === true
-    && Boolean(paymentSettings?.upi_id);
+  const upiEnabled = paymentSettings?.upi_enabled === true && Boolean(paymentSettings?.upi_id);
   const counterEnabled = paymentSettings?.counter_payment_enabled !== false;
   const invoiceUnpaid = invoice?.payment_status === "unpaid";
   const submissionPending = paymentSubmission?.status === "pending";
-  const submissionRejected = paymentSubmission?.status === "rejected";
+
+  useEffect(() => {
+    setSelectedMethod(invoice?.payment_choice || "");
+  }, [invoice?.id, invoice?.payment_choice]);
 
   useEffect(() => {
     let active = true;
@@ -44,7 +48,7 @@ export default function PublicInvoicePayment({
     setUpiIntent("");
     setQrError("");
 
-    if (!upiEnabled || !invoiceUnpaid || !invoice?.invoice_number) {
+    if (!upiEnabled || !invoiceUnpaid || selectedMethod !== "upi" || !invoice?.invoice_number) {
       return () => { active = false; };
     }
 
@@ -74,11 +78,43 @@ export default function PublicInvoicePayment({
   }, [
     upiEnabled,
     invoiceUnpaid,
+    selectedMethod,
     invoice?.invoice_number,
     invoice?.total_amount,
     paymentSettings?.upi_id,
     paymentSettings?.payee_name,
   ]);
+
+  async function choosePaymentMethod(method) {
+    if (!invoice?.id || !invoiceUnpaid || selectingMethod || submitting || submissionPending) return;
+    if (method !== "upi" && method !== "counter") return;
+
+    setSelectingMethod(true);
+    setError("");
+    setNotice("");
+    try {
+      const { error: selectionError } = await supabase.rpc(
+        "khaavio_select_public_invoice_payment_method",
+        {
+          p_slug: slug,
+          p_table_token: tableToken,
+          p_invoice_id: invoice.id,
+          p_guest_tab_token: guestTabToken,
+          p_payment_method: method,
+        },
+      );
+      if (selectionError) throw selectionError;
+      setSelectedMethod(method);
+      setNotice(method === "upi"
+        ? "UPI selected. Pay the exact amount shown below."
+        : "Pay at the counter selected. Please settle with restaurant staff.");
+      await onRefresh?.();
+    } catch (selectionError) {
+      setError(selectionError?.message || "Could not select this payment method. Please refresh the bill.");
+    } finally {
+      setSelectingMethod(false);
+    }
+  }
 
   async function copyUpiId() {
     try {
@@ -92,7 +128,7 @@ export default function PublicInvoicePayment({
 
   async function submitReference(event) {
     event.preventDefault();
-    if (!invoice?.id || !invoiceUnpaid || submitting || submissionPending) return;
+    if (!invoice?.id || !invoiceUnpaid || selectedMethod !== "upi" || submitting || submissionPending) return;
 
     const cleanedReference = reference.trim();
     if (!isValidUpiTransactionReference(cleanedReference)) {
@@ -141,15 +177,59 @@ export default function PublicInvoicePayment({
 
   if (!invoiceUnpaid) return null;
 
+  const selectedMethodUnavailable =
+    (selectedMethod === "upi" && !upiEnabled)
+    || (selectedMethod === "counter" && !counterEnabled);
+  const showMethodChoices = !selectedMethod || selectedMethodUnavailable;
+
   return (
     <section className="public-invoice-payment">
       <div className="public-invoice-payment-heading">
         <span className="public-invoice-payment-eyebrow">PAYMENT OPTIONS</span>
         <h3>Pay {formatPrice(invoice.total_amount)}</h3>
-        <p>Payment goes directly to the restaurant. Khaavio does not collect this payment.</p>
+        <p>Choose how you want to pay. Payment goes directly to the restaurant; Khaavio does not collect it.</p>
       </div>
 
-      {upiEnabled && (
+      {showMethodChoices ? (
+        <div className="public-invoice-payment-choices" aria-label="Choose payment method">
+          {upiEnabled && (
+            <button
+              type="button"
+              className="public-invoice-payment-choice"
+              aria-pressed={selectedMethod === "upi"}
+              onClick={() => choosePaymentMethod("upi")}
+              disabled={selectingMethod || submissionPending}
+            >
+              <QrCode size={19} />
+              <span><strong>Pay via UPI</strong><small>Scan QR or open a UPI app</small></span>
+              {selectingMethod && <LoaderCircle size={16} className="public-invoice-payment-spin" />}
+            </button>
+          )}
+          {counterEnabled && (
+            <button
+              type="button"
+              className="public-invoice-payment-choice"
+              aria-pressed={selectedMethod === "counter"}
+              onClick={() => choosePaymentMethod("counter")}
+              disabled={selectingMethod || submissionPending}
+            >
+              <Banknote size={19} />
+              <span><strong>Pay at counter</strong><small>Cash or method accepted by the restaurant</small></span>
+              {selectingMethod && <LoaderCircle size={16} className="public-invoice-payment-spin" />}
+            </button>
+          )}
+        </div>
+      ) : (
+        <div className="public-invoice-selected-method">
+          <span>{selectedMethod === "upi" ? "Selected payment method" : "Selected payment method"}</span>
+          <strong>{selectedMethod === "upi" ? "UPI payment" : "Pay at counter"}</strong>
+          {!submissionPending && (
+            <button type="button" onClick={() => setSelectedMethod("")}>Change method</button>
+          )}
+        </div>
+      )}
+
+      {selectedMethod === "upi" && upiEnabled && (
         <div className="public-invoice-upi-card">
           <div className="public-invoice-payment-method-title">
             <QrCode size={18} />
@@ -187,8 +267,9 @@ export default function PublicInvoicePayment({
           ) : (
             <form className="public-invoice-upi-reference-form" onSubmit={submitReference}>
               <label htmlFor="public-invoice-upi-reference">
-                {submissionRejected ? "Submit a new UPI reference" : "Already paid? Enter UPI transaction reference"}
+                {paymentSubmission?.status === "rejected" ? "Submit a new UPI reference" : "Already paid? Enter UPI transaction reference"}
               </label>
+              {paymentSubmission?.status === "rejected" && <p className="public-invoice-payment-error">The previous reference could not be confirmed. Check with restaurant staff or submit the correct reference.</p>}
               <input
                 id="public-invoice-upi-reference"
                 value={reference}
@@ -210,10 +291,10 @@ export default function PublicInvoicePayment({
         </div>
       )}
 
-      {counterEnabled && (
+      {selectedMethod === "counter" && counterEnabled && (
         <div className="public-invoice-counter-card">
           <strong>Pay at counter</strong>
-          <p>Pay the restaurant team directly by cash or another method accepted at the counter. Ask staff to update your bill after receiving payment.</p>
+          <p>Show this bill to restaurant staff and pay directly by cash or another method accepted at the counter. Staff will update the bill after receiving payment.</p>
         </div>
       )}
 
