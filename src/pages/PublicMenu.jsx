@@ -1747,31 +1747,31 @@ export default function PublicMenu() {
 
 
             <div className="public-menu-category-toolbar">
-            <div
-              className="public-menu-categories"
-              aria-label="Menu categories"
-            >
-              <button
-                type="button"
-                className={categoryId === "all" ? "active" : ""}
-                onClick={() => setCategoryId("all")}
-                aria-pressed={categoryId === "all"}
+              <div
+                className="public-menu-categories"
+                aria-label="Menu categories"
               >
-                All
-              </button>
-
-              {categories.map((category) => (
                 <button
                   type="button"
-                  key={category.id}
-                  className={categoryId === category.id ? "active" : ""}
-                  onClick={() => setCategoryId(category.id)}
-                  aria-pressed={categoryId === category.id}
+                  className={categoryId === "all" ? "active" : ""}
+                  onClick={() => setCategoryId("all")}
+                  aria-pressed={categoryId === "all"}
                 >
-                  {category.name}
+                  All
                 </button>
-              ))}
-            </div>
+
+                {categories.map((category) => (
+                  <button
+                    type="button"
+                    key={category.id}
+                    className={categoryId === category.id ? "active" : ""}
+                    onClick={() => setCategoryId(category.id)}
+                    aria-pressed={categoryId === category.id}
+                  >
+                    {category.name}
+                  </button>
+                ))}
+              </div>
 
               <div className="public-menu-smart-filter-bar" aria-label="Food preferences">
                 <div className="public-menu-diet-toggle" role="group" aria-label="Dietary preference">
