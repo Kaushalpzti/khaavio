@@ -41,6 +41,23 @@ BEGIN
 END;
 $restaurant_payment_checks$;
 
+ALTER TABLE public.table_session_invoices
+  ADD COLUMN IF NOT EXISTS payment_choice text;
+
+DO $payment_choice_constraint$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_catalog.pg_constraint
+    WHERE conrelid = 'public.table_session_invoices'::regclass
+      AND conname = 'table_session_invoices_payment_choice_check'
+  ) THEN
+    ALTER TABLE public.table_session_invoices
+      ADD CONSTRAINT table_session_invoices_payment_choice_check
+      CHECK (payment_choice IS NULL OR payment_choice IN ('upi', 'counter'));
+  END IF;
+END;
+$payment_choice_constraint$;
+
 CREATE TABLE IF NOT EXISTS public.table_session_invoice_payment_submissions (
   id uuid PRIMARY KEY DEFAULT pg_catalog.gen_random_uuid(),
   restaurant_id uuid NOT NULL REFERENCES public.restaurants(id) ON DELETE CASCADE,
@@ -199,7 +216,8 @@ BEGIN
     'payment_status', i.payment_status,
     'issued_at', i.issued_at,
     'paid_at', i.paid_at,
-    'payment_method', i.payment_method
+    'payment_method', i.payment_method,
+    'payment_choice', i.payment_choice
   )
   INTO v_invoice
   FROM public.table_session_invoices i
@@ -361,7 +379,8 @@ BEGIN
     'payment_status', i.payment_status,
     'issued_at', i.issued_at,
     'paid_at', i.paid_at,
-    'payment_method', i.payment_method
+    'payment_method', i.payment_method,
+    'payment_choice', i.payment_choice
   )
   INTO v_invoice
   FROM public.table_session_invoices i
@@ -442,6 +461,131 @@ REVOKE ALL ON FUNCTION public.khaavio_public_guest_tab_snapshot(text, uuid, uuid
 GRANT EXECUTE ON FUNCTION public.khaavio_public_guest_tab_snapshot(text, uuid, uuid)
   TO anon, authenticated;
 
+CREATE OR REPLACE FUNCTION public.khaavio_select_public_invoice_payment_method(
+  p_slug text,
+  p_table_token uuid,
+  p_invoice_id uuid,
+  p_guest_tab_token uuid,
+  p_payment_method text
+)
+RETURNS TABLE(invoice_id uuid, payment_choice text)
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path TO ''
+AS $function$
+DECLARE
+  v_restaurant_id uuid;
+  v_table_id uuid;
+  v_upi_enabled boolean;
+  v_upi_id text;
+  v_counter_enabled boolean;
+  v_session_id uuid;
+  v_session_status text;
+  v_billing_mode text;
+  v_guest_tab_id uuid;
+  v_invoice_status text;
+BEGIN
+  IF p_slug IS NULL OR pg_catalog.btrim(p_slug) = ''
+     OR pg_catalog.char_length(p_slug) > 160
+     OR p_table_token IS NULL OR p_invoice_id IS NULL
+     OR p_payment_method NOT IN ('upi', 'counter') THEN
+    RAISE EXCEPTION 'Choose a valid payment method for this invoice.'
+      USING ERRCODE = '22023';
+  END IF;
+
+  SELECT r.id, rt.id, r.upi_payment_enabled, r.upi_id, r.counter_payment_enabled
+    INTO v_restaurant_id, v_table_id, v_upi_enabled, v_upi_id, v_counter_enabled
+  FROM public.restaurants r
+  JOIN public.restaurant_tables rt ON rt.restaurant_id = r.id
+  WHERE r.slug = pg_catalog.btrim(p_slug)
+    AND r.is_published IS TRUE
+    AND rt.qr_token = p_table_token
+    AND rt.is_active IS TRUE
+  FOR SHARE OF r
+  FOR UPDATE OF rt;
+
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'This table QR is invalid, inactive, or unpublished.'
+      USING ERRCODE = '22023';
+  END IF;
+
+  IF p_payment_method = 'upi'
+     AND (v_upi_enabled IS NOT TRUE OR v_upi_id IS NULL) THEN
+    RAISE EXCEPTION 'This restaurant has not enabled UPI payments.'
+      USING ERRCODE = '55000';
+  END IF;
+  IF p_payment_method = 'counter'
+     AND v_counter_enabled IS NOT TRUE THEN
+    RAISE EXCEPTION 'This restaurant has not enabled counter payments.'
+      USING ERRCODE = '55000';
+  END IF;
+
+  SELECT i.session_id, i.guest_tab_id, i.payment_status, ts.status, ts.billing_mode
+    INTO v_session_id, v_guest_tab_id, v_invoice_status, v_session_status, v_billing_mode
+  FROM public.table_session_invoices i
+  JOIN public.table_sessions ts
+    ON ts.id = i.session_id
+   AND ts.restaurant_id = i.restaurant_id
+   AND ts.table_id = i.table_id
+  WHERE i.id = p_invoice_id
+    AND i.restaurant_id = v_restaurant_id
+    AND i.table_id = v_table_id
+  FOR UPDATE OF i, ts;
+
+  IF NOT FOUND OR v_invoice_status <> 'unpaid' THEN
+    RAISE EXCEPTION 'This invoice is not available for payment selection.'
+      USING ERRCODE = '55000';
+  END IF;
+
+  IF EXISTS (
+    SELECT 1
+    FROM public.table_session_invoice_payment_submissions s
+    WHERE s.invoice_id = p_invoice_id
+      AND s.status = 'pending'
+  ) THEN
+    RAISE EXCEPTION 'A UPI reference is awaiting verification. Please wait for restaurant staff.'
+      USING ERRCODE = '55000';
+  END IF;
+
+  IF v_guest_tab_id IS NULL THEN
+    IF p_guest_tab_token IS NOT NULL
+       OR v_billing_mode <> 'combined'
+       OR v_session_status <> 'billing' THEN
+      RAISE EXCEPTION 'This invoice does not match the table bill.'
+        USING ERRCODE = '42501';
+    END IF;
+  ELSE
+    IF p_guest_tab_token IS NULL
+       OR v_billing_mode <> 'per_guest'
+       OR NOT EXISTS (
+         SELECT 1
+         FROM public.table_session_tabs t
+         WHERE t.id = v_guest_tab_id
+           AND t.restaurant_id = v_restaurant_id
+           AND t.table_id = v_table_id
+           AND t.session_id = v_session_id
+           AND t.guest_tab_token = p_guest_tab_token
+           AND t.status = 'billing'
+       ) THEN
+      RAISE EXCEPTION 'This guest invoice does not match the guest bill on this device.'
+        USING ERRCODE = '42501';
+    END IF;
+  END IF;
+
+  UPDATE public.table_session_invoices i
+  SET payment_choice = p_payment_method
+  WHERE i.id = p_invoice_id
+    AND i.restaurant_id = v_restaurant_id;
+
+  RETURN QUERY SELECT p_invoice_id, p_payment_method;
+END;
+$function$;
+
+REVOKE ALL ON FUNCTION public.khaavio_select_public_invoice_payment_method(text, uuid, uuid, uuid, text)
+  FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.khaavio_select_public_invoice_payment_method(text, uuid, uuid, uuid, text)
+  TO anon, authenticated;
+
 CREATE OR REPLACE FUNCTION public.khaavio_submit_public_invoice_upi_payment(
   p_slug text,
   p_table_token uuid,
@@ -464,6 +608,7 @@ DECLARE
   v_billing_mode text;
   v_guest_tab_id uuid;
   v_invoice_status text;
+  v_payment_choice text;
   v_invoice_total numeric(12,2);
   v_reference text;
   v_submission_id uuid;
@@ -504,9 +649,9 @@ BEGIN
       USING ERRCODE = '55000';
   END IF;
 
-  SELECT i.session_id, i.guest_tab_id, i.payment_status, i.total_amount,
+  SELECT i.session_id, i.guest_tab_id, i.payment_status, i.payment_choice, i.total_amount,
          ts.status, ts.billing_mode
-    INTO v_session_id, v_guest_tab_id, v_invoice_status, v_invoice_total,
+    INTO v_session_id, v_guest_tab_id, v_invoice_status, v_payment_choice, v_invoice_total,
          v_session_status, v_billing_mode
   FROM public.table_session_invoices i
   JOIN public.table_sessions ts
@@ -520,6 +665,11 @@ BEGIN
 
   IF NOT FOUND OR v_invoice_status <> 'unpaid' THEN
     RAISE EXCEPTION 'This invoice is not available for UPI payment.'
+      USING ERRCODE = '55000';
+  END IF;
+
+  IF v_payment_choice IS DISTINCT FROM 'upi' THEN
+    RAISE EXCEPTION 'Select UPI as your payment method before submitting a transaction reference.'
       USING ERRCODE = '55000';
   END IF;
 
