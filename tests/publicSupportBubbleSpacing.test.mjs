@@ -2,44 +2,38 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 
-const launcher = readFileSync(new URL("../src/components/PublicHelpLauncher.jsx", import.meta.url), "utf8");
-const launcherCss = readFileSync(new URL("../src/components/PublicHelpLauncher.css", import.meta.url), "utf8");
-const menu = readFileSync(new URL("../src/pages/PublicMenu.jsx", import.meta.url), "utf8");
-const service = readFileSync(new URL("../src/components/PublicTableService.jsx", import.meta.url), "utf8");
-const ask = readFileSync(new URL("../src/components/AskKhaavio.jsx", import.meta.url), "utf8");
+const read = (path) => readFileSync(new URL("../" + path, import.meta.url), "utf8");
+const launcher = read("src/components/PublicHelpLauncher.jsx");
+const launcherCss = read("src/components/PublicHelpLauncher.css");
+const menu = read("src/pages/PublicMenu.jsx");
+const menuCss = read("src/pages/PublicMenu.css");
+const concierge = read("src/components/AskKhaavio.jsx");
 
-test("public menu renders one shared floating help launcher for both support paths", () => {
-  assert.equal((menu.match(/<PublicHelpLauncher\b/g) || []).length, 1);
-  assert.match(menu, /showService=\{Boolean\(slug && tableToken && tableContext\?\.restaurant_id\)\}/);
-  assert.match(menu, /showAI=\{canUseAskKhaavio\}/);
-  assert.match(menu, /onSelectService=\{\(\) => setActiveFloatingHelpPanel\("service"\)\}/);
-  assert.match(menu, /onSelectAI=\{\(\) => setActiveFloatingHelpPanel\("ai"\)\}/);
-  assert.match(menu, /<PublicTableService[\s\S]*?launcherHidden[\s\S]*?externalOpen=\{activeFloatingHelpPanel === "service"\}/);
-  assert.match(menu, /<AskKhaavio[\s\S]*?launcherHidden[\s\S]*?externalOpen=\{activeFloatingHelpPanel === "ai"\}/);
+test("there is only one icon-only Help launcher and it opens the single concierge", () => {
+  assert.match(launcher, /<LifeBuoy size=\{21\}/);
+  assert.match(launcher, /aria-label="Open Khaavio Concierge"/);
+  assert.match(launcher, /onClick=\{onOpen\}/);
+  assert.doesNotMatch(launcher, /How can we help\?|Contact restaurant team|<span>Help<\/span>/);
+  assert.match(menu, /<PublicHelpLauncher[\s\S]*?onOpen=\{\(\) => setActiveFloatingHelpPanel\("concierge"\)\}/);
+  assert.match(menu, /<AskKhaavio[\s\S]*?externalOpen=\{activeFloatingHelpPanel === "concierge"\}/);
 });
 
-test("the shared launcher offers restaurant service and AI help from one menu", () => {
-  assert.match(launcher, /className=\{\x60public-help-launcher/);
-  assert.match(launcher, /How can we help\?/);
-  assert.match(launcher, /Contact restaurant team/);
-  assert.match(launcher, /Ask Khaavio/);
-  assert.match(launcher, /aria-haspopup="dialog"/);
-  assert.match(launcher, /aria-expanded=\{isOpen\}/);
-  assert.match(launcher, /event\.key === "Escape"/);
+test("the concierge combines dish prompts and table actions inside one chat strip", () => {
+  assert.match(concierge, /ask-khaavio-concierge-prompts/);
+  assert.match(concierge, /copy\.tableActions\.map/);
+  assert.match(concierge, /sendServiceRequest\(action\.value\)/);
+  assert.doesNotMatch(concierge, /className="ask-khaavio-table-actions"/);
+  assert.doesNotMatch(menu, /<PublicTableService/);
 });
 
-test("child panels hide their own launchers when controlled by the shared help button", () => {
-  assert.match(service, /launcherHidden = false/);
-  assert.match(service, /!launcherHidden && !isOpen/);
-  assert.match(service, /externalOpen/);
-  assert.match(ask, /launcherHidden = false/);
-  assert.match(ask, /!launcherHidden && !isOpen/);
-  assert.match(ask, /externalOpen/);
+test("the icon launcher is round, icon-only and above the mobile bottom navigation", () => {
+  assert.match(launcherCss, /width:\s*46px;[\s\S]*height:\s*46px/);
+  assert.match(launcherCss, /border-radius:\s*50%/);
+  assert.match(menuCss, /\.public-menu-bottom-navigation~\.public-help-launcher\s*\{[\s\S]*?bottom:\s*calc\(78px \+ env\(safe-area-inset-bottom, 0px\)\)/);
+  assert.match(menuCss, /\.public-menu-bottom-navigation~\.public-help-launcher\.is-raised\s*\{[\s\S]*?bottom:\s*calc\(150px \+ env\(safe-area-inset-bottom, 0px\)\)/);
 });
 
-test("one help bubble stays above the mobile safe area and moves up for the sticky cart", () => {
-  assert.match(launcherCss, /\.public-help-launcher\s*\{[\s\S]*?position:\s*fixed/);
-  assert.match(launcherCss, /\.public-help-launcher\.is-raised\s*\{\s*bottom:\s*calc\(94px\s*\+\s*env\(safe-area-inset-bottom\)\);/);
-  assert.match(launcherCss, /@media \(max-width: 600px\)[\s\S]*?\.public-help-launcher\s*\{[\s\S]*?right:\s*12px/);
-  assert.match(launcherCss, /\.public-help-launcher\.is-raised\s*\{\s*bottom:\s*calc\(86px\s*\+\s*env\(safe-area-inset-bottom\)\);/);
+test("the concierge chat panel also sits above the bottom navigation and sticky cart", () => {
+  assert.match(menuCss, /\.public-menu-bottom-navigation~\.ask-khaavio-root \.ask-khaavio-panel\s*\{[\s\S]*?bottom:\s*calc\(145px \+ env\(safe-area-inset-bottom, 0px\)\)/);
+  assert.match(menuCss, /\.public-menu-bottom-navigation~\.ask-khaavio-root\.is-raised \.ask-khaavio-panel\s*\{[\s\S]*?bottom:\s*calc\(217px \+ env\(safe-area-inset-bottom, 0px\)\)/);
 });
