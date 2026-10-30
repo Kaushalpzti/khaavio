@@ -488,6 +488,7 @@ BEGIN
   IF p_slug IS NULL OR pg_catalog.btrim(p_slug) = ''
      OR pg_catalog.char_length(p_slug) > 160
      OR p_table_token IS NULL OR p_invoice_id IS NULL
+     OR p_payment_method IS NULL
      OR p_payment_method NOT IN ('upi', 'counter') THEN
     RAISE EXCEPTION 'Choose a valid payment method for this invoice.'
       USING ERRCODE = '22023';
@@ -712,20 +713,20 @@ BEGIN
   IF EXISTS (
     SELECT 1
     FROM public.table_session_invoice_payment_submissions s
-    WHERE s.invoice_id = p_invoice_id
+    WHERE s.restaurant_id = v_restaurant_id
       AND pg_catalog.lower(s.payment_reference) = pg_catalog.lower(v_reference)
   ) THEN
-    RAISE EXCEPTION 'This UPI transaction reference has already been submitted for this bill.'
+    RAISE EXCEPTION 'This UPI transaction reference has already been submitted at this restaurant.'
       USING ERRCODE = '23505';
   END IF;
 
-  INSERT INTO public.table_session_invoice_payment_submissions (
+  INSERT INTO public.table_session_invoice_payment_submissions AS inserted_payment (
     restaurant_id, invoice_id, payment_reference, amount
   )
   VALUES (
     v_restaurant_id, p_invoice_id, v_reference, v_invoice_total
   )
-  RETURNING id, table_session_invoice_payment_submissions.submitted_at
+  RETURNING inserted_payment.id, inserted_payment.submitted_at
     INTO v_submission_id, v_submitted_at;
 
   RETURN QUERY SELECT v_submission_id, 'pending'::text, v_submitted_at;
