@@ -7,7 +7,7 @@ const SUPPORT_EMAIL = "khaavioqr@gmail.com";
 const GRIEVANCE_EMAIL = "kaushalpzti@gmail.com";
 const SUPPORT_WHATSAPP = "917324883263";
 const OPERATOR_PHONE = "+919471640485";
-const LAST_UPDATED = "29 October 2026";
+const LAST_UPDATED = "30 October 2026";
 
 const LEGAL_CONTENT = {
   privacy: {
@@ -31,7 +31,7 @@ const LEGAL_CONTENT = {
           "Account and authentication information: name, email address, authentication identifiers, account status and access permissions.",
           "Restaurant workspace information: business name, menu slug, contact details, address, opening hours, menu items, prices, photos, logos, table settings and content uploaded by the restaurant team.",
           "Guest order and booking information: name, mobile number, email if supplied, party size, requested date and time, order items, notes, order or booking status, reference identifiers and related service requests. Khaavio requires a mobile number for public menu orders so the restaurant can process the order and provide order-related updates.",
-          "Subscription and support information: selected plan, renewal requests, payment amount and reference/UTR provided for manual verification, activation status, enquiry details and support correspondence.",
+          "Subscription and support information: selected plan, trial and subscription status, billing cycle, payment amount, Razorpay transaction and subscription references, mandate status, renewal and cancellation records, and support correspondence.",
           "Technical and security information: basic browser/device information, request and diagnostic records, and information needed to protect, troubleshoot and maintain the service.",
         ],
       },
@@ -41,7 +41,7 @@ const LEGAL_CONTENT = {
           "Create, authenticate and secure accounts and restaurant workspaces.",
           "Publish restaurant menus and deliver order, booking and service requests to the relevant restaurant workspace.",
           "Provide order tracking, kitchen updates, receipts, table sessions, subscription administration and support.",
-          "Verify manual subscription payments, prevent misuse, resolve payment questions and maintain appropriate business records.",
+          "Process and verify subscription payments through Razorpay, manage subscription access and authorised recurring mandates, prevent misuse, resolve payment questions and maintain appropriate business records.",
           "Understand repeat-visit and order trends for the relevant restaurant where the product feature uses guest-provided identifiers. Where relevant, submitting an order is not marketing consent and does not, by itself, authorise promotional marketing messages.",
           "Troubleshoot errors, maintain service reliability, protect users and meet applicable legal obligations.",
         ],
@@ -59,7 +59,7 @@ const LEGAL_CONTENT = {
       {
         title: "5. Sharing and service providers",
         paragraphs: [
-          "We share guest order or booking details with the restaurant that needs those details to respond to the guest. We use technology providers, including Supabase for authentication and database services and Vercel for website hosting, to operate the platform. They may process information as necessary to provide their services under their applicable terms and safeguards.",
+          "We share guest order or booking details with the restaurant that needs those details to respond to the guest. We use technology providers, including Supabase for authentication and database services, Vercel for website hosting and Razorpay for payment and subscription processing. These providers may process relevant information under their applicable terms and safeguards.",
           "We may disclose information where reasonably necessary to comply with law or valid legal process, protect the rights and security of users or the service, investigate abuse, or manage a permitted business reorganisation. We do not sell personal information as a business model.",
         ],
       },
@@ -127,9 +127,9 @@ const LEGAL_CONTENT = {
       {
         title: "3. Free trial, plans and subscription access",
         paragraphs: [
-          "Khaavio currently advertises a 7-day free trial without a card requirement. Trial access begins when it is assigned to the restaurant workspace. When the trial ends, access may be limited unless an eligible paid plan is activated.",
+          "Khaavio offers a 7-day free trial without requiring a payment card or AutoPay mandate. The trial does not automatically convert into a paid subscription, and no subscription charge is initiated merely because the trial ends. After the trial, the restaurant owner may independently choose to purchase a paid plan.",
           "Plan names, features, limits, billing periods, prices and promotional offers are shown on the website or communicated by Khaavio. Prices are stated in Indian rupees (INR). Applicable taxes, if any, will be communicated before payment where required.",
-          "During the current early-access pilot, subscription activation and renewal requests are handled manually; online payment collection and automatic recurring renewals are not enabled. A renewal request or payment reference is not confirmation that a plan is active. Access changes after the request and payment (if any) have been verified and the plan is assigned.",
+          "A paid subscription is purchased through Razorpay Checkout. Before recurring payments can be collected, the restaurant owner must explicitly authorise the applicable AutoPay mandate and review the plan, billing cycle and payment terms presented during checkout. Recurring payment attempts are made only under the mandate authorised by the owner and according to its terms. Trial expiry alone does not create a paid subscription or authorise a charge.",
           "Changes to price or features apply prospectively and do not remove rights applicable law gives you for a paid period already purchased. Offers, including founding offers, are subject to the eligibility and duration displayed when they are offered.",
         ],
       },
@@ -165,7 +165,7 @@ const LEGAL_CONTENT = {
       {
         title: "8. Cancellation, suspension and account closure",
         paragraphs: [
-          "You may stop using Khaavio and request account closure through support. If you have a paid subscription, send a cancellation request before requesting or paying for a further renewal and ask support to confirm your access end date. Under the current pilot, subscriptions are not automatically renewed or charged automatically.",
+          "You may request cancellation of a paid subscription or account closure by contacting support using the details on this page. Submit your cancellation request before the next scheduled renewal and ask us to confirm its effective date. Cancellation will stop future subscription renewals once processed. Any payment mandate should also be cancelled through the applicable payment-provider process where available. Charges already validly processed before cancellation are handled under the refund policy and applicable law.",
           "We may suspend or restrict access when reasonably necessary to address security risks, unlawful use, non-payment, a material breach of these Terms or a serious risk to the service or other users. Where appropriate, we will provide notice and an opportunity to resolve the issue. Records may be retained as permitted or required by law, and terms that by their nature should continue will survive account closure.",
         ],
       },
@@ -195,21 +195,21 @@ const LEGAL_CONTENT = {
       {
         title: "1. Free trial and current billing setup",
         paragraphs: [
-          "Khaavio currently advertises a 7-day free trial without a card requirement. If no fee was collected for the trial, there is no trial payment to refund. Trial access begins when it is assigned to the restaurant workspace.",
-          "During the current early-access pilot, plan activation and renewal requests are handled manually. Online payment collection and automatic recurring renewals are not enabled. We will not describe an account as paid or renewed until the relevant request and payment (if applicable) have been verified and the plan has been assigned.",
+          "Khaavio offers a 7-day free trial without requiring a payment card or AutoPay mandate. The trial does not automatically convert into a paid subscription, and no charge is initiated merely because the trial ends. There is no trial payment to refund where no fee was collected.",
+          "Paid subscriptions are purchased through Razorpay Checkout. Recurring payments are enabled only after the restaurant owner explicitly authorises the applicable AutoPay mandate. Renewal payment attempts follow the authorised billing cycle and mandate terms. Trial expiry alone does not activate a paid plan or authorise a payment.",
         ],
       },
       {
         title: "2. How to cancel a subscription",
         paragraphs: [
-          "To stop using a paid plan or close your account, email the support contact below from the email address associated with your workspace. Include the restaurant name, account email, plan and the date you want cancellation to take effect. Ask us to confirm the effective date and any remaining access.",
-          "Because automatic renewals are not enabled in the current pilot, a subscription will not be automatically charged for a new period. If you do not want to continue after your current access period, do not request or pay for another renewal. Contact support if you need help confirming your plan status or end date.",
+          "To cancel a paid subscription or close your account, email the support contact below from the email address associated with your workspace. Include the restaurant name, account email, plan and requested cancellation date. Ask us to confirm the cancellation and effective access end date. Submit the request before the next scheduled renewal to help prevent the next renewal payment.",
+          "After a paid subscription is purchased and its AutoPay mandate is explicitly authorised, renewal payment attempts may occur according to the selected billing cycle and mandate terms. Once a cancellation is processed, future renewals will stop. Contact support if you need help confirming cancellation or subscription status. The free trial itself never automatically converts into a paid subscription.",
         ],
       },
       {
         title: "3. When a subscription refund may be approved",
         paragraphs: [
-          "Refund requests are reviewed individually and verified before a decision is made. Subject to applicable law, a refund may be approved for a duplicate payment, a payment received or recorded in error, or a verified subscription payment where access was not activated because of a Khaavio-side issue and we cannot resolve the activation problem within five business days after you notify support. We will also consider other cases where a refund is required by law or expressly approved by Khaavio in writing.",
+          "Refund requests are reviewed individually and verified before a decision is made. Subject to applicable law, a refund may be considered for duplicate payments, incorrect or unauthorised charges, a payment collected after a valid cancellation took effect, or a verified subscription payment where access was not activated because of a Khaavio-side issue and we cannot resolve the activation problem within five business days after you notify support. We will also consider refunds required by law or expressly approved by Khaavio in writing.",
           "A partial-period or pro-rata refund is not automatic after subscription access has been activated. Unused days, low usage, a restaurant's decision to stop using the platform or a change in business plans do not by themselves guarantee a refund, subject always to rights that cannot lawfully be excluded.",
         ],
       },

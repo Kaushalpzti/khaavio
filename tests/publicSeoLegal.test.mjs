@@ -61,7 +61,7 @@ test("About page has a public route, metadata and homepage quick link", () => {
 
 test("legal policies are reviewed against current Indian privacy and consumer grievance requirements", () => {
     const legal = readRoot("src/pages/LegalPage.jsx");
-    assert.match(legal, /29 October 2026/);
+    assert.match(legal, /30 October 2026/);
     assert.match(legal, /Digital Personal Data Protection Act, 2023/);
     assert.match(legal, /Digital Personal Data Protection Rules, 2025/);
     assert.match(legal, /48 hours/);
@@ -118,8 +118,9 @@ test("route navigation resets scroll to the top before paint", () => {
 test("legal policies cover privacy handling, subscription terms and refund requests", () => {
     const legal = readRoot("src/pages/LegalPage.jsx");
     assert.match(legal, /Information we may handle/);
-    assert.match(legal, /manual subscription payment/);
+    assert.match(legal, /Razorpay/);
     assert.match(legal, /7-day free trial/);
+    assert.match(legal, /AutoPay mandate/);
     assert.match(legal, /duplicate payment/);
     assert.match(legal, /khaavioqr@gmail\.com/);
     assert.match(legal, /917324883263/);
