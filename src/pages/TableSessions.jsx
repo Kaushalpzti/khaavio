@@ -307,6 +307,82 @@ export default function TableSessions() {
     }
   }
 
+  async function closeEmptyGuestTab(tab) {
+    const tabOrders = orders.filter((order) => order.guest_tab_id === tab.id);
+    if (tabOrders.some((order) => order.status !== "cancelled")) {
+      setError("This guest still has billable orders. Complete or cancel them before closing the tab.");
+      return;
+    }
+    const activeInvoice = invoices.find(
+      (invoice) => invoice.guest_tab_id === tab.id && invoice.payment_status !== "void",
+    );
+    if (activeInvoice) {
+      setError("This guest tab has an active invoice. Review or settle it before closing the tab.");
+      return;
+    }
+
+    const guestName = tab.display_name || "this guest";
+    const confirmed = await confirmKhaavio(
+      "Close " + guestName + "'s empty tab? All of this guest's orders are cancelled. The cancelled order history will remain available in this table session.",
+    );
+    if (!confirmed) return;
+
+    setWorkingSessionId(tab.session_id);
+    setError("");
+    setNotice("");
+    try {
+      const { error: rpcError } = await supabase.rpc("close_empty_guest_tab", {
+        p_guest_tab_id: tab.id,
+      });
+      if (rpcError) throw rpcError;
+      setNotice(guestName + "'s empty tab is closed. Cancelled orders remain in the session history.");
+      await loadData({ quiet: true });
+    } catch (actionError) {
+      setError(actionError?.message || "Could not close this empty guest tab.");
+    } finally {
+      setWorkingSessionId("");
+    }
+  }
+
+  async function closeEmptySession(session) {
+    if (session.billing_mode === "per_guest") return;
+    const sessionOrders = ordersBySession.get(session.id) || [];
+    if (sessionOrders.some((order) => order.status !== "cancelled")) {
+      setError("This table still has billable orders. Complete or cancel them before closing the session.");
+      return;
+    }
+    const activeInvoice = invoices.find(
+      (invoice) => invoice.session_id === session.id && invoice.payment_status !== "void",
+    );
+    if (activeInvoice) {
+      setError("This table session has an active invoice and cannot be closed as empty.");
+      return;
+    }
+
+    const tableNumber = tableNames.get(session.table_id) || "this table";
+    const confirmed = await confirmKhaavio(
+      "Close the empty session for Table " + normalizeTableNumber(tableNumber) +
+      "? All orders in this session are cancelled. Their history will be kept, and the next QR order will start a fresh session.",
+    );
+    if (!confirmed) return;
+
+    setWorkingSessionId(session.id);
+    setError("");
+    setNotice("");
+    try {
+      const { error: rpcError } = await supabase.rpc("close_empty_table_session", {
+        p_session_id: session.id,
+      });
+      if (rpcError) throw rpcError;
+      setNotice("The empty session for Table " + normalizeTableNumber(tableNumber) + " is closed. Cancelled order history was kept.");
+      await loadData({ quiet: true });
+    } catch (actionError) {
+      setError(actionError?.message || "Could not close this empty table session.");
+    } finally {
+      setWorkingSessionId("");
+    }
+  }
+
   async function finalizeGuestTab(tab) {
     const tabOrders = orders.filter((order) => order.guest_tab_id === tab.id && order.status !== "cancelled");
     if (!tabOrders.length) {
@@ -620,6 +696,8 @@ export default function TableSessions() {
                             {(tabsBySession.get(session.id) || []).length ? (
                               (tabsBySession.get(session.id) || []).map((tab) => {
                                 const tabOrders = orders.filter((order) => order.guest_tab_id === tab.id);
+                                const billableTabOrders = tabOrders.filter((order) => order.status !== "cancelled");
+                                const cancelledTabOrderCount = tabOrders.length - billableTabOrders.length;
                                 const tabInvoice = invoices.find((invoice) => invoice.guest_tab_id === tab.id && invoice.payment_status !== "void");
                                 const tabTotal = tabInvoice ? Number(tabInvoice.total_amount) : getGuestTabTotal(tab.id);
                                 return (
@@ -627,15 +705,21 @@ export default function TableSessions() {
                                     <div className="ts-guest-tab-summary">
                                       <div>
                                         <strong>{tab.display_name || "Guest"}</strong>
-                                        <span>{titleCase(tab.status)} · {tabOrders.filter((order) => order.status !== "cancelled").length} orders</span>
+                                        <span>{titleCase(tab.status)} · {billableTabOrders.length} billable · {cancelledTabOrderCount} cancelled</span>
                                       </div>
                                       <strong>{formatPrice(tabTotal)}</strong>
                                     </div>
                                     <div className="ts-guest-tab-actions no-print">
-                                      {tab.status === "open" && !tabInvoice && (
+                                      {tab.status === "open" && !tabInvoice && billableTabOrders.length > 0 && (
                                         <button type="button" className="ts-primary-button" onClick={() => finalizeGuestTab(tab)} disabled={workingSessionId === tab.session_id}>
                                           {workingSessionId === tab.session_id ? <LoaderCircle size={16} className="ts-spin" /> : <Receipt size={16} />}
                                           Generate guest bill
+                                        </button>
+                                      )}
+                                      {tab.status === "open" && !tabInvoice && billableTabOrders.length === 0 && (
+                                        <button type="button" className="ts-secondary-button" onClick={() => closeEmptyGuestTab(tab)} disabled={workingSessionId === tab.session_id}>
+                                          {workingSessionId === tab.session_id ? <LoaderCircle size={16} className="ts-spin" /> : <CheckCircle2 size={16} />}
+                                          Close empty tab
                                         </button>
                                       )}
                                       {tabInvoice && (
@@ -668,10 +752,17 @@ export default function TableSessions() {
                             {expanded ? "Hide orders" : "View orders"}
                           </button>
                           {session.billing_mode !== "per_guest" && (
-                            <button type="button" className="ts-primary-button" onClick={() => finalizeSession(session)} disabled={workingSessionId === session.id}>
-                              {workingSessionId === session.id ? <LoaderCircle size={16} className="ts-spin" /> : <Receipt size={16} />}
-                              Generate final bill & close
-                            </button>
+                            sessionOrders.some((order) => order.status !== "cancelled") ? (
+                              <button type="button" className="ts-primary-button" onClick={() => finalizeSession(session)} disabled={workingSessionId === session.id}>
+                                {workingSessionId === session.id ? <LoaderCircle size={16} className="ts-spin" /> : <Receipt size={16} />}
+                                Generate final bill & close
+                              </button>
+                            ) : (
+                              <button type="button" className="ts-secondary-button" onClick={() => closeEmptySession(session)} disabled={workingSessionId === session.id}>
+                                {workingSessionId === session.id ? <LoaderCircle size={16} className="ts-spin" /> : <CheckCircle2 size={16} />}
+                                Close empty session
+                              </button>
+                            )
                           )}
                         </div>
                         {expanded && <div className="ts-session-details">{renderSessionOrders(session)}</div>}
