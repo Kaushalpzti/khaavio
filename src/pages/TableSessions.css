@@ -775,3 +775,86 @@
   color: var(--ts-muted, #6b7280);
   font-size: 12px;
 }
+
+
+.ts-payment-submissions {
+  display: grid;
+  gap: 11px;
+  padding: 14px 16px;
+  border-top: 1px solid #e5ebe2;
+  background: #f9fbf8;
+}
+.ts-payment-submissions-heading {
+  display: grid;
+  gap: 3px;
+}
+.ts-payment-submissions-heading strong {
+  color: #294b35;
+  font-size: 13px;
+}
+.ts-payment-submissions-heading span {
+  color: #758176;
+  font-size: 11px;
+  line-height: 1.5;
+}
+.ts-payment-submission {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid #e1e8df;
+  border-radius: 12px;
+  background: #fff;
+}
+.ts-payment-submission-info {
+  display: grid;
+  gap: 4px;
+  min-width: 180px;
+}
+.ts-payment-submission-info > strong {
+  color: #263d2e;
+  font-size: 13px;
+  letter-spacing: .04em;
+  overflow-wrap: anywhere;
+}
+.ts-payment-submission-info > span,
+.ts-payment-submission-info > small {
+  color: #748075;
+  font-size: 11px;
+  line-height: 1.45;
+}
+.ts-payment-submission-info .ts-submission-status {
+  width: fit-content;
+  border-radius: 999px;
+  padding: 3px 8px;
+  background: #fff7e8;
+  color: #98621e;
+  font-weight: 750;
+}
+.ts-payment-submission-info .ts-submission-status-verified {
+  background: #eaf6ee;
+  color: #267247;
+}
+.ts-payment-submission-info .ts-submission-status-rejected {
+  background: #fff0ed;
+  color: #ad4635;
+}
+.ts-payment-submission-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+@media (max-width: 640px) {
+  .ts-payment-submission {
+    align-items: stretch;
+  }
+  .ts-payment-submission-actions {
+    width: 100%;
+  }
+  .ts-payment-submission-actions button {
+    flex: 1;
+  }
+}
