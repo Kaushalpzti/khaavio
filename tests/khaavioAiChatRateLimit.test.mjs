@@ -71,5 +71,5 @@ test("dish overview questions can use Groq browser search, but exact restaurant 
 test("web research is clearly separated from restaurant recipe and allergen facts", () => {
   assert.match(functionSource, /general information about the dish, not the restaurant's exact recipe/);
   assert.match(functionSource, /Never use generic web results to assert this restaurant's ingredients or allergen status/);
-  assert.match(functionSource, /Confirm allergies with staff|confirm allergies with restaurant staff/i);
+  assert.match(functionSource, /Ask customers to confirm allergies, ingredients and dietary restrictions with restaurant staff/i);
 });
