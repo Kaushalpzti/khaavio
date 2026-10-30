@@ -939,4 +939,45 @@ REVOKE ALL ON FUNCTION public.khaavio_reject_invoice_upi_payment(uuid, text)
 GRANT EXECUTE ON FUNCTION public.khaavio_reject_invoice_upi_payment(uuid, text)
   TO authenticated;
 
+
+-- Close any outstanding UPI reference if the invoice is paid through another
+-- verified staff workflow or voided. The UPI verification RPC marks its own
+-- submission as verified before invoking the existing invoice-paid function.
+CREATE OR REPLACE FUNCTION public.khaavio_close_pending_invoice_payment_submissions()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path TO ''
+AS $function$
+BEGIN
+  IF OLD.payment_status IS DISTINCT FROM NEW.payment_status
+     AND NEW.payment_status IN ('paid', 'void') THEN
+    UPDATE public.table_session_invoice_payment_submissions s
+    SET status = 'rejected',
+        reviewed_at = pg_catalog.now(),
+        reviewed_by = (SELECT auth.uid()),
+        rejection_reason = CASE
+          WHEN NEW.payment_status = 'paid'
+            THEN 'The invoice was settled before this UPI reference was verified.'
+          ELSE 'The invoice was voided before this UPI reference was verified.'
+        END
+    WHERE s.invoice_id = NEW.id
+      AND s.status = 'pending';
+  END IF;
+  RETURN NEW;
+END;
+$function$;
+
+REVOKE ALL ON FUNCTION public.khaavio_close_pending_invoice_payment_submissions()
+  FROM PUBLIC, anon, authenticated;
+
+DROP TRIGGER IF EXISTS khaavio_close_pending_invoice_payment_submissions
+  ON public.table_session_invoices;
+
+CREATE TRIGGER khaavio_close_pending_invoice_payment_submissions
+AFTER UPDATE OF payment_status ON public.table_session_invoices
+FOR EACH ROW
+WHEN (OLD.payment_status IS DISTINCT FROM NEW.payment_status)
+EXECUTE FUNCTION public.khaavio_close_pending_invoice_payment_submissions();
+
 COMMIT;
