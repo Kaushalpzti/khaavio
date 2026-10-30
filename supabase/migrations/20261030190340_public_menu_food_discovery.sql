@@ -3,6 +3,28 @@
 -- matching frontend branch.
 
 BEGIN;
+SET LOCAL lock_timeout = '5s';
+SET LOCAL statement_timeout = '30s';
+
+DO $preflight$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public'
+      AND table_name = 'menu_items'
+      AND column_name = 'item_type'
+  ) THEN
+    RAISE EXCEPTION 'Expected existing public.menu_items.item_type column is missing';
+  END IF;
+
+  IF EXISTS (
+    SELECT 1 FROM public.menu_items
+    WHERE item_type NOT IN ('veg', 'non_veg', 'vegan', 'egg')
+  ) THEN
+    RAISE EXCEPTION 'Unexpected item_type value found; refusing automatic food_type backfill';
+  END IF;
+END;
+$preflight$;
 
 ALTER TABLE public.menu_items
   ADD COLUMN IF NOT EXISTS food_type text NOT NULL DEFAULT 'unspecified',
@@ -22,6 +44,18 @@ ALTER TABLE public.menu_items
     CHECK (spice_level IN ('unspecified', 'mild', 'medium', 'hot')),
   ADD CONSTRAINT menu_items_allergens_check
     CHECK (allergens <@ ARRAY['milk', 'peanuts', 'tree_nuts', 'soy', 'gluten', 'sesame', 'egg', 'fish', 'shellfish']::text[]);
+
+-- Backfill only from the restaurant's existing explicit item_type classification.
+UPDATE public.menu_items
+SET food_type = CASE item_type
+  WHEN 'veg' THEN 'vegetarian'
+  WHEN 'non_veg' THEN 'non_vegetarian'
+  WHEN 'vegan' THEN 'vegan'
+  WHEN 'egg' THEN 'egg'
+  ELSE 'unspecified'
+END
+WHERE food_type = 'unspecified';
+
 
 CREATE INDEX IF NOT EXISTS menu_items_public_dietary_idx
   ON public.menu_items (restaurant_id, food_type, is_available);
@@ -145,7 +179,17 @@ BEGIN
 END;
 $function$;
 
-REVOKE ALL ON FUNCTION public.khaavio_public_restaurant_menu(text) FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION public.khaavio_public_restaurant_menu(text) TO anon, authenticated;
+-- CREATE OR REPLACE preserves the existing execute grants on the public menu RPC.
+
+DO $verify$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM public.menu_items
+    WHERE food_type NOT IN ('unspecified', 'vegetarian', 'non_vegetarian', 'egg', 'vegan')
+  ) THEN
+    RAISE EXCEPTION 'Food discovery backfill produced an invalid food_type';
+  END IF;
+END;
+$verify$;
 
 COMMIT;
