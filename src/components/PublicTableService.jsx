@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   BellRing,
   CheckCircle2,
@@ -71,11 +71,11 @@ export default function PublicTableService({
   const [localIsOpen, setLocalIsOpen] = useState(false);
   const isControlledOpen = typeof externalOpen === "boolean";
   const isOpen = isControlledOpen ? externalOpen : localIsOpen;
-  function setIsOpen(nextValue) {
+  const setIsOpen = useCallback((nextValue) => {
     const nextOpen = typeof nextValue === "function" ? nextValue(isOpen) : nextValue;
     if (!isControlledOpen) setLocalIsOpen(nextOpen);
     onExternalOpenChange?.(nextOpen);
-  }
+  }, [isControlledOpen, isOpen, onExternalOpenChange]);
   const [requestType, setRequestType] = useState("waiter");
   const [note, setNote] = useState("");
   const [submitting, setSubmitting] = useState(false);
