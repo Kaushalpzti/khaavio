@@ -1654,40 +1654,6 @@ export default function PublicMenu() {
                   </button>
                 )}
               </label>
-              <span className="public-menu-tools-note">
-                <Leaf size={14} />
-                Freshly listed by the restaurant
-              </span>
-            </div>
-
-            <div className="public-menu-smart-filter-bar" aria-label="Food preferences and menu filters">
-              <div className="public-menu-diet-toggle" role="group" aria-label="Dietary preference">
-                <button
-                  type="button"
-                  className={dietFilter === "all" ? "is-active" : ""}
-                  aria-pressed={dietFilter === "all"}
-                  onClick={() => setDietFilter("all")}
-                >
-                  All
-                </button>
-                <button
-                  type="button"
-                  className={dietFilter === "veg" ? "is-active" : ""}
-                  aria-pressed={dietFilter === "veg"}
-                  onClick={() => setDietFilter("veg")}
-                >
-                  <Leaf size={13} aria-hidden="true" /> Veg
-                </button>
-                <button
-                  type="button"
-                  className={dietFilter === "non_veg" ? "is-active" : ""}
-                  aria-pressed={dietFilter === "non_veg"}
-                  onClick={() => setDietFilter("non_veg")}
-                >
-                  <UtensilsCrossed size={13} aria-hidden="true" /> Non-Veg
-                </button>
-              </div>
-
               <button
                 type="button"
                 className={`public-menu-filter-trigger ${isFilterSheetOpen ? "is-open" : ""}`}
@@ -1779,6 +1745,8 @@ export default function PublicMenu() {
               </div>
             )}
 
+
+            <div className="public-menu-category-toolbar">
             <div
               className="public-menu-categories"
               aria-label="Menu categories"
@@ -1803,6 +1771,36 @@ export default function PublicMenu() {
                   {category.name}
                 </button>
               ))}
+            </div>
+
+              <div className="public-menu-smart-filter-bar" aria-label="Food preferences">
+                <div className="public-menu-diet-toggle" role="group" aria-label="Dietary preference">
+                  <button
+                    type="button"
+                    className={dietFilter === "all" ? "is-active" : ""}
+                    aria-pressed={dietFilter === "all"}
+                    onClick={() => setDietFilter("all")}
+                  >
+                    All
+                  </button>
+                  <button
+                    type="button"
+                    className={dietFilter === "veg" ? "is-active" : ""}
+                    aria-pressed={dietFilter === "veg"}
+                    onClick={() => setDietFilter((current) => current === "veg" ? "all" : "veg")}
+                  >
+                    <Leaf size={13} aria-hidden="true" /> Veg
+                  </button>
+                  <button
+                    type="button"
+                    className={dietFilter === "non_veg" ? "is-active" : ""}
+                    aria-pressed={dietFilter === "non_veg"}
+                    onClick={() => setDietFilter((current) => current === "non_veg" ? "all" : "non_veg")}
+                  >
+                    <UtensilsCrossed size={13} aria-hidden="true" /> Non-Veg
+                  </button>
+                </div>
+              </div>
             </div>
 
             <div className="public-menu-section-heading">
