@@ -145,7 +145,7 @@ jobs:
       - name: Apply invoice payment migration to disposable PostgreSQL
         run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261030203552_restaurant_invoice_upi_payments.sql
       - name: Apply empty session cleanup migration to disposable PostgreSQL
-        run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261031021500_empty_session_cleanup.sql
+        run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261030204300_empty_session_cleanup.sql
       - name: Verify grants, public snapshot and staff-verified UPI settlement
         run: |
           psql -v ON_ERROR_STOP=1 <<'SQL'
