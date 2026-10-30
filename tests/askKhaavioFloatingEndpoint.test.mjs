@@ -14,7 +14,7 @@ test('AI localhost endpoint requires explicit development opt-in; hosted Supabas
 });
 
 test('AI launcher disappears while chat is open, avoiding a duplicate floating X button', () => {
-  assert.match(ask, /\{!isOpen\s*&&\s*\(/);
+  assert.match(ask, /\{!launcherHidden\s*&&\s*!isOpen\s*&&\s*\(/);
   assert.match(ask, /className="ask-khaavio-close"/); // Keep the accessible close action inside the panel header.
   assert.doesNotMatch(ask, /isOpen\s*\?\s*<X size=\{20\}/);
   assert.doesNotMatch(ask, /ask-khaavio-launcher is-open/);
