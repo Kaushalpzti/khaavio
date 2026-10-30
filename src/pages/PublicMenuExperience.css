@@ -1527,3 +1527,105 @@
   .public-menu-filter-backdrop,
   .public-menu-filter-sheet { animation: none; }
 }
+
+
+/* Public menu mobile discovery toolbar layout. */
+.public-menu-tools {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-width: 0;
+}
+.public-menu-search {
+  flex: 1 1 auto;
+  width: auto;
+  min-width: 0;
+}
+.public-menu-tools-note { display: none; }
+.public-menu-filter-trigger {
+  min-height: 46px;
+}
+.public-menu-category-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  margin: 10px 0 14px;
+}
+.public-menu-category-toolbar .public-menu-categories {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+  overscroll-behavior-x: contain;
+}
+.public-menu-category-toolbar .public-menu-categories::-webkit-scrollbar {
+  display: none;
+}
+.public-menu-category-toolbar .public-menu-smart-filter-bar {
+  flex: 0 0 auto;
+  margin: 0;
+}
+.public-menu-category-toolbar .public-menu-diet-toggle {
+  flex: 0 0 auto;
+}
+.public-menu-category-toolbar .public-menu-diet-toggle button {
+  flex: 0 0 auto;
+  min-height: 38px;
+  padding-inline: 10px;
+}
+@media (max-width: 680px) {
+  .public-menu-tools {
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+  }
+  .public-menu-search {
+    flex: 1 1 auto;
+    width: auto;
+    min-height: 44px;
+    padding-inline: 12px;
+  }
+  .public-menu-filter-trigger {
+    flex: 0 0 auto;
+    min-height: 44px;
+  }
+  .public-menu-category-toolbar {
+    gap: 8px;
+    margin: 10px 0 13px;
+  }
+  .public-menu-category-toolbar .public-menu-categories {
+    gap: 7px;
+    padding: 0;
+  }
+  .public-menu-category-toolbar .public-menu-categories button {
+    min-height: 36px;
+    padding: 8px 12px;
+  }
+  .public-menu-category-toolbar .public-menu-smart-filter-bar {
+    flex: 0 0 auto;
+  }
+  .public-menu-category-toolbar .public-menu-diet-toggle {
+    gap: 2px;
+    padding: 2px;
+    border-radius: 11px;
+  }
+  .public-menu-category-toolbar .public-menu-diet-toggle button {
+    min-height: 34px;
+    padding: 6px 8px;
+    font-size: 10px;
+  }
+}
+@media (max-width: 380px) {
+  .public-menu-tools { gap: 6px; }
+  .public-menu-search { min-height: 42px; padding-inline: 10px; }
+  .public-menu-filter-trigger { min-height: 42px; padding-inline: 9px; }
+  .public-menu-category-toolbar { gap: 6px; }
+  .public-menu-category-toolbar .public-menu-categories { gap: 5px; }
+  .public-menu-category-toolbar .public-menu-categories button { padding-inline: 10px; }
+  .public-menu-category-toolbar .public-menu-diet-toggle button { padding-inline: 6px; font-size: 9px; }
+}
