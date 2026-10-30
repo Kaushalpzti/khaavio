@@ -158,3 +158,195 @@
 @media (max-width: 390px) {
   .public-invoice-payment-choices { grid-template-columns: minmax(0, 1fr); }
 }
+
+
+.public-invoice-payment-paid {
+  flex-wrap: wrap;
+  align-items: center;
+}
+.public-invoice-payment-paid-copy {
+  flex: 1 1 170px;
+}
+.public-invoice-receipt-download {
+  display: inline-flex;
+  min-height: 42px;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 13px;
+  border: 1px solid #285c3c;
+  border-radius: 10px;
+  background: #285c3c;
+  color: #fff;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 800;
+  cursor: pointer;
+}
+.public-invoice-receipt-download:hover {
+  background: #1e4b30;
+}
+.public-invoice-receipt-print-surface {
+  display: none;
+  color: #203629;
+  background: #fff;
+  font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+}
+.public-invoice-receipt-heading {
+  display: grid;
+  gap: 5px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #dfe7dc;
+  text-align: center;
+}
+.public-invoice-receipt-heading > span {
+  color: #708071;
+  font-size: 9px;
+  font-weight: 850;
+  letter-spacing: 1.5px;
+}
+.public-invoice-receipt-heading h1 {
+  margin: 0;
+  color: #1e4934;
+  font-size: 23px;
+}
+.public-invoice-receipt-heading p {
+  margin: 0;
+  color: #758176;
+  font-size: 11px;
+}
+.public-invoice-receipt-meta {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px 18px;
+  padding: 16px 0;
+  border-bottom: 1px dashed #dfe7dc;
+}
+.public-invoice-receipt-meta > div {
+  display: grid;
+  gap: 3px;
+}
+.public-invoice-receipt-meta span {
+  color: #7a887b;
+  font-size: 9px;
+}
+.public-invoice-receipt-meta strong {
+  color: #304a38;
+  overflow-wrap: anywhere;
+  font-size: 11px;
+}
+.public-invoice-receipt-items {
+  display: grid;
+  gap: 11px;
+  padding: 16px 0;
+}
+.public-invoice-receipt-items-heading,
+.public-invoice-receipt-item {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+}
+.public-invoice-receipt-items-heading {
+  padding-bottom: 8px;
+  border-bottom: 1px solid #e3e9e0;
+  color: #7b887c;
+  font-size: 9px;
+  font-weight: 850;
+  letter-spacing: .8px;
+}
+.public-invoice-receipt-item > div {
+  display: grid;
+  gap: 3px;
+}
+.public-invoice-receipt-item strong {
+  color: #294434;
+  font-size: 11px;
+}
+.public-invoice-receipt-item small {
+  color: #849082;
+  font-size: 9px;
+}
+.public-invoice-receipt-no-items {
+  margin: 0;
+  color: #7c887d;
+  font-size: 10px;
+}
+.public-invoice-receipt-totals {
+  display: grid;
+  gap: 8px;
+  max-width: 330px;
+  margin-left: auto;
+  padding-top: 13px;
+  border-top: 1px solid #dfe7dc;
+}
+.public-invoice-receipt-totals > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  color: #6f7e71;
+  font-size: 10px;
+}
+.public-invoice-receipt-totals strong {
+  color: #304a38;
+}
+.public-invoice-receipt-totals .public-invoice-receipt-grand-total {
+  padding-top: 11px;
+  border-top: 1px dashed #dfe7dc;
+  color: #1f4e35;
+  font-size: 11px;
+  font-weight: 850;
+}
+.public-invoice-receipt-grand-total strong {
+  color: #1f4e35;
+  font-size: 20px;
+}
+.public-invoice-receipt-footer {
+  display: grid;
+  gap: 4px;
+  margin-top: 23px;
+  padding-top: 13px;
+  border-top: 1px dashed #dfe7dc;
+  text-align: center;
+}
+.public-invoice-receipt-footer strong {
+  color: #294b35;
+  font-size: 11px;
+}
+.public-invoice-receipt-footer span {
+  color: #839082;
+  font-size: 9px;
+}
+@media (max-width: 420px) {
+  .public-invoice-receipt-download {
+    width: 100%;
+  }
+}
+@media print {
+  body.khaavio-printing-public-invoice * {
+    visibility: hidden !important;
+  }
+  body.khaavio-printing-public-invoice .public-invoice-receipt-print-surface,
+  body.khaavio-printing-public-invoice .public-invoice-receipt-print-surface * {
+    visibility: visible !important;
+  }
+  body.khaavio-printing-public-invoice .public-invoice-receipt-print-surface {
+    position: absolute !important;
+    inset: 0 auto auto 0 !important;
+    display: block !important;
+    width: 100% !important;
+    max-width: 760px !important;
+    margin: 0 auto !important;
+    padding: 28px !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: #fff !important;
+    box-shadow: none !important;
+    color: #222 !important;
+  }
+  body.khaavio-printing-public-invoice .public-invoice-receipt-item,
+  body.khaavio-printing-public-invoice .public-invoice-receipt-totals {
+    break-inside: avoid;
+  }
+}
