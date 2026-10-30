@@ -1794,13 +1794,14 @@ export default function PublicMenu() {
                     ? "Try another search or choose a different category."
                     : "This restaurant has no available dishes yet."}
                 </p>
-                {(search || categoryId !== "all") && (
+                {(search || categoryId !== "all" || smartFilter !== "all") && (
                   <button
                     type="button"
                     className="public-menu-reset-filters"
                     onClick={() => {
                       setSearch("");
                       setCategoryId("all");
+                      setSmartFilter("all");
                     }}
                   >
                     Clear filters
