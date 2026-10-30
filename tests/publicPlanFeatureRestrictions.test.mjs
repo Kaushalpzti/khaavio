@@ -56,7 +56,9 @@ test("public menu uses server feature flags for Rewards, Reviews and Ask Khaavio
   assert.match(publicMenu, /activeBottomTab === "rewards" && canUseLoyaltyRewards/);
   assert.match(publicMenu, /activeBottomTab === "reviews" && canShowReviewsTab/);
   assert.match(publicMenu, /allowPrivateFeedback=\{canUsePrivateFeedback\}/);
-  assert.match(publicMenu, /\{canUseAskKhaavio && \(/);
+  assert.match(publicMenu, /\(canUseAskKhaavio \|\| Boolean\(slug && tableToken && tableContext\?\.restaurant_id\)\)/);
+  assert.match(publicMenu, /aiEnabled=\{canUseAskKhaavio\}/);
+  assert.match(publicMenu, /showService=\{Boolean\(slug && tableToken && tableContext\?\.restaurant_id\)\}/);
   assert.match(publicMenu, /shouldShowPublicReviewsTab/);
   assert.match(publicMenu, /hasSocialLinks\(restaurant\?\.social_links\)/);
 });
