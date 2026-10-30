@@ -73,6 +73,7 @@ export default function TableSessions() {
   const [workingInvoiceId, setWorkingInvoiceId] = useState("");
   const [workingSubmissionId, setWorkingSubmissionId] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("Cash");
+  const [receiptWidth, setReceiptWidth] = useState("80");
   const [printingInvoiceId, setPrintingInvoiceId] = useState("");
 
   const loadData = useCallback(async ({ quiet = false } = {}) => {
@@ -203,12 +204,14 @@ export default function TableSessions() {
   useEffect(() => {
     const handleAfterPrint = () => {
       document.body.classList.remove("khaavio-printing-session-invoice");
+      document.body.classList.remove("khaavio-printing-session-invoice-58", "khaavio-printing-session-invoice-80");
       setPrintingInvoiceId("");
     };
     window.addEventListener("afterprint", handleAfterPrint);
     return () => {
       window.removeEventListener("afterprint", handleAfterPrint);
       document.body.classList.remove("khaavio-printing-session-invoice");
+      document.body.classList.remove("khaavio-printing-session-invoice-58", "khaavio-printing-session-invoice-80");
     };
   }, []);
 
@@ -454,7 +457,9 @@ export default function TableSessions() {
   function printInvoice(invoice) {
     setExpandedInvoiceId(invoice.id);
     setPrintingInvoiceId(invoice.id);
+    document.body.classList.remove("khaavio-printing-session-invoice-58", "khaavio-printing-session-invoice-80");
     document.body.classList.add("khaavio-printing-session-invoice");
+    document.body.classList.add("khaavio-printing-session-invoice-" + receiptWidth);
     window.setTimeout(() => window.print(), 150);
   }
 
@@ -719,6 +724,13 @@ export default function TableSessions() {
                               </button>
                             </>
                           )}
+                          <label className="ts-print-width-select-label">
+                            <span>Receipt</span>
+                            <select value={receiptWidth} onChange={(event) => setReceiptWidth(event.target.value)} aria-label="Receipt paper width">
+                              <option value="58">58mm</option>
+                              <option value="80">80mm</option>
+                            </select>
+                          </label>
                           <button type="button" className="ts-secondary-button" onClick={() => printInvoice(invoice)}><Printer size={16} /> Print / Save PDF</button>
                         </div>
                         {invoice.payment_status === "unpaid" && (paymentSubmissionsByInvoice.get(invoice.id) || []).length > 0 && (
