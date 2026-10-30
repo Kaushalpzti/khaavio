@@ -22,11 +22,9 @@ export default function PublicInvoicePayment({
   paymentSubmission = null,
   onRefresh,
 }) {
-  const [upiQr, setUpiQr] = useState("");
-  const [upiIntent, setUpiIntent] = useState("");
-  const [qrError, setQrError] = useState("");
+  const [qrState, setQrState] = useState(null);
   const [reference, setReference] = useState("");
-  const [selectedMethod, setSelectedMethod] = useState(invoice?.payment_choice || "");
+  const [localPaymentChoice, setLocalPaymentChoice] = useState(null);
   const [selectingMethod, setSelectingMethod] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -37,52 +35,68 @@ export default function PublicInvoicePayment({
   const counterEnabled = paymentSettings?.counter_payment_enabled !== false;
   const invoiceUnpaid = invoice?.payment_status === "unpaid";
   const submissionPending = paymentSubmission?.status === "pending";
+  const selectedMethod = localPaymentChoice?.invoiceId === invoice?.id
+    ? localPaymentChoice.method
+    : invoice?.payment_choice || "";
+
+  const qrKey = [
+    invoice?.id || "",
+    invoice?.invoice_number || "",
+    invoice?.total_amount ?? "",
+    paymentSettings?.upi_id || "",
+    paymentSettings?.payee_name || "",
+    selectedMethod,
+  ].join(":");
+  const qrData = qrState?.key === qrKey ? qrState : null;
 
   useEffect(() => {
-    setSelectedMethod(invoice?.payment_choice || "");
-  }, [invoice?.id, invoice?.payment_choice]);
-
-  useEffect(() => {
-    let active = true;
-    setUpiQr("");
-    setUpiIntent("");
-    setQrError("");
-
     if (!upiEnabled || !invoiceUnpaid || selectedMethod !== "upi" || !invoice?.invoice_number) {
-      return () => { active = false; };
+      return undefined;
     }
 
-    try {
-      const intent = buildUpiIntentUrl({
-        upiId: paymentSettings.upi_id,
-        payeeName: paymentSettings.payee_name,
-        amount: invoice.total_amount,
-        invoiceNumber: invoice.invoice_number,
+    let active = true;
+    Promise.resolve()
+      .then(() => {
+        const intent = buildUpiIntentUrl({
+          upiId: paymentSettings.upi_id,
+          payeeName: paymentSettings.payee_name,
+          amount: invoice.total_amount,
+          invoiceNumber: invoice.invoice_number,
+        });
+        return QRCode.toDataURL(intent, {
+          width: 224,
+          margin: 2,
+          errorCorrectionLevel: "M",
+          color: { dark: "#183b2a", light: "#ffffff" },
+        }).then((dataUrl) => ({ intent, dataUrl }));
+      })
+      .then(({ intent, dataUrl }) => {
+        if (active) setQrState({ key: qrKey, intent, dataUrl, error: "" });
+      })
+      .catch((qrBuildError) => {
+        if (active) {
+          setQrState({
+            key: qrKey,
+            intent: "",
+            dataUrl: "",
+            error: qrBuildError?.message || "The UPI QR could not be prepared. You can still open your UPI app or copy the UPI ID.",
+          });
+        }
       });
-      setUpiIntent(intent);
-      QRCode.toDataURL(intent, {
-        width: 224,
-        margin: 2,
-        errorCorrectionLevel: "M",
-        color: { dark: "#183b2a", light: "#ffffff" },
-      }).then((dataUrl) => {
-        if (active) setUpiQr(dataUrl);
-      }).catch(() => {
-        if (active) setQrError("The UPI QR could not be prepared. You can still open your UPI app or copy the UPI ID.");
-      });
-    } catch (qrBuildError) {
-      setQrError(qrBuildError?.message || "The restaurant UPI details are not valid.");
-    }
 
-    return () => { active = false; };
+    return () => {
+      active = false;
+    };
   }, [
     upiEnabled,
     invoiceUnpaid,
     selectedMethod,
+    invoice?.id,
     invoice?.invoice_number,
     invoice?.total_amount,
     paymentSettings?.upi_id,
     paymentSettings?.payee_name,
+    qrKey,
   ]);
 
   async function choosePaymentMethod(method) {
@@ -104,7 +118,7 @@ export default function PublicInvoicePayment({
         },
       );
       if (selectionError) throw selectionError;
-      setSelectedMethod(method);
+      setLocalPaymentChoice({ invoiceId: invoice.id, method });
       setNotice(method === "upi"
         ? "UPI selected. Pay the exact amount shown below."
         : "Pay at the counter selected. Please settle with restaurant staff.");
@@ -221,10 +235,10 @@ export default function PublicInvoicePayment({
         </div>
       ) : (
         <div className="public-invoice-selected-method">
-          <span>{selectedMethod === "upi" ? "Selected payment method" : "Selected payment method"}</span>
+          <span>Selected payment method</span>
           <strong>{selectedMethod === "upi" ? "UPI payment" : "Pay at counter"}</strong>
           {!submissionPending && (
-            <button type="button" onClick={() => setSelectedMethod("")}>Change method</button>
+            <button type="button" onClick={() => setLocalPaymentChoice({ invoiceId: invoice.id, method: "" })}>Change method</button>
           )}
         </div>
       )}
@@ -236,11 +250,11 @@ export default function PublicInvoicePayment({
             <strong>Pay with UPI</strong>
           </div>
           <p className="public-invoice-upi-exact-amount">Exact bill amount: <strong>{formatPrice(invoice.total_amount)}</strong></p>
-          {upiQr ? (
-            <img className="public-invoice-upi-qr" src={upiQr} alt={"UPI QR code for " + formatPrice(invoice.total_amount)} />
+          {qrData?.dataUrl ? (
+            <img className="public-invoice-upi-qr" src={qrData.dataUrl} alt={"UPI QR code for " + formatPrice(invoice.total_amount)} />
           ) : (
             <div className="public-invoice-upi-qr-placeholder">
-              {qrError ? <span>{qrError}</span> : <LoaderCircle size={22} className="public-invoice-payment-spin" />}
+              {qrData?.error || <LoaderCircle size={22} className="public-invoice-payment-spin" />}
             </div>
           )}
           <div className="public-invoice-upi-payee">
@@ -249,8 +263,8 @@ export default function PublicInvoicePayment({
             <code>{paymentSettings.upi_id}</code>
           </div>
           <div className="public-invoice-upi-actions">
-            {upiIntent && (
-              <a className="public-invoice-upi-open" href={upiIntent}>
+            {qrData?.intent && (
+              <a className="public-invoice-upi-open" href={qrData.intent}>
                 <ExternalLink size={15} /> Open UPI app
               </a>
             )}
