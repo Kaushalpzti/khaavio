@@ -30,6 +30,7 @@ import { getStoredKhaavioLoyaltyPhone, setStoredKhaavioLoyaltyPhone } from "../l
 import { DEFAULT_PUBLIC_FEATURES, normalizePublicFeatureFlags, shouldShowPublicReviewsTab } from "../lib/publicPlanFeatures";
 import { hasSocialLinks } from "../lib/restaurantSocialLinks.js";
 import PublicTableService from "../components/PublicTableService";
+import PublicHelpLauncher from "../components/PublicHelpLauncher";
 import PublicInvoicePayment from "../components/PublicInvoicePayment";
 import PublicLoyaltyClub from "../components/PublicLoyaltyClub";
 import PublicReviewsFeedback, { isValidGoogleReviewUrl } from "../components/PublicReviewsFeedback";
@@ -266,6 +267,7 @@ export default function PublicMenu() {
   const [tableBillError, setTableBillError] = useState("");
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [activeBottomTab, setActiveBottomTab] = useState("menu");
+  const [activeFloatingHelpPanel, setActiveFloatingHelpPanel] = useState(null);
   const [activePromoSlide, setActivePromoSlide] = useState(0);
   const [customerName, setCustomerName] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
@@ -2593,11 +2595,23 @@ export default function PublicMenu() {
             </div>
           )}
 
+          <PublicHelpLauncher
+            showService={Boolean(slug && tableToken && tableContext?.restaurant_id)}
+            showAI={canUseAskKhaavio}
+            isPanelOpen={Boolean(activeFloatingHelpPanel)}
+            hasStickyCart={activeBottomTab === "menu" && cart.length > 0 && !orderResult && !isCartOpen}
+            onSelectService={() => setActiveFloatingHelpPanel("service")}
+            onSelectAI={() => setActiveFloatingHelpPanel("ai")}
+          />
+
           <PublicTableService
             slug={slug}
             tableToken={tableToken}
             tableContext={tableContext}
             hasStickyCart={activeBottomTab === "menu" && cart.length > 0 && !orderResult && !isCartOpen}
+            launcherHidden
+            externalOpen={activeFloatingHelpPanel === "service"}
+            onExternalOpenChange={(open) => setActiveFloatingHelpPanel(open ? "service" : null)}
           />
 
           {canUseAskKhaavio && (
@@ -2607,6 +2621,9 @@ export default function PublicMenu() {
               categories={categories}
               onAddToCart={addToCart}
               hasStickyCart={activeBottomTab === "menu" && cart.length > 0 && !orderResult && !isCartOpen}
+              launcherHidden
+              externalOpen={activeFloatingHelpPanel === "ai"}
+              onExternalOpenChange={(open) => setActiveFloatingHelpPanel(open ? "ai" : null)}
             />
           )}
 

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   BellRing,
   CheckCircle2,
@@ -59,8 +59,23 @@ function readableError(error) {
   return "We couldn't send that request right now. Please try again or ask a team member directly.";
 }
 
-export default function PublicTableService({ slug, tableToken, tableContext, hasStickyCart = false }) {
-  const [isOpen, setIsOpen] = useState(false);
+export default function PublicTableService({
+  slug,
+  tableToken,
+  tableContext,
+  hasStickyCart = false,
+  launcherHidden = false,
+  externalOpen,
+  onExternalOpenChange,
+}) {
+  const [localIsOpen, setLocalIsOpen] = useState(false);
+  const isControlledOpen = typeof externalOpen === "boolean";
+  const isOpen = isControlledOpen ? externalOpen : localIsOpen;
+  const setIsOpen = useCallback((nextValue) => {
+    const nextOpen = typeof nextValue === "function" ? nextValue(isOpen) : nextValue;
+    if (!isControlledOpen) setLocalIsOpen(nextOpen);
+    onExternalOpenChange?.(nextOpen);
+  }, [isControlledOpen, isOpen, onExternalOpenChange]);
   const [requestType, setRequestType] = useState("waiter");
   const [note, setNote] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -78,7 +93,7 @@ export default function PublicTableService({ slug, tableToken, tableContext, has
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [isOpen, submitting]);
+  }, [isOpen, submitting, setIsOpen]);
 
   if (!hasValidTableContext) return null;
 
@@ -134,6 +149,7 @@ export default function PublicTableService({ slug, tableToken, tableContext, has
 
   return (
     <div className={`public-table-service${hasStickyCart ? " is-raised" : ""}`}>
+      {!launcherHidden && !isOpen && (
       <button
         type="button"
         className="public-table-service-fab"
@@ -147,6 +163,7 @@ export default function PublicTableService({ slug, tableToken, tableContext, has
         <span className="public-table-service-fab-icon"><MessageCircle size={18} /></span>
         <span>Need help?</span>
       </button>
+      )}
 
       {isOpen && (
         <div

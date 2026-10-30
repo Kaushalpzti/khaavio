@@ -86,8 +86,18 @@ export default function AskKhaavio({
   categories = [],
   onAddToCart,
   hasStickyCart = false,
+  launcherHidden = false,
+  externalOpen,
+  onExternalOpenChange,
 }) {
-  const [isOpen, setIsOpen] = useState(false);
+  const [localIsOpen, setLocalIsOpen] = useState(false);
+  const isControlledOpen = typeof externalOpen === "boolean";
+  const isOpen = isControlledOpen ? externalOpen : localIsOpen;
+  function setIsOpen(nextValue) {
+    const nextOpen = typeof nextValue === "function" ? nextValue(isOpen) : nextValue;
+    if (!isControlledOpen) setLocalIsOpen(nextOpen);
+    onExternalOpenChange?.(nextOpen);
+  }
   const [language, setLanguage] = useState("hinglish");
   const [draft, setDraft] = useState("");
   const [sending, setSending] = useState(false);
@@ -410,7 +420,7 @@ export default function AskKhaavio({
         </section>
       )}
 
-      {!isOpen && (
+      {!launcherHidden && !isOpen && (
         <button
           type="button"
           className="ask-khaavio-launcher"

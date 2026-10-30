@@ -14,7 +14,8 @@ test('AI localhost endpoint requires explicit development opt-in; hosted Supabas
 });
 
 test('AI launcher disappears while chat is open, avoiding a duplicate floating X button', () => {
-  assert.match(ask, /\{!isOpen\s*&&\s*\(/);
+  assert.match(ask, /launcherHidden = false/);
+  assert.match(ask, /\{!launcherHidden\s*&&\s*!isOpen\s*&&\s*\(/);
   assert.match(ask, /className="ask-khaavio-close"/); // Keep the accessible close action inside the panel header.
   assert.doesNotMatch(ask, /isOpen\s*\?\s*<X size=\{20\}/);
   assert.doesNotMatch(ask, /ask-khaavio-launcher is-open/);
@@ -28,6 +29,8 @@ test('Ask Khaavio launcher is compact on desktop and mobile', () => {
 test('Need help bubble is compact and moves up when a sticky cart is present', () => {
   assert.match(service, /hasStickyCart\s*=\s*false/);
   assert.match(service, /className=\{`public-table-service\$\{hasStickyCart \? " is-raised" : ""\}`\}/);
+  assert.match(service, /launcherHidden = false/);
+  assert.match(service, /!launcherHidden && !isOpen/);
   assert.match(serviceCss, /\.public-table-service-fab\s*\{[^}]*min-height:\s*41px/s);
   assert.match(serviceCss, /@media \(max-width: 600px\)[\s\S]*?\.public-table-service-fab\s*\{[^}]*min-height:\s*37px/s);
 });
