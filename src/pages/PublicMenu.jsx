@@ -2606,6 +2606,8 @@ export default function PublicMenu() {
             <AskKhaavio
               restaurant={restaurant}
               menuItems={items}
+              menuOptionGroups={menuOptionGroups}
+              publicOffers={publicOffers}
               categories={categories}
               onAddToCart={addToCart}
               hasStickyCart={activeBottomTab === "menu" && cart.length > 0 && !orderResult && !isCartOpen}
