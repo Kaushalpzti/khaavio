@@ -55,21 +55,23 @@ function shouldUseBrowserSearch(
   menuItems: Array<Record<string, unknown>>,
 ): boolean {
   const text = question.toLowerCase();
-  const explicitWebRequest = /\b(search online|search the web|on the internet|internet par|online search|google karo|web search|look it up online)\b/i.test(text);
-  if (explicitWebRequest) return true;
 
-  // Keep exact restaurant facts grounded in the menu and never web-search prices,
-  // availability, dietary status, spice level, allergen claims or offers.
-  const restaurantFactRequest = /\b(price|cost|kitne ka|kitni ki|available|availability|in stock|can i order|order this|veg|vegetarian|non[- ]?veg|vegan|jain|spice level|spicy|allergen|allergy|offer|discount|coupon|under ₹|under rs|under rupees)\b/i.test(text);
+  // Keep exact restaurant facts grounded in the published menu.
+  // Avoid a broad "veg" match so dishes such as Veg Manchurian can still be researched.
+  const restaurantFactRequest = /\\b(price|cost|kitne ka|kitni ki|available|availability|in stock|can i order|order this|vegetarian options|veg options|suggest veg|non[- ]?veg options|is it veg|is this veg|vegan|jain|spice level|how spicy|allergen|allergy|offer|discount|coupon|under ₹|under rs|under rupees)\\b/i.test(text);
   if (restaurantFactRequest) return false;
 
-  const dishKnowledgeRequest = /\b(tell me about|describe|explain|what is|what's|details? about|details? of|history|origin|traditional|authentic|ingredients|how is .{1,60} made|how is .{1,60} prepared|kya hota|ke baare mein|ke bare mein|batao)\b/i.test(text);
+  const explicitWebRequest = /\\b(internet|online|web search|search online|search the web|google karo|look it up online)\\b/i.test(text);
+  if (explicitWebRequest) return true;
+
+  const dishKnowledgeRequest = /\\b(tell me about|describe|explain|what is|what's|details? about|details? of|history|origin|traditional|authentic|ingredients|taste|flavou?r|how is .{1,60} made|how is .{1,60} prepared|kya hota|kya hai|ke baare mein|ke bare mein|batao)\\b|के बारे में|बताओ|क्या है|क्या होता|स्वाद|इतिहास|उत्पत्ति|सामग्री/u.test(text);
   if (!dishKnowledgeRequest) return false;
 
   const normalized = (value: string) => value.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+  const normalizedQuestion = normalized(text);
   const matchingDish = menuItems.find((item) => {
     const name = typeof item.name === "string" ? normalized(item.name) : "";
-    return name.length >= 3 && normalized(text).includes(name);
+    return name.length >= 3 && normalizedQuestion.includes(name);
   });
 
   if (!matchingDish) return true;
