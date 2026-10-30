@@ -858,3 +858,61 @@
     flex: 1;
   }
 }
+
+.ts-print-width-select-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: #718073;
+  font-size: 11px;
+  font-weight: 700;
+}
+.ts-print-width-select-label select {
+  min-height: 36px;
+  border: 1px solid #dce6da;
+  border-radius: 9px;
+  padding: 6px 9px;
+  background: #fff;
+  color: #36513d;
+  font: inherit;
+}
+@media print {
+  body.khaavio-printing-session-invoice-58 .ts-invoice-print-surface.print-target {
+    width: 50mm !important;
+    max-width: 50mm !important;
+    padding: 3mm !important;
+  }
+  body.khaavio-printing-session-invoice-80 .ts-invoice-print-surface.print-target {
+    width: 72mm !important;
+    max-width: 72mm !important;
+    padding: 4mm !important;
+  }
+  body.khaavio-printing-session-invoice-58 .ts-print-heading {
+    gap: 5px;
+    padding-bottom: 8px;
+  }
+  body.khaavio-printing-session-invoice-58 .ts-print-heading img {
+    width: 26px;
+    height: 26px;
+  }
+  body.khaavio-printing-session-invoice-58 .ts-print-heading h2 {
+    font-size: 13px;
+  }
+  body.khaavio-printing-session-invoice-58 .ts-print-heading span,
+  body.khaavio-printing-session-invoice-58 .ts-print-heading p,
+  body.khaavio-printing-session-invoice-58 .ts-print-meta,
+  body.khaavio-printing-session-invoice-58 .ts-order-heading,
+  body.khaavio-printing-session-invoice-58 .ts-order-item,
+  body.khaavio-printing-session-invoice-58 .ts-print-tax-summary,
+  body.khaavio-printing-session-invoice-58 .ts-paid-note,
+  body.khaavio-printing-session-invoice-58 .ts-print-footer {
+    font-size: 8px !important;
+  }
+  body.khaavio-printing-session-invoice-58 .ts-print-grand-total strong {
+    font-size: 17px;
+  }
+  body.khaavio-printing-session-invoice-58 .ts-order-block {
+    padding: 5px;
+    margin-top: 6px;
+  }
+}
