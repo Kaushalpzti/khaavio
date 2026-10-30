@@ -59,3 +59,24 @@ test("public menu only renders explicitly entered dietary/allergen metadata", ()
   assert.match(publicStyles, /\.public-menu-smart-filter-bar/);
   assert.match(publicStyles, /\.public-menu-food-tag/);
 });
+
+
+test("mobile menu controls use a search/filter row and a category/diet row", () => {
+  const toolsStart = publicMenu.indexOf('className="public-menu-tools"');
+  const searchStart = publicMenu.indexOf('className="public-menu-search"', toolsStart);
+  const filterTrigger = publicMenu.indexOf('className={`public-menu-filter-trigger', toolsStart);
+  const sheetStart = publicMenu.indexOf('{isFilterSheetOpen && (', toolsStart);
+  const toolbarStart = publicMenu.indexOf('className="public-menu-category-toolbar"');
+  const categoriesStart = publicMenu.indexOf('className="public-menu-categories"', toolbarStart);
+  const dietStart = publicMenu.indexOf('className="public-menu-smart-filter-bar"', toolbarStart);
+  const sectionStart = publicMenu.indexOf('className="public-menu-section-heading"', toolbarStart);
+
+  assert.ok(toolsStart >= 0 && searchStart > toolsStart && filterTrigger > searchStart);
+  assert.ok(sheetStart > filterTrigger);
+  assert.ok(toolbarStart > sheetStart && categoriesStart > toolbarStart);
+  assert.ok(dietStart > categoriesStart && sectionStart > dietStart);
+  assert.match(publicMenu, /current === "veg" \? "all" : "veg"/);
+  assert.match(publicMenu, /current === "non_veg" \? "all" : "non_veg"/);
+  assert.match(publicStyles, /\.public-menu-category-toolbar/);
+  assert.match(publicStyles, /\.public-menu-tools\s*\{[^}]*flex-direction:\s*row/s);
+});
