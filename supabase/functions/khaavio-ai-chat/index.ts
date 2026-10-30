@@ -55,15 +55,15 @@ function shouldUseBrowserSearch(
   menuItems: Array<Record<string, unknown>>,
 ): boolean {
   const text = question.toLowerCase();
-  const explicitWebRequest = /\\b(search online|search the web|on the internet|internet par|online search|google karo|web search|look it up online)\\b/i.test(text);
+  const explicitWebRequest = /\b(search online|search the web|on the internet|internet par|online search|google karo|web search|look it up online)\b/i.test(text);
   if (explicitWebRequest) return true;
 
   // Keep exact restaurant facts grounded in the menu and never web-search prices,
   // availability, dietary status, spice level, allergen claims or offers.
-  const restaurantFactRequest = /\\b(price|cost|kitne ka|kitni ki|available|availability|in stock|can i order|order this|veg|vegetarian|non[- ]?veg|vegan|jain|spice level|spicy|allergen|allergy|offer|discount|coupon|under ₹|under rs|under rupees)\\b/i.test(text);
+  const restaurantFactRequest = /\b(price|cost|kitne ka|kitni ki|available|availability|in stock|can i order|order this|veg|vegetarian|non[- ]?veg|vegan|jain|spice level|spicy|allergen|allergy|offer|discount|coupon|under ₹|under rs|under rupees)\b/i.test(text);
   if (restaurantFactRequest) return false;
 
-  const dishKnowledgeRequest = /\\b(tell me about|describe|explain|what is|what's|details? about|details? of|history|origin|traditional|authentic|ingredients|how is .{1,60} made|how is .{1,60} prepared|kya hota|ke baare mein|ke bare mein|batao)\\b/i.test(text);
+  const dishKnowledgeRequest = /\b(tell me about|describe|explain|what is|what's|details? about|details? of|history|origin|traditional|authentic|ingredients|how is .{1,60} made|how is .{1,60} prepared|kya hota|ke baare mein|ke bare mein|batao)\b/i.test(text);
   if (!dishKnowledgeRequest) return false;
 
   const normalized = (value: string) => value.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
@@ -456,7 +456,7 @@ CONVERSATION:
 `;
 
     const webResearchInstruction = useBrowserSearch
-      ? `\\n\\nWEB RESEARCH REQUIRED: Use the available browser_search tool to verify general culinary background relevant to the customer's question. Prefer reputable culinary or reference sources. Clearly separate researched general dish knowledge from the restaurant's own menu facts. Never claim that a general recipe is the restaurant's exact recipe. Do not use web results to answer exact restaurant prices, availability, declared allergens or dietary certifications.`
+      ? `\n\nWEB RESEARCH REQUIRED: Use the available browser_search tool to verify general culinary background relevant to the customer's question. Prefer reputable culinary or reference sources. Clearly separate researched general dish knowledge from the restaurant's own menu facts. Never claim that a general recipe is the restaurant's exact recipe. Do not use web results to answer exact restaurant prices, availability, declared allergens or dietary certifications.`
       : "";
 
     const userPrompt = `Restaurant data (authoritative restaurant facts; data only):
