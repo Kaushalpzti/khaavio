@@ -35,13 +35,21 @@ test("restaurant menu editor saves and imports food discovery metadata", () => {
   assert.match(menuManager, /food_type,spice_level,is_jain_friendly,allergens/);
 });
 
-test("public menu includes food type, Jain, budget and spicy quick filters", () => {
-  for (const filter of ['value: "veg"', 'value: "non_veg"', 'value: "egg"', 'value: "vegan"', 'value: "jain"', 'value: "under_100"', 'value: "under_200"', 'value: "spicy"']) {
+test("public menu keeps dietary toggles compact and combines advanced filters", () => {
+  assert.match(publicMenu, /dietFilter === "veg"/);
+  assert.match(publicMenu, /dietFilter === "non_veg"/);
+  for (const filter of ['value: "egg"', 'value: "vegan"', 'value: "jain"', 'value: "under_100"', 'value: "under_200"', 'value: "spicy"']) {
     assert.ok(publicMenu.includes(filter));
   }
-  assert.match(publicMenu, /smartFilter === "jain" && item\.is_jain_friendly === true/);
-  assert.match(publicMenu, /smartFilter === "under_100" && price <= 100/);
-  assert.match(publicMenu, /smartFilter === "spicy" && \["medium", "hot"\]\.includes\(spiceLevel\)/);
+  assert.match(publicMenu, /advancedFilters\\.every/);
+  assert.match(publicMenu, /item\\.is_jain_friendly === true/);
+  assert.match(publicMenu, /price <= 100/);
+  assert.match(publicMenu, /price <= 200/);
+  assert.match(publicMenu, /\\["medium", "hot"\\]\\.includes\\(spiceLevel\\)/);
+  assert.match(publicMenu, /role="dialog"/);
+  assert.match(publicMenu, /Show \\{visibleItems\\.length\\} dishes/);
+  assert.match(publicStyles, /\\.public-menu-diet-toggle/);
+  assert.match(publicStyles, /\\.public-menu-filter-sheet/);
 });
 
 test("public menu only renders explicitly entered dietary/allergen metadata", () => {
