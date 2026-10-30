@@ -699,3 +699,58 @@
 .public-order-pickup-time select { min-height: 38px; border: 1px solid #dce5d8; border-radius: 9px; padding: 0 10px; background: white; font: inherit; }
 .public-order-line-info small { display: block; margin-top: 3px; color: #748176; font-size: 11px; }
 @media (max-width: 560px) { .public-option-modal { padding: 21px 16px; } .menu-option-editor-heading { align-items: flex-start; } }
+
+
+/* Dietary classification and allergen controls. */
+.menu-allergen-editor {
+  min-width: 0;
+  margin: 0;
+  padding: 14px;
+  border: 1px solid #e1e9df;
+  border-radius: 14px;
+  background: #fbfdf9;
+}
+.menu-allergen-editor legend {
+  padding: 0 5px;
+  color: #263d2d;
+  font-size: 13px;
+  font-weight: 800;
+}
+.menu-allergen-editor > p {
+  margin: 0 0 12px;
+  color: #718073;
+  font-size: 11px;
+  line-height: 1.5;
+}
+.menu-allergen-options {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 9px;
+}
+.menu-allergen-options label {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+  color: #405344;
+  font-size: 12px;
+  font-weight: 650;
+}
+.menu-allergen-options input { accent-color: #286144; }
+.menu-item-food-type {
+  display: inline-flex;
+  width: fit-content;
+  margin-top: 6px;
+  padding: 4px 7px;
+  border: 1px solid #d7e8d4;
+  border-radius: 6px;
+  color: #286144;
+  background: #eff8ed;
+  font-size: 8px;
+  font-weight: 850;
+  letter-spacing: .4px;
+}
+@media (max-width: 580px) {
+  .menu-allergen-options { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .menu-allergen-editor { padding: 12px; }
+}

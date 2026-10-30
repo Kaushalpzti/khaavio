@@ -28,7 +28,45 @@ const emptyForm = {
   price: "",
   image_url: "",
   is_available: true,
+  food_type: "unspecified",
+  spice_level: "unspecified",
+  is_jain_friendly: false,
+  allergens: [],
 };
+
+const FOOD_TYPE_OPTIONS = [
+  { value: "unspecified", label: "Not specified" },
+  { value: "vegetarian", label: "Vegetarian" },
+  { value: "non_vegetarian", label: "Non-vegetarian" },
+  { value: "egg", label: "Contains egg" },
+  { value: "vegan", label: "Vegan" },
+];
+
+const SPICE_LEVEL_OPTIONS = [
+  { value: "unspecified", label: "Not specified" },
+  { value: "mild", label: "Mild" },
+  { value: "medium", label: "Medium" },
+  { value: "hot", label: "Hot" },
+];
+
+const ALLERGEN_OPTIONS = [
+  { value: "milk", label: "Milk / dairy" },
+  { value: "peanuts", label: "Peanuts" },
+  { value: "tree_nuts", label: "Tree nuts" },
+  { value: "soy", label: "Soy" },
+  { value: "gluten", label: "Gluten" },
+  { value: "sesame", label: "Sesame" },
+  { value: "egg", label: "Egg" },
+  { value: "fish", label: "Fish" },
+  { value: "shellfish", label: "Shellfish" },
+];
+
+function normalizeFoodType(value) {
+  const normalized = String(value || "").trim().toLowerCase().replace(/[\s-]+/g, "_");
+  if (normalized === "veg") return "vegetarian";
+  if (["nonveg", "non_veg"].includes(normalized)) return "non_vegetarian";
+  return normalized || "unspecified";
+}
 
 function createOptionGroup() {
   return { name: "", min_selections: 0, max_selections: 1, options: [{ name: "", price_delta: 0, is_available: true }] };
@@ -106,9 +144,9 @@ function readCsvBoolean(value) {
 
 function downloadMenuTemplate() {
   const template = [
-    "name,category,description,price,is_available,image_url",
-    'Masala Dosa,South Indian,"Crispy dosa with potato filling",180,true,',
-    'Cold Coffee,Beverages,"Chilled coffee",120,true,',
+    "name,category,description,price,is_available,image_url,food_type,spice_level,is_jain_friendly,allergens",
+    'Masala Dosa,South Indian,"Crispy dosa with potato filling",180,true,,vegetarian,mild,false',
+    'Cold Coffee,Beverages,"Chilled coffee",120,true,,vegetarian,unspecified,false,milk',
   ].join("\r\n");
   const blob = new Blob([template], { type: "text/csv;charset=utf-8;" });
   const url = URL.createObjectURL(blob);
@@ -346,6 +384,10 @@ export default function MenuManager() {
       price: String(item.price ?? ""),
       image_url: item.image_url || "",
       is_available: Boolean(item.is_available),
+      food_type: item.food_type || "unspecified",
+      spice_level: item.spice_level || "unspecified",
+      is_jain_friendly: item.is_jain_friendly === true,
+      allergens: Array.isArray(item.allergens) ? item.allergens : [],
     });
     setImageFile(null);
     setOptionGroups([]);
@@ -454,6 +496,10 @@ export default function MenuManager() {
         price,
         image_url: imageUrl,
         is_available: form.is_available,
+        food_type: form.food_type || "unspecified",
+        spice_level: form.spice_level || "unspecified",
+        is_jain_friendly: form.is_jain_friendly === true,
+        allergens: Array.isArray(form.allergens) ? form.allergens : [],
       };
 
       if (!payload.name) {
@@ -606,6 +652,10 @@ export default function MenuManager() {
           "status",
         ),
         imageUrl: findColumn("image_url", "image", "photo_url", "image_link"),
+        foodType: findColumn("food_type", "dietary_type", "food_category"),
+        spiceLevel: findColumn("spice_level", "spice"),
+        isJainFriendly: findColumn("is_jain_friendly", "jain_friendly", "jain"),
+        allergens: findColumn("allergens", "allergen"),
       };
 
       const missingColumns = ["name", "category", "price"].filter(
@@ -649,6 +699,11 @@ export default function MenuManager() {
         const priceText = read(columns.price);
         const imageUrl = read(columns.imageUrl);
         const availabilityText = read(columns.isAvailable);
+        const foodType = normalizeFoodType(read(columns.foodType));
+        const spiceLevel = read(columns.spiceLevel).trim().toLowerCase() || "unspecified";
+        const jainText = read(columns.isJainFriendly);
+        const isJainFriendly = jainText ? readCsvBoolean(jainText) : false;
+        const allergens = read(columns.allergens).split(/[|;]/).map((value) => value.trim().toLowerCase().replace(/[\s-]+/g, "_")).filter(Boolean);
         const price = Number(priceText);
         const errors = [];
 
@@ -662,6 +717,15 @@ export default function MenuManager() {
           errors.push("Enter a valid non-negative price.");
         if (description.length > 500)
           errors.push("Description must be 500 characters or fewer.");
+        if (!FOOD_TYPE_OPTIONS.some((option) => option.value === foodType))
+          errors.push("Food type must be vegetarian, non_vegetarian, egg, vegan, or unspecified.");
+        if (!SPICE_LEVEL_OPTIONS.some((option) => option.value === spiceLevel))
+          errors.push("Spice level must be mild, medium, hot, or unspecified.");
+        if (isJainFriendly === null)
+          errors.push("Jain-friendly must be true/false, yes/no, or 1/0.");
+        const allowedAllergens = new Set(ALLERGEN_OPTIONS.map((option) => option.value));
+        if (allergens.some((allergen) => !allowedAllergens.has(allergen)))
+          errors.push("Allergens must use supported values separated by | (milk, peanuts, tree_nuts, soy, gluten, sesame, egg, fish, shellfish).");
 
         let isAvailable = readCsvBoolean(availabilityText);
         if (isAvailable === null)
@@ -708,6 +772,10 @@ export default function MenuManager() {
           numericPrice:
             priceText && Number.isFinite(price) && price >= 0 ? price : null,
           imageUrl,
+          foodType,
+          spiceLevel,
+          isJainFriendly: isJainFriendly === true,
+          allergens,
           isAvailable: isAvailable === null ? true : isAvailable,
           valid: errors.length === 0,
           error: errors.join(" "),
@@ -793,6 +861,10 @@ export default function MenuManager() {
           price: row.numericPrice,
           image_url: row.imageUrl.trim() || null,
           is_available: row.isAvailable,
+          food_type: row.foodType,
+          spice_level: row.spiceLevel,
+          is_jain_friendly: row.isJainFriendly,
+          allergens: row.allergens,
         };
       });
 
@@ -996,7 +1068,8 @@ export default function MenuManager() {
             <code>category</code>, <code>price</code>.
             <span>
               Optional: <code>description</code>, <code>is_available</code>,{" "}
-              <code>image_url</code>.
+              <code>image_url</code>, <code>food_type</code>, <code>spice_level</code>,{" "}
+              <code>is_jain_friendly</code>, <code>allergens</code>.
             </span>
             <small>
               CSV only (max 2 MB, 500 rows). Missing categories are created
@@ -1212,6 +1285,47 @@ export default function MenuManager() {
                 />
               </label>
 
+              <label className="menu-field">
+                <span>Food type</span>
+                <select name="food_type" value={form.food_type} onChange={updateForm}>
+                  {FOOD_TYPE_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+                </select>
+              </label>
+
+              <label className="menu-field">
+                <span>Spice level</span>
+                <select name="spice_level" value={form.spice_level} onChange={updateForm}>
+                  {SPICE_LEVEL_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+                </select>
+              </label>
+
+              <label className="menu-availability menu-field-wide">
+                <input name="is_jain_friendly" type="checkbox" checked={form.is_jain_friendly} onChange={updateForm} />
+                <span><strong>Jain-friendly</strong><small>Only select this when the restaurant can confirm the preparation method.</small></span>
+              </label>
+
+              <fieldset className="menu-allergen-editor menu-field-wide">
+                <legend>Allergen information (optional)</legend>
+                <p>Select only allergens present in this dish. Keep this information accurate and confirm it with the kitchen.</p>
+                <div className="menu-allergen-options">
+                  {ALLERGEN_OPTIONS.map((option) => (
+                    <label key={option.value}>
+                      <input
+                        type="checkbox"
+                        checked={form.allergens.includes(option.value)}
+                        onChange={(event) => setForm((current) => ({
+                          ...current,
+                          allergens: event.target.checked
+                            ? [...current.allergens, option.value]
+                            : current.allergens.filter((value) => value !== option.value),
+                        }))}
+                      />
+                      <span>{option.label}</span>
+                    </label>
+                  ))}
+                </div>
+              </fieldset>
+
               <label className="menu-field menu-field-wide">
                 <span>Dish photo (optional, max 5 MB)</span>
                 <div className="menu-upload-control">
@@ -1356,6 +1470,7 @@ export default function MenuManager() {
                         <span className="menu-item-category">
                           {category?.name || "Uncategorised"}
                         </span>
+                        {item.food_type && item.food_type !== "unspecified" && <span className="menu-item-food-type">{item.food_type === "non_vegetarian" ? "NON-VEG" : item.food_type.toUpperCase()}</span>}
                         <span
                           className={
                             item.is_available
