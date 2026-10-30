@@ -401,6 +401,9 @@ export default function PublicMenu() {
       setGuestTabSnapshot(null);
       setGuestBillOpen(false);
       setGuestBillError("");
+      setTableBillSnapshot(null);
+      setTableBillOpen(false);
+      setTableBillError("");
       setIsCartOpen(false);
       setOrderResult(null);
       setCheckoutError("");
@@ -1334,7 +1337,7 @@ export default function PublicMenu() {
               <span>Table {normalizeTableNumber(tableContext.table_number)}</span>
             </span>
           )}
-          {tableContext ? (
+          {tableContext && (
             <button
               type="button"
               className="public-menu-header-bill"
@@ -1349,7 +1352,8 @@ export default function PublicMenu() {
                   : (tableBillSnapshot?.invoice?.total_amount)
               ) || 0)}</b>
             </button>
-          ) : (
+          )}
+          {!isGuestBilling && (
             <button
               type="button"
               className="public-menu-header-cart"
