@@ -36,7 +36,9 @@ CREATE TABLE public.table_sessions (
   table_id uuid NOT NULL REFERENCES public.restaurant_tables(id),
   status text NOT NULL,
   billing_mode text NOT NULL,
-  opened_at timestamptz NOT NULL DEFAULT now()
+  opened_at timestamptz NOT NULL DEFAULT now(),
+  closed_at timestamptz,
+  closed_by uuid REFERENCES auth.users(id)
 );
 
 CREATE TABLE public.table_session_tabs (
