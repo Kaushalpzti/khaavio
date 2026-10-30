@@ -60,6 +60,7 @@ export default function TableSessions() {
   const [orders, setOrders] = useState([]);
   const [tables, setTables] = useState([]);
   const [guestTabs, setGuestTabs] = useState([]);
+  const [paymentSubmissions, setPaymentSubmissions] = useState([]);
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -70,7 +71,8 @@ export default function TableSessions() {
   const [expandedInvoiceId, setExpandedInvoiceId] = useState("");
   const [workingSessionId, setWorkingSessionId] = useState("");
   const [workingInvoiceId, setWorkingInvoiceId] = useState("");
-  const [paymentMethod, setPaymentMethod] = useState("UPI");
+  const [workingSubmissionId, setWorkingSubmissionId] = useState("");
+  const [paymentMethod, setPaymentMethod] = useState("Cash");
   const [printingInvoiceId, setPrintingInvoiceId] = useState("");
 
   const loadData = useCallback(async ({ quiet = false } = {}) => {
@@ -88,14 +90,14 @@ export default function TableSessions() {
 
       const { data: restaurantData, error: restaurantError } = await supabase
         .from("restaurants")
-        .select("id, name, owner_id")
+        .select("id, name, owner_id, upi_payment_enabled, counter_payment_enabled, upi_id")
         .eq("owner_id", authData.user.id)
         .maybeSingle();
 
       if (restaurantError) throw restaurantError;
       if (!restaurantData) throw new Error("No restaurant workspace was found. Complete onboarding first.");
 
-      const [sessionsResult, invoicesResult, tablesResult, guestTabsResult] = await Promise.all([
+      const [sessionsResult, invoicesResult, tablesResult, guestTabsResult, submissionsResult] = await Promise.all([
         supabase
           .from("table_sessions")
           .select("id, restaurant_id, table_id, status, billing_mode, opened_at, closed_at")
@@ -118,12 +120,19 @@ export default function TableSessions() {
           .eq("restaurant_id", restaurantData.id)
           .order("opened_at", { ascending: false })
           .limit(300),
+        supabase
+          .from("table_session_invoice_payment_submissions")
+          .select("id, invoice_id, payment_reference, amount, status, submitted_at, reviewed_at, rejection_reason")
+          .eq("restaurant_id", restaurantData.id)
+          .order("submitted_at", { ascending: false })
+          .limit(200),
       ]);
 
       if (sessionsResult.error) throw sessionsResult.error;
       if (invoicesResult.error) throw invoicesResult.error;
       if (tablesResult.error) throw tablesResult.error;
       if (guestTabsResult.error) throw guestTabsResult.error;
+      if (submissionsResult.error) throw submissionsResult.error;
 
       const sessionRows = sessionsResult.data || [];
       const invoiceRows = invoicesResult.data || [];
@@ -173,6 +182,7 @@ export default function TableSessions() {
       setInvoiceItems(invoiceItemRows);
       setTables(tableRows);
       setGuestTabs(guestTabsResult.data || []);
+      setPaymentSubmissions(submissionsResult.data || []);
       setOrders(orderRows);
       setItems(itemRows);
     } catch (loadError) {
@@ -244,6 +254,15 @@ export default function TableSessions() {
     return map;
   }, [items]);
   const openSessions = sessions.filter((session) => session.status === "open" || session.status === "billing");
+  const paymentSubmissionsByInvoice = useMemo(() => {
+    const map = new Map();
+    for (const submission of paymentSubmissions) {
+      const current = map.get(submission.invoice_id) || [];
+      current.push(submission);
+      map.set(submission.invoice_id, current);
+    }
+    return map;
+  }, [paymentSubmissions]);
 
   function getSessionTotal(sessionId) {
     return (ordersBySession.get(sessionId) || [])
@@ -377,6 +396,58 @@ export default function TableSessions() {
     }
   }
 
+  async function verifyUpiSubmission(submission, invoice) {
+    if (!submission || submission.status !== "pending" || invoice?.payment_status !== "unpaid") return;
+    const confirmed = await confirmKhaavio(
+      "Verify UPI reference " + submission.payment_reference +
+      " for " + formatPrice(submission.amount) +
+      "? Confirm only after checking the credit in the restaurant's UPI or bank app.",
+    );
+    if (!confirmed) return;
+
+    setWorkingSubmissionId(submission.id);
+    setError("");
+    setNotice("");
+    try {
+      const { error: rpcError } = await supabase.rpc("khaavio_verify_invoice_upi_payment", {
+        p_submission_id: submission.id,
+      });
+      if (rpcError) throw rpcError;
+      setNotice("UPI payment verified. Invoice " + invoice.invoice_number + " is now paid.");
+      await loadData({ quiet: true });
+    } catch (actionError) {
+      setError(actionError?.message || "Could not verify this UPI payment.");
+    } finally {
+      setWorkingSubmissionId("");
+    }
+  }
+
+  async function rejectUpiSubmission(submission) {
+    if (!submission || submission.status !== "pending") return;
+    const confirmed = await confirmKhaavio(
+      "Reject UPI reference " + submission.payment_reference +
+      "? The invoice will remain unpaid and the customer can submit a corrected reference.",
+    );
+    if (!confirmed) return;
+
+    setWorkingSubmissionId(submission.id);
+    setError("");
+    setNotice("");
+    try {
+      const { error: rpcError } = await supabase.rpc("khaavio_reject_invoice_upi_payment", {
+        p_submission_id: submission.id,
+        p_rejection_reason: "Payment could not be confirmed. Please check with restaurant staff.",
+      });
+      if (rpcError) throw rpcError;
+      setNotice("UPI payment submission rejected. The invoice remains unpaid.");
+      await loadData({ quiet: true });
+    } catch (actionError) {
+      setError(actionError?.message || "Could not reject this UPI payment submission.");
+    } finally {
+      setWorkingSubmissionId("");
+    }
+  }
+
   function printInvoice(invoice) {
     setExpandedInvoiceId(invoice.id);
     setPrintingInvoiceId(invoice.id);
@@ -503,8 +574,9 @@ export default function TableSessions() {
           <>
             <section className="ts-stats no-print">
               <article><span>Open tables</span><strong>{openSessions.length}</strong><small>Sessions accepting more QR orders</small></article>
-              <article><span>Final invoices</span><strong>{invoices.length}</strong><small>Combined bills generated</small></article>
+              <article><span>Final invoices</span><strong>{invoices.length}</strong><small>Combined and guest bills</small></article>
               <article><span>Unpaid invoices</span><strong>{invoices.filter((invoice) => invoice.payment_status === "unpaid").length}</strong><small>Awaiting payment confirmation</small></article>
+              <article><span>UPI verification</span><strong>{paymentSubmissions.filter((submission) => submission.status === "pending").length}</strong><small>References awaiting bank check</small></article>
             </section>
 
             <div className="ts-tabs no-print" role="tablist" aria-label="Billing views">
@@ -642,8 +714,35 @@ export default function TableSessions() {
                               </button>
                             </>
                           )}
-                          <button type="button" className="ts-secondary-button" onClick={() => printInvoice(invoice)}><Printer size={16} /> Print</button>
+                          <button type="button" className="ts-secondary-button" onClick={() => printInvoice(invoice)}><Printer size={16} /> Print / Save PDF</button>
                         </div>
+                        {invoice.payment_status === "unpaid" && (paymentSubmissionsByInvoice.get(invoice.id) || []).length > 0 && (
+                          <section className="ts-payment-submissions no-print" aria-label="UPI payment verification">
+                            <div className="ts-payment-submissions-heading">
+                              <strong>UPI payment references</strong>
+                              <span>Confirm the credit in your bank / UPI app before verifying.</span>
+                            </div>
+                            {(paymentSubmissionsByInvoice.get(invoice.id) || []).map((submission) => (
+                              <article className="ts-payment-submission" key={submission.id}>
+                                <div className="ts-payment-submission-info">
+                                  <strong>{submission.payment_reference}</strong>
+                                  <span>{formatPrice(submission.amount)} · Submitted {formatDate(submission.submitted_at)}</span>
+                                  <small className={"ts-submission-status ts-submission-status-" + submission.status}>{titleCase(submission.status)}</small>
+                                  {submission.status === "rejected" && submission.rejection_reason && <small>{submission.rejection_reason}</small>}
+                                </div>
+                                {submission.status === "pending" && (
+                                  <div className="ts-payment-submission-actions">
+                                    <button type="button" className="ts-primary-button" onClick={() => verifyUpiSubmission(submission, invoice)} disabled={workingSubmissionId === submission.id}>
+                                      {workingSubmissionId === submission.id ? <LoaderCircle size={15} className="ts-spin" /> : <CheckCircle2 size={15} />}
+                                      Verify credit
+                                    </button>
+                                    <button type="button" className="ts-secondary-button" onClick={() => rejectUpiSubmission(submission)} disabled={workingSubmissionId === submission.id}>Reject</button>
+                                  </div>
+                                )}
+                              </article>
+                            ))}
+                          </section>
+                        )}
                         {expanded && (
                           <section className={`ts-session-details ts-invoice-print-surface ${printingInvoiceId === invoice.id ? "print-target" : ""}`}>
                               <div className="ts-print-heading">
