@@ -171,6 +171,8 @@ jobs:
 
             IF pg_catalog.has_table_privilege('anon', 'public.table_session_invoice_payment_submissions', 'SELECT') THEN
               RAISE EXCEPTION 'Anonymous users must not read UPI payment submissions'; END IF;
+            IF pg_catalog.has_table_privilege('anon', 'public.restaurants', 'SELECT') THEN
+              RAISE EXCEPTION 'UPI ID must not be exposed through public restaurant table SELECT'; END IF;
             IF NOT pg_catalog.has_table_privilege('authenticated', 'public.table_session_invoice_payment_submissions', 'SELECT') THEN
               RAISE EXCEPTION 'Authenticated owner SELECT grant is missing'; END IF;
             IF pg_catalog.has_function_privilege('anon', 'public.khaavio_verify_invoice_upi_payment(uuid)', 'EXECUTE') THEN
@@ -226,6 +228,9 @@ jobs:
                 WHERE id = '00000000-0000-4000-8000-000000000005') <> 'unpaid' THEN
               RAISE EXCEPTION 'Customer submission must never mark an invoice paid';
             END IF;
+            IF public.khaavio_public_table_invoice_snapshot('green-table', '00000000-0000-4000-8000-000000000003') -> 'invoice' ->> 'payment_choice' <> 'upi' THEN
+              RAISE EXCEPTION 'Public invoice snapshot does not expose the selected UPI method';
+            END IF;
           END;
           $verify_pending$;
 
@@ -254,4 +259,50 @@ jobs:
             'green-table',
             '00000000-0000-4000-8000-000000000003'
           );
+
+          INSERT INTO public.table_session_invoices (
+            id, restaurant_id, table_id, session_id, invoice_number, total_amount,
+            subtotal_amount, order_count, payment_status
+          ) VALUES (
+            '00000000-0000-4000-8000-000000000008',
+            '00000000-0000-4000-8000-000000000001',
+            '00000000-0000-4000-8000-000000000002',
+            '00000000-0000-4000-8000-000000000004',
+            'KHV-TEST-0002', 450, 450, 1, 'unpaid'
+          );
+
+          SET ROLE anon;
+          SELECT * FROM public.khaavio_select_public_invoice_payment_method(
+            'green-table',
+            '00000000-0000-4000-8000-000000000003',
+            '00000000-0000-4000-8000-000000000008',
+            NULL,
+            'upi'
+          );
+          SELECT * FROM public.khaavio_submit_public_invoice_upi_payment(
+            'green-table',
+            '00000000-0000-4000-8000-000000000003',
+            '00000000-0000-4000-8000-000000000008',
+            NULL,
+            'UPIREF2234567'
+          );
+          RESET ROLE;
+
+          SET request.jwt.claim.sub = '00000000-0000-4000-8000-000000000099';
+          SET ROLE authenticated;
+          SELECT * FROM public.mark_table_invoice_paid(
+            '00000000-0000-4000-8000-000000000008', 'Cash'
+          );
+          RESET ROLE;
+          RESET request.jwt.claim.sub;
+
+          DO $verify_manual_settlement$
+          BEGIN
+            IF (SELECT status FROM public.table_session_invoice_payment_submissions
+                WHERE invoice_id = '00000000-0000-4000-8000-000000000008') <> 'rejected' THEN
+              RAISE EXCEPTION 'A different/manual settlement must close the pending UPI reference';
+            END IF;
+            RAISE NOTICE 'PASS: non-UPI manual settlement closes stale UPI submissions';
+          END;
+          $verify_manual_settlement$;
           SQL
