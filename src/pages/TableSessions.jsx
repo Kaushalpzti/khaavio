@@ -177,6 +177,9 @@ export default function TableSessions() {
       }
 
       setRestaurant(restaurantData);
+      if (restaurantData.counter_payment_enabled !== false) setPaymentMethod("Cash");
+      else if (restaurantData.upi_payment_enabled === true) setPaymentMethod("UPI");
+      else setPaymentMethod("Other");
       setSessions(sessionRows);
       setInvoices(invoiceRows);
       setInvoiceItems(invoiceItemRows);
@@ -702,10 +705,12 @@ export default function TableSessions() {
                               <label className="ts-payment-select-label">
                                 <span>Payment</span>
                                 <select value={paymentMethod} onChange={(event) => setPaymentMethod(event.target.value)}>
-                                  <option value="UPI">UPI</option>
-                                  <option value="Cash">Cash</option>
-                                  <option value="Card">Card</option>
-                                  <option value="Other">Other</option>
+                                  {restaurant?.upi_payment_enabled === true && <option value="UPI">UPI</option>}
+                                  {restaurant?.counter_payment_enabled !== false && <>
+                                    <option value="Cash">Cash</option>
+                                    <option value="Card">Card at counter</option>
+                                  </>}
+                                  <option value="Other">Other / Manual</option>
                                 </select>
                               </label>
                               <button type="button" className="ts-primary-button" onClick={() => markInvoicePaid(invoice)} disabled={workingInvoiceId === invoice.id}>
