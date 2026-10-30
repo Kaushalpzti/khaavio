@@ -12,6 +12,7 @@ import {
   Plus,
   ReceiptText,
   Search,
+  SlidersHorizontal,
   ShoppingBag,
   Gift,
   Star,
@@ -45,13 +46,10 @@ function formatPrice(price) {
   }).format(Number(price) || 0);
 }
 
-const SMART_FILTERS = [
-  { value: "all", label: "All dishes" },
-  { value: "veg", label: "Veg" },
-  { value: "non_veg", label: "Non-Veg" },
+const ADVANCED_FILTERS = [
   { value: "egg", label: "Egg" },
   { value: "vegan", label: "Vegan" },
-  { value: "jain", label: "Jain" },
+  { value: "jain", label: "Jain friendly" },
   { value: "under_100", label: "Under ₹100" },
   { value: "under_200", label: "Under ₹200" },
   { value: "spicy", label: "Spicy" },
@@ -247,7 +245,9 @@ export default function PublicMenu() {
 
   const [search, setSearch] = useState("");
   const [categoryId, setCategoryId] = useState("all");
-  const [smartFilter, setSmartFilter] = useState("all");
+  const [dietFilter, setDietFilter] = useState("all");
+  const [advancedFilters, setAdvancedFilters] = useState([]);
+  const [isFilterSheetOpen, setIsFilterSheetOpen] = useState(false);
 
   const [cart, setCart] = useState([]);
   const [couponInput, setCouponInput] = useState("");
@@ -385,7 +385,9 @@ export default function PublicMenu() {
       setTableListLoaded(false);
       setTableSelectionError("");
       setCategoryId("all");
-      setSmartFilter("all");
+      setDietFilter("all");
+      setAdvancedFilters([]);
+      setIsFilterSheetOpen(false);
       setCart(pendingCart);
       setCouponInput("");
       setAppliedCoupon(null);
@@ -729,6 +731,23 @@ export default function PublicMenu() {
     };
   }, [isCartOpen, submitting]);
 
+  useEffect(() => {
+    if (!isFilterSheetOpen) return undefined;
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    function handleEscape(event) {
+      if (event.key === "Escape") setIsFilterSheetOpen(false);
+    }
+
+    window.addEventListener("keydown", handleEscape);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", handleEscape);
+    };
+  }, [isFilterSheetOpen]);
+
 
 
   const visibleItems = items.filter((item) => {
@@ -740,23 +759,42 @@ export default function PublicMenu() {
     const foodType = item.food_type || "unspecified";
     const price = Number(item.price) || 0;
     const spiceLevel = item.spice_level || "unspecified";
-    const matchesSmartFilter =
-      smartFilter === "all" ||
-      (smartFilter === "veg" && ["vegetarian", "vegan"].includes(foodType)) ||
-      (smartFilter === "non_veg" && foodType === "non_vegetarian") ||
-      (smartFilter === "egg" && foodType === "egg") ||
-      (smartFilter === "vegan" && foodType === "vegan") ||
-      (smartFilter === "jain" && item.is_jain_friendly === true) ||
-      (smartFilter === "under_100" && price <= 100) ||
-      (smartFilter === "under_200" && price <= 200) ||
-      (smartFilter === "spicy" && ["medium", "hot"].includes(spiceLevel));
+
+    const matchesDietFilter =
+      dietFilter === "all" ||
+      (dietFilter === "veg" && ["vegetarian", "vegan"].includes(foodType)) ||
+      (dietFilter === "non_veg" && foodType === "non_vegetarian");
+
+    const matchesAdvancedFilters = advancedFilters.every((filter) => {
+      switch (filter) {
+        case "egg":
+          return foodType === "egg";
+        case "vegan":
+          return foodType === "vegan";
+        case "jain":
+          return item.is_jain_friendly === true;
+        case "under_100":
+          return price <= 100;
+        case "under_200":
+          return price <= 200;
+        case "spicy":
+          return ["medium", "hot"].includes(spiceLevel);
+        default:
+          return true;
+      }
+    });
 
     return (
       matchesCategory &&
-      matchesSmartFilter &&
+      matchesDietFilter &&
+      matchesAdvancedFilters &&
       searchableText.includes(search.trim().toLowerCase())
     );
   });
+
+  const activeFoodFilterCount =
+    advancedFilters.length + (dietFilter !== "all" ? 1 : 0);
+  const hasActiveFoodFilters = activeFoodFilterCount > 0;
 
   const promoImageItems = items.filter((item) => Boolean(item.image_url));
   const fallbackPromoSlides = [
@@ -1622,19 +1660,124 @@ export default function PublicMenu() {
               </span>
             </div>
 
-            <div className="public-menu-smart-filters" aria-label="Quick menu filters">
-              {SMART_FILTERS.map((filter) => (
+            <div className="public-menu-smart-filter-bar" aria-label="Food preferences and menu filters">
+              <div className="public-menu-diet-toggle" role="group" aria-label="Dietary preference">
                 <button
-                  key={filter.value}
                   type="button"
-                  className={smartFilter === filter.value ? "is-active" : ""}
-                  aria-pressed={smartFilter === filter.value}
-                  onClick={() => setSmartFilter(filter.value)}
+                  className={dietFilter === "all" ? "is-active" : ""}
+                  aria-pressed={dietFilter === "all"}
+                  onClick={() => setDietFilter("all")}
                 >
-                  {filter.label}
+                  All
                 </button>
-              ))}
+                <button
+                  type="button"
+                  className={dietFilter === "veg" ? "is-active" : ""}
+                  aria-pressed={dietFilter === "veg"}
+                  onClick={() => setDietFilter("veg")}
+                >
+                  <Leaf size={13} aria-hidden="true" /> Veg
+                </button>
+                <button
+                  type="button"
+                  className={dietFilter === "non_veg" ? "is-active" : ""}
+                  aria-pressed={dietFilter === "non_veg"}
+                  onClick={() => setDietFilter("non_veg")}
+                >
+                  <UtensilsCrossed size={13} aria-hidden="true" /> Non-Veg
+                </button>
+              </div>
+
+              <button
+                type="button"
+                className={`public-menu-filter-trigger ${isFilterSheetOpen ? "is-open" : ""}`}
+                onClick={() => setIsFilterSheetOpen(true)}
+                aria-haspopup="dialog"
+                aria-expanded={isFilterSheetOpen}
+                aria-label={activeFoodFilterCount ? `More filters, ${activeFoodFilterCount} active` : "More filters"}
+              >
+                <SlidersHorizontal size={15} aria-hidden="true" />
+                <span>Filters</span>
+                {activeFoodFilterCount > 0 && (
+                  <span className="public-menu-filter-count">{activeFoodFilterCount}</span>
+                )}
+              </button>
             </div>
+
+            {isFilterSheetOpen && (
+              <div
+                className="public-menu-filter-backdrop"
+                role="presentation"
+                onClick={() => setIsFilterSheetOpen(false)}
+              >
+                <section
+                  className="public-menu-filter-sheet"
+                  role="dialog"
+                  aria-modal="true"
+                  aria-labelledby="public-menu-filter-title"
+                  onClick={(event) => event.stopPropagation()}
+                >
+                  <div className="public-menu-filter-handle" aria-hidden="true" />
+                  <div className="public-menu-filter-header">
+                    <div>
+                      <span className="public-menu-filter-eyebrow">REFINE YOUR MENU</span>
+                      <h2 id="public-menu-filter-title">More filters</h2>
+                      <p>Choose one or more options to find your favourites.</p>
+                    </div>
+                    <button
+                      type="button"
+                      className="public-menu-filter-close"
+                      onClick={() => setIsFilterSheetOpen(false)}
+                      aria-label="Close filters"
+                    >
+                      <X size={18} />
+                    </button>
+                  </div>
+
+                  <div className="public-menu-filter-options">
+                    {ADVANCED_FILTERS.map((filter) => (
+                      <label
+                        key={filter.value}
+                        className={`public-menu-filter-option ${advancedFilters.includes(filter.value) ? "is-selected" : ""}`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={advancedFilters.includes(filter.value)}
+                          onChange={(event) => {
+                            setAdvancedFilters((current) =>
+                              event.target.checked
+                                ? [...current, filter.value]
+                                : current.filter((value) => value !== filter.value),
+                            );
+                          }}
+                        />
+                        <span>{filter.label}</span>
+                      </label>
+                    ))}
+                  </div>
+
+                  <div className="public-menu-filter-actions">
+                    <button
+                      type="button"
+                      className="public-menu-filter-clear"
+                      onClick={() => {
+                        setDietFilter("all");
+                        setAdvancedFilters([]);
+                      }}
+                    >
+                      Clear all
+                    </button>
+                    <button
+                      type="button"
+                      className="public-menu-filter-apply"
+                      onClick={() => setIsFilterSheetOpen(false)}
+                    >
+                      Show {visibleItems.length} dishes
+                    </button>
+                  </div>
+                </section>
+              </div>
+            )}
 
             <div
               className="public-menu-categories"
@@ -1669,7 +1812,8 @@ export default function PublicMenu() {
                 onClick={() => {
                   setSearch("");
                   setCategoryId("all");
-                  setSmartFilter("all");
+                  setDietFilter("all");
+                  setAdvancedFilters([]);
                 }}
                 aria-label="See all dishes"
               >
@@ -1794,14 +1938,15 @@ export default function PublicMenu() {
                     ? "Try another search or choose a different category."
                     : "This restaurant has no available dishes yet."}
                 </p>
-                {(search || categoryId !== "all" || smartFilter !== "all") && (
+                {(search || categoryId !== "all" || hasActiveFoodFilters) && (
                   <button
                     type="button"
                     className="public-menu-reset-filters"
                     onClick={() => {
                       setSearch("");
                       setCategoryId("all");
-                      setSmartFilter("all");
+                      setDietFilter("all");
+                      setAdvancedFilters([]);
                     }}
                   >
                     Clear filters
