@@ -8,7 +8,6 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const read = (relativePath) => readFileSync(path.join(root, relativePath), "utf8");
 const migration = read("supabase/migrations/20261025030000_table_service_requests.sql");
 const publicMenu = read("src/pages/PublicMenu.jsx");
-const publicWidget = read("src/components/PublicTableService.jsx");
 const concierge = read("src/components/AskKhaavio.jsx");
 const dashboard = read("src/pages/ServiceRequestsDashboard.jsx");
 const app = read("src/App.jsx");
