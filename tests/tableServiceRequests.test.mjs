@@ -9,6 +9,7 @@ const read = (relativePath) => readFileSync(path.join(root, relativePath), "utf8
 const migration = read("supabase/migrations/20261025030000_table_service_requests.sql");
 const publicMenu = read("src/pages/PublicMenu.jsx");
 const publicWidget = read("src/components/PublicTableService.jsx");
+const concierge = read("src/components/AskKhaavio.jsx");
 const dashboard = read("src/pages/ServiceRequestsDashboard.jsx");
 const app = read("src/App.jsx");
 const layout = read("src/components/RestaurantDashboardLayout.jsx");
@@ -36,12 +37,13 @@ test("only restaurant owners can read and transition requests", () => {
   assert.match(migration, /A resolved service request cannot be changed/i);
 });
 
-test("Public Menu shows Call Waiter actions only for a validated table QR context", () => {
-  assert.match(publicMenu, /import PublicTableService from "\.\.\/components\/PublicTableService"/);
-  assert.match(publicMenu, /<PublicTableService[\s\S]*?slug=\{slug\}[\s\S]*?tableToken=\{tableToken\}[\s\S]*?tableContext=\{tableContext\}[\s\S]*?hasStickyCart=/);
-  assert.match(publicWidget, /create_public_table_service_request/);
-  assert.match(publicWidget, /if \(!hasValidTableContext\) return null/);
-  assert.match(publicWidget, /"waiter"[\s\S]*"water"[\s\S]*"bill"[\s\S]*"cutlery"[\s\S]*"other"/);
+test("Public Menu routes validated table service actions through the unified concierge chat", () => {
+  assert.match(publicMenu, /import PublicHelpLauncher from "\.\.\/components\/PublicHelpLauncher"/);
+  assert.match(publicMenu, /<PublicHelpLauncher[\s\S]*?showService=\{Boolean\(slug && tableToken && tableContext\?\.restaurant_id\)\}/);
+  assert.match(publicMenu, /<AskKhaavio[\s\S]*?showService=\{Boolean\(slug && tableToken && tableContext\?\.restaurant_id\)\}[\s\S]*?slug=\{slug\}[\s\S]*?tableToken=\{tableToken\}[\s\S]*?tableContext=\{tableContext\}/);
+  assert.match(concierge, /create_public_table_service_request/);
+  assert.match(concierge, /if \(!showService \|\| serviceSubmitting \|\| !slug \|\| !tableToken \|\| !tableContext\?\.restaurant_id\) return/);
+  assert.match(concierge, /"waiter"[\s\S]*"water"[\s\S]*"bill"[\s\S]*"cutlery"/);
 });
 
 test("service request dashboard uses restaurant-scoped realtime and protected navigation", () => {
