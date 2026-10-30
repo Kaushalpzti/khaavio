@@ -18,7 +18,7 @@ import "./AskKhaavio.css";
 
 const COPY = {
   en: {
-    welcome: "Hi! I'm Ask Khaavio. I can help you explore this menu. What are you craving?",
+    welcome: "Hi! I'm Ask Khaavio. Ask me about dishes or use the quick actions below for table help.",
     subtitle: "Menu & table concierge",
     placeholder: "Ask about dishes, prices…",
     send: "Send message",
@@ -40,7 +40,7 @@ const COPY = {
     requestFailed: "We couldn't send that request. Please try again.",
   },
   hi: {
-    welcome: "नमस्ते! मैं Ask Khaavio हूँ। इस मेन्यू में आपके लिए क्या अच्छा रहेगा?",
+    welcome: "नमस्ते! मेन्यू के बारे में पूछें या नीचे दिए गए विकल्पों से टेबल पर मदद माँगें।",
     subtitle: "मेन्यू और टेबल सहायता",
     placeholder: "डिश या कीमत के बारे में पूछें…",
     send: "मैसेज भेजें",
@@ -62,7 +62,7 @@ const COPY = {
     requestFailed: "रिक्वेस्ट नहीं भेज पाए। कृपया फिर कोशिश करें।",
   },
   hinglish: {
-    welcome: "Hey! Main Ask Khaavio hoon 😊 Menu mein kya try karna chahoge?",
+    welcome: "Hey! Main Ask Khaavio hoon 😊 Dish ke baare mein poochho, ya neeche quick action se table help maango.",
     subtitle: "Menu aur table help, ek hi chat mein",
     placeholder: "Dish, price ya recommendation poochho…",
     send: "Message bhejo",
