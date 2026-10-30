@@ -107,7 +107,7 @@ export default function TableSessions() {
           .limit(100),
         supabase
           .from("table_session_invoices")
-          .select("id, restaurant_id, table_id, session_id, guest_tab_id, invoice_number, total_amount, subtotal_amount, discount_amount, tax_amount, gstin_snapshot, gst_inclusive, order_count, payment_status, issued_at, issued_by, paid_at, payment_method, voided_at, voided_by, void_reason")
+          .select("id, restaurant_id, table_id, session_id, guest_tab_id, invoice_number, total_amount, subtotal_amount, discount_amount, tax_amount, gstin_snapshot, gst_inclusive, order_count, payment_status, payment_choice, issued_at, issued_by, paid_at, payment_method, voided_at, voided_by, void_reason")
           .eq("restaurant_id", restaurantData.id)
           .order("issued_at", { ascending: false })
           .limit(100),
@@ -696,7 +696,7 @@ export default function TableSessions() {
                           <div className="ts-session-summary">
                             <span className={`ts-chip ${invoice.payment_status === "paid" ? "ts-chip-paid" : "ts-chip-unpaid"}`}>{titleCase(invoice.payment_status)}</span>
                             <h2>{invoice.invoice_number}</h2>
-                            <p><Table2 size={13} /> Table {normalizeTableNumber(tableNumber)}{invoice.guest_tab_id ? " · " + (guestTabNames.get(invoice.guest_tab_id) || "Guest") : ""} · <CalendarDays size={13} /> {formatDate(invoice.issued_at)}</p>
+                            <p><Table2 size={13} /> Table {normalizeTableNumber(tableNumber)}{invoice.guest_tab_id ? " · " + (guestTabNames.get(invoice.guest_tab_id) || "Guest") : ""}{invoice.payment_choice ? " · Customer chose " + (invoice.payment_choice === "upi" ? "UPI" : "counter") : ""} · <CalendarDays size={13} /> {formatDate(invoice.issued_at)}</p>
                           </div>
                           <div className="ts-session-total"><span>Final total</span><strong>{formatPrice(invoice.total_amount)}</strong><small>{invoice.order_count} {invoice.order_count === 1 ? "order" : "orders"}</small></div>
                         </div>
