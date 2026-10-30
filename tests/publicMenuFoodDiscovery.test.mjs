@@ -41,13 +41,13 @@ test("public menu keeps dietary toggles compact and combines advanced filters", 
   for (const filter of ['value: "egg"', 'value: "vegan"', 'value: "jain"', 'value: "under_100"', 'value: "under_200"', 'value: "spicy"']) {
     assert.ok(publicMenu.includes(filter));
   }
-  assert.match(publicMenu, /advancedFilters\\.every/);
-  assert.match(publicMenu, /item\\.is_jain_friendly === true/);
+  assert.match(publicMenu, /advancedFilters\.every/);
+  assert.match(publicMenu, /item\.is_jain_friendly === true/);
   assert.match(publicMenu, /price <= 100/);
   assert.match(publicMenu, /price <= 200/);
-  assert.match(publicMenu, /\\["medium", "hot"\\]\\.includes\\(spiceLevel\\)/);
+  assert.match(publicMenu, /\["medium", "hot"\]\.includes\(spiceLevel\)/);
   assert.match(publicMenu, /role="dialog"/);
-  assert.match(publicMenu, /Show \\{visibleItems\\.length\\} dishes/);
+  assert.match(publicMenu, /Show \{visibleItems\.length\} dishes/);
   assert.match(publicStyles, /\\.public-menu-diet-toggle/);
   assert.match(publicStyles, /\\.public-menu-filter-sheet/);
 });
