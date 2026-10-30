@@ -56,6 +56,6 @@ test("public menu only renders explicitly entered dietary/allergen metadata", ()
   assert.match(publicMenu, /FOOD_TYPE_LABELS\[item\.food_type\]/);
   assert.match(publicMenu, /item\.is_jain_friendly === true/);
   assert.match(publicMenu, /Array\.isArray\(item\.allergens\)/);
-  assert.match(publicStyles, /\.public-menu-smart-filters/);
+  assert.match(publicStyles, /\.public-menu-smart-filter-bar/);
   assert.match(publicStyles, /\.public-menu-food-tag/);
 });
