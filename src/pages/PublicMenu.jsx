@@ -45,6 +45,25 @@ function formatPrice(price) {
   }).format(Number(price) || 0);
 }
 
+const SMART_FILTERS = [
+  { value: "all", label: "All dishes" },
+  { value: "veg", label: "Veg" },
+  { value: "non_veg", label: "Non-Veg" },
+  { value: "egg", label: "Egg" },
+  { value: "vegan", label: "Vegan" },
+  { value: "jain", label: "Jain" },
+  { value: "under_100", label: "Under ₹100" },
+  { value: "under_200", label: "Under ₹200" },
+  { value: "spicy", label: "Spicy" },
+];
+
+const FOOD_TYPE_LABELS = {
+  vegetarian: "VEG",
+  non_vegetarian: "NON-VEG",
+  egg: "EGG",
+  vegan: "VEGAN",
+};
+
 function getErrorMessage(error, fallback) {
   const message =
     typeof error?.message === "string" ? error.message.trim() : "";
@@ -228,6 +247,7 @@ export default function PublicMenu() {
 
   const [search, setSearch] = useState("");
   const [categoryId, setCategoryId] = useState("all");
+  const [smartFilter, setSmartFilter] = useState("all");
 
   const [cart, setCart] = useState([]);
   const [couponInput, setCouponInput] = useState("");
@@ -365,6 +385,7 @@ export default function PublicMenu() {
       setTableListLoaded(false);
       setTableSelectionError("");
       setCategoryId("all");
+      setSmartFilter("all");
       setCart(pendingCart);
       setCouponInput("");
       setAppliedCoupon(null);
@@ -716,9 +737,24 @@ export default function PublicMenu() {
 
     const searchableText =
       `${item.name || ""} ${item.description || ""}`.toLowerCase();
+    const foodType = item.food_type || "unspecified";
+    const price = Number(item.price) || 0;
+    const spiceLevel = item.spice_level || "unspecified";
+    const matchesSmartFilter =
+      smartFilter === "all" ||
+      (smartFilter === "veg" && ["vegetarian", "vegan"].includes(foodType)) ||
+      (smartFilter === "non_veg" && foodType === "non_vegetarian") ||
+      (smartFilter === "egg" && foodType === "egg") ||
+      (smartFilter === "vegan" && foodType === "vegan") ||
+      (smartFilter === "jain" && item.is_jain_friendly === true) ||
+      (smartFilter === "under_100" && price <= 100) ||
+      (smartFilter === "under_200" && price <= 200) ||
+      (smartFilter === "spicy" && ["medium", "hot"].includes(spiceLevel));
 
     return (
-      matchesCategory && searchableText.includes(search.trim().toLowerCase())
+      matchesCategory &&
+      matchesSmartFilter &&
+      searchableText.includes(search.trim().toLowerCase())
     );
   });
 
@@ -1586,6 +1622,20 @@ export default function PublicMenu() {
               </span>
             </div>
 
+            <div className="public-menu-smart-filters" aria-label="Quick menu filters">
+              {SMART_FILTERS.map((filter) => (
+                <button
+                  key={filter.value}
+                  type="button"
+                  className={smartFilter === filter.value ? "is-active" : ""}
+                  aria-pressed={smartFilter === filter.value}
+                  onClick={() => setSmartFilter(filter.value)}
+                >
+                  {filter.label}
+                </button>
+              ))}
+            </div>
+
             <div
               className="public-menu-categories"
               aria-label="Menu categories"
@@ -1619,6 +1669,7 @@ export default function PublicMenu() {
                 onClick={() => {
                   setSearch("");
                   setCategoryId("all");
+                  setSmartFilter("all");
                 }}
                 aria-label="See all dishes"
               >
@@ -1661,6 +1712,26 @@ export default function PublicMenu() {
                         <span className="public-menu-item-category">
                           {category?.name || "From our kitchen"}
                         </span>
+                        {(FOOD_TYPE_LABELS[item.food_type] || item.is_jain_friendly || item.spice_level && item.spice_level !== "unspecified") && (
+                          <div className="public-menu-item-tags" aria-label="Dish attributes">
+                            {FOOD_TYPE_LABELS[item.food_type] && (
+                              <span className={`public-menu-food-tag is-${item.food_type}`}>
+                                {FOOD_TYPE_LABELS[item.food_type]}
+                              </span>
+                            )}
+                            {item.is_jain_friendly === true && <span className="public-menu-food-tag is-jain">JAIN FRIENDLY</span>}
+                            {item.spice_level && item.spice_level !== "unspecified" && (
+                              <span className={`public-menu-food-tag is-spice-${item.spice_level}`}>
+                                {item.spice_level === "hot" ? "HOT" : item.spice_level.toUpperCase()}
+                              </span>
+                            )}
+                          </div>
+                        )}
+                        {Array.isArray(item.allergens) && item.allergens.length > 0 && (
+                          <p className="public-menu-allergens">
+                            Contains: {item.allergens.map((allergen) => String(allergen).replace(/_/g, " ")).join(" · ")}
+                          </p>
+                        )}
                         <h3>{item.name}</h3>
 
                         {item.description && (
