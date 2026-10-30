@@ -507,6 +507,7 @@ jobs:
           EXCEPTION WHEN SQLSTATE '55000' THEN
             RAISE NOTICE 'PASS: active guest order prevents empty-tab closure';
           END;
+          $reject_non_empty_guest$;
           RESET ROLE;
           RESET request.jwt.claim.sub;
 
@@ -555,6 +556,7 @@ jobs:
           EXCEPTION WHEN SQLSTATE '55000' THEN
             RAISE NOTICE 'PASS: active guest invoice prevents empty-tab closure';
           END;
+          $reject_guest_with_invoice$;
           RESET ROLE;
           RESET request.jwt.claim.sub;
 
