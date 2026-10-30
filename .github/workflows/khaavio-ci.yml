@@ -144,6 +144,8 @@ jobs:
         run: psql -v ON_ERROR_STOP=1 -f tests/sql/restaurant-invoice-payments-fixture.sql
       - name: Apply invoice payment migration to disposable PostgreSQL
         run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261030203552_restaurant_invoice_upi_payments.sql
+      - name: Apply empty session cleanup migration to disposable PostgreSQL
+        run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261031021500_empty_session_cleanup.sql
       - name: Verify grants, public snapshot and staff-verified UPI settlement
         run: |
           psql -v ON_ERROR_STOP=1 <<'SQL'
@@ -305,4 +307,173 @@ jobs:
             RAISE NOTICE 'PASS: non-UPI manual settlement closes stale UPI submissions';
           END;
           $verify_manual_settlement$;
+          SQL
+
+      - name: Verify empty guest tabs and cancelled-only sessions can close safely
+        run: |
+          psql -v ON_ERROR_STOP=1 <<'SQL'
+          INSERT INTO public.table_sessions (
+            id, restaurant_id, table_id, status, billing_mode
+          ) VALUES (
+            '00000000-0000-4000-8000-000000000010',
+            '00000000-0000-4000-8000-000000000001',
+            '00000000-0000-4000-8000-000000000002',
+            'open',
+            'per_guest'
+          );
+
+          INSERT INTO public.table_session_tabs (
+            id, restaurant_id, table_id, session_id, guest_tab_token, status, display_name
+          ) VALUES
+            (
+              '00000000-0000-4000-8000-000000000011',
+              '00000000-0000-4000-8000-000000000001',
+              '00000000-0000-4000-8000-000000000002',
+              '00000000-0000-4000-8000-000000000010',
+              '00000000-0000-4000-8000-000000000021',
+              'open',
+              'Guest A'
+            ),
+            (
+              '00000000-0000-4000-8000-000000000012',
+              '00000000-0000-4000-8000-000000000001',
+              '00000000-0000-4000-8000-000000000002',
+              '00000000-0000-4000-8000-000000000010',
+              '00000000-0000-4000-8000-000000000022',
+              'open',
+              'Guest B'
+            );
+
+          INSERT INTO public.orders (
+            id, restaurant_id, table_id, session_id, guest_tab_id,
+            customer_name, status, total_amount
+          ) VALUES (
+            '00000000-0000-4000-8000-000000000013',
+            '00000000-0000-4000-8000-000000000001',
+            '00000000-0000-4000-8000-000000000002',
+            '00000000-0000-4000-8000-000000000010',
+            '00000000-0000-4000-8000-000000000011',
+            'Guest A',
+            'cancelled',
+            100
+          );
+
+          SET request.jwt.claim.sub = '00000000-0000-4000-8000-000000000099';
+          SET ROLE authenticated;
+          SELECT * FROM public.close_empty_guest_tab('00000000-0000-4000-8000-000000000011');
+          RESET ROLE;
+
+          DO $verify_one_guest$
+          BEGIN
+            IF (SELECT status FROM public.table_session_tabs
+                WHERE id = '00000000-0000-4000-8000-000000000011') <> 'closed' THEN
+              RAISE EXCEPTION 'Cancelled-only guest tab was not closed';
+            END IF;
+            IF (SELECT status FROM public.table_sessions
+                WHERE id = '00000000-0000-4000-8000-000000000010') <> 'open' THEN
+              RAISE EXCEPTION 'Closing one guest tab must leave another active guest session open';
+            END IF;
+          END;
+          $verify_one_guest$;
+
+          SET ROLE authenticated;
+          SELECT * FROM public.close_empty_guest_tab('00000000-0000-4000-8000-000000000012');
+          RESET ROLE;
+          RESET request.jwt.claim.sub;
+
+          DO $verify_guest_session$
+          BEGIN
+            IF (SELECT status FROM public.table_sessions
+                WHERE id = '00000000-0000-4000-8000-000000000010') <> 'closed' THEN
+              RAISE EXCEPTION 'Table session must close after every guest tab is closed';
+            END IF;
+            IF (SELECT closed_at FROM public.table_sessions
+                WHERE id = '00000000-0000-4000-8000-000000000010') IS NULL THEN
+              RAISE EXCEPTION 'Closed guest session must have a close timestamp';
+            END IF;
+          END;
+          $verify_guest_session$;
+
+          INSERT INTO public.table_sessions (
+            id, restaurant_id, table_id, status, billing_mode
+          ) VALUES (
+            '00000000-0000-4000-8000-000000000014',
+            '00000000-0000-4000-8000-000000000001',
+            '00000000-0000-4000-8000-000000000002',
+            'open',
+            'combined'
+          );
+          INSERT INTO public.orders (
+            id, restaurant_id, table_id, session_id, customer_name, status, total_amount
+          ) VALUES (
+            '00000000-0000-4000-8000-000000000015',
+            '00000000-0000-4000-8000-000000000001',
+            '00000000-0000-4000-8000-000000000002',
+            '00000000-0000-4000-8000-000000000014',
+            'Guest',
+            'cancelled',
+            250
+          );
+
+          SET request.jwt.claim.sub = '00000000-0000-4000-8000-000000000099';
+          SET ROLE authenticated;
+          SELECT * FROM public.close_empty_table_session('00000000-0000-4000-8000-000000000014');
+          RESET ROLE;
+          RESET request.jwt.claim.sub;
+
+          DO $verify_combined_session$
+          BEGIN
+            IF (SELECT status FROM public.table_sessions
+                WHERE id = '00000000-0000-4000-8000-000000000014') <> 'closed' THEN
+              RAISE EXCEPTION 'Cancelled-only combined session was not closed';
+            END IF;
+          END;
+          $verify_combined_session$;
+
+          INSERT INTO public.table_sessions (
+            id, restaurant_id, table_id, status, billing_mode
+          ) VALUES (
+            '00000000-0000-4000-8000-000000000016',
+            '00000000-0000-4000-8000-000000000001',
+            '00000000-0000-4000-8000-000000000002',
+            'open',
+            'combined'
+          );
+          INSERT INTO public.orders (
+            id, restaurant_id, table_id, session_id, customer_name, status, total_amount
+          ) VALUES (
+            '00000000-0000-4000-8000-000000000017',
+            '00000000-0000-4000-8000-000000000001',
+            '00000000-0000-4000-8000-000000000002',
+            '00000000-0000-4000-8000-000000000016',
+            'Guest',
+            'completed',
+            250
+          );
+
+          SET request.jwt.claim.sub = '00000000-0000-4000-8000-000000000099';
+          SET ROLE authenticated;
+          DO $reject_non_empty$
+          BEGIN
+            PERFORM public.close_empty_table_session('00000000-0000-4000-8000-000000000016');
+            RAISE EXCEPTION 'A session with a non-cancelled order must not close';
+          EXCEPTION WHEN SQLSTATE '55000' THEN
+            RAISE NOTICE 'PASS: active order prevents empty-session closure';
+          END;
+          $reject_non_empty$;
+          RESET ROLE;
+          RESET request.jwt.claim.sub;
+
+          DO $verify_close_history$
+          BEGIN
+            IF (SELECT count(*) FROM public.orders
+                WHERE id IN (
+                  '00000000-0000-4000-8000-000000000013',
+                  '00000000-0000-4000-8000-000000000015'
+                )) <> 2 THEN
+              RAISE EXCEPTION 'Closing an empty session must preserve cancelled order history';
+            END IF;
+            RAISE NOTICE 'PASS: empty guest and combined sessions close without deleting order history';
+          END;
+          $verify_close_history$;
           SQL
