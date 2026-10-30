@@ -93,7 +93,7 @@ export default function PublicTableService({
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [isOpen, submitting]);
+  }, [isOpen, submitting, setIsOpen]);
 
   if (!hasValidTableContext) return null;
 
