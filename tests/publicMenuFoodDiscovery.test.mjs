@@ -48,8 +48,8 @@ test("public menu keeps dietary toggles compact and combines advanced filters", 
   assert.match(publicMenu, /\["medium", "hot"\]\.includes\(spiceLevel\)/);
   assert.match(publicMenu, /role="dialog"/);
   assert.match(publicMenu, /Show \{visibleItems\.length\} dishes/);
-  assert.match(publicStyles, /\\.public-menu-diet-toggle/);
-  assert.match(publicStyles, /\\.public-menu-filter-sheet/);
+  assert.ok(publicStyles.includes(".public-menu-diet-toggle"));
+  assert.ok(publicStyles.includes(".public-menu-filter-sheet"));
 });
 
 test("public menu only renders explicitly entered dietary/allergen metadata", () => {
