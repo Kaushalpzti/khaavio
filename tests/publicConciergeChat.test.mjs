@@ -34,6 +34,8 @@ test("public table assistance and AI run in one concierge chat, with no second s
   assert.match(ask, /Request bill|Bill mango/);
   assert.match(ask, /Water/);
   assert.match(ask, /setMessages\(\(current\) => \[\.\.\.current, \{/);
+  assert.match(ask, /ask-khaavio-concierge-prompts/);
+  assert.doesNotMatch(ask, /className="ask-khaavio-table-actions"/);
 });
 
 test("AI receives the full public menu metadata needed for grounded dish answers", () => {
@@ -53,5 +55,7 @@ test("dish answers are more detailed while exact restaurant facts remain menu-gr
   assert.match(edge, /sole authority for this restaurant's exact dish names, prices, availability/);
   assert.match(edge, /Never invent or infer a restaurant-specific recipe/);
   assert.match(edge, /Never use generic web results to assert this restaurant's ingredients or allergen status/);
+  assert.match(ask, /usedWebResearch: result\?\.usedWebResearch === true/);
+  assert.match(ask, /General dish background checked online/);
   assert.match(askCss, /Khaavio Concierge visual refresh/);
 });
