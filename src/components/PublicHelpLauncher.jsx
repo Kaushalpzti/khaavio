@@ -31,10 +31,6 @@ export default function PublicHelpLauncher({
     };
   }, [isOpen]);
 
-  useEffect(() => {
-    if (isPanelOpen) setIsOpen(false);
-  }, [isPanelOpen]);
-
   if ((!showAI && !showService) || isPanelOpen) return null;
 
   function choose(action) {
