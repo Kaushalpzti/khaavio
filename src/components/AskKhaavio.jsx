@@ -109,6 +109,8 @@ function getReplyFromError(error, copy) {
 export default function AskKhaavio({
   restaurant,
   menuItems = [],
+  menuOptionGroups = [],
+  publicOffers = [],
   categories = [],
   onAddToCart,
   hasStickyCart = false,
@@ -189,9 +191,23 @@ export default function AskKhaavio({
           spiceLevel: item.spice_level || "unspecified",
           isJainFriendly: item.is_jain_friendly === true,
           allergens: Array.isArray(item.allergens) ? item.allergens : [],
+          optionGroups: menuOptionGroups
+            .filter((group) => group.menu_item_id === item.id)
+            .slice(0, 8)
+            .map((group) => ({
+              name: group.name || "",
+              minSelections: Number(group.min_selections) || 0,
+              maxSelections: Number(group.max_selections) || 0,
+              options: (Array.isArray(group.options) ? group.options : [])
+                .slice(0, 15)
+                .map((option) => ({
+                  name: option.name || "",
+                  priceDelta: Number(option.price_delta) || 0,
+                })),
+            })),
         }))
       : [],
-    [menuItems, categoryById, aiEnabled],
+    [menuItems, menuOptionGroups, categoryById, aiEnabled],
   );
 
   async function requestAI(messageText, history) {
@@ -207,6 +223,16 @@ export default function AskKhaavio({
       },
       table: tableContext?.table_number ? { number: String(tableContext.table_number) } : null,
       menuItems: preparedMenu,
+      offers: publicOffers.slice(0, 20).map((offer) => ({
+        title: offer.title || "",
+        code: offer.code || "",
+        discountType: offer.discount_type || "",
+        discountValue: Number(offer.discount_value) || 0,
+        minimumOrderAmount: Number(offer.minimum_order_amount) || 0,
+        maximumDiscountAmount: offer.maximum_discount_amount == null
+          ? null
+          : Number(offer.maximum_discount_amount) || 0,
+      })),
       history,
     };
 
