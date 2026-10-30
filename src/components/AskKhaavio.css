@@ -602,3 +602,14 @@
   border-top: 1px solid #e5eee5;
   padding-top: 9px;
 }
+
+.ask-khaavio-research-note {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 7px;
+  color: #688571;
+  font-size: 9px;
+  font-weight: 700;
+}
+.ask-khaavio-research-note svg { flex: 0 0 auto; color: #18815b; }
