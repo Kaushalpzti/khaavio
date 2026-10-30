@@ -21,6 +21,8 @@ CREATE TABLE public.restaurants (
   table_billing_mode text NOT NULL DEFAULT 'combined'
 );
 
+GRANT SELECT ON public.restaurants TO authenticated;
+
 CREATE TABLE public.restaurant_tables (
   id uuid PRIMARY KEY,
   restaurant_id uuid NOT NULL REFERENCES public.restaurants(id),
