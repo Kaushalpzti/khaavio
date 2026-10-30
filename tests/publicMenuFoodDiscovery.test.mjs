@@ -4,7 +4,7 @@ import { readFileSync } from "node:fs";
 
 const publicMenu = readFileSync(new URL("../src/pages/PublicMenu.jsx", import.meta.url), "utf8");
 const menuManager = readFileSync(new URL("../src/pages/MenuManager.jsx", import.meta.url), "utf8");
-const migration = readFileSync(new URL("../supabase/migrations/20261030100000_public_menu_food_discovery.sql", import.meta.url), "utf8");
+const migration = readFileSync(new URL("../supabase/migrations/20261030190340_public_menu_food_discovery.sql", import.meta.url), "utf8");
 const publicStyles = readFileSync(new URL("../src/pages/PublicMenuExperience.css", import.meta.url), "utf8");
 
 test("menu items have explicit food type, spice, Jain and allergen metadata", () => {
@@ -22,7 +22,8 @@ test("public menu snapshot exposes only the new, allowlisted discovery fields", 
   assert.match(migration, /'spice_level', m\.spice_level/);
   assert.match(migration, /'is_jain_friendly', m\.is_jain_friendly/);
   assert.match(migration, /'allergens', m\.allergens/);
-  assert.match(migration, /REVOKE ALL ON FUNCTION public\.khaavio_public_restaurant_menu\(text\) FROM PUBLIC/);
+  assert.match(migration, /CREATE OR REPLACE preserves the existing execute grants on the public menu RPC/);
+  assert.doesNotMatch(migration, /^\s*(?:GRANT|REVOKE)\b/im);
 });
 
 test("restaurant menu editor saves and imports food discovery metadata", () => {
