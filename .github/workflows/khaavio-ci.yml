@@ -464,6 +464,100 @@ jobs:
           RESET ROLE;
           RESET request.jwt.claim.sub;
 
+          INSERT INTO public.table_sessions (
+            id, restaurant_id, table_id, status, billing_mode
+          ) VALUES (
+            '00000000-0000-4000-8000-000000000018',
+            '00000000-0000-4000-8000-000000000001',
+            '00000000-0000-4000-8000-000000000002',
+            'open',
+            'per_guest'
+          );
+          INSERT INTO public.table_session_tabs (
+            id, restaurant_id, table_id, session_id, guest_tab_token, status, display_name
+          ) VALUES (
+            '00000000-0000-4000-8000-000000000019',
+            '00000000-0000-4000-8000-000000000001',
+            '00000000-0000-4000-8000-000000000002',
+            '00000000-0000-4000-8000-000000000018',
+            '00000000-0000-4000-8000-000000000029',
+            'open',
+            'Guest C'
+          );
+          INSERT INTO public.orders (
+            id, restaurant_id, table_id, session_id, guest_tab_id,
+            customer_name, status, total_amount
+          ) VALUES (
+            '00000000-0000-4000-8000-000000000030',
+            '00000000-0000-4000-8000-000000000001',
+            '00000000-0000-4000-8000-000000000002',
+            '00000000-0000-4000-8000-000000000018',
+            '00000000-0000-4000-8000-000000000019',
+            'Guest C',
+            'completed',
+            99
+          );
+
+          SET request.jwt.claim.sub = '00000000-0000-4000-8000-000000000099';
+          SET ROLE authenticated;
+          DO $reject_non_empty_guest$
+          BEGIN
+            PERFORM public.close_empty_guest_tab('00000000-0000-4000-8000-000000000019');
+            RAISE EXCEPTION 'A guest tab with a non-cancelled order must not close';
+          EXCEPTION WHEN SQLSTATE '55000' THEN
+            RAISE NOTICE 'PASS: active guest order prevents empty-tab closure';
+          END;
+          RESET ROLE;
+          RESET request.jwt.claim.sub;
+
+          INSERT INTO public.table_sessions (
+            id, restaurant_id, table_id, status, billing_mode
+          ) VALUES (
+            '00000000-0000-4000-8000-000000000031',
+            '00000000-0000-4000-8000-000000000001',
+            '00000000-0000-4000-8000-000000000002',
+            'open',
+            'per_guest'
+          );
+          INSERT INTO public.table_session_tabs (
+            id, restaurant_id, table_id, session_id, guest_tab_token, status, display_name
+          ) VALUES (
+            '00000000-0000-4000-8000-000000000032',
+            '00000000-0000-4000-8000-000000000001',
+            '00000000-0000-4000-8000-000000000002',
+            '00000000-0000-4000-8000-000000000031',
+            '00000000-0000-4000-8000-000000000033',
+            'open',
+            'Guest D'
+          );
+          INSERT INTO public.table_session_invoices (
+            id, restaurant_id, table_id, session_id, guest_tab_id,
+            invoice_number, total_amount, subtotal_amount, order_count, payment_status
+          ) VALUES (
+            '00000000-0000-4000-8000-000000000034',
+            '00000000-0000-4000-8000-000000000001',
+            '00000000-0000-4000-8000-000000000002',
+            '00000000-0000-4000-8000-000000000031',
+            '00000000-0000-4000-8000-000000000032',
+            'KHV-TEST-ACTIVE-GUEST',
+            50,
+            50,
+            1,
+            'unpaid'
+          );
+
+          SET request.jwt.claim.sub = '00000000-0000-4000-8000-000000000099';
+          SET ROLE authenticated;
+          DO $reject_guest_with_invoice$
+          BEGIN
+            PERFORM public.close_empty_guest_tab('00000000-0000-4000-8000-000000000032');
+            RAISE EXCEPTION 'A guest tab with an active invoice must not close';
+          EXCEPTION WHEN SQLSTATE '55000' THEN
+            RAISE NOTICE 'PASS: active guest invoice prevents empty-tab closure';
+          END;
+          RESET ROLE;
+          RESET request.jwt.claim.sub;
+
           DO $verify_close_history$
           BEGIN
             IF (SELECT count(*) FROM public.orders
