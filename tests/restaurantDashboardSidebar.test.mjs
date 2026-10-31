@@ -46,3 +46,38 @@ test("sidebar has responsive collapse and mobile drawer support without touching
   assert.match(css, /@media \(max-width: 780px\)/);
   assert.match(css, /prefers-reduced-motion/);
 });
+
+
+test("Operations appears immediately after Overview and before the Restaurant section", () => {
+  const workspaceIndex = layout.indexOf('label: "Workspace"');
+  const operationsIndex = layout.indexOf('label: "Operations"');
+  const restaurantIndex = layout.indexOf('label: "Restaurant"');
+  assert.ok(workspaceIndex >= 0 && operationsIndex > workspaceIndex && restaurantIndex > operationsIndex);
+  const operationsBlock = layout.slice(operationsIndex, restaurantIndex);
+  const expectedDailyOrder = [
+    'label: "Orders"',
+    'label: "Kitchen display"',
+    'label: "Service requests"',
+    'label: "Table sessions & billing"',
+    'label: "Bookings"',
+    'label: "Order receipts"',
+    'label: "Offers & Coupons"',
+    'label: "Loyalty & rewards"',
+  ];
+  let lastIndex = -1;
+  for (const item of expectedDailyOrder) {
+    const currentIndex = operationsBlock.indexOf(item);
+    assert.ok(currentIndex > lastIndex, `Operations item is missing or out of order: ${item}`);
+    lastIndex = currentIndex;
+  }
+});
+
+test("Restaurant navigation is collapsible, remembers preference, and expands for its active routes", () => {
+  assert.match(layout, /label: "Restaurant",[\s\S]*?collapsible: true/);
+  assert.match(layout, /restaurant-dashboard-nav-label-toggle/);
+  assert.match(layout, /aria-expanded=\{!groupCollapsed\}/);
+  assert.match(layout, /aria-controls=\{groupId\}/);
+  assert.match(layout, /localStorage\.getItem\(RESTAURANT_NAV_STORAGE_KEY\)/);
+  assert.match(layout, /localStorage\.setItem\(RESTAURANT_NAV_STORAGE_KEY/);
+  assert.match(layout, /if \(isRestaurantRoute\) setRestaurantNavCollapsed\(false\)/);
+});

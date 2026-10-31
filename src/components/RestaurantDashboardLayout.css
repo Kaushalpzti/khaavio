@@ -338,3 +338,39 @@
   .restaurant-dashboard-menu-trigger,
   .restaurant-dashboard-sidebar { transition: none; }
 }
+
+
+/* Keep everyday Operations links near the top; Restaurant tools can be tucked away. */
+.restaurant-dashboard-nav-label-toggle {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  border: 0;
+  background: transparent;
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+}
+.restaurant-dashboard-nav-label-toggle:hover {
+  color: #526f5e;
+}
+.restaurant-dashboard-nav-group-chevron {
+  flex: 0 0 auto;
+  transition: transform 160ms ease;
+}
+.restaurant-dashboard-nav-group-chevron.is-collapsed {
+  transform: rotate(-90deg);
+}
+.restaurant-dashboard-nav-group-items[hidden] {
+  display: none !important;
+}
+.restaurant-dashboard-layout.is-collapsed .restaurant-dashboard-nav-label-toggle {
+  display: none;
+}
+@media (max-width: 780px) {
+  .restaurant-dashboard-sidebar .restaurant-dashboard-nav-label-toggle {
+    display: flex;
+  }
+}
