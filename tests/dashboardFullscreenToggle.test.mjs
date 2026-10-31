@@ -4,7 +4,6 @@ import test from "node:test";
 
 const layout = readFileSync(new URL("../src/components/RestaurantDashboardLayout.jsx", import.meta.url), "utf8");
 const styles = readFileSync(new URL("../src/components/RestaurantDashboardLayout.css", import.meta.url), "utf8");
-const styles = readFileSync(new URL("../src/components/RestaurantWorkspacePolish.css", import.meta.url), "utf8");
 
 test("dashboard header exposes an accessible fullscreen toggle on desktop and mobile", () => {
   assert.match(layout, /function FullscreenToggle\(/);
