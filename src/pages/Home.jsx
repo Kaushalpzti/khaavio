@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   ArrowDownRight,
   ArrowRight,
@@ -325,139 +325,62 @@ function Brand({ light = false }) {
 }
 
 function DemoRequestForm() {
+  const navigate = useNavigate();
   const [status, setStatus] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
-  function submitRequest(event) {
+  async function submitRequest(event) {
     event.preventDefault();
-    const form = event.currentTarget;
-    const data = new FormData(form);
-    const rows = [
-      "Hi Khaavio, I would like to request a free product demo.",
-      "",
-      `Name: ${data.get("name") || "Not provided"}`,
-      `Phone: ${data.get("phone") || "Not provided"}`,
-      `Restaurant / café: ${data.get("business") || "Not provided"}`,
-      `Business type: ${data.get("businessType") || "Not provided"}`,
-      `City: ${data.get("city") || "Not provided"}`,
-      `Email: ${data.get("email") || "Not provided"}`,
-      `Preferred time: ${data.get("preferredTime") || "Flexible"}`,
-    ];
-    const url = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(rows.join("\n"))}`;
-    const whatsappWindow = window.open(url, "_blank");
-    if (whatsappWindow) whatsappWindow.opener = null;
-    else window.location.assign(url);
-    setStatus(
-      "WhatsApp will open with your demo request prepared. Send the message there to complete your enquiry.",
-    );
+    if (submitting) return;
+    setSubmitting(true);
+    setStatus("");
+    const data = new FormData(event.currentTarget);
+    try {
+      const response = await fetch("/api/leads", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type: "demo",
+          name: data.get("name"),
+          phone: data.get("phone"),
+          business: data.get("business"),
+          businessType: data.get("businessType"),
+          city: data.get("city"),
+          email: data.get("email"),
+          preferredTime: data.get("preferredTime"),
+          website: data.get("website"),
+        }),
+      });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok || result.ok !== true) {
+        throw new Error(result.message || "We couldn't receive your demo request. Please try again.");
+      }
+      navigate("/thank-you?type=demo");
+    } catch (error) {
+      setStatus(error?.message || "We couldn't receive your request. Please try again.");
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   return (
     <form className="kh2-lead-form kh2-demo-form" onSubmit={submitRequest}>
       <div className="kh2-form-grid">
-        <label>
-          <span>
-            Full name <b>*</b>
-          </span>
-          <input
-            name="name"
-            autoComplete="name"
-            placeholder="Your name"
-            required
-          />
-        </label>
-        <label>
-          <span>
-            Phone number <b>*</b>
-          </span>
-          <input
-            name="phone"
-            type="tel"
-            autoComplete="tel"
-            inputMode="tel"
-            placeholder="+91 98765 43210"
-            pattern="[+0-9() .-]{8,20}"
-            title="Enter a valid phone number"
-            required
-          />
-        </label>
-        <label className="kh2-field-full">
-          <span>
-            Restaurant / café name <b>*</b>
-          </span>
-          <input
-            name="business"
-            placeholder="Your business name"
-            autoComplete="organization"
-            required
-          />
-        </label>
-        <label>
-          <span>
-            Business type <b>*</b>
-          </span>
-          <select name="businessType" defaultValue="" required>
-            <option value="" disabled>
-              Select type
-            </option>
-            <option>Café</option>
-            <option>Restaurant</option>
-            <option>Bakery / dessert shop</option>
-            <option>Cloud kitchen</option>
-            <option>Other food business</option>
-          </select>
-        </label>
-        <label>
-          <span>
-            City <b>*</b>
-          </span>
-          <input
-            name="city"
-            placeholder="e.g. Patna"
-            autoComplete="address-level2"
-            required
-          />
-        </label>
-        <label className="kh2-field-full">
-          <span>Business email</span>
-          <input
-            name="email"
-            type="email"
-            autoComplete="email"
-            placeholder="you@yourrestaurant.com"
-          />
-        </label>
-        <label className="kh2-field-full">
-          <span>Preferred demo time</span>
-          <select
-            name="preferredTime"
-            defaultValue="Flexible — please contact me"
-          >
-            <option>Flexible — please contact me</option>
-            <option>Morning (10 AM–12 PM IST)</option>
-            <option>Afternoon (12 PM–4 PM IST)</option>
-            <option>Evening (4 PM–7 PM IST)</option>
-          </select>
-        </label>
+        <label><span>Full name <b>*</b></span><input name="name" autoComplete="name" placeholder="Your name" required /></label>
+        <label><span>Phone number <b>*</b></span><input name="phone" type="tel" autoComplete="tel" inputMode="tel" placeholder="+91 98765 43210" pattern="[+0-9() .-]{8,24}" title="Enter a valid phone number" required /></label>
+        <label className="kh2-field-full"><span>Restaurant / café name <b>*</b></span><input name="business" placeholder="Your business name" autoComplete="organization" required /></label>
+        <label><span>Business type <b>*</b></span><select name="businessType" defaultValue="" required><option value="" disabled>Select type</option><option>Café</option><option>Restaurant</option><option>Bakery / dessert shop</option><option>Cloud kitchen</option><option>Other food business</option></select></label>
+        <label><span>City <b>*</b></span><input name="city" placeholder="e.g. Patna" autoComplete="address-level2" required /></label>
+        <label className="kh2-field-full"><span>Business email</span><input name="email" type="email" autoComplete="email" placeholder="you@yourrestaurant.com" /></label>
+        <label className="kh2-field-full"><span>Preferred demo time</span><select name="preferredTime" defaultValue="Flexible — please contact me"><option>Flexible — please contact me</option><option>Morning (10 AM–12 PM IST)</option><option>Afternoon (12 PM–4 PM IST)</option><option>Evening (4 PM–7 PM IST)</option></select></label>
+        <label className="kh2-lead-honeypot" aria-hidden="true">Website<input name="website" tabIndex={-1} autoComplete="off" /></label>
       </div>
-      <button
-        className="kh2-button kh2-button-primary kh2-form-submit"
-        type="submit"
-      >
-        Continue on WhatsApp <ArrowUpRight size={18} />
+      <button className="kh2-button kh2-button-primary kh2-form-submit" type="submit" disabled={submitting}>
+        {submitting ? "Sending request…" : "Send demo request"} <ArrowUpRight size={18} />
       </button>
-      <p className="kh2-form-note">
-        <MessageCircle size={14} /> WhatsApp opens with your details prepared.
-        You must send the message to submit your demo request.
-      </p>
-      {status && (
-        <p className="kh2-form-status" role="status">
-          {status}
-        </p>
-      )}
-      <p className="kh2-privacy-note">
-        By sending the message, you agree that Khaavio may contact you about
-        this enquiry. Do not share passwords, OTPs or payment credentials.
-      </p>
+      <p className="kh2-form-note"><MessageCircle size={14} /> Your request is sent securely to Khaavio. We'll contact you using the details you share.</p>
+      {status && <p className="kh2-form-status" role="alert">{status}</p>}
+      <p className="kh2-privacy-note">By submitting, you agree that Khaavio may contact you about this request. Do not share passwords, OTPs or payment credentials.</p>
     </form>
   );
 }

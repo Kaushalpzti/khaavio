@@ -91,13 +91,25 @@ export default async function handler(req, res) {
 
     const slug = getSlugFromPath(pathname);
     const restaurant = slug ? await fetchPublicRestaurant(slug) : null;
-    const metadata = buildPageMetadata(pathname, {
+    let metadata = buildPageMetadata(pathname, {
       restaurant,
       tableToken: requestUrl.searchParams.get("table") || "",
     });
+    const missingRestaurantPage = Boolean(slug) && !restaurant;
+    const notFound = metadata.title === "Page Not Found | Khaavio" || missingRestaurantPage;
+    if (notFound) {
+      metadata = {
+        ...metadata,
+        title: "Page Not Found | Khaavio",
+        description: "The page may have moved, or the link may be incorrect. Visit Khaavio to explore restaurant menus and tools.",
+        indexable: false,
+        canonical: "",
+        structuredData: null,
+      };
+    }
     const html = injectPageMetadata(readBuiltHtml(), metadata);
 
-    res.statusCode = 200;
+    res.statusCode = notFound ? 404 : 200;
     res.setHeader("Content-Type", "text/html; charset=utf-8");
     res.setHeader("X-Content-Type-Options", "nosniff");
     res.setHeader("X-Robots-Tag", metadata.indexable ? "index,follow,max-image-preview:large" : "noindex,follow");

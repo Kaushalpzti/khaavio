@@ -63,6 +63,12 @@ const STATIC_PAGES = {
         indexable: true,
         canonicalPath: "/refund-policy",
     },
+    "/cancellation-refund": {
+        title: "Refund & Cancellation Policy | Khaavio",
+        description: "Understand Khaavio subscription cancellations, manual payment verification and how to request a refund.",
+        indexable: false,
+        canonicalPath: "/refund-policy",
+    },
     "/refunds": {
         title: "Refund & Cancellation Policy | Khaavio",
         description: "Understand Khaavio subscription cancellations, manual payment verification and how to request a refund.",
@@ -95,6 +101,18 @@ const PRIVATE_PAGE_TITLES = {
     "/dashboard/menu": [
         "Menu Manager | Khaavio",
         "Manage dishes, prices and availability in your restaurant menu.",
+    ],
+    "/dashboard/menu-banners": [
+        "Menu Banners | Khaavio",
+        "Manage promotional banners displayed on your restaurant menu.",
+    ],
+    "/dashboard/offers": [
+        "Offers & Coupons | Khaavio",
+        "Manage restaurant coupons and promotional offers.",
+    ],
+    "/thank-you": [
+        "Thank You | Khaavio",
+        "Your Khaavio enquiry has been received.",
     ],
     "/dashboard/qr": [
         "Menu QR Studio | Khaavio",
@@ -447,27 +465,6 @@ export function buildPageMetadata(pathname, options = {}) {
     if (PRIVATE_PAGE_TITLES[path]) {
         const [title, description] = PRIVATE_PAGE_TITLES[path];
         return makeBaseMetadata(path, title, description, false);
-    }
-
-    if (path.startsWith("/dashboard/")) {
-        const section = path.split("/").filter(Boolean).pop().replace(/-/g, " ");
-        const sectionTitle = section.replace(/\b\w/g, (letter) => letter.toUpperCase());
-
-        return makeBaseMetadata(
-            path,
-            `${sectionTitle} | Khaavio`,
-            `Manage ${section} in your Khaavio restaurant workspace.`,
-            false,
-        );
-    }
-
-    if (path.startsWith("/platform-admin/")) {
-        return makeBaseMetadata(
-            path,
-            "Platform Administration | Khaavio",
-            "Restricted Khaavio platform administration.",
-            false,
-        );
     }
 
     return makeBaseMetadata(

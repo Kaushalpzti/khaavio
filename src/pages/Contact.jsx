@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import {
   ArrowLeft,
   ArrowRight,
@@ -29,26 +29,42 @@ export default function Contact() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [status, setStatus] = useState("");
 
-  function submitContact(event) {
+  const navigate = useNavigate();
+  const [submitting, setSubmitting] = useState(false);
+
+  async function submitContact(event) {
     event.preventDefault();
+    if (submitting) return;
+    setSubmitting(true);
+    setStatus("");
     const data = new FormData(event.currentTarget);
-    const fields = [
-      "KHAAVIO CONTACT ENQUIRY",
-      "",
-      `Name: ${data.get("name") || "Not provided"}`,
-      `Phone: ${data.get("phone") || "Not provided"}`,
-      `Business: ${data.get("business") || "Not provided"}`,
-      `Business type: ${data.get("businessType") || "Not provided"}`,
-      `City: ${data.get("city") || "Not provided"}`,
-      `Email: ${data.get("email") || "Not provided"}`,
-      `Enquiry type: ${data.get("enquiryType") || "General enquiry"}`,
-      `Message: ${data.get("message") || "Not provided"}`,
-      "",
-      "Sent from the Khaavio Contact Us page.",
-    ];
-    const href = `mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent("Khaavio — Contact Enquiry")}&body=${encodeURIComponent(fields.join("\n"))}`;
-    setStatus("Your email app should open with the enquiry prepared. Send the email to complete your request.");
-    window.location.href = href;
+    try {
+      const response = await fetch("/api/leads", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type: "contact",
+          name: data.get("name"),
+          phone: data.get("phone"),
+          business: data.get("business"),
+          businessType: data.get("businessType"),
+          city: data.get("city"),
+          email: data.get("email"),
+          enquiryType: data.get("enquiryType"),
+          message: data.get("message"),
+          website: data.get("website"),
+        }),
+      });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok || result.ok !== true) {
+        throw new Error(result.message || "We couldn't receive your enquiry. Please try again.");
+      }
+      navigate("/thank-you?type=contact");
+    } catch (error) {
+      setStatus(error?.message || "We couldn't receive your enquiry. Please try again.");
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   return (
@@ -98,6 +114,7 @@ export default function Contact() {
             <div className="khc-form-heading"><span className="khc-form-mark"><Mail size={21} /></span><div><h2>Send us a message</h2><p>Fields marked * are required.</p></div></div>
             <form className="kh2-lead-form kh2-contact-form" onSubmit={submitContact}>
               <div className="kh2-form-grid">
+                <label className="kh2-lead-honeypot" aria-hidden="true">Website<input name="website" tabIndex={-1} autoComplete="off" /></label>
                 <label><span>Full name <b>*</b></span><input name="name" autoComplete="name" placeholder="Your name" required /></label>
                 <label><span>Phone number <b>*</b></span><input name="phone" type="tel" autoComplete="tel" inputMode="tel" placeholder="+91 98765 43210" pattern="[+0-9() .-]{8,20}" title="Enter a valid phone number" required /></label>
                 <label className="kh2-field-full"><span>Restaurant / business name <b>*</b></span><input name="business" autoComplete="organization" placeholder="Your business name" required /></label>
@@ -107,9 +124,9 @@ export default function Contact() {
                 <label className="kh2-field-full"><span>Enquiry type <b>*</b></span><select name="enquiryType" defaultValue="General enquiry" required><option>General enquiry</option><option>Product demo</option><option>Plans and pricing</option><option>Technical support</option><option>Account or billing</option><option>Partnership</option></select></label>
                 <label className="kh2-field-full"><span>How can we help? <b>*</b></span><textarea name="message" rows="4" placeholder="Tell us a little about your question..." required /></label>
               </div>
-              <button className="kh2-button kh2-button-primary kh2-form-submit" type="submit">Prepare enquiry email <ArrowUpRight size={17} /></button>
-              <p className="kh2-form-note"><Mail size={14} /> Your email app will open with the details prepared. Send the email to submit your enquiry.</p>
-              {status && <p className="kh2-form-status" role="status">{status}</p>}
+              <button className="kh2-button kh2-button-primary kh2-form-submit" type="submit" disabled={submitting}>{submitting ? "Sending enquiry…" : "Send enquiry" <ArrowUpRight size={17} /></button>
+              <p className="kh2-form-note"><Mail size={14} /> Your enquiry is sent securely to Khaavio. We will respond using the contact details you provide.</p>
+              {status && <p className="kh2-form-status" role="alert">{status}</p>}
               <p className="kh2-privacy-note">Do not include passwords, payment card details or other sensitive information.</p>
             </form>
           </div>

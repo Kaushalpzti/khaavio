@@ -7,6 +7,7 @@ import { KhaavioOperationalAlertsProvider } from "./context/KhaavioOperationalAl
 import SubscriptionAccessGuard from "./components/SubscriptionAccessGuard";
 import RestaurantDashboardLayout from "./components/RestaurantDashboardLayout";
 import SeoManager from "./components/SeoManager";
+import AnalyticsConsentManager from "./components/AnalyticsConsentManager";
 import LegalPage from "./pages/LegalPage";
 import "./PageLoader.css";
 import { getDomainRedirectTarget } from "./lib/domainRouting.js";
@@ -19,6 +20,8 @@ const Auth = lazy(() => import("./pages/Auth"));
 const PublicMenu = lazy(() => import("./pages/PublicMenu"));
 const PublicBooking = lazy(() => import("./pages/PublicBooking"));
 const OrderTracking = lazy(() => import("./pages/OrderTracking"));
+const ThankYou = lazy(() => import("./pages/ThankYou"));
+const NotFound = lazy(() => import("./pages/NotFound"));
 
 // Restaurant setup and dashboard
 const Onboarding = lazy(() => import("./pages/Onboarding"));
@@ -152,6 +155,7 @@ export default function App() {
         <ScrollToTop />
         <DomainRouteBoundary>
           <SeoManager />
+          <AnalyticsConsentManager />
         <LocationAwareRouteBoundary>
           <Suspense fallback={<PageLoader />}>
             <Routes>
@@ -168,6 +172,7 @@ export default function App() {
           />
           <Route path="/about" element={<About />} />
           <Route path="/contact" element={<Contact />} />
+          <Route path="/thank-you" element={<ThankYou />} />
           <Route path="/privacy" element={<LegalPage type="privacy" />} />
           <Route path="/terms" element={<LegalPage type="terms" />} />
           <Route path="/refund-policy" element={<LegalPage type="refund" />} />
@@ -375,7 +380,7 @@ export default function App() {
             }
           />
           {/* Unknown routes */}
-          <Route path="*" element={<Navigate to="/" replace />} />
+          <Route path="*" element={<NotFound />} />
                     </Routes>
           </Suspense>
         </LocationAwareRouteBoundary>
