@@ -1183,7 +1183,8 @@ export default function PublicMenu() {
           p_service_mode: selectedMode,
           p_pickup_eta_minutes: selectedMode === "pickup" ? pickupEtaMinutes : null,
           p_coupon_code: activeCoupon?.code || null,
-          p_loyalty_phone: null,
+          p_loyalty_phone: payload.p_loyalty_phone,
+          p_loyalty_member_token: payload.p_loyalty_member_token,
         });
         if (orderError) throw orderError;
         const result = Array.isArray(data) ? data[0] : data;

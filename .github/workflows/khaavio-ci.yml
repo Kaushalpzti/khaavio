@@ -619,6 +619,7 @@ jobs:
             v_lookup text;
             v_order text;
             v_service text;
+            v_service_legacy text;
           BEGIN
             IF NOT pg_catalog.has_table_privilege('service_role', 'public.platform_contact_leads', 'INSERT') THEN
               RAISE EXCEPTION 'Service role cannot store website leads';
@@ -665,11 +666,23 @@ jobs:
 
             SELECT p.prosrc INTO v_service
             FROM pg_catalog.pg_proc p JOIN pg_catalog.pg_namespace n ON n.oid = p.pronamespace
-            WHERE n.nspname = 'public' AND p.proname = 'place_public_order_for_service_mode';
-            IF v_service IS NULL
-               OR pg_catalog.strpos(v_service, 'restaurant_loyalty_members') > 0
-               OR pg_catalog.strpos(v_service, 'loyalty_member_id') > 0 THEN
-              RAISE EXCEPTION 'Service-mode order still attaches loyalty without a browser token';
+            WHERE n.nspname = 'public' AND p.proname = 'place_public_order_for_service_mode'
+              AND p.pronargs = 10;
+            IF v_service IS NULL OR pg_catalog.strpos(v_service, 'lm.member_token = p_loyalty_member_token') = 0 THEN
+              RAISE EXCEPTION 'Token-aware service-mode order does not bind loyalty to its browser token';
+            END IF;
+
+            SELECT p.prosrc INTO v_service_legacy
+            FROM pg_catalog.pg_proc p JOIN pg_catalog.pg_namespace n ON n.oid = p.pronamespace
+            WHERE n.nspname = 'public' AND p.proname = 'place_public_order_for_service_mode'
+              AND p.pronargs = 9;
+            IF v_service_legacy IS NULL
+               OR pg_catalog.strpos(v_service_legacy, 'restaurant_loyalty_members') > 0
+               OR pg_catalog.strpos(v_service_legacy, 'loyalty_member_id') > 0 THEN
+              RAISE EXCEPTION 'Legacy service-mode overload can still attach loyalty without a token';
+            END IF;
+            IF NOT pg_catalog.has_function_privilege('anon', 'public.place_public_order_for_service_mode(text,text,text,text,jsonb,text,smallint,text,text,uuid)', 'EXECUTE') THEN
+              RAISE EXCEPTION 'Anonymous client cannot call the token-aware service-mode RPC';
             END IF;
             RAISE NOTICE 'PASS: lead access, feedback RPC grants, sitemap visibility and token-bound loyalty are verified';
           END;

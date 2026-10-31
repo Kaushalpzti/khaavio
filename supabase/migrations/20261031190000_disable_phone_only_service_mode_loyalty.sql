@@ -13,7 +13,8 @@ CREATE OR REPLACE FUNCTION public.place_public_order_for_service_mode(
   p_service_mode text,
   p_pickup_eta_minutes smallint,
   p_coupon_code text,
-  p_loyalty_phone text DEFAULT NULL
+  p_loyalty_phone text,
+  p_loyalty_member_token uuid
 )
 RETURNS TABLE(order_id uuid, order_reference text, total_amount numeric, tracking_token uuid)
 LANGUAGE plpgsql
@@ -32,6 +33,8 @@ DECLARE
   v_tracking uuid;
   v_total numeric(12,2);
   v_final numeric(12,2);
+  v_member_id uuid;
+  v_loyalty_phone text;
 BEGIN
   IF p_service_mode NOT IN ('pickup', 'dine_in') THEN
     RAISE EXCEPTION 'Choose pickup or dine-in.' USING ERRCODE = '22023';
@@ -89,6 +92,36 @@ BEGIN
   UPDATE public.orders SET total_amount = v_total WHERE id = v_order_id;
   v_final := public.khaavio_apply_order_coupon(v_order_id, p_coupon_code);
 
+  -- Attach loyalty only when both the device bearer token and the linked
+  -- mobile number match the same Perks member row.
+  IF p_loyalty_member_token IS NOT NULL
+     AND p_loyalty_phone IS NOT NULL
+     AND pg_catalog.btrim(p_loyalty_phone) <> '' THEN
+    v_loyalty_phone := public.khaavio_normalize_indian_mobile(p_loyalty_phone);
+    IF v_loyalty_phone IS NULL THEN
+      RAISE EXCEPTION 'Invalid loyalty mobile number. Update your Perks card or continue without Loyalty.'
+        USING ERRCODE = '22023';
+    END IF;
+
+    SELECT lm.id INTO v_member_id
+    FROM public.restaurant_loyalty_members AS lm
+    JOIN public.restaurant_loyalty_programs AS lp
+      ON lp.restaurant_id = lm.restaurant_id
+     AND lp.enabled IS TRUE
+    WHERE lm.restaurant_id = v_restaurant_id
+      AND lm.member_token = p_loyalty_member_token
+      AND lm.phone_number = v_loyalty_phone
+    FOR UPDATE OF lm;
+
+    IF FOUND THEN
+      PERFORM pg_catalog.set_config('app.khaavio_assign_loyalty_member', 'on', true);
+      UPDATE public.orders AS o
+      SET loyalty_member_id = v_member_id
+      WHERE o.id = v_order_id AND o.restaurant_id = v_restaurant_id;
+      PERFORM pg_catalog.set_config('app.khaavio_assign_loyalty_member', 'off', true);
+    END IF;
+  END IF;
+
   RETURN QUERY SELECT
     v_order_id,
     pg_catalog.upper(pg_catalog.substr(pg_catalog.replace(v_order_id::text, '-', ''), 1, 8)),
@@ -96,6 +129,39 @@ BEGIN
     v_tracking;
 END;
 $function$;
+
+
+-- Backward-compatible nine-argument RPC: callers without a browser token
+-- can still place pickup/dine-in orders, but cannot attach loyalty by phone.
+CREATE OR REPLACE FUNCTION public.place_public_order_for_service_mode(
+  p_slug text,
+  p_customer_name text,
+  p_customer_phone text,
+  p_notes text,
+  p_items jsonb,
+  p_service_mode text,
+  p_pickup_eta_minutes smallint,
+  p_coupon_code text,
+  p_loyalty_phone text DEFAULT NULL
+)
+RETURNS TABLE(order_id uuid, order_reference text, total_amount numeric, tracking_token uuid)
+LANGUAGE sql
+SECURITY DEFINER
+SET search_path TO ''
+AS $function$
+  SELECT *
+  FROM public.place_public_order_for_service_mode(
+    p_slug, p_customer_name, p_customer_phone, p_notes, p_items,
+    p_service_mode, p_pickup_eta_minutes, p_coupon_code, p_loyalty_phone, NULL::uuid
+  );
+$function$;
+
+REVOKE ALL ON FUNCTION public.place_public_order_for_service_mode(
+  text, text, text, text, jsonb, text, smallint, text, text, uuid
+) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.place_public_order_for_service_mode(
+  text, text, text, text, jsonb, text, smallint, text, text, uuid
+) TO anon, authenticated;
 
 REVOKE ALL ON FUNCTION public.place_public_order_for_service_mode(
   text, text, text, text, jsonb, text, smallint, text, text
