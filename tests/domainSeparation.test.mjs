@@ -72,6 +72,26 @@ test("canonical routes do not redirect and app root is handled by the router", (
   assert.equal(getDomainRedirectTarget("localhost:5173", "/dashboard", ""), "");
 });
 
+test("host-specific root redirects run before static index fallback", () => {
+  const config = JSON.parse(read("../vercel.json"));
+  const rootRedirects = config.redirects.filter((redirect) => redirect.source === "/");
+
+  assert.deepEqual(rootRedirects, [
+    {
+      source: "/",
+      has: [{ type: "host", value: "www.khaavio.in" }],
+      destination: `${PUBLIC_SITE_URL}/`,
+      permanent: true,
+    },
+    {
+      source: "/",
+      has: [{ type: "host", value: "app.khaavio.in" }],
+      destination: `${APP_SITE_URL}/dashboard`,
+      permanent: true,
+    },
+  ]);
+});
+
 test("auth callbacks use the app host in production and preserve local preview hosts", () => {
   assert.equal(
     getAppRedirectUrl("/reset-password", "khaavio.in", "https://khaavio.in"),
