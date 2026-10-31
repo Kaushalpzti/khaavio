@@ -13,6 +13,10 @@ test("Google review link is independent from private feedback rating", () => {
   assert.match(publicWidget, /useState\(0\)/);
   assert.match(publicWidget, /disabled=\{submitting \|\| rating === 0\}/);
   assert.match(publicWidget, /isValidGoogleReviewUrl\(googleReviewUrl\)/);
+  assert.match(publicWidget, /navigator\.clipboard\.writeText\(draft\)/);
+  assert.match(publicWidget, /Copy review text/);
+  assert.match(publicWidget, /select your .*star rating again/);
+  assert.match(publicWidget, /choose your stars again on Google/i);
   assert.doesNotMatch(publicWidget, /rating\s*>=\s*4.*google/i);
 });
 

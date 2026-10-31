@@ -22,6 +22,7 @@ function getServiceErrorMessage(error) {
 export default function PublicHelpLauncher({
   showAI = false,
   showService = false,
+  isEnabled = true,
   isPanelOpen = false,
   hasStickyCart = false,
   slug = "",
@@ -54,7 +55,16 @@ export default function PublicHelpLauncher({
     if (showCustomRequest && isOpen) customInputRef.current?.focus();
   }, [showCustomRequest, isOpen]);
 
-  if ((!showAI && !showService) || isPanelOpen) return null;
+  useEffect(() => {
+    if (!isEnabled && isOpen) {
+      setIsOpen(false);
+      setShowCustomRequest(false);
+      setError("");
+      setStatus("");
+    }
+  }, [isEnabled, isOpen]);
+
+  if ((!showAI && !showService) || !isEnabled || isPanelOpen) return null;
 
   async function sendServiceRequest(requestType, note = "") {
     const cleanNote = note.trim();
@@ -112,24 +122,26 @@ export default function PublicHelpLauncher({
 
   return (
     <>
-      <div className={"public-help-launcher" + (hasStickyCart ? " is-raised" : "")}>
-        <button
-          type="button"
-          className="public-help-launcher-fab"
-          aria-label={isOpen ? "Close help options" : "Open Khaavio help"}
-          aria-haspopup="dialog"
-          aria-expanded={isOpen}
-          aria-controls="public-help-launcher-dialog"
-          title="Get Help"
-          onClick={() => {
-            setIsOpen((open) => !open);
-            setError("");
-            setStatus("");
-          }}
-        >
-          <Sparkles size={21} strokeWidth={2.1} aria-hidden="true" />
-        </button>
-      </div>
+      {!isOpen && (
+        <div className={"public-help-launcher" + (hasStickyCart ? " is-raised" : "")}>
+          <button
+            type="button"
+            className="public-help-launcher-fab"
+            aria-label="Open Khaavio help"
+            aria-haspopup="dialog"
+            aria-expanded={false}
+            aria-controls="public-help-launcher-dialog"
+            title="Get Help"
+            onClick={() => {
+              setIsOpen(true);
+              setError("");
+              setStatus("");
+            }}
+          >
+            <Sparkles size={21} strokeWidth={2.1} aria-hidden="true" />
+          </button>
+        </div>
+      )}
 
       {isOpen && (
         <div

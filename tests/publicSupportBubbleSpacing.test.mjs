@@ -15,6 +15,10 @@ test("one icon-only Help bubble opens the help sheet and AI chat separately", ()
   assert.ok(launcher.includes('role="dialog"'));
   assert.ok(launcher.includes("How can we help you?"));
   assert.ok(launcher.includes("onOpenAI"));
+  assert.ok(launcher.includes("isEnabled = true"));
+  assert.ok(launcher.includes("!isEnabled || isPanelOpen"));
+  assert.ok(launcher.includes("{!isOpen && ("));
+  assert.ok(menu.includes('isEnabled={activeBottomTab === "menu"}'));
   assert.ok(menu.includes('onOpenAI={() => setActiveFloatingHelpPanel("concierge")}'));
   assert.ok(menu.includes('externalOpen={activeFloatingHelpPanel === "concierge"}'));
 });

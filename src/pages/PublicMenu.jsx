@@ -2597,6 +2597,7 @@ export default function PublicMenu() {
           <PublicHelpLauncher
             showService={Boolean(slug && tableToken && tableContext?.restaurant_id)}
             showAI={canUseAskKhaavio}
+            isEnabled={activeBottomTab === "menu"}
             isPanelOpen={Boolean(activeFloatingHelpPanel)}
             hasStickyCart={activeBottomTab === "menu" && cart.length > 0 && !orderResult && !isCartOpen}
             slug={slug}
