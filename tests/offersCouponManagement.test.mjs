@@ -29,7 +29,7 @@ test("offers dashboard supports editing every editable field and preserves local
   assert.match(dashboard, /toLocalDateTimeInput\(coupon\.starts_at\)/);
   assert.match(dashboard, /toLocalDateTimeInput\(coupon\.ends_at\)/);
   for (const field of ["code", "title", "discount_type", "discount_value", "minimum_order_amount", "maximum_discount_amount", "starts_at", "ends_at", "usage_limit"]) {
-    assert.match(dashboard, new RegExp(`\b${field}:\s*`));
+    assert.match(dashboard, new RegExp(String.raw`\b${field}:\s*`));
   }
   assert.match(dashboard, /\.update\(couponPayload\)[\s\S]*?\.eq\("id", editingCouponId\)[\s\S]*?\.eq\("restaurant_id", restaurantId\)/);
   assert.match(dashboard, /Save changes/);

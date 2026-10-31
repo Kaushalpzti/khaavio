@@ -147,7 +147,9 @@ export default function OffersDashboard() {
           .from("restaurant_coupons")
           .update(couponPayload)
           .eq("id", editingCouponId)
-          .eq("restaurant_id", restaurantId);
+          .eq("restaurant_id", restaurantId)
+          .select("id")
+          .single();
         if (updateError) throw updateError;
         setNotice(`${code} updated successfully. Existing orders keep their saved totals.`);
       } else {
@@ -263,7 +265,7 @@ export default function OffersDashboard() {
           <p>Make a deal, share the code, and let the QR menu apply it at checkout.</p>
         </div>
         <div className="offers-header-actions">
-          {restaurants.length > 1 && <label className="offers-restaurant-select"><span>Restaurant</span><select value={restaurantId} onChange={(event) => setRestaurantId(event.target.value)}>{restaurants.map((restaurant) => <option value={restaurant.id} key={restaurant.id}>{restaurant.name}</option>)}</select></label>}
+          {restaurants.length > 1 && <label className="offers-restaurant-select"><span>Restaurant</span><select value={restaurantId} onChange={(event) => { resetCouponForm(); setRestaurantId(event.target.value); }}>{restaurants.map((restaurant) => <option value={restaurant.id} key={restaurant.id}>{restaurant.name}</option>)}</select></label>}
           <button type="button" className="offers-refresh" onClick={() => void loadCoupons(true)} disabled={refreshing}><RefreshCw size={15} className={refreshing ? "offers-spin" : ""} /> Refresh</button>
         </div>
       </header>
