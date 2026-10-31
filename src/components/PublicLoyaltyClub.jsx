@@ -192,7 +192,7 @@ export default function PublicLoyaltyClub({ slug, phone = "", onPhoneChange = ()
               <label className="public-perks-phone-field">
                 <span><Phone size={14} /> Mobile number</span>
                 <input type="tel" inputMode="tel" autoComplete="tel-national" value={phoneDraft} onChange={(event) => setPhoneDraft(event.target.value)} placeholder="10-digit mobile number" maxLength={16} aria-label="Mobile number for Khaavio Perks" required />
-                <small>India mobile numbers only. No OTP is sent; staff will confirm rewards at redemption.</small>
+                <small>Mobile number is a contact detail, not an identity check. Your Perks card is protected by this browser’s private token.</small>
               </label>
               <label className="public-perks-consent-row">
                 <input type="checkbox" checked={loyaltyConsent} onChange={(event) => setLoyaltyConsent(event.target.checked)} />
@@ -204,7 +204,7 @@ export default function PublicLoyaltyClub({ slug, phone = "", onPhoneChange = ()
               </label>
               <button type="submit" className="public-perks-join-button" disabled={saving}>
                 {saving ? <LoaderCircle size={16} className="public-perks-spin" /> : <CheckCircle2 size={16} />}
-                {saving ? "Checking card…" : "Find my card / Join free"}
+                {saving ? "Checking card…" : "Link this number to this device"}
               </button>
             </form>
           ) : (
@@ -221,7 +221,7 @@ export default function PublicLoyaltyClub({ slug, phone = "", onPhoneChange = ()
                   </span>
                 ))}
               </div>
-              <small className="public-perks-footnote">Stamps are added only after an eligible order is completed and its table bill is paid. Enter the same mobile number next visit to find this card.</small>
+              <small className="public-perks-footnote">Stamps are added only after an eligible order is completed and its table bill is paid. Keep this browser storage to access your card; a phone number alone cannot restore it on another device.</small>
               <div className="public-perks-marketing-preference">
                 <label><input type="checkbox" checked={marketingOptIn} onChange={(event) => { setMarketingOptIn(event.target.checked); setMarketingDirty(true); }} /><span>Receive offers from this restaurant (optional)</span></label>
                 {marketingDirty && <button type="button" onClick={() => void saveMarketingPreference()} disabled={saving}>{saving ? "Saving…" : "Save preference"}</button>}
@@ -242,7 +242,7 @@ export default function PublicLoyaltyClub({ slug, phone = "", onPhoneChange = ()
       )}
       {error && <p className="public-perks-message is-error" role="alert">{error}</p>}
       {notice && <p className="public-perks-message is-success" role="status">{notice}</p>}
-      <p className="public-perks-privacy-note"><ShieldCheck size={13} /> Your mobile number is used for this restaurant's loyalty service. Promotional offers are optional. This no-OTP mobile number is not independently verified.</p>
+      <p className="public-perks-privacy-note"><ShieldCheck size={13} /> Your mobile number is stored as a loyalty contact detail. Your card is accessed using a random token on this browser; the number alone cannot reveal stamps or rewards.</p>
     </section>
   );
 }

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { ExternalLink, LoaderCircle, MessageCircle, Send, Star, X } from "lucide-react";
 import { supabase } from "../lib/supabaseClient";
-import " ./PublicReviewsFeedback.css".trim();
+import "./PublicReviewsFeedback.css";
 
 const FEEDBACK_CATEGORIES = [
   { value: "food", label: "Food" },
