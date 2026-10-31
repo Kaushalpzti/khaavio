@@ -15,16 +15,16 @@ import {
   UtensilsCrossed,
 } from "lucide-react";
 import { supabase } from "../lib/supabaseClient";
-import { getAppRedirectUrl } from "../lib/domainRouting.js";
+import { getAppRedirectUrl, PUBLIC_SITE_URL } from "../lib/domainRouting.js";
 import khaavioIcon from "../assets/icon.png";
 import "./Auth.css";
 
 function Brand() {
   return (
-    <Link to="/" className="auth-brand" aria-label="Khaavio homepage">
+    <a href={PUBLIC_SITE_URL} className="auth-brand" aria-label="Khaavio homepage">
       <img src={khaavioIcon} alt="" className="auth-brand-icon" />
       <span>Khaa<span>vio</span></span>
-    </Link>
+    </a>
   );
 }
 
@@ -304,10 +304,10 @@ export default function Auth({ mode = "login" }) {
 
         <div className="auth-showcase-header">
           <Brand />
-          <Link to="/" className="auth-back-home">
+          <a href={PUBLIC_SITE_URL} className="auth-back-home">
             <ArrowLeft size={15} />
             <span>Back to website</span>
-          </Link>
+          </a>
         </div>
 
         <div className="auth-showcase-content">
@@ -391,10 +391,10 @@ export default function Auth({ mode = "login" }) {
 
       <section className="auth-panel">
         <div className="auth-panel-top">
-          <Link to="/" className="auth-mobile-brand">
+          <a href={PUBLIC_SITE_URL} className="auth-mobile-brand">
             <img src={khaavioIcon} alt="" />
             <strong>Khaavio</strong>
-          </Link>
+          </a>
 
           <span className="auth-secure-label">
             <ShieldCheck size={14} />
