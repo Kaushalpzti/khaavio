@@ -46,3 +46,36 @@ test("sidebar has responsive collapse and mobile drawer support without touching
   assert.match(css, /@media \(max-width: 780px\)/);
   assert.match(css, /prefers-reduced-motion/);
 });
+
+
+test("Operations appears immediately after Overview and before the Restaurant section", () => {
+  const workspaceIndex = layout.indexOf('label: "Workspace"');
+  const operationsIndex = layout.indexOf('label: "Operations"');
+  const restaurantIndex = layout.indexOf('label: "Restaurant"');
+  assert.ok(workspaceIndex >= 0 && operationsIndex > workspaceIndex && restaurantIndex > operationsIndex);
+  const operationsBlock = layout.slice(operationsIndex, restaurantIndex);
+  const expectedDailyOrder = [
+    'label: "Orders"',
+    'label: "Kitchen display"',
+    'label: "Service requests"',
+    'label: "Table sessions & billing"',
+    'label: "Bookings"',
+    'label: "Order receipts"',
+    'label: "Offers & Coupons"',
+    'label: "Loyalty & rewards"',
+  ];
+  let lastIndex = -1;
+  for (const item of expectedDailyOrder) {
+    const currentIndex = operationsBlock.indexOf(item);
+    assert.ok(currentIndex > lastIndex, `Operations item is missing or out of order: ${item}`);
+    lastIndex = currentIndex;
+  }
+});
+
+test("Restaurant navigation remains expanded and uses the same plain section label as other groups", () => {
+  const css = readFileSync(new URL("../src/components/RestaurantDashboardLayout.css", import.meta.url), "utf8");
+  assert.match(layout, /label: "Restaurant",\s*items:/);
+  assert.doesNotMatch(layout, /collapsible: true|restaurantNavCollapsed|RESTAURANT_NAV_STORAGE_KEY|nav-label-toggle/);
+  assert.match(layout, /<div className="restaurant-dashboard-nav-label">\{group\.label\}<\/div>/);
+  assert.doesNotMatch(css, /restaurant-dashboard-nav-label-toggle|restaurant-dashboard-nav-group-chevron/);
+});

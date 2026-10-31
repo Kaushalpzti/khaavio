@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { BadgePercent, CalendarClock, Check, Copy, LoaderCircle, Plus, RefreshCw, Tag, ToggleLeft, ToggleRight, Users } from "lucide-react";
+import { BadgePercent, CalendarClock, Check, Copy, LoaderCircle, Pencil, Plus, RefreshCw, Tag, Trash2, ToggleLeft, ToggleRight, Users, X } from "lucide-react";
 import { supabase } from "../lib/supabaseClient";
 import "./OffersDashboard.css";
 
@@ -26,14 +26,27 @@ function localNowInput() {
   return date.toISOString().slice(0, 16);
 }
 
+function toLocalDateTimeInput(value) {
+  if (!value) return "";
+  const date = new Date(value);
+  if (!Number.isFinite(date.getTime())) return "";
+  return new Date(date.getTime() - date.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+}
+
+function emptyCouponForm() {
+  return { ...EMPTY_FORM, starts_at: localNowInput() };
+}
+
 export default function OffersDashboard() {
   const [restaurants, setRestaurants] = useState([]);
   const [restaurantId, setRestaurantId] = useState("");
   const [coupons, setCoupons] = useState([]);
-  const [form, setForm] = useState(() => ({ ...EMPTY_FORM, starts_at: localNowInput() }));
+  const [form, setForm] = useState(emptyCouponForm);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [editingCouponId, setEditingCouponId] = useState("");
+  const [deletingCouponId, setDeletingCouponId] = useState("");
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [copiedCode, setCopiedCode] = useState("");
@@ -83,7 +96,7 @@ export default function OffersDashboard() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [restaurantId]);
 
-  async function createCoupon(event) {
+  async function saveCoupon(event) {
     event.preventDefault();
     if (!restaurantId || saving) return;
     setError("");
@@ -117,8 +130,7 @@ export default function OffersDashboard() {
 
     setSaving(true);
     try {
-      const { error: insertError } = await supabase.from("restaurant_coupons").insert({
-        restaurant_id: restaurantId,
+      const couponPayload = {
         code,
         title,
         discount_type: form.discount_type,
@@ -128,10 +140,29 @@ export default function OffersDashboard() {
         starts_at: startsAt.toISOString(),
         ends_at: endsAt?.toISOString() || null,
         usage_limit: usageLimit,
-      });
-      if (insertError) throw insertError;
-      setForm({ ...EMPTY_FORM, starts_at: localNowInput() });
-      setNotice(`${code} is ready. Share it with your customers.`);
+      };
+
+      if (editingCouponId) {
+        const { error: updateError } = await supabase
+          .from("restaurant_coupons")
+          .update(couponPayload)
+          .eq("id", editingCouponId)
+          .eq("restaurant_id", restaurantId)
+          .select("id")
+          .single();
+        if (updateError) throw updateError;
+        setNotice(`${code} updated successfully. Existing orders keep their saved totals.`);
+      } else {
+        const { error: insertError } = await supabase.from("restaurant_coupons").insert({
+          restaurant_id: restaurantId,
+          ...couponPayload,
+        });
+        if (insertError) throw insertError;
+        setNotice(`${code} is ready. Share it with your customers.`);
+      }
+
+      setEditingCouponId("");
+      setForm(emptyCouponForm());
       await loadCoupons(true);
     } catch (saveError) {
       const message = saveError?.code === "23505"
@@ -140,6 +171,61 @@ export default function OffersDashboard() {
       setError(message);
     } finally {
       setSaving(false);
+    }
+  }
+
+  function resetCouponForm() {
+    setEditingCouponId("");
+    setForm(emptyCouponForm());
+    setError("");
+    setNotice("");
+  }
+
+  function editCoupon(coupon) {
+    setEditingCouponId(coupon.id);
+    setError("");
+    setNotice("");
+    setForm({
+      code: coupon.code,
+      title: coupon.title,
+      discount_type: coupon.discount_type,
+      discount_value: String(coupon.discount_value),
+      minimum_order_amount: String(coupon.minimum_order_amount),
+      maximum_discount_amount: coupon.maximum_discount_amount === null ? "" : String(coupon.maximum_discount_amount),
+      starts_at: toLocalDateTimeInput(coupon.starts_at),
+      ends_at: toLocalDateTimeInput(coupon.ends_at),
+      usage_limit: coupon.usage_limit === null ? "" : String(coupon.usage_limit),
+    });
+  }
+
+  async function deleteCoupon(coupon) {
+    if (!restaurantId || deletingCouponId) return;
+    const confirmed = window.confirm(
+      `Delete coupon ${coupon.code}? It will stop being available to customers. Existing orders keep their saved coupon code and totals.`,
+    );
+    if (!confirmed) return;
+
+    setDeletingCouponId(coupon.id);
+    setError("");
+    setNotice("");
+    try {
+      const { error: deleteError } = await supabase
+        .from("restaurant_coupons")
+        .delete()
+        .eq("id", coupon.id)
+        .eq("restaurant_id", restaurantId)
+        .select("id")
+        .single();
+      if (deleteError) throw deleteError;
+
+      setCoupons((current) => current.filter((entry) => entry.id !== coupon.id));
+      if (editingCouponId === coupon.id) resetCouponForm();
+      setNotice(`${coupon.code} deleted. Existing order totals remain unchanged.`);
+    } catch (deleteError) {
+      console.error("Could not delete coupon:", deleteError);
+      setError(deleteError?.message || "Could not delete the coupon.");
+    } finally {
+      setDeletingCouponId("");
     }
   }
 
@@ -179,7 +265,7 @@ export default function OffersDashboard() {
           <p>Make a deal, share the code, and let the QR menu apply it at checkout.</p>
         </div>
         <div className="offers-header-actions">
-          {restaurants.length > 1 && <label className="offers-restaurant-select"><span>Restaurant</span><select value={restaurantId} onChange={(event) => setRestaurantId(event.target.value)}>{restaurants.map((restaurant) => <option value={restaurant.id} key={restaurant.id}>{restaurant.name}</option>)}</select></label>}
+          {restaurants.length > 1 && <label className="offers-restaurant-select"><span>Restaurant</span><select value={restaurantId} onChange={(event) => { resetCouponForm(); setRestaurantId(event.target.value); }}>{restaurants.map((restaurant) => <option value={restaurant.id} key={restaurant.id}>{restaurant.name}</option>)}</select></label>}
           <button type="button" className="offers-refresh" onClick={() => void loadCoupons(true)} disabled={refreshing}><RefreshCw size={15} className={refreshing ? "offers-spin" : ""} /> Refresh</button>
         </div>
       </header>
@@ -195,8 +281,12 @@ export default function OffersDashboard() {
 
           <div className="offers-layout">
             <section className="offers-panel offers-create-panel">
-              <div className="offers-panel-heading"><span className="offers-icon"><Plus size={17} /></span><div><h2>Create a coupon</h2><p>Discounts apply to one QR menu order.</p></div></div>
-              <form className="offers-form" onSubmit={createCoupon}>
+              <div className="offers-panel-heading">
+                <span className="offers-icon">{editingCouponId ? <Pencil size={17} /> : <Plus size={17} />}</span>
+                <div><h2>{editingCouponId ? "Edit coupon" : "Create a coupon"}</h2><p>{editingCouponId ? "Update the offer details. Saved orders keep their original totals." : "Discounts apply to one QR menu order."}</p></div>
+                {editingCouponId && <button type="button" className="offers-cancel-edit" onClick={resetCouponForm} aria-label="Cancel coupon editing"><X size={16} /> Cancel</button>}
+              </div>
+              <form className="offers-form" onSubmit={saveCoupon}>
                 <div className="offers-fields two-cols">
                   <label><span>Coupon code</span><input value={form.code} onChange={(event) => setForm((value) => ({ ...value, code: event.target.value.toUpperCase().replace(/[^A-Z0-9_-]/g, "").slice(0, 24) }))} placeholder="e.g. WELCOME10" maxLength={24} autoCapitalize="characters" required /><small>Customers enter this at checkout.</small></label>
                   <label><span>Offer name</span><input value={form.title} onChange={(event) => setForm((value) => ({ ...value, title: event.target.value }))} placeholder="e.g. First order offer" maxLength={80} required /></label>
@@ -213,7 +303,13 @@ export default function OffersDashboard() {
                   <label><span>Total uses · optional</span><input type="number" min="1" step="1" value={form.usage_limit} onChange={(event) => setForm((value) => ({ ...value, usage_limit: event.target.value }))} placeholder="Unlimited" /></label>
                 </div>
                 <div className="offers-safety-note"><Check size={15} /><span>Coupon dates, limits and discount amounts are checked again when an order is placed.</span></div>
-                <button className="offers-primary-button" type="submit" disabled={saving || loading || !restaurantId}>{saving ? <LoaderCircle size={16} className="offers-spin" /> : <Plus size={16} />} Create coupon</button>
+                <div className="offers-form-actions">
+                  <button className="offers-primary-button" type="submit" disabled={saving || loading || !restaurantId}>
+                    {saving ? <LoaderCircle size={16} className="offers-spin" /> : editingCouponId ? <Check size={16} /> : <Plus size={16} />}
+                    {saving ? "Saving…" : editingCouponId ? "Save changes" : "Create coupon"}
+                  </button>
+                  {editingCouponId && <button className="offers-secondary-button" type="button" onClick={resetCouponForm} disabled={saving}>Cancel</button>}
+                </div>
               </form>
             </section>
 
@@ -225,7 +321,14 @@ export default function OffersDashboard() {
                     const exhausted = coupon.usage_limit !== null && Number(coupon.used_count) >= Number(coupon.usage_limit);
                     const live = coupon.is_active && !exhausted && new Date(coupon.starts_at) <= new Date() && (!coupon.ends_at || new Date(coupon.ends_at) > new Date());
                     return <article className={`offers-coupon-card${live ? " is-live" : ""}`} key={coupon.id}>
-                      <div className="offers-coupon-top"><div><span className="offers-coupon-kicker">{coupon.title}</span><strong>{coupon.discount_type === "percent" ? `${Number(coupon.discount_value)}% off` : `₹${Number(coupon.discount_value).toFixed(2)} off`}</strong></div><button type="button" className="offers-toggle" aria-label={`${coupon.is_active ? "Pause" : "Activate"} ${coupon.code}`} onClick={() => void toggleCoupon(coupon)}>{coupon.is_active ? <ToggleRight size={25} /> : <ToggleLeft size={25} />}</button></div>
+                      <div className="offers-coupon-top">
+                        <div><span className="offers-coupon-kicker">{coupon.title}</span><strong>{coupon.discount_type === "percent" ? `${Number(coupon.discount_value)}% off` : `₹${Number(coupon.discount_value).toFixed(2)} off`}</strong></div>
+                        <div className="offers-coupon-actions">
+                          <button type="button" className="offers-toggle" aria-label={`${coupon.is_active ? "Pause" : "Activate"} ${coupon.code}`} onClick={() => void toggleCoupon(coupon)}>{coupon.is_active ? <ToggleRight size={25} /> : <ToggleLeft size={25} />}</button>
+                          <button type="button" className="offers-edit-button" onClick={() => editCoupon(coupon)} aria-label={`Edit coupon ${coupon.code}`} disabled={saving || Boolean(deletingCouponId)}><Pencil size={14} /> Edit</button>
+                          <button type="button" className="offers-delete-button" onClick={() => void deleteCoupon(coupon)} aria-label={`Delete coupon ${coupon.code}`} disabled={Boolean(deletingCouponId)}>{deletingCouponId === coupon.id ? <LoaderCircle size={14} className="offers-spin" /> : <Trash2 size={14} />} Delete</button>
+                        </div>
+                      </div>
                       <div className="offers-code-row"><code>{coupon.code}</code><button type="button" onClick={() => void copyCode(coupon.code)} aria-label={`Copy coupon ${coupon.code}`}>{copiedCode === coupon.code ? <Check size={15} /> : <Copy size={15} />}{copiedCode === coupon.code ? "Copied" : "Copy"}</button></div>
                       <div className="offers-coupon-meta"><span>Min. ₹{Number(coupon.minimum_order_amount).toFixed(0)}</span>{coupon.maximum_discount_amount !== null && <span>Max. ₹{Number(coupon.maximum_discount_amount).toFixed(0)} off</span>}<span>{coupon.used_count} / {coupon.usage_limit ?? "∞"} uses</span></div>
                       <div className="offers-coupon-footer"><span className={`offers-status${live ? " is-live" : ""}`}>{exhausted ? "Limit reached" : live ? "Active" : coupon.is_active ? "Scheduled / expired" : "Paused"}</span><span><CalendarClock size={13} /> {dateTimeLocal(coupon.ends_at)}</span></div>

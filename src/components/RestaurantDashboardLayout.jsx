@@ -39,6 +39,19 @@ const NAV_GROUPS = [
     ],
   },
   {
+    label: "Operations",
+    items: [
+      { label: "Orders", to: "/dashboard/orders", icon: ClipboardList },
+      { label: "Kitchen display", to: "/dashboard/kitchen", icon: ChefHat },
+      { label: "Service requests", to: "/dashboard/service-requests", icon: BellRing },
+      { label: "Table sessions & billing", to: "/dashboard/table-sessions", icon: Receipt },
+      { label: "Bookings", to: "/dashboard/bookings", icon: CalendarDays },
+      { label: "Order receipts", to: "/dashboard/receipts", icon: Receipt },
+      { label: "Offers & Coupons", to: "/dashboard/offers", icon: Tag },
+      { label: "Loyalty & rewards", to: "/dashboard/loyalty", icon: Gift },
+    ],
+  },
+  {
     label: "Restaurant",
     items: [
       { label: "Restaurant settings", to: "/dashboard/settings", icon: Settings },
@@ -46,19 +59,6 @@ const NAV_GROUPS = [
       { label: "Menu banners", to: "/dashboard/menu-banners", icon: ImagePlus },
       { label: "Menu QR", to: "/dashboard/qr", icon: QrCode },
       { label: "Table QR codes", to: "/dashboard/table-qr", icon: Store },
-    ],
-  },
-  {
-    label: "Operations",
-    items: [
-      { label: "Orders", to: "/dashboard/orders", icon: ClipboardList },
-      { label: "Service requests", to: "/dashboard/service-requests", icon: BellRing },
-      { label: "Offers & Coupons", to: "/dashboard/offers", icon: Tag },
-      { label: "Loyalty & rewards", to: "/dashboard/loyalty", icon: Gift },
-      { label: "Kitchen display", to: "/dashboard/kitchen", icon: ChefHat },
-      { label: "Table sessions & billing", to: "/dashboard/table-sessions", icon: Receipt },
-      { label: "Order receipts", to: "/dashboard/receipts", icon: Receipt },
-      { label: "Bookings", to: "/dashboard/bookings", icon: CalendarDays },
     ],
   },
   {
@@ -75,6 +75,7 @@ const NAV_GROUPS = [
     ],
   },
 ];
+
 
 function RestaurantIdentityMark({ restaurant }) {
   const [imageFailed, setImageFailed] = useState(false);
