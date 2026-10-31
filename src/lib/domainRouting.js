@@ -53,6 +53,10 @@ export function getDomainRedirectTarget(hostname, pathname, search = "") {
     return `${APP_SITE_URL}${path}${suffix}`;
   }
 
+  if (host === "app.khaavio.in" && path === "/") {
+    return `${APP_SITE_URL}/dashboard${suffix}`;
+  }
+
   if (
     host === "app.khaavio.in" &&
     (CUSTOMER_PATH.test(path) || MARKETING_PATH.test(path))
