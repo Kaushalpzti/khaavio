@@ -158,6 +158,27 @@ const PRIVATE_PAGE_TITLES = {
     ],
 };
 
+const KNOWN_APP_PATHS = new Set([
+    ...Object.keys(STATIC_PAGES),
+    ...Object.keys(PRIVATE_PAGE_TITLES),
+    "/cancellation-refund",
+    "/dashboard/menu-banners",
+    "/dashboard/receipts",
+    "/dashboard/offers",
+]);
+
+export function isKnownMetadataPath(value) {
+    const path = normalizeMetadataPath(value);
+
+    if (KNOWN_APP_PATHS.has(path)) return true;
+
+    if (/^\/(?:menu|book)\/[a-z0-9][a-z0-9-]{0,159}$/i.test(path)) {
+        return true;
+    }
+
+    return /^\/track\/[a-z0-9][a-z0-9-]{0,159}\/[a-z0-9][a-z0-9_-]{0,199}$/i.test(path);
+}
+
 export function normalizeMetadataPath(value) {
     let path = String(value || "/").split("?")[0].trim();
 
