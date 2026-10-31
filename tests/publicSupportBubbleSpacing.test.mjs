@@ -39,6 +39,6 @@ test("the Help bubble remains round and above the mobile navigation", () => {
 });
 
 test("AI chat panel remains above bottom navigation and sticky cart", () => {
-  assert.match(menuCss, /\.public-menu-bottom-navigation~\.ask-khaavio-root \.ask-khaavio-panel\s*\{[\s\S]*?bottom:\s*calc\(145px \+ env\(safe-area-inset-bottom, 0px\)\)/);
-  assert.match(menuCss, /\.public-menu-bottom-navigation~\.ask-khaavio-root\.is-raised \.ask-khaavio-panel\s*\{[\s\S]*?bottom:\s*calc\(217px \+ env\(safe-area-inset-bottom, 0px\)\)/);
+  assert.match(menuCss, /\.public-menu-bottom-navigation~\.ask-khaavio-root \.ask-khaavio-panel\s*\{[\s\S]*?bottom:\s*calc\(80px \+ env\(safe-area-inset-bottom, 0px\)\)/);
+  assert.match(menuCss, /\.public-menu-bottom-navigation~\.ask-khaavio-root\.is-raised \.ask-khaavio-panel\s*\{[\s\S]*?bottom:\s*calc\(152px \+ env\(safe-area-inset-bottom, 0px\)\)/);
 });

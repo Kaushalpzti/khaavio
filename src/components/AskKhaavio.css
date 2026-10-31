@@ -567,17 +567,17 @@
 .ask-khaavio-footer-note svg { color: #26845f; }
 @media (max-width: 560px) {
   .ask-khaavio-panel {
-    bottom: calc(145px + env(safe-area-inset-bottom, 0px));
-    height: min(650px, calc(100dvh - 165px));
-    min-height: min(320px, calc(100dvh - 165px));
-    max-height: calc(100dvh - 165px);
+    bottom: calc(80px + env(safe-area-inset-bottom, 0px));
+    height: min(650px, calc(100dvh - 100px));
+    min-height: min(320px, calc(100dvh - 100px));
+    max-height: calc(100dvh - 100px);
     border-radius: 22px;
   }
   .ask-khaavio-root.is-raised .ask-khaavio-panel {
-    bottom: calc(217px + env(safe-area-inset-bottom, 0px));
-    height: min(650px, calc(100dvh - 237px));
-    min-height: min(300px, calc(100dvh - 237px));
-    max-height: calc(100dvh - 237px);
+    bottom: calc(152px + env(safe-area-inset-bottom, 0px));
+    height: min(650px, calc(100dvh - 172px));
+    min-height: min(300px, calc(100dvh - 172px));
+    max-height: calc(100dvh - 172px);
   }
 }
 
