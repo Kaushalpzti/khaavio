@@ -8,7 +8,7 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const read = (relativePath) => readFileSync(path.join(root, relativePath), "utf8");
 const migration = read("supabase/migrations/20261025030000_table_service_requests.sql");
 const publicMenu = read("src/pages/PublicMenu.jsx");
-const concierge = read("src/components/AskKhaavio.jsx");
+const helpLauncher = read("src/components/PublicHelpLauncher.jsx");
 const dashboard = read("src/pages/ServiceRequestsDashboard.jsx");
 const app = read("src/App.jsx");
 const layout = read("src/components/RestaurantDashboardLayout.jsx");
@@ -36,13 +36,24 @@ test("only restaurant owners can read and transition requests", () => {
   assert.match(migration, /A resolved service request cannot be changed/i);
 });
 
-test("Public Menu routes validated table service actions through the unified concierge chat", () => {
+test("Public Menu exposes the Help popup only for enabled service or AI features", () => {
   assert.match(publicMenu, /import PublicHelpLauncher from "\.\.\/components\/PublicHelpLauncher"/);
   assert.match(publicMenu, /<PublicHelpLauncher[\s\S]*?showService=\{Boolean\(slug && tableToken && tableContext\?\.restaurant_id\)\}/);
-  assert.match(publicMenu, /<AskKhaavio[\s\S]*?showService=\{Boolean\(slug && tableToken && tableContext\?\.restaurant_id\)\}[\s\S]*?slug=\{slug\}[\s\S]*?tableToken=\{tableToken\}[\s\S]*?tableContext=\{tableContext\}/);
-  assert.match(concierge, /create_public_table_service_request/);
-  assert.match(concierge, /if \(!showService \|\| serviceSubmitting \|\| !slug \|\| !tableToken \|\| !tableContext\?\.restaurant_id\) return/);
-  assert.match(concierge, /"waiter"[\s\S]*"water"[\s\S]*"bill"[\s\S]*"cutlery"/);
+  assert.match(publicMenu, /<PublicHelpLauncher[\s\S]*?slug=\{slug\}[\s\S]*?tableToken=\{tableToken\}/);
+  assert.match(publicMenu, /<AskKhaavio[\s\S]*?aiEnabled=\{canUseAskKhaavio\}[\s\S]*?externalOpen=\{activeFloatingHelpPanel === "concierge"\}/);
+  assert.doesNotMatch(publicMenu, /showService=\{Boolean\(slug && tableToken/);
+});
+
+test("Help popup sends table-service actions through the existing validated RPC", () => {
+  assert.match(helpLauncher, /create_public_table_service_request/);
+  assert.match(helpLauncher, /p_slug: slug/);
+  assert.match(helpLauncher, /p_table_token: tableToken/);
+  assert.match(helpLauncher, /"waiter"/);
+  assert.match(helpLauncher, /"water"/);
+  assert.match(helpLauncher, /"bill"/);
+  assert.match(helpLauncher, /"cutlery"/);
+  assert.match(helpLauncher, /"other"/);
+  assert.match(helpLauncher, /row\.already_open === true/);
 });
 
 test("service request dashboard uses restaurant-scoped realtime and protected navigation", () => {

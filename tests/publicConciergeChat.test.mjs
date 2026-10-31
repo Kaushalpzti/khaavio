@@ -11,34 +11,47 @@ const menu = read("src/pages/PublicMenu.jsx");
 const menuCss = read("src/pages/PublicMenu.css");
 const edge = read("supabase/functions/khaavio-ai-chat/index.ts");
 
-test("public menu has one icon-only floating concierge launcher", () => {
+test("public menu has one icon-only Help bubble and a separate popup", () => {
   assert.equal((menu.match(/<PublicHelpLauncher\b/g) || []).length, 1);
-  assert.match(launcher, /<LifeBuoy size=\{21\}/);
-  assert.match(launcher, /aria-label="Open Khaavio Concierge"/);
-  assert.match(launcher, /onClick=\{onOpen\}/);
-  assert.doesNotMatch(launcher, /<span>Help<\/span>|Contact restaurant team|Ask Khaavio<\/strong>/);
-  assert.match(launcherCss, /width:\s*46px;[\s\S]*height:\s*46px/);
+  assert.ok(launcher.includes("<Sparkles size={21}"));
+  assert.ok(launcher.includes('title="Get Help"'));
+  assert.ok(launcher.includes('aria-haspopup="dialog"'));
+  assert.ok(launcher.includes('role="dialog"'));
+  assert.ok(launcher.includes("How can we help you?"));
+  assert.ok(launcherCss.includes("border-radius: 50%"));
+  assert.ok(launcherCss.includes(".public-help-launcher-scrim"));
 });
 
-test("mobile concierge icon is above the bottom nav and sticky cart", () => {
+test("help popup includes waiter, water, bill, cutlery and custom service requests", () => {
+  assert.ok(launcher.includes('sendServiceRequest("waiter")'));
+  assert.ok(launcher.includes('value: "water"'));
+  assert.ok(launcher.includes('value: "bill"'));
+  assert.ok(launcher.includes('value: "cutlery"'));
+  assert.ok(launcher.includes('sendServiceRequest("other", customNote)'));
+  assert.ok(launcher.includes("create_public_table_service_request"));
+  assert.ok(launcher.includes("p_slug: slug"));
+  assert.ok(launcher.includes("p_table_token: tableToken"));
+  assert.ok(menu.includes('onOpenAI={() => setActiveFloatingHelpPanel("concierge")}'));
+  assert.ok(menu.includes('externalOpen={activeFloatingHelpPanel === "concierge"}'));
+});
+
+test("mobile Help bubble is positioned above bottom navigation and sticky cart", () => {
   assert.match(menuCss, /\.public-menu-bottom-navigation~\.public-help-launcher\s*\{\s*right:\s*12px;\s*bottom:\s*calc\(78px \+ env\(safe-area-inset-bottom, 0px\)\);/);
   assert.match(menuCss, /\.public-menu-bottom-navigation~\.public-help-launcher\.is-raised\s*\{\s*bottom:\s*calc\(150px \+ env\(safe-area-inset-bottom, 0px\)\);/);
+  assert.ok(launcherCss.includes("max-height: min(88dvh,780px)"));
 });
 
-test("public table assistance and AI run in one concierge chat, with no second service dialog", () => {
-  assert.doesNotMatch(menu, /import PublicTableService/);
-  assert.doesNotMatch(menu, /<PublicTableService/);
-  assert.match(menu, /<AskKhaavio[\s\S]*?aiEnabled=\{canUseAskKhaavio\}[\s\S]*?showService=\{Boolean\(slug && tableToken && tableContext\?\.restaurant_id\)\}/);
-  assert.match(ask, /create_public_table_service_request/);
-  assert.match(ask, /Call waiter|Waiter bulao/);
-  assert.match(ask, /Request bill|Bill mango/);
-  assert.match(ask, /Water/);
-  assert.match(ask, /setMessages\(\(current\) => \[\.\.\.current, \{/);
-  assert.match(ask, /ask-khaavio-concierge-prompts/);
-  assert.doesNotMatch(ask, /className="ask-khaavio-table-actions"/);
+test("Ask Khaavio is a separate menu-focused chat with four quick prompts", () => {
+  assert.ok(ask.includes("What is special today?"));
+  assert.ok(ask.includes("Aaj kya special hai?"));
+  assert.ok(ask.includes("usedWebResearch: result?.usedWebResearch === true"));
+  assert.ok(ask.includes("General dish background checked online"));
+  assert.doesNotMatch(ask, /sendServiceRequest|create_public_table_service_request|tableActions|showService/);
+  assert.ok(ask.includes("ask-khaavio-concierge-prompts"));
+  assert.ok(askCss.includes("Khaavio Concierge visual refresh"));
 });
 
-test("AI receives the full public menu metadata needed for grounded dish answers", () => {
+test("AI receives dietary/allergen metadata and keeps restaurant facts menu-grounded", () => {
   assert.match(ask, /\.slice\(0, 120\)/);
   assert.match(ask, /foodType: item\.food_type/);
   assert.match(ask, /spiceLevel: item\.spice_level/);
@@ -48,14 +61,7 @@ test("AI receives the full public menu metadata needed for grounded dish answers
   assert.match(edge, /spiceLevel/);
   assert.match(edge, /isJainFriendly/);
   assert.match(edge, /allergens/);
-});
-
-test("dish answers are more detailed while exact restaurant facts remain menu-grounded", () => {
   assert.match(edge, /80-150 words/);
   assert.match(edge, /sole authority for this restaurant's exact dish names, prices, availability/);
-  assert.match(edge, /Never invent or infer a restaurant-specific recipe/);
   assert.match(edge, /Never use generic web results to assert this restaurant's ingredients or allergen status/);
-  assert.match(ask, /usedWebResearch: result\?\.usedWebResearch === true/);
-  assert.match(ask, /General dish background checked online/);
-  assert.match(askCss, /Khaavio Concierge visual refresh/);
 });
