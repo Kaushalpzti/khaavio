@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { ExternalLink, LoaderCircle, MessageCircle, Send, Star, X } from "lucide-react";
 import { supabase } from "../lib/supabaseClient";
+import PublicRestaurantSocialLinks from "./PublicRestaurantSocialLinks";
 import "./PublicReviewsFeedback.css";
 
 const FEEDBACK_CATEGORIES = [
@@ -196,6 +197,8 @@ export default function PublicReviewsFeedback({
           )}
         </div>
       )}
+
+      <PublicRestaurantSocialLinks restaurantName={restaurantName} socialLinks={socialLinks} />
     </section>
   );
 }
