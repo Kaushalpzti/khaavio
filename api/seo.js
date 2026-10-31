@@ -18,7 +18,7 @@ function getSlugFromPath(pathname) {
 async function fetchPublicRestaurant(slug) {
   if (!slug) return { restaurant: null, notFound: true };
 
-  const supabaseUrl = String(process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL || "").replace(/\\/+$/, "");
+  const supabaseUrl = String(process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL || "").replace(/\/+$/, "");
   const publishableKey = process.env.VITE_SUPABASE_PUBLISHABLE_KEY ||
     process.env.SUPABASE_PUBLISHABLE_KEY ||
     process.env.SUPABASE_ANON_KEY ||
