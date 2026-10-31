@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import {
   ArrowUpRight,
@@ -17,6 +17,8 @@ import {
   LifeBuoy,
   LogOut,
   Menu,
+  Maximize2,
+  Minimize2,
   ImagePlus,
   QrCode,
   Receipt,
@@ -104,9 +106,31 @@ function RestaurantIdentityMark({ restaurant }) {
   );
 }
 
+function FullscreenToggle({ isFullscreen, disabled, onClick }) {
+  const Icon = isFullscreen ? Minimize2 : Maximize2;
+  const label = isFullscreen ? "Exit fullscreen" : "Enter fullscreen";
+  return (
+    <button
+      type="button"
+      className="restaurant-dashboard-fullscreen-toggle"
+      onClick={onClick}
+      disabled={disabled}
+      aria-label={label}
+      title={disabled ? "Fullscreen is not supported by this browser" : label}
+    >
+      <Icon size={17} strokeWidth={1.9} aria-hidden="true" />
+    </button>
+  );
+}
+
+
 export default function RestaurantDashboardLayout({ children }) {
   const location = useLocation();
   const navigate = useNavigate();
+  const layoutRef = useRef(null);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [fullscreenSupported, setFullscreenSupported] = useState(false);
+  const [fullscreenError, setFullscreenError] = useState("");
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [isMobileViewport, setIsMobileViewport] = useState(false);
@@ -144,6 +168,31 @@ export default function RestaurantDashboardLayout({ children }) {
     mediaQuery.addEventListener("change", updateViewport);
     return () => mediaQuery.removeEventListener("change", updateViewport);
   }, []);
+
+  useEffect(() => {
+    const updateFullscreenState = () => {
+      setIsFullscreen(document.fullscreenElement === layoutRef.current);
+      setFullscreenSupported(Boolean(document.fullscreenEnabled && layoutRef.current?.requestFullscreen));
+    };
+    updateFullscreenState();
+    document.addEventListener("fullscreenchange", updateFullscreenState);
+    return () => document.removeEventListener("fullscreenchange", updateFullscreenState);
+  }, []);
+
+  async function toggleFullscreen() {
+    setFullscreenError("");
+    try {
+      if (document.fullscreenElement) {
+        await document.exitFullscreen();
+      } else if (layoutRef.current?.requestFullscreen) {
+        await layoutRef.current.requestFullscreen();
+      } else {
+        throw new Error("Fullscreen is not supported by this browser.");
+      }
+    } catch (error) {
+      setFullscreenError(error?.message || "Could not change fullscreen mode.");
+    }
+  }
 
   const handleSidebarControlClick = () => {
     if (window.matchMedia("(max-width: 780px)").matches) {
@@ -187,7 +236,7 @@ export default function RestaurantDashboardLayout({ children }) {
   }, [mobileOpen]);
 
   return (
-    <div className={`restaurant-dashboard-layout${collapsed ? " is-collapsed" : ""}`}>
+    <div ref={layoutRef} className={`restaurant-dashboard-layout${collapsed ? " is-collapsed" : ""}`}>
       <div className="restaurant-dashboard-mobilebar">
         <button
           type="button"
@@ -205,6 +254,7 @@ export default function RestaurantDashboardLayout({ children }) {
             <strong>{restaurantIdentity?.name || "Your restaurant"}</strong>
           </span>
         </Link>
+        <FullscreenToggle isFullscreen={isFullscreen} disabled={!fullscreenSupported} onClick={() => void toggleFullscreen()} />
       </div>
 
       {mobileOpen && (
@@ -322,7 +372,9 @@ export default function RestaurantDashboardLayout({ children }) {
               <strong>{restaurantIdentity?.name || "Your restaurant"}</strong>
             </span>
           </Link>
+          <FullscreenToggle isFullscreen={isFullscreen} disabled={!fullscreenSupported} onClick={() => void toggleFullscreen()} />
         </header>
+        {fullscreenError && <span className="restaurant-dashboard-fullscreen-error" role="status">{fullscreenError}</span>}
         {children}
       </div>
     </div>

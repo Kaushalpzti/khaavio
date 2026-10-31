@@ -50,3 +50,12 @@ test("coupon controls remain responsive and provide visible edit/delete actions"
   assert.match(styles, /\.offers-delete-button/);
   assert.match(styles, /@media \(max-width: 560px\)/);
 });
+
+
+test("coupon controls stay in one compact row instead of increasing card height", () => {
+  const actionBlock = styles.match(/\.offers-coupon-actions\s*\{([^}]+)\}/)?.[1] || "";
+  assert.match(actionBlock, /flex-wrap:\s*nowrap/);
+  assert.match(actionBlock, /flex:\s*0 0 auto/);
+  assert.match(styles, /\.offers-edit-button span,\s*\.offers-delete-button span\s*\{\s*display:\s*none;/);
+  assert.match(styles, /\.offers-coupon-card\s*\{[^}]*padding:\s*9px/);
+});

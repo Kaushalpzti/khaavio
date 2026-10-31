@@ -16,6 +16,7 @@
 }
 
 .restaurant-dashboard-workspacebar {
+  justify-content: space-between;
   position: sticky;
   top: 0;
   z-index: 80;

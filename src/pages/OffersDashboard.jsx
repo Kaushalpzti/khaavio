@@ -323,10 +323,10 @@ export default function OffersDashboard() {
                     return <article className={`offers-coupon-card${live ? " is-live" : ""}`} key={coupon.id}>
                       <div className="offers-coupon-top">
                         <div><span className="offers-coupon-kicker">{coupon.title}</span><strong>{coupon.discount_type === "percent" ? `${Number(coupon.discount_value)}% off` : `₹${Number(coupon.discount_value).toFixed(2)} off`}</strong></div>
-                        <div className="offers-coupon-actions">
-                          <button type="button" className="offers-toggle" aria-label={`${coupon.is_active ? "Pause" : "Activate"} ${coupon.code}`} onClick={() => void toggleCoupon(coupon)}>{coupon.is_active ? <ToggleRight size={25} /> : <ToggleLeft size={25} />}</button>
-                          <button type="button" className="offers-edit-button" onClick={() => editCoupon(coupon)} aria-label={`Edit coupon ${coupon.code}`} disabled={saving || Boolean(deletingCouponId)}><Pencil size={14} /> Edit</button>
-                          <button type="button" className="offers-delete-button" onClick={() => void deleteCoupon(coupon)} aria-label={`Delete coupon ${coupon.code}`} disabled={Boolean(deletingCouponId)}>{deletingCouponId === coupon.id ? <LoaderCircle size={14} className="offers-spin" /> : <Trash2 size={14} />} Delete</button>
+                        <div className="offers-coupon-actions" aria-label={`Actions for coupon ${coupon.code}`}>
+                          <button type="button" className="offers-toggle" title={coupon.is_active ? "Pause coupon" : "Enable coupon"} aria-label={`${coupon.is_active ? "Pause" : "Activate"} ${coupon.code}`} onClick={() => void toggleCoupon(coupon)}>{coupon.is_active ? <ToggleRight size={22} /> : <ToggleLeft size={22} />}</button>
+                          <button type="button" className="offers-edit-button" title={`Edit ${coupon.code}`} onClick={() => editCoupon(coupon)} aria-label={`Edit coupon ${coupon.code}`} disabled={saving || Boolean(deletingCouponId)}><Pencil size={13} /><span>Edit</span></button>
+                          <button type="button" className="offers-delete-button" title={`Delete ${coupon.code}`} onClick={() => void deleteCoupon(coupon)} aria-label={`Delete coupon ${coupon.code}`} disabled={Boolean(deletingCouponId)}>{deletingCouponId === coupon.id ? <LoaderCircle size={13} className="offers-spin" /> : <Trash2 size={13} />}<span>Delete</span></button>
                         </div>
                       </div>
                       <div className="offers-code-row"><code>{coupon.code}</code><button type="button" onClick={() => void copyCode(coupon.code)} aria-label={`Copy coupon ${coupon.code}`}>{copiedCode === coupon.code ? <Check size={15} /> : <Copy size={15} />}{copiedCode === coupon.code ? "Copied" : "Copy"}</button></div>

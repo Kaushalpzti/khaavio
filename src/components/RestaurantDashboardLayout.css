@@ -338,3 +338,63 @@
   .restaurant-dashboard-menu-trigger,
   .restaurant-dashboard-sidebar { transition: none; }
 }
+
+
+/* Dashboard fullscreen control */
+.restaurant-dashboard-fullscreen-toggle {
+  display: inline-grid;
+  flex: 0 0 36px;
+  width: 36px;
+  height: 36px;
+  margin-left: auto;
+  place-items: center;
+  border: 1px solid #dfe8dc;
+  border-radius: 10px;
+  color: #315f46;
+  background: #fffefa;
+  cursor: pointer;
+  transition: background 150ms ease, border-color 150ms ease, color 150ms ease, transform 150ms ease;
+}
+.restaurant-dashboard-fullscreen-toggle:hover:not(:disabled) {
+  border-color: #b9d3bd;
+  color: #075b43;
+  background: #f0f7ef;
+}
+.restaurant-dashboard-fullscreen-toggle:active:not(:disabled) { transform: scale(.96); }
+.restaurant-dashboard-fullscreen-toggle:focus-visible {
+  outline: 3px solid rgb(42 128 81 / 22%);
+  outline-offset: 2px;
+}
+.restaurant-dashboard-fullscreen-toggle:disabled {
+  cursor: not-allowed;
+  opacity: .45;
+}
+.restaurant-dashboard-layout:fullscreen {
+  width: 100%;
+  min-height: 100vh;
+  overflow: auto;
+  background: #f7f8f4;
+}
+.restaurant-dashboard-fullscreen-error {
+  position: fixed;
+  z-index: 200;
+  top: 66px;
+  right: 18px;
+  max-width: min(360px, calc(100vw - 36px));
+  padding: 8px 11px;
+  border: 1px solid #f0d1c9;
+  border-radius: 9px;
+  color: #8b4537;
+  background: #fff7f3;
+  box-shadow: 0 8px 24px rgb(31 52 38 / 10%);
+  font-size: 11px;
+}
+@media (max-width: 780px) {
+  .restaurant-dashboard-mobilebar { gap: 9px; }
+  .restaurant-dashboard-fullscreen-toggle {
+    flex: 0 0 34px;
+    width: 34px;
+    height: 34px;
+    margin-left: auto;
+  }
+}
