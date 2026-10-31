@@ -104,11 +104,6 @@ test("public loyalty lookup and order attachment require the same browser-bound 
   const firstRpcEndMarker = serviceMigration.indexOf("$function$;", firstRpcStart);
   const secondRpcStart = serviceMigration.indexOf(rpcName, firstRpcEndMarker + "$function$;".length);
   const secondRpcEndMarker = serviceMigration.indexOf("$function$;", secondRpcStart);
-  const rpcName = "CREATE OR REPLACE FUNCTION public.place_public_order_for_service_mode(";
-  const firstRpcStart = serviceMigration.indexOf(rpcName);
-  const firstRpcEndMarker = serviceMigration.indexOf("$function$;", firstRpcStart);
-  const secondRpcStart = serviceMigration.indexOf(rpcName, firstRpcEndMarker + "$function$;".length);
-  const secondRpcEndMarker = serviceMigration.indexOf("$function$;", secondRpcStart);
   const serviceRpc = firstRpcStart >= 0 && firstRpcEndMarker >= 0
     ? serviceMigration.slice(firstRpcStart, firstRpcEndMarker + "$function$;".length)
     : "";
