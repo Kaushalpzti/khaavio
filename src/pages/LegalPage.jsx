@@ -61,7 +61,7 @@ const LEGAL_CONTENT = {
       {
         title: "5. Sharing and service providers",
         paragraphs: [
-          "We share guest order or booking details with the restaurant that needs those details to respond to the guest. We use technology providers, including Supabase for authentication and database services, Vercel for website hosting, Razorpay for payment and subscription processing, and Groq for the Khaavio AI menu assistant when a guest chooses to use it. Google Analytics 4 may process website usage information only after the visitor allows analytics through the privacy choices control. These providers may process relevant information under their applicable terms and safeguards."
+          "We share guest order or booking details with the restaurant that needs those details to respond to the guest. We use technology providers, including Supabase for authentication and database services, Vercel for website hosting, Razorpay for payment and subscription processing, and Groq for the Khaavio AI menu assistant when a guest chooses to use it. Google Analytics 4 may process website usage information only after the visitor allows analytics through the privacy choices control. These providers may process relevant information under their applicable terms and safeguards.",
           "We may disclose information where reasonably necessary to comply with law or valid legal process, protect the rights and security of users or the service, investigate abuse, or manage a permitted business reorganisation. We do not sell personal information as a business model.",
         ],
       },
@@ -69,7 +69,7 @@ const LEGAL_CONTENT = {
         title: "6. Website forms, email and browser storage",
         paragraphs: [
           "The Book a Free Demo and Contact Us forms submit the details you enter to Khaavio's website API. The enquiry is stored in a restricted lead table in the Khaavio Supabase project so the team can review and respond. Submission does not automatically book a calendar slot. Do not include passwords, OTPs, card numbers or payment credentials.",
-          "Khaavio uses essential browser storage for account sessions, settings and guest workflows. The Perks browser token is a random identifier stored on the device and is used to access that browser's loyalty card; a phone number alone cannot retrieve a card. If the visitor allows analytics, Khaavio loads Google Analytics 4 and stores the analytics choice in browser local storage. Visitors can reject optional analytics or reopen Privacy choices at any time. If analytics are not configured or consent is not granted, the GA4 script is not loaded."
+          "Khaavio uses essential browser storage for account sessions, settings and guest workflows. The Perks browser token is a random identifier stored on the device and is used to access that browser's loyalty card; a phone number alone cannot retrieve a card. If the visitor allows analytics, Khaavio loads Google Analytics 4 and stores the analytics choice in browser local storage. Visitors can reject optional analytics or reopen Privacy choices at any time. If analytics are not configured or consent is not granted, the GA4 script is not loaded.",
         ],
       },
       {
