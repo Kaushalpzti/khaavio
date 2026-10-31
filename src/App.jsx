@@ -8,6 +8,7 @@ import SubscriptionAccessGuard from "./components/SubscriptionAccessGuard";
 import RestaurantDashboardLayout from "./components/RestaurantDashboardLayout";
 import SeoManager from "./components/SeoManager";
 import LegalPage from "./pages/LegalPage";
+import NotFound from "./pages/NotFound";
 import "./PageLoader.css";
 import { getDomainRedirectTarget } from "./lib/domainRouting.js";
 
@@ -375,7 +376,7 @@ export default function App() {
             }
           />
           {/* Unknown routes */}
-          <Route path="*" element={<Navigate to="/" replace />} />
+          <Route path="*" element={<NotFound />} />
                     </Routes>
           </Suspense>
         </LocationAwareRouteBoundary>
