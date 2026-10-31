@@ -3093,3 +3093,6 @@
     line-height: 1.8;
   }
 }
+
+/* Off-screen honeypot fields are invisible to people and available to basic form bots. */
+.kh2-lead-honeypot,.public-reviews-honeypot{position:absolute!important;left:-10000px!important;top:auto!important;width:1px!important;height:1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important}
