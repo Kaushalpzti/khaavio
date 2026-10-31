@@ -120,9 +120,17 @@ The website's demo and contact forms store submitted enquiries in the restricted
 
 - `SUPABASE_URL` (or the existing `VITE_SUPABASE_URL`)
 - `SUPABASE_SERVICE_ROLE_KEY` — server-side only; never expose this value through a `VITE_*` variable.
+- `SUPABASE_PUBLISHABLE_KEY` (or the existing `VITE_SUPABASE_PUBLISHABLE_KEY`) — public key used by the dynamic sitemap endpoint.
 
-Apply the migrations in timestamp order, including `20261031170000_website_leads_sitemap_feedback_controls.sql` and `20261031180000_bind_loyalty_cards_to_browser_tokens.sql`. Deploy the public feedback function with `supabase functions deploy khaavio-submit-feedback`.
+Apply these migrations in timestamp order:
+1. `20261031170000_website_leads_sitemap_feedback_controls.sql`
+2. `20261031180000_bind_loyalty_cards_to_browser_tokens.sql`
+3. `20261031190000_disable_phone_only_service_mode_loyalty.sql`
 
-To enable optional Google Analytics 4, configure `VITE_GA4_MEASUREMENT_ID` with the site's GA4 measurement ID and rebuild the frontend. GA4 is loaded only after the visitor chooses **Allow analytics**; the privacy choices control remains available for withdrawal. Without this variable, the analytics script and consent banner are not activated.
+Deploy the public feedback function with `supabase functions deploy khaavio-submit-feedback`.
 
-The dynamic sitemap is served through `/sitemap.xml` and includes the marketing pages plus published restaurant menu slugs. Submit that URL in Google Search Console after the application and database migration are deployed.
+New demo/contact enquiries are stored in `public.platform_contact_leads`. Review them in Supabase Dashboard → Table Editor; this implementation does not send an email notification or add a CRM screen yet.
+
+To enable optional Google Analytics 4, configure `VITE_GA4_MEASUREMENT_ID` with the site's GA4 measurement ID and rebuild the frontend. GA4 is loaded only after the visitor chooses **Allow analytics**; the privacy choices control remains available for withdrawal. Without this variable, the analytics script and consent banner are not activated. Mark `generate_lead` as a key event in the GA4 property if it should appear as a conversion.
+
+The dynamic sitemap is served through `/sitemap.xml` and includes the marketing pages plus published restaurant menu slugs. Submit that URL in Google Search Console after the application and database migrations are deployed.
