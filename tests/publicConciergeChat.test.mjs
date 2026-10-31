@@ -68,6 +68,6 @@ test("AI receives dietary/allergen metadata and keeps restaurant facts menu-grou
 
 
 test("Ask Khaavio Edge Function returns whether browser research was requested", () => {
-  assert.match(edgeFunction, /usedWebResearch:\s*useBrowserSearch/);
-  assert.match(edgeFunction, /return respond\(\{ reply: reply\.slice\(0, 1200\), usedWebResearch: useBrowserSearch \}\)/);
+  assert.match(edge, /usedWebResearch:\s*useBrowserSearch/);
+  assert.match(edge, /return respond\(\{ reply: reply\.slice\(0, 1200\), usedWebResearch: useBrowserSearch \}\)/);
 });
