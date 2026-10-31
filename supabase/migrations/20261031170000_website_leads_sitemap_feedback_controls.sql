@@ -40,7 +40,7 @@ AS $function$
     AND r.slug IS NOT NULL
     AND r.slug ~ '^[a-zA-Z0-9][a-zA-Z0-9-]{0,159}$'
   ORDER BY r.slug
-  LIMIT 50000;
+  LIMIT 49994;
 $function$;
 
 REVOKE ALL ON FUNCTION public.khaavio_public_sitemap_restaurant_slugs() FROM PUBLIC;
