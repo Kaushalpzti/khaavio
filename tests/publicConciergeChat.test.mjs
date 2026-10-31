@@ -65,3 +65,9 @@ test("AI receives dietary/allergen metadata and keeps restaurant facts menu-grou
   assert.match(edge, /sole authority for this restaurant's exact dish names, prices, availability/);
   assert.match(edge, /Never use generic web results to assert this restaurant's ingredients or allergen status/);
 });
+
+
+test("Ask Khaavio Edge Function returns whether browser research was requested", () => {
+  assert.match(edgeFunction, /usedWebResearch:\s*useBrowserSearch/);
+  assert.match(edgeFunction, /return respond\(\{ reply: reply\.slice\(0, 1200\), usedWebResearch: useBrowserSearch \}\)/);
+});

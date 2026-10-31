@@ -578,10 +578,10 @@ ${customerQuestion}`;
         : language === "en"
           ? "Sorry, I couldn't format that reply in English. Please ask me again."
           : "Sorry bhai, main reply Hinglish mein sahi format nahi kar paya. Ek baar phir poochho.";
-      return respond({ reply: fallback });
+      return respond({ reply: fallback, usedWebResearch: useBrowserSearch });
     }
 
-    return respond({ reply: reply.slice(0, 1200) });
+    return respond({ reply: reply.slice(0, 1200), usedWebResearch: useBrowserSearch });
   } catch (error) {
     if (error instanceof DOMException && error.name === "AbortError") {
       return respond({ error: "AI_TIMEOUT", message: "The request timed out. Please try again." }, 504);
