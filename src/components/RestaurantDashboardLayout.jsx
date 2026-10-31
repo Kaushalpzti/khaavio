@@ -275,7 +275,7 @@ export default function RestaurantDashboardLayout({ children }) {
         <nav className="restaurant-dashboard-nav">
           {NAV_GROUPS.map((group) => {
             const groupCollapsed = group.collapsible && !collapsed && restaurantNavCollapsed;
-            const groupId = `restaurant-dashboard-nav-items-${group.key || group.label.toLowerCase().replace(/\\s+/g, "-")}`;
+            const groupId = `restaurant-dashboard-nav-items-${group.key || group.label.toLowerCase()}`;
             return (
               <div
                 className={`restaurant-dashboard-nav-group${groupCollapsed ? " is-section-collapsed" : ""}`}
