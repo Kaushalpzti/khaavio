@@ -350,7 +350,7 @@
   border: 0;
   background: transparent;
   text-align: left;
-  font: inherit;
+  font-family: inherit;
   cursor: pointer;
 }
 .restaurant-dashboard-nav-label-toggle:hover {

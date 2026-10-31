@@ -81,3 +81,12 @@ test("Restaurant navigation is collapsible, remembers preference, and expands fo
   assert.match(layout, /localStorage\.setItem\(RESTAURANT_NAV_STORAGE_KEY/);
   assert.match(layout, /if \(isRestaurantRoute\) setRestaurantNavCollapsed\(false\)/);
 });
+
+
+test("collapsible Restaurant heading keeps the same typography as other section labels", () => {
+  const css = readFileSync(new URL("../src/components/RestaurantDashboardLayout.css", import.meta.url), "utf8");
+  const toggleRule = css.match(/\.restaurant-dashboard-nav-label-toggle\s*\{([^}]+)\}/)?.[1] || "";
+  assert.match(toggleRule, /font-family:\s*inherit/);
+  assert.doesNotMatch(toggleRule, /font:\s*inherit/);
+  assert.match(css, /\.restaurant-dashboard-nav-label\s*\{[\s\S]*?font-size:\s*9px[\s\S]*?font-weight:\s*850[\s\S]*?letter-spacing:\s*1\.25px[\s\S]*?text-transform:\s*uppercase/);
+});
