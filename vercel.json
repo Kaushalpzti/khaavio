@@ -1,4 +1,28 @@
 {
+  "redirects": [
+    {
+      "source": "/",
+      "has": [
+        {
+          "type": "host",
+          "value": "www.khaavio.in"
+        }
+      ],
+      "destination": "https://khaavio.in/",
+      "permanent": true
+    },
+    {
+      "source": "/",
+      "has": [
+        {
+          "type": "host",
+          "value": "app.khaavio.in"
+        }
+      ],
+      "destination": "https://app.khaavio.in/dashboard",
+      "permanent": true
+    }
+  ],
   "headers": [
     {
       "source": "/",
