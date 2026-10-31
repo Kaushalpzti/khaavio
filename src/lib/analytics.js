@@ -3,6 +3,14 @@ export const LEAD_CONFIRMATION_KEY = "khaavio:confirmed-lead:v1";
 
 const pendingEvents = [];
 
+export function sanitizeAnalyticsPath(pathname) {
+  const path = String(pathname || "/").split("?")[0].replace(/\/{2,}/g, "/");
+  if (/^\/menu\/[^/]+(?:\/.*)?$/.test(path)) return "/menu/:restaurant";
+  if (/^\/book\/[^/]+(?:\/.*)?$/.test(path)) return "/book/:restaurant";
+  if (/^\/track\/[^/]+\/[^/]+(?:\/.*)?$/.test(path)) return "/track/:restaurant/:order";
+  return path || "/";
+}
+
 export function markLeadConfirmed(leadType) {
   if (typeof window === "undefined" || !["demo", "contact"].includes(leadType)) return false;
   try {

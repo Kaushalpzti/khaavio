@@ -65,6 +65,9 @@ test("GA4 loads only with a configured measurement ID and explicit analytics con
   assert.match(manager, /analytics_storage: "denied"/);
   assert.match(analytics, /getItem\(ANALYTICS_CONSENT_KEY\) !== "granted"/);
   assert.match(analytics, /LEAD_CONFIRMATION_KEY/);
+  assert.match(analytics, /sanitizeAnalyticsPath/);
+  assert.match(manager, /sanitizeAnalyticsPath\(location\.pathname\)/);
+  assert.match(manager, /page_location: window\.location\.origin \+ pagePath/);
   assert.match(privacy, /Google Analytics 4/);
   assert.match(privacy, /privacy choices/);
 });
@@ -96,6 +99,11 @@ test("public loyalty lookup and order attachment require the same browser-bound 
   const sql = await read("supabase/migrations/20261031180000_bind_loyalty_cards_to_browser_tokens.sql");
   const serviceMigration = await read("supabase/migrations/20261031190000_disable_phone_only_service_mode_loyalty.sql");
   const component = await read("src/components/PublicLoyaltyClub.jsx");
+  const rpcName = "CREATE OR REPLACE FUNCTION public.place_public_order_for_service_mode(";
+  const firstRpcStart = serviceMigration.indexOf(rpcName);
+  const firstRpcEndMarker = serviceMigration.indexOf("$function$;", firstRpcStart);
+  const secondRpcStart = serviceMigration.indexOf(rpcName, firstRpcEndMarker + "$function$;".length);
+  const secondRpcEndMarker = serviceMigration.indexOf("$function$;", secondRpcStart);
   const rpcName = "CREATE OR REPLACE FUNCTION public.place_public_order_for_service_mode(";
   const firstRpcStart = serviceMigration.indexOf(rpcName);
   const firstRpcEndMarker = serviceMigration.indexOf("$function$;", firstRpcStart);
