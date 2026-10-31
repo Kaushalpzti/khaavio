@@ -119,7 +119,7 @@ export default function PublicReviewsFeedback({
             </label>
             {reviewStatus && <p className="public-reviews-status" role="status">{reviewStatus}</p>}
             <div className="public-reviews-next-actions">
-              <button type="button" className="public-reviews-copy" onClick={() => void copyReviewText()}>Copy my review</button>
+              <button type="button" className="public-reviews-copy" onClick={() => void copyReviewText()}>Copy review text</button>
               <button type="button" className="public-reviews-google" onClick={continueToGoogle}>
                 <span>Continue to Google</span><ExternalLink size={16} />
               </button>
