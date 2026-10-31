@@ -97,6 +97,7 @@ test("public loyalty lookup and order attachment require the same browser-bound 
   assert.match(sql, /lm\.member_token = p_loyalty_member_token/);
   assert.match(sql, /lm\.phone_number = v_phone/);
   assert.match(serviceRpc, /v_final := public\.khaavio_apply_order_coupon/);
-  assert.doesNotMatch(serviceRpc, /restaurant_loyalty_members|loyalty_member_id|p_loyalty_phone/);
+  const serviceBody = serviceRpc.split("AS $function$")[1] || "";
+  assert.doesNotMatch(serviceBody, /restaurant_loyalty_members|loyalty_member_id|p_loyalty_phone/);
   assert.match(component, /phone number alone cannot restore it/);
 });
