@@ -73,17 +73,9 @@ test("Operations appears immediately after Overview and before the Restaurant se
 });
 
 test("Restaurant navigation remains expanded and uses the same plain section label as other groups", () => {
+  const css = readFileSync(new URL("../src/components/RestaurantDashboardLayout.css", import.meta.url), "utf8");
   assert.match(layout, /label: "Restaurant",\s*items:/);
   assert.doesNotMatch(layout, /collapsible: true|restaurantNavCollapsed|RESTAURANT_NAV_STORAGE_KEY|nav-label-toggle/);
   assert.match(layout, /<div className="restaurant-dashboard-nav-label">\{group\.label\}<\/div>/);
   assert.doesNotMatch(css, /restaurant-dashboard-nav-label-toggle|restaurant-dashboard-nav-group-chevron/);
-});
-
-
-test("collapsible Restaurant heading keeps the same typography as other section labels", () => {
-  const css = readFileSync(new URL("../src/components/RestaurantDashboardLayout.css", import.meta.url), "utf8");
-  const toggleRule = css.match(/\.restaurant-dashboard-nav-label-toggle\s*\{([^}]+)\}/)?.[1] || "";
-  assert.match(toggleRule, /font-family:\s*inherit/);
-  assert.doesNotMatch(toggleRule, /font:\s*inherit/);
-  assert.match(css, /\.restaurant-dashboard-nav-label\s*\{[\s\S]*?font-size:\s*9px[\s\S]*?font-weight:\s*850[\s\S]*?letter-spacing:\s*1\.25px[\s\S]*?text-transform:\s*uppercase/);
 });
