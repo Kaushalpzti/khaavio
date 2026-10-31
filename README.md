@@ -112,3 +112,17 @@ values ('YOUR_AUTH_USER_UUID'::uuid)
 on conflict (user_id) do nothing;
 ~~~
 ~~~
+
+
+## Website trust and analytics configuration
+
+The website's demo and contact forms store submitted enquiries in the restricted `platform_contact_leads` table. Configure these server-side Vercel environment variables before enabling the forms:
+
+- `SUPABASE_URL` (or the existing `VITE_SUPABASE_URL`)
+- `SUPABASE_SERVICE_ROLE_KEY` — server-side only; never expose this value through a `VITE_*` variable.
+
+Apply the migrations in timestamp order, including `20261031170000_website_leads_sitemap_feedback_controls.sql` and `20261031180000_bind_loyalty_cards_to_browser_tokens.sql`. Deploy the public feedback function with `supabase functions deploy khaavio-submit-feedback`.
+
+To enable optional Google Analytics 4, configure `VITE_GA4_MEASUREMENT_ID` with the site's GA4 measurement ID and rebuild the frontend. GA4 is loaded only after the visitor chooses **Allow analytics**; the privacy choices control remains available for withdrawal. Without this variable, the analytics script and consent banner are not activated.
+
+The dynamic sitemap is served through `/sitemap.xml` and includes the marketing pages plus published restaurant menu slugs. Submit that URL in Google Search Console after the application and database migration are deployed.

@@ -1,7 +1,3 @@
-import { existsSync, readFileSync } from "node:fs";
-import { resolve } from "node:path";
-import { fileURLToPath } from "node:url";
-
 const SITE_URL = "https://khaavio.in";
 const STATIC_PATHS = ["/", "/about", "/contact", "/privacy", "/terms", "/refund-policy"];
 

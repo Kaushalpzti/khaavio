@@ -124,7 +124,7 @@ export default function Contact() {
                 <label className="kh2-field-full"><span>Enquiry type <b>*</b></span><select name="enquiryType" defaultValue="General enquiry" required><option>General enquiry</option><option>Product demo</option><option>Plans and pricing</option><option>Technical support</option><option>Account or billing</option><option>Partnership</option></select></label>
                 <label className="kh2-field-full"><span>How can we help? <b>*</b></span><textarea name="message" rows="4" placeholder="Tell us a little about your question..." required /></label>
               </div>
-              <button className="kh2-button kh2-button-primary kh2-form-submit" type="submit" disabled={submitting}>{submitting ? "Sending enquiry…" : "Send enquiry" <ArrowUpRight size={17} /></button>
+              <button className="kh2-button kh2-button-primary kh2-form-submit" type="submit" disabled={submitting}>{submitting ? "Sending enquiry…" : "Send enquiry"} <ArrowUpRight size={17} /></button>
               <p className="kh2-form-note"><Mail size={14} /> Your enquiry is sent securely to Khaavio. We will respond using the contact details you provide.</p>
               {status && <p className="kh2-form-status" role="alert">{status}</p>}
               <p className="kh2-privacy-note">Do not include passwords, payment card details or other sensitive information.</p>

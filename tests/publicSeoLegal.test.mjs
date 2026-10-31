@@ -12,14 +12,15 @@ test("robots.txt points crawlers to the Khaavio sitemap", () => {
     assert.match(robots, /Sitemap:\s*https:\/\/khaavio\.in\/sitemap\.xml/i);
 });
 
-test("sitemap contains only public canonical marketing and legal pages", () => {
-    const sitemap = readRoot("public/sitemap.xml");
-    assert.match(sitemap, /https:\/\/khaavio\.in\//);
-    assert.match(sitemap, /https:\/\/khaavio\.in\/about/);
-    assert.match(sitemap, /https:\/\/khaavio\.in\/privacy/);
-    assert.match(sitemap, /https:\/\/khaavio\.in\/terms/);
-    assert.match(sitemap, /https:\/\/khaavio\.in\/refund-policy/);
+test("dynamic sitemap includes public marketing pages and published restaurant menus only", () => {
+    const sitemap = readRoot("api/sitemap.js");
+    for (const path of ["/", "/about", "/contact", "/privacy", "/terms", "/refund-policy"]) {
+        assert.ok(sitemap.includes(path), `Missing sitemap path ${path}`);
+    }
+    assert.match(sitemap, /khaavio_public_sitemap_restaurant_slugs/);
+    assert.match(sitemap, /\/menu\//);
     assert.doesNotMatch(sitemap, /\/dashboard|\/login|\/signup|\/track\//);
+    assert.match(readRoot("supabase/migrations/20261031170000_website_leads_sitemap_feedback_controls.sql"), /khaavio_public_sitemap_restaurant_slugs/);
 });
 
 test("HTML includes canonical, description, social preview and software schema", () => {
