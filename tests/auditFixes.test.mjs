@@ -58,7 +58,7 @@ test("GA4 loads only with a configured measurement ID and explicit analytics con
   const manager = await read("src/components/AnalyticsConsentManager.jsx");
   const analytics = await read("src/lib/analytics.js");
   const privacy = await read("src/pages/LegalPage.jsx");
-  assert.match(manager, /VITE_GA4_MEASUREMENT_ID/);
+  assert.ok(manager.includes("VITE_GA4_MEASUREMENT_ID"));
   assert.match(manager, /consent !== "granted"/);
   assert.match(manager, /Allow analytics/);
   assert.match(manager, /Reject optional/);
@@ -96,8 +96,17 @@ test("public loyalty lookup and order attachment require the same browser-bound 
   const sql = await read("supabase/migrations/20261031180000_bind_loyalty_cards_to_browser_tokens.sql");
   const serviceMigration = await read("supabase/migrations/20261031190000_disable_phone_only_service_mode_loyalty.sql");
   const component = await read("src/components/PublicLoyaltyClub.jsx");
-  const serviceRpc = serviceMigration.match(/CREATE OR REPLACE FUNCTION public\.place_public_order_for_service_mode[\\s\\S]*?p_loyalty_member_token uuid[\\s\\S]*?\\$function\\$;/)?.[0] || "";
-  const legacyRpc = serviceMigration.match(/CREATE OR REPLACE FUNCTION public\.place_public_order_for_service_mode[\\s\\S]*?p_loyalty_phone text DEFAULT NULL[\\s\\S]*?\\$function\\$;/)?.[0] || "";
+  const rpcName = "CREATE OR REPLACE FUNCTION public.place_public_order_for_service_mode(";
+  const firstRpcStart = serviceMigration.indexOf(rpcName);
+  const firstRpcEndMarker = serviceMigration.indexOf("$function$;", firstRpcStart);
+  const secondRpcStart = serviceMigration.indexOf(rpcName, firstRpcEndMarker + "$function$;".length);
+  const secondRpcEndMarker = serviceMigration.indexOf("$function$;", secondRpcStart);
+  const serviceRpc = firstRpcStart >= 0 && firstRpcEndMarker >= 0
+    ? serviceMigration.slice(firstRpcStart, firstRpcEndMarker + "$function$;".length)
+    : "";
+  const legacyRpc = secondRpcStart >= 0 && secondRpcEndMarker >= 0
+    ? serviceMigration.slice(secondRpcStart, secondRpcEndMarker + "$function$;".length)
+    : "";
   const publicMenu = await read("src/pages/PublicMenu.jsx");
   assert.match(sql, /lm\.member_token = p_member_token/);
   assert.match(sql, /lm\.member_token = p_loyalty_member_token/);
