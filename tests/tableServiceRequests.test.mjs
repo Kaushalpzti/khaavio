@@ -41,7 +41,10 @@ test("Public Menu exposes the Help popup only for enabled service or AI features
   assert.match(publicMenu, /<PublicHelpLauncher[\s\S]*?showService=\{Boolean\(slug && tableToken && tableContext\?\.restaurant_id\)\}/);
   assert.match(publicMenu, /<PublicHelpLauncher[\s\S]*?slug=\{slug\}[\s\S]*?tableToken=\{tableToken\}/);
   assert.match(publicMenu, /<AskKhaavio[\s\S]*?aiEnabled=\{canUseAskKhaavio\}[\s\S]*?externalOpen=\{activeFloatingHelpPanel === "concierge"\}/);
-  assert.doesNotMatch(publicMenu, /showService=\{Boolean\(slug && tableToken/);
+  const askStart = publicMenu.indexOf("<AskKhaavio");
+  const askEnd = publicMenu.indexOf("/>", askStart);
+  const askProps = publicMenu.slice(askStart, askEnd);
+  assert.doesNotMatch(askProps, /showService=|tableContext=/);
 });
 
 test("Help popup sends table-service actions through the existing validated RPC", () => {
