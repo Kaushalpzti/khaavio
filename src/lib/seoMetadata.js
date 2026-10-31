@@ -47,7 +47,7 @@ const STATIC_PAGES = {
     },
     "/privacy": {
         title: "Privacy Policy | Khaavio",
-        description: "Learn how Khaavio handles restaurant account information, guest order and booking details, subscription records and privacy requests.",
+        description: "Learn how Khaavio handles restaurant accounts, guest orders, bookings, loyalty rewards, feedback, AI-assisted features and privacy requests.",
         indexable: true,
         canonicalPath: "/privacy",
     },
@@ -157,6 +157,27 @@ const PRIVATE_PAGE_TITLES = {
         "Restricted Khaavio platform administration.",
     ],
 };
+
+const KNOWN_APP_PATHS = new Set([
+    ...Object.keys(STATIC_PAGES),
+    ...Object.keys(PRIVATE_PAGE_TITLES),
+    "/cancellation-refund",
+    "/dashboard/menu-banners",
+    "/dashboard/receipts",
+    "/dashboard/offers",
+]);
+
+export function isKnownMetadataPath(value) {
+    const path = normalizeMetadataPath(value);
+
+    if (KNOWN_APP_PATHS.has(path)) return true;
+
+    if (/^\/(?:menu|book)\/[a-z0-9][a-z0-9-]{0,159}$/i.test(path)) {
+        return true;
+    }
+
+    return /^\/track\/[a-z0-9][a-z0-9-]{0,159}\/[a-z0-9][a-z0-9_-]{0,199}$/i.test(path);
+}
 
 export function normalizeMetadataPath(value) {
     let path = String(value || "/").split("?")[0].trim();

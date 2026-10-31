@@ -12,14 +12,21 @@ test("robots.txt points crawlers to the Khaavio sitemap", () => {
     assert.match(robots, /Sitemap:\s*https:\/\/khaavio\.in\/sitemap\.xml/i);
 });
 
-test("sitemap contains only public canonical marketing and legal pages", () => {
-    const sitemap = readRoot("public/sitemap.xml");
-    assert.match(sitemap, /https:\/\/khaavio\.in\//);
-    assert.match(sitemap, /https:\/\/khaavio\.in\/about/);
-    assert.match(sitemap, /https:\/\/khaavio\.in\/privacy/);
-    assert.match(sitemap, /https:\/\/khaavio\.in\/terms/);
-    assert.match(sitemap, /https:\/\/khaavio\.in\/refund-policy/);
-    assert.doesNotMatch(sitemap, /\/dashboard|\/login|\/signup|\/track\//);
+test("dynamic sitemap is routed through a narrow published-restaurant slug RPC", () => {
+    const sitemap = readRoot("api/sitemap.js");
+    const migration = readRoot("supabase/migrations/20261031183000_public_sitemap_slugs.sql");
+    const config = JSON.parse(readRoot("vercel.json"));
+
+    assert.match(sitemap, /\/sitemap\.xml|khaavio_public_sitemap_slugs/);
+    assert.match(sitemap, /STATIC_PATHS = \["\/", "\/about", "\/contact", "\/privacy", "\/terms", "\/refund-policy"\]/);
+    assert.match(sitemap, /SAFE_SLUG\.test\(slug\)/);
+    assert.match(migration, /WHERE r\.is_published IS TRUE/);
+    assert.match(migration, /REVOKE ALL ON FUNCTION public\.khaavio_public_sitemap_slugs\(\) FROM PUBLIC, anon, authenticated/);
+    assert.match(migration, /GRANT EXECUTE ON FUNCTION public\.khaavio_public_sitemap_slugs\(\) TO anon/);
+    assert.doesNotMatch(migration, /GRANT SELECT/i);
+    assert.ok(config.rewrites[0].source === "/sitemap.xml");
+    assert.equal(config.rewrites[0].destination, "/api/sitemap");
+    assert.equal(existsSync(new URL("../public/sitemap.xml", import.meta.url)), false);
 });
 
 test("HTML includes canonical, description, social preview and software schema", () => {
@@ -46,6 +53,18 @@ test("application routes and footer expose all legal pages", () => {
     assert.match(app, /<SeoManager\s*\/>/);
 });
 
+test("unknown browser routes render the custom 404 page rather than redirecting home", () => {
+    const app = readRoot("src/App.jsx");
+    const notFound = readRoot("src/pages/NotFound.jsx");
+    const styles = readRoot("src/pages/NotFound.css");
+    assert.match(app, /import NotFound from "\.\/pages\/NotFound";/);
+    assert.ok(app.includes('<Route path="*" element={<NotFound />} />'));
+    assert.match(notFound, /ERROR 404/);
+    assert.match(notFound, /Back to Khaavio/);
+    assert.match(styles, /prefers-reduced-motion/);
+    assert.ok(!app.includes('<Route path="*" element={<Navigate to="/" replace />} />'));
+});
+
 test("About page has a public route, metadata and homepage quick link", () => {
     const app = readRoot("src/App.jsx");
     const home = readRoot("src/pages/Home.jsx");
@@ -59,11 +78,15 @@ test("About page has a public route, metadata and homepage quick link", () => {
     assert.match(seo, /About Khaavio \| Restaurant QR Ordering & Operations/);
 });
 
-test("legal policies are reviewed against current Indian privacy and consumer grievance requirements", () => {
+test("privacy policy discloses current AI, loyalty, feedback and browser-storage processing", () => {
     const legal = readRoot("src/pages/LegalPage.jsx");
-    assert.match(legal, /30 October 2026/);
+    assert.match(legal, /31 October 2026/);
     assert.match(legal, /Digital Personal Data Protection Act, 2023/);
     assert.match(legal, /Digital Personal Data Protection Rules, 2025/);
+    assert.match(legal, /Groq/);
+    assert.match(legal, /Ask Khaavio/);
+    assert.match(legal, /browser local storage or session storage/);
+    assert.match(legal, /13 May 2027/);
     assert.match(legal, /48 hours/);
     assert.match(legal, /30 days/);
     assert.match(legal, /statutory right or remedy/);
