@@ -1,56 +1,98 @@
-.public-help-launcher {
-  position: fixed;
-  right: 18px;
-  bottom: max(22px, env(safe-area-inset-bottom));
-  z-index: 1100;
-  color: #173e2f;
-  font-family: inherit;
-}
-.public-help-launcher.is-raised {
-  bottom: calc(94px + env(safe-area-inset-bottom));
-}
-.public-help-launcher *,
-.public-help-launcher *::before,
-.public-help-launcher *::after {
-  box-sizing: border-box;
-}
+/* Public Menu Help — compact icon launcher and warm service sheet */
+.public-help-launcher { position: fixed; right: 18px; bottom: max(22px, env(safe-area-inset-bottom)); z-index: 1210; font-family: inherit; }
+.public-help-launcher.is-raised { bottom: calc(94px + env(safe-area-inset-bottom)); }
+.public-help-launcher *, .public-help-launcher *::before, .public-help-launcher *::after { box-sizing: border-box; }
 .public-help-launcher-fab {
-  display: grid;
-  width: 48px;
-  height: 48px;
-  place-items: center;
-  padding: 0;
-  border: 1px solid rgba(255,255,255,.82);
-  border-radius: 50%;
-  color: #fff;
+  position: relative; display: grid; width: 48px; height: 48px; place-items: center; padding: 0;
+  border: 1px solid rgba(255,255,255,.82); border-radius: 50%; color: #fff;
   background: linear-gradient(145deg, #075b42 0%, #09815a 100%);
   box-shadow: 0 9px 26px rgba(8,76,52,.25), 0 2px 6px rgba(8,76,52,.12);
-  cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
-  transition: transform 160ms ease, box-shadow 160ms ease;
+  cursor: pointer; -webkit-tap-highlight-color: transparent; transition: transform 160ms ease, box-shadow 160ms ease;
 }
-.public-help-launcher-fab:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 13px 30px rgba(8,76,52,.3);
+.public-help-launcher-fab::after {
+  content: "Get Help"; position: absolute; right: 0; bottom: calc(100% + 9px); padding: 6px 9px; border-radius: 8px;
+  color: #fff; background: #103f31; box-shadow: 0 5px 14px rgba(8,45,33,.18); font-size: 10px; font-weight: 750; line-height: 1; white-space: nowrap; pointer-events: none;
 }
-.public-help-launcher-fab:focus-visible {
-  outline: 3px solid rgba(35,132,91,.3);
-  outline-offset: 3px;
+.public-help-launcher-fab:hover { transform: translateY(-2px); box-shadow: 0 13px 30px rgba(8,76,52,.3); }
+.public-help-launcher-fab:focus-visible, .public-help-launcher-close:focus-visible, .public-help-launcher-primary-card:focus-visible,
+.public-help-launcher-service-row:focus-visible, .public-help-launcher-custom button:focus-visible, .public-help-launcher-custom input:focus-visible {
+  outline: 3px solid rgba(35,132,91,.32); outline-offset: 3px;
+}
+.public-help-launcher-scrim {
+  position: fixed; z-index: 1200; inset: 0; display: flex; align-items: flex-end; justify-content: center;
+  padding: 14px 10px max(0px, env(safe-area-inset-bottom, 0px)); background: rgba(18,28,23,.48);
+  -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px); animation: public-help-scrim-in 150ms ease-out both;
+}
+.public-help-launcher-panel {
+  display: flex; width: min(100%,520px); max-height: min(86dvh,760px); flex-direction: column; overflow-y: auto; overscroll-behavior: contain;
+  padding: 10px 18px max(20px,env(safe-area-inset-bottom,0px)); border: 1px solid rgba(229,221,208,.9); border-radius: 28px 28px 0 0;
+  color: #17392d; background: linear-gradient(180deg,#fffefa 0%,#fbf7ef 100%); box-shadow: 0 -12px 48px rgba(15,38,27,.2);
+  animation: public-help-sheet-in 190ms cubic-bezier(.2,.75,.25,1) both; scrollbar-width: thin;
+}
+.public-help-launcher-handle { width: 42px; height: 4px; flex: 0 0 auto; margin: 0 auto 15px; border-radius: 999px; background: #d7d8d0; }
+.public-help-launcher-header { display: flex; align-items: flex-start; gap: 11px; padding: 0 0 17px; }
+.public-help-launcher-header-icon { display: grid; width: 39px; height: 39px; flex: 0 0 39px; place-items: center; border-radius: 13px; color: #176144; background: #e9f3e9; }
+.public-help-launcher-header > div { flex: 1 1 auto; min-width: 0; }
+.public-help-launcher-header h2 { margin: 1px 0 5px; color: #16392d; font-family: Georgia,"Times New Roman",serif; font-size: clamp(20px,5vw,25px); font-weight: 750; letter-spacing: -.45px; line-height: 1.15; }
+.public-help-launcher-header p { max-width: 390px; margin: 0; color: #7b817b; font-size: 12px; line-height: 1.55; }
+.public-help-launcher-close { display: grid; width: 36px; height: 36px; flex: 0 0 36px; place-items: center; border: 1px solid #e8e9e1; border-radius: 50%; color: #294b3c; background: #fff; cursor: pointer; }
+.public-help-launcher-close:disabled { cursor: not-allowed; opacity: .55; }
+.public-help-launcher-status, .public-help-launcher-error { display: flex; align-items: flex-start; gap: 8px; margin: 0 0 13px; padding: 10px 12px; border: 1px solid #d9ebda; border-radius: 12px; color: #25613f; background: #f0f8ef; font-size: 12px; line-height: 1.45; }
+.public-help-launcher-status svg { flex: 0 0 auto; margin-top: 1px; }
+.public-help-launcher-error { display: block; border-color: #f0d6cd; color: #9c3f2b; background: #fff5f1; }
+.public-help-launcher-cards { display: grid; grid-template-columns: minmax(0,1fr); gap: 10px; margin-bottom: 13px; }
+.public-help-launcher-cards.has-two { grid-template-columns: repeat(2,minmax(0,1fr)); }
+.public-help-launcher-primary-card { position: relative; display: grid; min-width: 0; min-height: 158px; grid-template-rows: auto auto 1fr; justify-items: start; gap: 10px; padding: 15px 14px; border: 1px solid #e6e9de; border-radius: 20px; color: #173b2e; background: #fff; text-align: left; cursor: pointer; transition: transform 150ms ease,box-shadow 150ms ease,border-color 150ms ease; }
+.public-help-launcher-primary-card:hover:not(:disabled) { transform: translateY(-2px); border-color: #c8dfce; box-shadow: 0 9px 22px rgba(25,76,48,.08); }
+.public-help-launcher-primary-card.is-service { background: linear-gradient(145deg,#fff 0%,#f6fbf4 100%); }
+.public-help-launcher-primary-card.is-ai { border-color: #f0e1d2; background: linear-gradient(145deg,#fff 0%,#fff6ed 100%); }
+.public-help-launcher-primary-card:disabled { cursor: wait; opacity: .7; }
+.public-help-launcher-card-icon { display: grid; width: 48px; height: 48px; place-items: center; border-radius: 16px; color: #176443; background: #e7f2e5; }
+.public-help-launcher-primary-card.is-ai .public-help-launcher-card-icon { color: #ba632b; background: #fff0e2; }
+.public-help-launcher-primary-card strong { color: #17392d; font-family: Georgia,"Times New Roman",serif; font-size: 16px; font-weight: 750; line-height: 1.2; }
+.public-help-launcher-primary-card small { max-width: 190px; padding-right: 15px; color: #7b817b; font-size: 11px; line-height: 1.4; }
+.public-help-launcher-card-arrow { position: absolute; right: 12px; bottom: 14px; display: grid; width: 28px; height: 28px; place-items: center; border: 1px solid #dfe8dd; border-radius: 50%; color: #61806e; background: rgba(255,255,255,.8); }
+.public-help-launcher-service-list { overflow: hidden; padding: 2px 12px; border: 1px solid #e8e8df; border-radius: 17px; background: rgba(255,255,255,.78); }
+.public-help-launcher-service-row { display: flex; width: 100%; min-height: 65px; align-items: center; gap: 11px; padding: 9px 2px; border: 0; border-bottom: 1px solid #eeeee7; color: #1f4234; background: transparent; text-align: left; cursor: pointer; }
+.public-help-launcher-service-row:last-child { border-bottom: 0; }
+.public-help-launcher-service-row:disabled { cursor: wait; opacity: .55; }
+.public-help-launcher-service-icon { display: grid; width: 39px; height: 39px; flex: 0 0 39px; place-items: center; border-radius: 13px; color: #26674a; background: #f0f5ec; }
+.public-help-launcher-service-copy { display: grid; flex: 1 1 auto; min-width: 0; gap: 3px; }
+.public-help-launcher-service-copy strong { color: #264435; font-size: 12px; font-weight: 750; line-height: 1.3; }
+.public-help-launcher-service-copy small { color: #92968e; font-size: 10px; line-height: 1.35; }
+.public-help-launcher-service-arrow { flex: 0 0 auto; color: #98a198; transition: transform 150ms ease; }
+.public-help-launcher-service-arrow.is-open { transform: rotate(90deg); }
+.public-help-launcher-custom { display: grid; gap: 7px; padding: 13px; border: 1px solid #e5e9de; border-radius: 14px; background: #fff; }
+.public-help-launcher-custom label { color: #294b3a; font-size: 11px; font-weight: 750; }
+.public-help-launcher-custom > div { display: flex; gap: 8px; }
+.public-help-launcher-custom input { width: 100%; min-width: 0; min-height: 42px; padding: 0 12px; border: 1px solid #e3e8df; border-radius: 11px; color: #244333; background: #fffefa; font: inherit; font-size: 12px; }
+.public-help-launcher-custom button { display: grid; width: 42px; height: 42px; flex: 0 0 42px; place-items: center; border: 0; border-radius: 12px; color: #fff; background: #176344; cursor: pointer; }
+.public-help-launcher-custom button:disabled { cursor: not-allowed; opacity: .5; }
+.public-help-launcher-custom > small { color: #9a9d95; font-size: 10px; text-align: right; }
+.public-help-launcher-footnote { display: flex; align-items: flex-start; gap: 7px; margin: 13px 2px 0; color: #9a968a; font-size: 10px; line-height: 1.45; }
+.public-help-launcher-footnote-icon { color: #c28244; }
+.is-spinning { animation: public-help-spin 900ms linear infinite; }
+@keyframes public-help-spin { to { transform: rotate(360deg); } }
+@keyframes public-help-scrim-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes public-help-sheet-in { from { opacity: .65; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+@media (min-width: 700px) {
+  .public-help-launcher-scrim { align-items: flex-end; justify-content: flex-end; padding: 24px; }
+  .public-help-launcher-panel { width: min(440px,calc(100vw - 48px)); max-height: calc(100dvh - 48px); border-radius: 26px; padding: 13px 20px 20px; }
+  .public-help-launcher-handle { margin-bottom: 17px; }
 }
 @media (max-width: 600px) {
-  .public-help-launcher {
-    right: 12px;
-    bottom: calc(78px + env(safe-area-inset-bottom, 0px));
-  }
-  .public-help-launcher.is-raised {
-    bottom: calc(150px + env(safe-area-inset-bottom, 0px));
-  }
-  .public-help-launcher-fab {
-    width: 46px;
-    height: 46px;
-  }
+  .public-help-launcher { right: 12px; bottom: calc(78px + env(safe-area-inset-bottom,0px)); }
+  .public-help-launcher.is-raised { bottom: calc(150px + env(safe-area-inset-bottom,0px)); }
+  .public-help-launcher-fab { width: 46px; height: 46px; }
+  .public-help-launcher-panel { max-height: min(88dvh,780px); }
+}
+@media (max-width: 370px) {
+  .public-help-launcher-panel { padding-left: 13px; padding-right: 13px; }
+  .public-help-launcher-cards.has-two { gap: 7px; }
+  .public-help-launcher-primary-card { min-height: 150px; padding: 12px 10px; }
+  .public-help-launcher-primary-card strong { font-size: 14px; }
+  .public-help-launcher-primary-card small { font-size: 10px; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .public-help-launcher-fab { transition: none; }
-  .public-help-launcher-fab:hover { transform: none; }
+  .public-help-launcher *, .public-help-launcher *::before, .public-help-launcher *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
 }
