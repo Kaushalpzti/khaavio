@@ -71,4 +71,48 @@ REVOKE ALL ON FUNCTION public.khaavio_remove_restaurant_coupon(uuid)
 GRANT EXECUTE ON FUNCTION public.khaavio_remove_restaurant_coupon(uuid)
   TO authenticated;
 
+CREATE OR REPLACE FUNCTION public.khaavio_restore_restaurant_coupon(p_coupon_id uuid)
+RETURNS boolean
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path TO ''
+AS $function$
+DECLARE
+  v_coupon_id uuid;
+BEGIN
+  IF (SELECT auth.uid()) IS NULL THEN
+    RAISE EXCEPTION 'Authentication is required to manage coupons.'
+      USING ERRCODE = '42501';
+  END IF;
+
+  SELECT c.id
+    INTO v_coupon_id
+  FROM public.restaurant_coupons AS c
+  JOIN public.restaurants AS r ON r.id = c.restaurant_id
+  WHERE c.id = p_coupon_id
+    AND r.owner_id = (SELECT auth.uid())
+    AND c.is_archived IS TRUE
+  FOR UPDATE OF c;
+
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'Archived coupon not found or you do not have permission to restore it.'
+      USING ERRCODE = '42501';
+  END IF;
+
+  -- Restoring never silently reactivates a customer-facing discount.
+  UPDATE public.restaurant_coupons AS c
+  SET is_archived = false,
+      is_active = false,
+      updated_at = pg_catalog.now()
+  WHERE c.id = v_coupon_id;
+
+  RETURN true;
+END;
+$function$;
+
+REVOKE ALL ON FUNCTION public.khaavio_restore_restaurant_coupon(uuid)
+  FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.khaavio_restore_restaurant_coupon(uuid)
+  TO authenticated;
+
 COMMIT;
