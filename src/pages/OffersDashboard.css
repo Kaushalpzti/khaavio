@@ -183,7 +183,7 @@
 }
 
 /* Archived coupons remain visible for history, but cannot be edited or reactivated. */
-.offers-coupon-card:has(.offers-status.is-archived) {
+.offers-coupon-card.is-archived {
   border-color: #e6e1d1;
   background: #fbfaf5;
 }
