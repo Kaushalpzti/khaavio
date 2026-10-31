@@ -2,6 +2,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { buildPageMetadata, injectPageMetadata, normalizeMetadataPath } from "./_seo-utils.js";
+import { getDomainRedirectTarget } from "../src/lib/domainRouting.js";
 
 const SITE_URL = "https://khaavio.in";
 
@@ -69,6 +70,25 @@ export default async function handler(req, res) {
   try {
     const requestUrl = new URL(req.url || "/", SITE_URL);
     const pathname = normalizeMetadataPath(requestUrl.searchParams.get("path") || "/");
+    const forwardedQuery = new URLSearchParams(requestUrl.searchParams);
+    forwardedQuery.delete("path");
+    const originalSearch = forwardedQuery.toString();
+    const requestHost =
+      req.headers?.["x-forwarded-host"] || req.headers?.host || "";
+    const redirectTarget = getDomainRedirectTarget(
+      requestHost,
+      pathname,
+      originalSearch ? `?${originalSearch}` : "",
+    );
+
+    if (redirectTarget) {
+      res.statusCode = 308;
+      res.setHeader("Location", redirectTarget);
+      res.setHeader("Cache-Control", "public, max-age=3600");
+      res.end();
+      return;
+    }
+
     const slug = getSlugFromPath(pathname);
     const restaurant = slug ? await fetchPublicRestaurant(slug) : null;
     const metadata = buildPageMetadata(pathname, {

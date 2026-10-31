@@ -12,6 +12,7 @@ import {
   Upload,
 } from "lucide-react";
 import { supabase } from "../lib/supabaseClient";
+import { createPublicQrDestination } from "../lib/seoMetadata.js";
 import { normalizeSocialLinks, SOCIAL_LINK_FIELDS, validateSocialLinks } from "../lib/restaurantSocialLinks.js";
 import { isValidUpiId, normalizeUpiId } from "../lib/upiPayment.js";
 import "./RestaurantSettings.css";
@@ -458,7 +459,7 @@ export default function RestaurantSettings() {
   async function copyMenuLink() {
     if (!restaurant?.slug) return;
 
-    const url = `${window.location.origin}/menu/${encodeURIComponent(restaurant.slug)}`;
+    const url = createPublicQrDestination("menu", restaurant.slug);
 
     try {
       await navigator.clipboard.writeText(url);
@@ -987,7 +988,7 @@ export default function RestaurantSettings() {
                 Copy menu link
               </button>
               <code className="restaurant-settings-url">
-                {window.location.origin}/menu/{restaurant.slug}
+                {createPublicQrDestination("menu", restaurant.slug)}
               </code>
             </section>
           </>

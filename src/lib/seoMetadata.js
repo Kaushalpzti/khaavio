@@ -1,4 +1,7 @@
-export const SITE_URL = "https://khaavio.in";
+import { APP_SITE_URL, PUBLIC_SITE_URL } from "./domainRouting.js";
+
+export const SITE_URL = PUBLIC_SITE_URL;
+export const APP_URL = APP_SITE_URL;
 export const SOCIAL_IMAGE = `${SITE_URL}/khaavio-social-preview.png`;
 
 const HOME_DESCRIPTION =
@@ -35,6 +38,12 @@ const STATIC_PAGES = {
         description: "Learn how Khaavio helps cafés and restaurants bring digital menus, QR ordering, bookings, kitchen workflows, guest billing and loyalty tools into one workspace.",
         indexable: true,
         canonicalPath: "/about",
+    },
+    "/contact": {
+        title: "Contact Khaavio | Restaurant Software Support & Demos",
+        description: "Contact Khaavio for restaurant software demos, onboarding help, product questions and support.",
+        indexable: true,
+        canonicalPath: "/contact",
     },
     "/privacy": {
         title: "Privacy Policy | Khaavio",

@@ -15,6 +15,7 @@ import {
   UtensilsCrossed,
 } from "lucide-react";
 import { supabase } from "../lib/supabaseClient";
+import { getAppRedirectUrl } from "../lib/domainRouting.js";
 import khaavioIcon from "../assets/icon.png";
 import "./Auth.css";
 
@@ -182,7 +183,7 @@ export default function Auth({ mode = "login" }) {
 
         const { error: resetError } =
           await supabase.auth.resetPasswordForEmail(normalizedEmail, {
-            redirectTo: `${window.location.origin}/reset-password`,
+            redirectTo: getAppRedirectUrl("/reset-password", window.location.hostname, window.location.origin),
           });
 
         if (resetError) throw resetError;
@@ -219,7 +220,7 @@ export default function Auth({ mode = "login" }) {
           email: normalizedEmail,
           password,
           options: {
-            emailRedirectTo: `${window.location.origin}/login`,
+            emailRedirectTo: getAppRedirectUrl("/login", window.location.hostname, window.location.origin),
             data: {
               full_name: fullName.trim(),
               restaurant_name: restaurantName.trim(),
@@ -268,7 +269,7 @@ export default function Auth({ mode = "login" }) {
         await supabase.auth.signInWithOAuth({
           provider: "google",
           options: {
-            redirectTo: `${window.location.origin}/onboarding`,
+            redirectTo: getAppRedirectUrl("/onboarding", window.location.hostname, window.location.origin),
           },
         });
 
