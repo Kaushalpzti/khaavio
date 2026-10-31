@@ -65,7 +65,10 @@ test("canonical routes do not redirect and app root is handled by the router", (
   assert.equal(getDomainRedirectTarget("khaavio.in", "/menu/cafe-one", ""), "");
   assert.equal(getDomainRedirectTarget("app.khaavio.in", "/login", ""), "");
   assert.equal(getDomainRedirectTarget("app.khaavio.in", "/dashboard", ""), "");
-  assert.equal(getDomainRedirectTarget("app.khaavio.in", "/", ""), "");
+  assert.equal(
+    getDomainRedirectTarget("app.khaavio.in", "/", ""),
+    `${APP_SITE_URL}/dashboard`,
+  );
   assert.equal(getDomainRedirectTarget("localhost:5173", "/dashboard", ""), "");
 });
 
