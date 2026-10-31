@@ -58,11 +58,11 @@ test("unknown browser routes render the custom 404 page rather than redirecting 
     const notFound = readRoot("src/pages/NotFound.jsx");
     const styles = readRoot("src/pages/NotFound.css");
     assert.match(app, /import NotFound from "\.\/pages\/NotFound";/);
-    assert.match(app, /<Route path="\\*" element=\{<NotFound \/>\} \/>/);
+    assert.ok(app.includes('<Route path="*" element={<NotFound />} />'));
     assert.match(notFound, /ERROR 404/);
     assert.match(notFound, /Back to Khaavio/);
     assert.match(styles, /prefers-reduced-motion/);
-    assert.doesNotMatch(app, /<Route path="\\*" element=\{<Navigate to="\/" replace \/>\} \/>/);
+    assert.ok(!app.includes('<Route path="*" element={<Navigate to="/" replace />} />'));
 });
 
 test("About page has a public route, metadata and homepage quick link", () => {
