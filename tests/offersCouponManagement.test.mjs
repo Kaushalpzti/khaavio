@@ -9,10 +9,9 @@ const dashboard = read("src/pages/OffersDashboard.jsx");
 const styles = read("src/pages/OffersDashboard.css");
 
 test("coupon edits are limited to restaurant owners and cannot alter usage counters or ownership", () => {
-  assert.match(migration, /GRANT UPDATE \([\s\S]*?code[\s\S]*?title[\s\S]*?discount_type[\s\S]*?discount_value[\s\S]*?minimum_order_amount[\s\S]*?maximum_discount_amount[\s\S]*?starts_at[\s\S]*?ends_at[\s\S]*?usage_limit[\s\S]*?\) ON public\.restaurant_coupons TO authenticated/);
-  assert.doesNotMatch(migration, /GRANT UPDATE \([\s\S]*?used_count/);
-  assert.doesNotMatch(migration, /GRANT UPDATE \([\s\S]*?restaurant_id/);
-  assert.doesNotMatch(migration, /GRANT UPDATE \([\s\S]*?is_active/);
+  const updateGrant = migration.match(/GRANT UPDATE \(([\s\S]*?)\) ON public\.restaurant_coupons TO authenticated/)?.[1] || "";
+  assert.match(updateGrant, /code[\s\S]*?title[\s\S]*?discount_type[\s\S]*?discount_value[\s\S]*?minimum_order_amount[\s\S]*?maximum_discount_amount[\s\S]*?starts_at[\s\S]*?ends_at[\s\S]*?usage_limit/);
+  assert.doesNotMatch(updateGrant, /used_count|restaurant_id|is_active|created_at|updated_at/);
   assert.match(originalMigration, /GRANT UPDATE \(is_active\) ON public\.restaurant_coupons TO authenticated/);
   assert.match(originalMigration, /restaurant_coupons_owner_update[\s\S]*?r\.owner_id = \(SELECT auth\.uid\(\)\)/);
 });
