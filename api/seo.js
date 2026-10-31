@@ -21,7 +21,7 @@ async function fetchPublicRestaurant(slug) {
     process.env.SUPABASE_PUBLISHABLE_KEY ||
     process.env.SUPABASE_ANON_KEY ||
     "";
-  if (!supabaseUrl || !publishableKey) return null;
+  if (!supabaseUrl || !publishableKey) return undefined;
 
   try {
     const response = await fetch(supabaseUrl + "/rest/v1/rpc/khaavio_public_restaurant_menu", {
@@ -34,13 +34,13 @@ async function fetchPublicRestaurant(slug) {
       body: JSON.stringify({ p_slug: slug }),
       signal: AbortSignal.timeout(2800),
     });
-    if (!response.ok) return null;
+    if (!response.ok) return undefined;
     const data = await response.json();
     if (!data || !data.restaurant || data.restaurant.is_published !== true) return null;
     return data.restaurant;
   } catch (error) {
     console.warn("Social metadata lookup failed for a public restaurant.", error?.name || "FetchError");
-    return null;
+    return undefined;
   }
 }
 
@@ -95,7 +95,7 @@ export default async function handler(req, res) {
       restaurant,
       tableToken: requestUrl.searchParams.get("table") || "",
     });
-    const missingRestaurantPage = Boolean(slug) && !restaurant;
+    const missingRestaurantPage = Boolean(slug) && restaurant === null;
     const notFound = metadata.title === "Page Not Found | Khaavio" || missingRestaurantPage;
     if (notFound) {
       metadata = {

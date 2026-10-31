@@ -4,6 +4,8 @@ import { supabase } from "../lib/supabaseClient";
 import PublicRestaurantSocialLinks from "./PublicRestaurantSocialLinks";
 import "./PublicReviewsFeedback.css";
 
+const GOOGLE_REVIEW_HOSTS = new Set(["g.page", "search.google.com", "www.google.com", "maps.google.com", "maps.app.goo.gl"]);
+
 const FEEDBACK_CATEGORIES = [
   { value: "food", label: "Food" },
   { value: "service", label: "Service" },
@@ -15,8 +17,7 @@ export function isValidGoogleReviewUrl(value) {
   if (!value || typeof value !== "string") return false;
   try {
     const url = new URL(value.trim());
-    const hosts = new Set(["g.page", "search.google.com", "www.google.com", "maps.google.com", "maps.app.goo.gl"]);
-    return url.protocol === "https:" && hosts.has(url.hostname.toLowerCase());
+    return url.protocol === "https:" && GOOGLE_REVIEW_HOSTS.has(url.hostname.toLowerCase());
   } catch {
     return false;
   }

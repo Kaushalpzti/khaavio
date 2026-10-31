@@ -115,7 +115,7 @@ export default function PublicLoyaltyClub({ slug, phone = "", onPhoneChange = ()
       setPhoneDraft(normalized);
       setShowPhoneForm(false);
       setLoyaltyConsent(false);
-      setNotice("Your Perks card is ready. Use the same mobile number on future visits.");
+      setNotice("Your Perks card is linked to this browser. Keep this browser storage to access it next visit.");
       setSummary(result);
     } catch (requestError) {
       console.error("Could not find or join Khaavio Perks:", requestError);
