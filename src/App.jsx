@@ -1,4 +1,4 @@
-import { lazy, Suspense, useLayoutEffect } from "react";
+import { lazy, Suspense, useEffect, useLayoutEffect } from "react";
 import { BrowserRouter, Navigate, Route, Routes, useLocation } from "react-router-dom";
 import ProtectedRoute from "./components/ProtectedRoute";
 import RouteErrorBoundary from "./components/RouteErrorBoundary";
@@ -9,6 +9,7 @@ import RestaurantDashboardLayout from "./components/RestaurantDashboardLayout";
 import SeoManager from "./components/SeoManager";
 import LegalPage from "./pages/LegalPage";
 import "./PageLoader.css";
+import { getDomainRedirectTarget } from "./lib/domainRouting.js";
 
 // Public pages
 const Home = lazy(() => import("./pages/Home"));
@@ -112,6 +113,19 @@ function LocationAwareRouteBoundary({ children }) {
   const resetKey = `${location.pathname}${location.search}${location.hash}`;
   return <RouteErrorBoundary key={resetKey}>{children}</RouteErrorBoundary>;
 }
+
+function DomainRouteBoundary({ children }) {
+  const { pathname, search, hash } = useLocation();
+  const hostname = typeof window === "undefined" ? "" : window.location.hostname;
+  const redirectTarget = getDomainRedirectTarget(hostname, pathname, search);
+
+  useEffect(() => {
+    if (!redirectTarget) return;
+    window.location.replace(`${redirectTarget}${hash || ""}`);
+  }, [redirectTarget, hash]);
+
+  return redirectTarget ? <PageLoader /> : children;
+}
 function ProtectedPage({ children }) {
   return <ProtectedRoute>{children}</ProtectedRoute>;
 }
@@ -127,17 +141,31 @@ function ProtectedRestaurantPage({ children }) {
 }
 
 export default function App() {
+  const isRestaurantAppHost =
+    typeof window !== "undefined" &&
+    window.location.hostname.toLowerCase() === "app.khaavio.in";
+
   return (
     <BrowserRouter>
       <AuthSessionProvider>
         <KhaavioOperationalAlertsProvider>
         <ScrollToTop />
-        <SeoManager />
+        <DomainRouteBoundary>
+          <SeoManager />
         <LocationAwareRouteBoundary>
           <Suspense fallback={<PageLoader />}>
             <Routes>
           {/* Public marketing and legal pages */}
-          <Route path="/" element={<Home />} />
+          <Route
+            path="/"
+            element={
+              isRestaurantAppHost ? (
+                <Navigate to="/dashboard" replace />
+              ) : (
+                <Home />
+              )
+            }
+          />
           <Route path="/about" element={<About />} />
           <Route path="/contact" element={<Contact />} />
           <Route path="/privacy" element={<LegalPage type="privacy" />} />
@@ -351,6 +379,7 @@ export default function App() {
                     </Routes>
           </Suspense>
         </LocationAwareRouteBoundary>
+        </DomainRouteBoundary>
         </KhaavioOperationalAlertsProvider>
       </AuthSessionProvider>
     </BrowserRouter>

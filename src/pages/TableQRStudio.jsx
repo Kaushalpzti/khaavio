@@ -32,6 +32,7 @@ import {
 
 import { supabase } from "../lib/supabaseClient";
 import { normalizeTableNumber } from "../lib/tableNumber";
+import { createPublicQrDestination } from "../lib/seoMetadata.js";
 import khaavioIcon from "../assets/icon.png";
 import "./TableQRStudio.css";
 
@@ -138,20 +139,6 @@ function getErrorMessage(error, fallback) {
     : fallback;
 }
 
-function getPublicAppBase() {
-  const configured = import.meta.env.VITE_PUBLIC_APP_URL?.trim();
-
-  if (configured) {
-    return configured.replace(/\/+$/, "");
-  }
-
-  if (typeof window !== "undefined") {
-    return window.location.origin.replace(/\/+$/, "");
-  }
-
-  return "https://khaavio.in";
-}
-
 function getPublicMenuUrl(restaurant, table) {
   if (
     !restaurant?.slug ||
@@ -159,8 +146,8 @@ function getPublicMenuUrl(restaurant, table) {
     table.restaurant_id !== restaurant.id
   )
     return "";
-  const base = getPublicAppBase();
-  return `${base}/menu/${encodeURIComponent(restaurant.slug)}?table=${encodeURIComponent(table.qr_token)}`;
+
+  return createPublicQrDestination("menu", restaurant.slug, table.qr_token);
 }
 
 function getInitials(name) {

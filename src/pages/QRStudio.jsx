@@ -15,6 +15,7 @@ import {
 import QRCode from "qrcode";
 
 import { supabase } from "../lib/supabaseClient";
+import { createPublicQrDestination } from "../lib/seoMetadata.js";
 import khaavioIcon from "../assets/icon.png";
 import "./QRStudio.css";
 
@@ -85,7 +86,7 @@ export default function QRStudio() {
   }, [navigate]);
 
   const menuUrl = restaurant
-    ? `${window.location.origin}/menu/${encodeURIComponent(restaurant.slug)}`
+    ? createPublicQrDestination("menu", restaurant.slug)
     : "";
 
   useEffect(() => {
@@ -357,10 +358,9 @@ export default function QRStudio() {
               <div className="qr-dev-notice">
                 <strong>Local development preview</strong>
                 <p>
-                  This QR currently contains your localhost URL. It is useful
-                  for testing on this computer, but it will not open your
-                  development server on a customer's phone. After deployment,
-                  generate a QR from your live domain.
+                  QR codes always use your public Khaavio domain, even during
+                  local development. Customers can scan the same QR from any
+                  phone and open your published menu on khaavio.in.
                 </p>
               </div>
             )}
