@@ -242,6 +242,9 @@ BEGIN
 END;
 $function$;
 
+REVOKE ALL ON FUNCTION public.place_public_order_with_loyalty(text, uuid, text, text, text, jsonb, uuid, text) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.place_public_order_with_loyalty(text, uuid, text, text, text, jsonb, uuid, text) TO anon, authenticated;
+
 REVOKE ALL ON FUNCTION public.ensure_public_loyalty_member_by_phone(text, text, uuid, boolean, boolean, boolean)
   FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.ensure_public_loyalty_member_by_phone(text, text, uuid, boolean, boolean, boolean)
