@@ -107,6 +107,8 @@ test("domain separation is wired into routes, auth, QR tools and server metadata
   assert.match(app, /getDomainRedirectTarget/);
   assert.match(app, /isRestaurantAppHost \? \([\s\S]*?\/dashboard/);
   assert.match(auth, /getAppRedirectUrl\("\/onboarding"/);
+  assert.match(auth, /href=\{PUBLIC_SITE_URL\}/);
+  assert.doesNotMatch(auth, /<Link to="\/" className="auth-(?:brand|back-home|mobile-brand)"/);
   assert.doesNotMatch(auth, /\$\{window\.location\.origin\}\/(?:login|onboarding|reset-password)/);
   for (const source of [qr, tableQr, settings]) {
     assert.match(source, /createPublicQrDestination/);
