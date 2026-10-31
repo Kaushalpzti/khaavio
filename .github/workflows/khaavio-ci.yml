@@ -571,3 +571,107 @@ jobs:
           END;
           $verify_close_history$;
           SQL
+
+  website_trust_migration_sql:
+    name: Apply and verify website trust migrations
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_DB: khaavio_test
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d khaavio_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      PGHOST: localhost
+      PGPORT: 5432
+      PGUSER: postgres
+      PGPASSWORD: postgres
+      PGDATABASE: khaavio_test
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Install PostgreSQL client
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes postgresql-client
+      - name: Create minimal disposable schema fixture
+        run: psql -v ON_ERROR_STOP=1 -f tests/sql/website-trust-migrations-fixture.sql
+      - name: Apply website trust, token-bound loyalty and service-mode migrations
+        run: |
+          psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261031170000_website_leads_sitemap_feedback_controls.sql
+          psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261031180000_bind_loyalty_cards_to_browser_tokens.sql
+          psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261031190000_disable_phone_only_service_mode_loyalty.sql
+      - name: Verify grants, published sitemap and token-bound loyalty contracts
+        run: |
+          psql -v ON_ERROR_STOP=1 <<'SQL'
+          DO $verify$
+          DECLARE
+            v_sitemap text;
+            v_lookup text;
+            v_order text;
+            v_service text;
+          BEGIN
+            IF NOT pg_catalog.has_table_privilege('service_role', 'public.platform_contact_leads', 'INSERT') THEN
+              RAISE EXCEPTION 'Service role cannot store website leads';
+            END IF;
+            IF pg_catalog.has_table_privilege('anon', 'public.platform_contact_leads', 'SELECT')
+               OR pg_catalog.has_table_privilege('authenticated', 'public.platform_contact_leads', 'INSERT') THEN
+              RAISE EXCEPTION 'Website leads are exposed to browser roles';
+            END IF;
+            IF NOT EXISTS (
+              SELECT 1 FROM pg_catalog.pg_class c
+              JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace
+              WHERE n.nspname = 'public' AND c.relname = 'platform_contact_leads' AND c.relrowsecurity
+            ) THEN RAISE EXCEPTION 'Website leads RLS is not enabled'; END IF;
+            IF pg_catalog.has_function_privilege('anon', 'public.submit_restaurant_feedback(text,integer,text,text)', 'EXECUTE') THEN
+              RAISE EXCEPTION 'Anonymous clients can still call the feedback write RPC';
+            END IF;
+            IF NOT pg_catalog.has_function_privilege('service_role', 'public.submit_restaurant_feedback(text,integer,text,text)', 'EXECUTE') THEN
+              RAISE EXCEPTION 'Feedback Edge Function service role lacks RPC execution';
+            END IF;
+            IF NOT pg_catalog.has_function_privilege('anon', 'public.khaavio_public_sitemap_restaurant_slugs()', 'EXECUTE') THEN
+              RAISE EXCEPTION 'Public sitemap slug RPC is not accessible';
+            END IF;
+
+            SELECT p.prosrc INTO v_sitemap
+            FROM pg_catalog.pg_proc p JOIN pg_catalog.pg_namespace n ON n.oid = p.pronamespace
+            WHERE n.nspname = 'public' AND p.proname = 'khaavio_public_sitemap_restaurant_slugs';
+            IF v_sitemap IS NULL OR pg_catalog.strpos(v_sitemap, 'is_published') = 0 THEN
+              RAISE EXCEPTION 'Sitemap function does not filter published restaurants';
+            END IF;
+
+            SELECT p.prosrc INTO v_lookup
+            FROM pg_catalog.pg_proc p JOIN pg_catalog.pg_namespace n ON n.oid = p.pronamespace
+            WHERE n.nspname = 'public' AND p.proname = 'ensure_public_loyalty_member_by_phone';
+            IF v_lookup IS NULL OR pg_catalog.strpos(v_lookup, 'lm.member_token = p_member_token') = 0 THEN
+              RAISE EXCEPTION 'Public loyalty balance lookup is not bound to the browser token';
+            END IF;
+
+            SELECT p.prosrc INTO v_order
+            FROM pg_catalog.pg_proc p JOIN pg_catalog.pg_namespace n ON n.oid = p.pronamespace
+            WHERE n.nspname = 'public' AND p.proname = 'place_public_order_with_loyalty';
+            IF v_order IS NULL OR pg_catalog.strpos(v_order, 'lm.member_token = p_loyalty_member_token') = 0 THEN
+              RAISE EXCEPTION 'Table order loyalty attachment is not token-bound';
+            END IF;
+
+            SELECT p.prosrc INTO v_service
+            FROM pg_catalog.pg_proc p JOIN pg_catalog.pg_namespace n ON n.oid = p.pronamespace
+            WHERE n.nspname = 'public' AND p.proname = 'place_public_order_for_service_mode';
+            IF v_service IS NULL
+               OR pg_catalog.strpos(v_service, 'restaurant_loyalty_members') > 0
+               OR pg_catalog.strpos(v_service, 'loyalty_member_id') > 0 THEN
+              RAISE EXCEPTION 'Service-mode order still attaches loyalty without a browser token';
+            END IF;
+            RAISE NOTICE 'PASS: lead access, feedback RPC grants, sitemap visibility and token-bound loyalty are verified';
+          END;
+          $verify$;
+          SQL
