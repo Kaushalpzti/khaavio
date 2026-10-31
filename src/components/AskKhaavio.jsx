@@ -1,17 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
-  BellRing,
   Bot,
   ChevronDown,
-  Droplets,
   LoaderCircle,
-  MessageCircle,
-  ReceiptText,
   Search,
   Send,
   Sparkles,
   Utensils,
-  UtensilsCrossed,
   X,
 } from "lucide-react";
 import { supabase } from "../lib/supabaseClient";
@@ -19,70 +14,49 @@ import "./AskKhaavio.css";
 
 const COPY = {
   en: {
-    welcome: "Hi! I'm Ask Khaavio. Ask me about dishes or use the quick actions below for table help.",
-    subtitle: "Menu & table concierge",
+    welcome: "Hi! I'm Ask Khaavio. I can help you explore this menu. What are you craving?",
+    subtitle: "Your friendly menu assistant",
     placeholder: "Ask about dishes, prices…",
     send: "Send message",
     open: "Open Ask Khaavio chat",
     close: "Close chat",
-    quickTitle: "Try a question or quick action",
-    quickPrompts: ["Suggest something spicy", "Vegetarian options", "Under ₹200"],
+    quickTitle: "Try asking",
+    quickPrompts: ["Suggest something spicy", "Vegetarian options", "Under ₹200", "What is special today?"],
     typing: "Finding a helpful answer…",
     unavailable: "Sorry, the assistant is temporarily unavailable. Please try again shortly.",
     add: "Add",
     language: "Reply language",
     offline: "I couldn't connect right now. Please try again in a moment.",
-    tableActionsTitle: "Need something at your table?",
-    tableActions: [{ value: "waiter", label: "Call waiter" }, { value: "water", label: "Water" }, { value: "bill", label: "Request bill" }, { value: "cutlery", label: "Plates / cutlery" }],
-    other: "Something else",
-    otherPlaceholder: "Tell the restaurant team what you need…",
-    requestSent: "Your request has been sent to the restaurant team.",
-    requestAlreadyOpen: "Your earlier request is already open. The team can see it.",
-    requestFailed: "We couldn't send that request. Please try again.",
   },
   hi: {
-    welcome: "नमस्ते! मेन्यू के बारे में पूछें या नीचे दिए गए विकल्पों से टेबल पर मदद माँगें।",
-    subtitle: "मेन्यू और टेबल सहायता",
+    welcome: "नमस्ते! मैं Ask Khaavio हूँ। इस मेन्यू में आपके लिए क्या अच्छा रहेगा?",
+    subtitle: "आपका मेन्यू असिस्टेंट",
     placeholder: "डिश या कीमत के बारे में पूछें…",
     send: "मैसेज भेजें",
     open: "Ask Khaavio चैट खोलें",
     close: "चैट बंद करें",
-    quickTitle: "कोई सवाल या क्विक एक्शन चुनें",
-    quickPrompts: ["कुछ spicy सुझाओ", "शाकाहारी विकल्प", "₹200 से कम में"],
+    quickTitle: "आप ये पूछ सकते हैं",
+    quickPrompts: ["कुछ spicy सुझाओ", "शाकाहारी विकल्प", "₹200 से कम में", "आज क्या खास है?"],
     typing: "जवाब ढूँढ रहा हूँ…",
     unavailable: "माफ़ कीजिए, असिस्टेंट अभी उपलब्ध नहीं है। थोड़ी देर बाद कोशिश करें।",
     add: "जोड़ें",
     language: "जवाब की भाषा",
     offline: "अभी कनेक्ट नहीं हो पाया। कृपया थोड़ी देर बाद फिर कोशिश करें।",
-    tableActionsTitle: "टेबल पर कुछ चाहिए?",
-    tableActions: [{ value: "waiter", label: "वेटर बुलाएँ" }, { value: "water", label: "पानी" }, { value: "bill", label: "बिल मँगाएँ" }, { value: "cutlery", label: "प्लेट / कटलरी" }],
-    other: "कुछ और",
-    otherPlaceholder: "रेस्टोरेंट टीम को बताएं कि क्या चाहिए…",
-    requestSent: "आपकी रिक्वेस्ट रेस्टोरेंट टीम को भेज दी गई है।",
-    requestAlreadyOpen: "आपकी पिछली रिक्वेस्ट अभी भी खुली है। टीम उसे देख सकती है।",
-    requestFailed: "रिक्वेस्ट नहीं भेज पाए। कृपया फिर कोशिश करें।",
   },
   hinglish: {
-    welcome: "Hey! Main Ask Khaavio hoon 😊 Dish ke baare mein poochho, ya neeche quick action se table help maango.",
-    subtitle: "Menu aur table help, ek hi chat mein",
+    welcome: "Hey! Main Ask Khaavio hoon 😊 Menu explore karo—kya try karna chahoge?",
+    subtitle: "Your friendly menu assistant",
     placeholder: "Dish, price ya recommendation poochho…",
     send: "Message bhejo",
     open: "Ask Khaavio chat kholo",
     close: "Chat band karo",
-    quickTitle: "Sawaal poochho ya quick action chuno",
-    quickPrompts: ["Kuch spicy suggest karo", "Veg options batao", "₹200 ke andar"],
+    quickTitle: "Try asking",
+    quickPrompts: ["Kuch spicy suggest karo", "Veg options batao", "₹200 ke andar", "Aaj kya special hai?"],
     typing: "Achha answer dhoondh raha hoon…",
     unavailable: "Sorry bhai, assistant abhi available nahi hai. Thodi der baad try karo.",
     add: "Add karo",
     language: "Reply ki language",
     offline: "Abhi connect nahi ho paya. Ek baar phir try karo.",
-    tableActionsTitle: "Table par kuch chahiye?",
-    tableActions: [{ value: "waiter", label: "Waiter bulao" }, { value: "water", label: "Paani" }, { value: "bill", label: "Bill mango" }, { value: "cutlery", label: "Plate / cutlery" }],
-    other: "Kuch aur",
-    otherPlaceholder: "Restaurant team ko batao kya chahiye…",
-    requestSent: "Tumhari request restaurant team ko bhej di gayi hai.",
-    requestAlreadyOpen: "Tumhari pehle wali request abhi open hai. Team use dekh sakti hai.",
-    requestFailed: "Request send nahi ho payi. Ek baar phir try karo.",
   },
 };
 
@@ -118,10 +92,6 @@ export default function AskKhaavio({
   externalOpen,
   onExternalOpenChange,
   aiEnabled = true,
-  showService = false,
-  slug = "",
-  tableToken = "",
-  tableContext = null,
 }) {
   const [localIsOpen, setLocalIsOpen] = useState(false);
   const isControlledOpen = typeof externalOpen === "boolean";
@@ -134,10 +104,6 @@ export default function AskKhaavio({
   const [language, setLanguage] = useState("hinglish");
   const [draft, setDraft] = useState("");
   const [sending, setSending] = useState(false);
-  const [serviceSubmitting, setServiceSubmitting] = useState(false);
-  const [serviceNote, setServiceNote] = useState("");
-  const [showServiceNote, setShowServiceNote] = useState(false);
-  const [serviceError, setServiceError] = useState("");
   const [messages, setMessages] = useState(() => [{
     id: "greeting",
     role: "assistant",
@@ -221,7 +187,6 @@ export default function AskKhaavio({
         address: restaurant?.address || "",
         businessHours: restaurant?.business_hours || null,
       },
-      table: tableContext?.table_number ? { number: String(tableContext.table_number) } : null,
       menuItems: preparedMenu,
       offers: publicOffers.slice(0, 20).map((offer) => ({
         title: offer.title || "",
@@ -332,55 +297,6 @@ export default function AskKhaavio({
     }
   }
 
-  async function sendServiceRequest(requestType, note = "") {
-    const cleanNote = note.trim();
-    if (!showService || serviceSubmitting || !slug || !tableToken || !tableContext?.restaurant_id) return;
-    if (requestType === "other" && !cleanNote) {
-      setServiceError(copy.otherPlaceholder);
-      return;
-    }
-
-    const option = copy.tableActions.find((item) => item.value === requestType);
-    const actionLabel = requestType === "other" ? copy.other : option?.label || copy.tableActionsTitle;
-    setServiceSubmitting(true);
-    setServiceError("");
-
-    setMessages((current) => [...current, {
-      id: makeId(),
-      role: "user",
-      content: requestType === "other" ? cleanNote : actionLabel,
-      suggestedItems: [],
-    }]);
-
-    try {
-      const { data, error } = await supabase.rpc("create_public_table_service_request", {
-        p_slug: slug,
-        p_table_token: tableToken,
-        p_request_type: requestType,
-        p_note: cleanNote || null,
-      });
-      if (error) throw error;
-      const row = Array.isArray(data) ? data[0] : data;
-      if (!row?.request_id) throw new Error("The restaurant team did not confirm this request.");
-
-      setMessages((current) => [...current, {
-        id: makeId(),
-        role: "assistant",
-        content: row.already_open === true ? copy.requestAlreadyOpen : copy.requestSent,
-        suggestedItems: [],
-      }]);
-      setServiceNote("");
-      setShowServiceNote(false);
-    } catch (error) {
-      const message = String(error?.message || "").toLowerCase();
-      setServiceError(message.includes("rate") || message.includes("too many")
-        ? "A few requests were just sent. Please wait a moment."
-        : copy.requestFailed);
-    } finally {
-      setServiceSubmitting(false);
-    }
-  }
-
   function handleLanguageChange(event) {
     const nextLanguage = event.target.value;
     if (!Object.prototype.hasOwnProperty.call(COPY, nextLanguage) || nextLanguage === language) {
@@ -419,7 +335,7 @@ export default function AskKhaavio({
               <span />
             </div>
             <div className="ask-khaavio-header-copy">
-              <strong>{aiEnabled ? "Ask Khaavio" : "Table assistance"}</strong>
+              <strong>Ask Khaavio</strong>
               <small>{copy.subtitle}</small>
             </div>
             <label className="ask-khaavio-language">
@@ -453,12 +369,6 @@ export default function AskKhaavio({
               <>
                 <span className="ask-khaavio-context-dot" />
                 <span>{preparedMenu.length} {language === "hi" ? "डिश" : "dishes"}</span>
-              </>
-            )}
-            {showService && tableContext?.table_number && (
-              <>
-                <span className="ask-khaavio-context-dot" />
-                <span>Table {tableContext.table_number}</span>
               </>
             )}
           </div>
@@ -516,87 +426,20 @@ export default function AskKhaavio({
             )}
           </div>
 
-          {(aiEnabled || showService) && (
+          {aiEnabled && (
             <div className="ask-khaavio-quick-prompts ask-khaavio-concierge-prompts">
               <span>{copy.quickTitle}</span>
               <div>
-                {aiEnabled && messages.length === 1 && !sending && [
-                  preparedMenu[0]?.name
-                    ? language === "hi"
-                      ? preparedMenu[0].name + " के बारे में बताओ"
-                      : language === "en"
-                        ? "Tell me about " + preparedMenu[0].name
-                        : preparedMenu[0].name + " ke baare mein batao"
-                    : copy.quickPrompts[0],
-                  copy.quickPrompts[1],
-                  copy.quickPrompts[2],
-                ].map((prompt) => (
-                  <button key={prompt} type="button" onClick={() => void sendMessage(prompt)} disabled={sending || serviceSubmitting}>
+                {messages.length === 1 && !sending && copy.quickPrompts.map((prompt) => (
+                  <button key={prompt} type="button" onClick={() => void sendMessage(prompt)} disabled={sending}>
                     {prompt}
                   </button>
                 ))}
-                {showService && copy.tableActions.map((action) => {
-                  const Icon = action.value === "waiter"
-                    ? BellRing
-                    : action.value === "water"
-                      ? Droplets
-                      : action.value === "bill"
-                        ? ReceiptText
-                        : UtensilsCrossed;
-                  return (
-                    <button
-                      key={action.value}
-                      type="button"
-                      className="ask-khaavio-service-chip"
-                      onClick={() => void sendServiceRequest(action.value)}
-                      disabled={serviceSubmitting || sending}
-                    >
-                      <Icon size={13} />
-                      {action.label}
-                    </button>
-                  );
-                })}
-                {showService && (
-                  <button
-                    type="button"
-                    className="ask-khaavio-service-chip"
-                    onClick={() => {
-                      setShowServiceNote((current) => !current);
-                      setServiceError("");
-                    }}
-                    disabled={serviceSubmitting || sending}
-                  >
-                    <MessageCircle size={13} />
-                    {copy.other}
-                  </button>
-                )}
               </div>
-              {showService && showServiceNote && (
-                <form
-                  className="ask-khaavio-other-request"
-                  onSubmit={(event) => {
-                    event.preventDefault();
-                    void sendServiceRequest("other", serviceNote);
-                  }}
-                >
-                  <input
-                    value={serviceNote}
-                    onChange={(event) => setServiceNote(event.target.value.slice(0, 240))}
-                    placeholder={copy.otherPlaceholder}
-                    maxLength={240}
-                    aria-label={copy.otherPlaceholder}
-                  />
-                  <button type="submit" disabled={serviceSubmitting || !serviceNote.trim()}>
-                    {serviceSubmitting ? <LoaderCircle size={14} className="ask-khaavio-spin" /> : <Send size={14} />}
-                  </button>
-                </form>
-              )}
-              {serviceError && <p className="ask-khaavio-service-error" role="alert">{serviceError}</p>}
             </div>
           )}
 
-          {aiEnabled ? (
-            <form className="ask-khaavio-composer" onSubmit={handleSubmit}>
+          <form className="ask-khaavio-composer" onSubmit={handleSubmit}>
               <input
                 ref={inputRef}
                 value={draft}
@@ -615,11 +458,6 @@ export default function AskKhaavio({
                 {sending ? <LoaderCircle size={17} className="ask-khaavio-spin" /> : <Send size={17} />}
               </button>
             </form>
-          ) : (
-            <div className="ask-khaavio-service-only-note">
-              Choose a table action above and the restaurant team will receive it directly.
-            </div>
-          )}
           <div className="ask-khaavio-footer-note">
             <Sparkles size={11} />
             <span>{language === "hi" ? "मेन्यू की जानकारी पहले · सामान्य डिश जानकारी के लिए वेब रिसर्च · एलर्जी स्टाफ से ज़रूर कन्फर्म करें" : language === "en" ? "Restaurant menu first · Web research for general dish knowledge · Confirm allergies with staff" : "Pehle restaurant menu ki details · General dish info ke liye web research · Allergy staff se confirm karein"}</span>

@@ -2599,10 +2599,12 @@ export default function PublicMenu() {
             showAI={canUseAskKhaavio}
             isPanelOpen={Boolean(activeFloatingHelpPanel)}
             hasStickyCart={activeBottomTab === "menu" && cart.length > 0 && !orderResult && !isCartOpen}
-            onOpen={() => setActiveFloatingHelpPanel("concierge")}
+            slug={slug}
+            tableToken={tableToken}
+            onOpenAI={() => setActiveFloatingHelpPanel("concierge")}
           />
 
-          {(canUseAskKhaavio || Boolean(slug && tableToken && tableContext?.restaurant_id)) && (
+          {canUseAskKhaavio && (
             <AskKhaavio
               restaurant={restaurant}
               menuItems={items}
@@ -2615,10 +2617,6 @@ export default function PublicMenu() {
               externalOpen={activeFloatingHelpPanel === "concierge"}
               onExternalOpenChange={(open) => setActiveFloatingHelpPanel(open ? "concierge" : null)}
               aiEnabled={canUseAskKhaavio}
-              showService={Boolean(slug && tableToken && tableContext?.restaurant_id)}
-              slug={slug}
-              tableToken={tableToken}
-              tableContext={tableContext}
             />
           )}
 
