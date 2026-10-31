@@ -72,14 +72,11 @@ test("Operations appears immediately after Overview and before the Restaurant se
   }
 });
 
-test("Restaurant navigation is collapsible, remembers preference, and expands for its active routes", () => {
-  assert.match(layout, /label: "Restaurant",[\s\S]*?collapsible: true/);
-  assert.match(layout, /restaurant-dashboard-nav-label-toggle/);
-  assert.match(layout, /aria-expanded=\{!groupCollapsed\}/);
-  assert.match(layout, /aria-controls=\{groupId\}/);
-  assert.match(layout, /localStorage\.getItem\(RESTAURANT_NAV_STORAGE_KEY\)/);
-  assert.match(layout, /localStorage\.setItem\(RESTAURANT_NAV_STORAGE_KEY/);
-  assert.match(layout, /if \(isRestaurantRoute\) setRestaurantNavCollapsed\(false\)/);
+test("Restaurant navigation remains expanded and uses the same plain section label as other groups", () => {
+  assert.match(layout, /label: "Restaurant",\s*items:/);
+  assert.doesNotMatch(layout, /collapsible: true|restaurantNavCollapsed|RESTAURANT_NAV_STORAGE_KEY|nav-label-toggle/);
+  assert.match(layout, /<div className="restaurant-dashboard-nav-label">\{group\.label\}<\/div>/);
+  assert.doesNotMatch(css, /restaurant-dashboard-nav-label-toggle|restaurant-dashboard-nav-group-chevron/);
 });
 
 

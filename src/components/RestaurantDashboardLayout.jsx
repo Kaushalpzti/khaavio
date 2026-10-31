@@ -8,7 +8,6 @@ import {
   Gift,
   MessageSquareText,
   ChefHat,
-  ChevronDown,
   ChevronLeft,
   ChevronRight,
   ClipboardList,
@@ -54,8 +53,6 @@ const NAV_GROUPS = [
   },
   {
     label: "Restaurant",
-    key: "restaurant",
-    collapsible: true,
     items: [
       { label: "Restaurant settings", to: "/dashboard/settings", icon: Settings },
       { label: "Menu manager", to: "/dashboard/menu", icon: UtensilsCrossed },
@@ -79,15 +76,6 @@ const NAV_GROUPS = [
   },
 ];
 
-const RESTAURANT_NAV_STORAGE_KEY = "khaavio.restaurant-nav.collapsed";
-
-function getStoredRestaurantNavState() {
-  try {
-    return window.localStorage.getItem(RESTAURANT_NAV_STORAGE_KEY) !== "false";
-  } catch {
-    return true;
-  }
-}
 
 function RestaurantIdentityMark({ restaurant }) {
   const [imageFailed, setImageFailed] = useState(false);
@@ -120,7 +108,6 @@ export default function RestaurantDashboardLayout({ children }) {
   const location = useLocation();
   const navigate = useNavigate();
   const [collapsed, setCollapsed] = useState(false);
-  const [restaurantNavCollapsed, setRestaurantNavCollapsed] = useState(getStoredRestaurantNavState);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [isMobileViewport, setIsMobileViewport] = useState(false);
   const [restaurantIdentity, setRestaurantIdentity] = useState(null);
@@ -180,25 +167,6 @@ export default function RestaurantDashboardLayout({ children }) {
       setSigningOut(false);
     }
   }
-
-  useEffect(() => {
-    try {
-      window.localStorage.setItem(RESTAURANT_NAV_STORAGE_KEY, String(restaurantNavCollapsed));
-    } catch {
-      // Sidebar preferences are optional; navigation remains usable if storage is unavailable.
-    }
-  }, [restaurantNavCollapsed]);
-
-  const isRestaurantRoute = [
-    "/dashboard/settings",
-    "/dashboard/menu",
-    "/dashboard/qr",
-    "/dashboard/table-qr",
-  ].some((path) => location.pathname === path || location.pathname.startsWith(`${path}/`));
-
-  useEffect(() => {
-    if (isRestaurantRoute) setRestaurantNavCollapsed(false);
-  }, [isRestaurantRoute]);
 
   useEffect(() => {
     setMobileOpen(false);
@@ -273,56 +241,30 @@ export default function RestaurantDashboardLayout({ children }) {
         </div>
 
         <nav className="restaurant-dashboard-nav">
-          {NAV_GROUPS.map((group) => {
-            const groupCollapsed = group.collapsible && !collapsed && restaurantNavCollapsed;
-            const groupId = `restaurant-dashboard-nav-items-${group.key || group.label.toLowerCase()}`;
-            return (
-              <div
-                className={`restaurant-dashboard-nav-group${groupCollapsed ? " is-section-collapsed" : ""}`}
-                key={group.label}
-              >
-                {group.collapsible ? (
-                  <button
-                    type="button"
-                    className="restaurant-dashboard-nav-label restaurant-dashboard-nav-label-toggle"
-                    aria-expanded={!groupCollapsed}
-                    aria-controls={groupId}
-                    onClick={() => setRestaurantNavCollapsed((value) => !value)}
+          {NAV_GROUPS.map((group) => (
+            <div className="restaurant-dashboard-nav-group" key={group.label}>
+              <div className="restaurant-dashboard-nav-label">{group.label}</div>
+              {group.items.map((item) => {
+                const Icon = item.icon;
+                return (
+                  <NavLink
+                    key={item.to}
+                    to={item.to}
+                    end={item.end}
+                    title={collapsed ? item.label : undefined}
+                    aria-label={item.label}
+                    className={({ isActive }) =>
+                      `restaurant-dashboard-nav-link${isActive ? " is-active" : ""}`
+                    }
                   >
-                    <span>{group.label}</span>
-                    <ChevronDown
-                      className={`restaurant-dashboard-nav-group-chevron${groupCollapsed ? " is-collapsed" : ""}`}
-                      size={15}
-                      aria-hidden="true"
-                    />
-                  </button>
-                ) : (
-                  <div className="restaurant-dashboard-nav-label">{group.label}</div>
-                )}
-                <div id={groupId} className="restaurant-dashboard-nav-group-items" hidden={Boolean(groupCollapsed)}>
-                  {group.items.map((item) => {
-                    const Icon = item.icon;
-                    return (
-                      <NavLink
-                        key={item.to}
-                        to={item.to}
-                        end={item.end}
-                        title={collapsed ? item.label : undefined}
-                        aria-label={item.label}
-                        className={({ isActive }) =>
-                          `restaurant-dashboard-nav-link${isActive ? " is-active" : ""}`
-                        }
-                      >
-                        <Icon size={18} strokeWidth={1.8} aria-hidden="true" />
-                        <span className="restaurant-dashboard-nav-copy">{item.label}</span>
-                        <ArrowUpRight className="restaurant-dashboard-nav-arrow" size={13} aria-hidden="true" />
-                      </NavLink>
-                    );
-                  })}
-                </div>
-              </div>
-            );
-          })}
+                    <Icon size={18} strokeWidth={1.8} aria-hidden="true" />
+                    <span className="restaurant-dashboard-nav-copy">{item.label}</span>
+                    <ArrowUpRight className="restaurant-dashboard-nav-arrow" size={13} aria-hidden="true" />
+                  </NavLink>
+                );
+              })}
+            </div>
+          ))}
         </nav>
 
         <div className="restaurant-dashboard-sidebar-footer">
