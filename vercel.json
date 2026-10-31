@@ -171,6 +171,10 @@
   ],
   "rewrites": [
     {
+      "source": "/sitemap.xml",
+      "destination": "/api/sitemap"
+    },
+    {
       "source": "/((?!api/).*)",
       "destination": "/api/seo?path=/$1"
     }
