@@ -62,7 +62,9 @@ test("GA4 loads only with a configured measurement ID and explicit analytics con
   assert.match(manager, /consent !== "granted"/);
   assert.match(manager, /Allow analytics/);
   assert.match(manager, /Reject optional/);
-  assert.match(manager, /analytics_storage: "denied"/);
+  assert.match(manager, /consentPayload\("denied"\)/);
+  assert.match(manager, /consentPayload\("granted"\)/);
+  assert.match(manager, /analytics_storage: value === "granted" \? "granted" : "denied"/);
   assert.match(analytics, /getItem\(ANALYTICS_CONSENT_KEY\) !== "granted"/);
   assert.match(analytics, /LEAD_CONFIRMATION_KEY/);
   assert.match(analytics, /sanitizeAnalyticsPath/);
