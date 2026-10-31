@@ -17,7 +17,7 @@ test("Google review hand-off is independent from private feedback rating", () =>
   assert.match(publicWidget, /isValidGoogleReviewUrl\(googleReviewUrl\)/);
   assert.match(publicWidget, /navigator\.clipboard\.writeText\(draft\)/);
   assert.match(publicWidget, /Copy review text/);
-  assert.match(publicWidget, /select your honest star rating there/i);
+  assert.match(publicWidget, /choose your honest star rating there/i);
   assert.doesNotMatch(publicWidget, /rating\s*>=\s*4.*google/i);
   assert.doesNotMatch(publicWidget, /review_draft|generateReviewDraft|Create an AI draft/i);
 });
