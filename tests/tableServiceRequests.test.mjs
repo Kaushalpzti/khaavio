@@ -8,7 +8,7 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const read = (relativePath) => readFileSync(path.join(root, relativePath), "utf8");
 const migration = read("supabase/migrations/20261025030000_table_service_requests.sql");
 const publicMenu = read("src/pages/PublicMenu.jsx");
-const publicWidget = read("src/components/PublicTableService.jsx");
+const helpLauncher = read("src/components/PublicHelpLauncher.jsx");
 const dashboard = read("src/pages/ServiceRequestsDashboard.jsx");
 const app = read("src/App.jsx");
 const layout = read("src/components/RestaurantDashboardLayout.jsx");
@@ -36,12 +36,27 @@ test("only restaurant owners can read and transition requests", () => {
   assert.match(migration, /A resolved service request cannot be changed/i);
 });
 
-test("Public Menu shows Call Waiter actions only for a validated table QR context", () => {
-  assert.match(publicMenu, /import PublicTableService from "\.\.\/components\/PublicTableService"/);
-  assert.match(publicMenu, /<PublicTableService[\s\S]*?slug=\{slug\}[\s\S]*?tableToken=\{tableToken\}[\s\S]*?tableContext=\{tableContext\}[\s\S]*?hasStickyCart=/);
-  assert.match(publicWidget, /create_public_table_service_request/);
-  assert.match(publicWidget, /if \(!hasValidTableContext\) return null/);
-  assert.match(publicWidget, /"waiter"[\s\S]*"water"[\s\S]*"bill"[\s\S]*"cutlery"[\s\S]*"other"/);
+test("Public Menu exposes the Help popup only for enabled service or AI features", () => {
+  assert.match(publicMenu, /import PublicHelpLauncher from "\.\.\/components\/PublicHelpLauncher"/);
+  assert.match(publicMenu, /<PublicHelpLauncher[\s\S]*?showService=\{Boolean\(slug && tableToken && tableContext\?\.restaurant_id\)\}/);
+  assert.match(publicMenu, /<PublicHelpLauncher[\s\S]*?slug=\{slug\}[\s\S]*?tableToken=\{tableToken\}/);
+  assert.match(publicMenu, /<AskKhaavio[\s\S]*?externalOpen=\{activeFloatingHelpPanel === "concierge"\}[\s\S]*?aiEnabled=\{canUseAskKhaavio\}/);
+  const askStart = publicMenu.indexOf("<AskKhaavio");
+  const askEnd = publicMenu.indexOf("/>", askStart);
+  const askProps = publicMenu.slice(askStart, askEnd);
+  assert.doesNotMatch(askProps, /showService=|tableContext=/);
+});
+
+test("Help popup sends table-service actions through the existing validated RPC", () => {
+  assert.match(helpLauncher, /create_public_table_service_request/);
+  assert.match(helpLauncher, /p_slug: slug/);
+  assert.match(helpLauncher, /p_table_token: tableToken/);
+  assert.match(helpLauncher, /"waiter"/);
+  assert.match(helpLauncher, /"water"/);
+  assert.match(helpLauncher, /"bill"/);
+  assert.match(helpLauncher, /"cutlery"/);
+  assert.match(helpLauncher, /"other"/);
+  assert.match(helpLauncher, /row\.already_open === true/);
 });
 
 test("service request dashboard uses restaurant-scoped realtime and protected navigation", () => {

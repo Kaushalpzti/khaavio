@@ -118,6 +118,20 @@ export default function PublicReviewsFeedback({
     }
   }
 
+  async function copyReviewDraft() {
+    const draft = reviewDraft.trim();
+    if (!draft) {
+      setReviewStatus("Create an AI draft first, or write your own review in the draft box.");
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(draft);
+      setReviewStatus(`Review text copied. Google will not prefill it automatically—paste it there and select your ${reviewRating || "own"}-star rating again.`);
+    } catch {
+      setReviewStatus("Copy was blocked by the browser. Press and hold the draft text to copy it, then paste it into Google and select your stars there.");
+    }
+  }
+
   async function continueToGoogle() {
     if (!isValidGoogleReviewUrl(googleReviewUrl)) return;
     // Open synchronously from the user's click so popup blockers don't eat the link.
@@ -127,12 +141,18 @@ export default function PublicReviewsFeedback({
     if (draft) {
       try {
         await navigator.clipboard.writeText(draft);
-        setReviewStatus(googleWindow ? "Draft copied. Paste it into Google, edit it if needed, then submit your review." : "Your draft is copied, but the browser blocked the new tab. Open Google using the link below, then paste and submit your review.");
+        setReviewStatus(googleWindow
+          ? `Draft copied. In Google, paste it into the review box and select your ${reviewRating || "own"}-star rating again.`
+          : `Draft copied, but the browser blocked the new tab. Open Google using the link below, paste the draft and select your ${reviewRating || "own"}-star rating.`);
       } catch {
-        setReviewStatus(googleWindow ? "Google is open. Copy your draft below, then paste, edit and submit it there." : "The browser blocked the new tab. Open Google using the link below, then copy and submit your draft.");
+        setReviewStatus(googleWindow
+          ? "Google is open. Copy the draft below, paste it into the review box and select your stars there."
+          : "The browser blocked the new tab. Open Google using the link below, then copy your draft and select your stars there.");
       }
     } else {
-      setReviewStatus(googleWindow ? "Google is open. Write and submit your honest review there." : "The browser blocked the new tab. Open Google using the link below to write your review.");
+      setReviewStatus(googleWindow
+        ? "Google is open. Write your honest review and choose your star rating there."
+        : "The browser blocked the new tab. Open Google using the link below to write your review and choose your stars.");
     }
   }
 
@@ -188,6 +208,11 @@ export default function PublicReviewsFeedback({
                   </button>
                 ))}
               </div>
+              {reviewRating > 0 && (
+                <p className="public-reviews-rating-note">
+                  Your {reviewRating}-star choice guides this draft. You’ll choose your stars again on Google.
+                </p>
+              )}
             </div>
             <label className="public-reviews-field">
               <span className="public-reviews-field-label">What would you like your review to mention? <span>(optional)</span></span>
@@ -197,10 +222,25 @@ export default function PublicReviewsFeedback({
               {reviewBusy ? <LoaderCircle size={16} className="public-menu-spinner" /> : <Sparkles size={16} />}
               {reviewBusy ? "Preparing draft…" : reviewDraft ? "Refresh AI draft" : "Create an AI draft"}
             </button>
-            {reviewDraft && <label className="public-reviews-field public-review-draft-field"><span className="public-reviews-field-label">Your draft — edit it in your own words</span><textarea value={reviewDraft} onChange={(event) => setReviewDraft(event.target.value.slice(0, 1200))} rows={5} maxLength={1200} /></label>}
+            {reviewDraft && (
+              <label className="public-reviews-field public-review-draft-field">
+                <span className="public-reviews-field-label">Your draft — edit it in your own words</span>
+                <textarea value={reviewDraft} onChange={(event) => setReviewDraft(event.target.value.slice(0, 1200))} rows={5} maxLength={1200} />
+              </label>
+            )}
             {error && reviewOpen && <p className="public-reviews-error" role="alert">{error}</p>}
             {reviewStatus && <p className="public-reviews-status" role="status">{reviewStatus}</p>}
-            <button type="button" className="public-reviews-google" onClick={() => void continueToGoogle()}><span>Continue to Google</span><ExternalLink size={16} /></button>
+            <div className="public-reviews-next-actions">
+              {reviewDraft && (
+                <button type="button" className="public-reviews-copy" onClick={() => void copyReviewDraft()}>
+                  Copy review text
+                </button>
+              )}
+              <button type="button" className="public-reviews-google" onClick={() => void continueToGoogle()}>
+                <span>{reviewDraft ? "Copy draft & continue to Google" : "Continue to Google"}</span>
+                <ExternalLink size={16} />
+              </button>
+            </div>
             <a className="public-reviews-text-button" href={googleReviewUrl} target="_blank" rel="noopener noreferrer nofollow">Open the Google review page</a>
             <p className="public-reviews-privacy-note">The draft is only a suggestion and stays in this browser. Google opens separately; please review, edit and submit it yourself. No reward is offered for a review.</p>
           </div>

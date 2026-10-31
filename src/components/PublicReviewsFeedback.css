@@ -129,3 +129,41 @@
 @media (prefers-reduced-motion: reduce) {
   .public-reviews-social-icon { transition: none; }
 }
+
+
+/* Google review hand-off: make the copy/paste step explicit and easy to use. */
+.public-reviews-rating-note {
+  margin: 8px 0 0;
+  color: #718176;
+  font-size: 11px;
+  line-height: 1.5;
+}
+.public-reviews-next-actions {
+  display: grid;
+  grid-column: 1 / -1;
+  gap: 9px;
+  max-width: 430px;
+}
+.public-reviews-next-actions .public-reviews-google {
+  width: 100%;
+  box-sizing: border-box;
+}
+.public-reviews-copy {
+  min-height: 44px;
+  padding: 10px 15px;
+  border: 1px solid #dce5d8;
+  border-radius: 13px;
+  color: #2e6242;
+  background: #fff;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 750;
+  cursor: pointer;
+}
+.public-reviews-copy:hover {
+  border-color: #9fc7a8;
+  background: #f6fbf5;
+}
+@media (max-width: 600px) {
+  .public-reviews-next-actions { max-width: none; }
+}

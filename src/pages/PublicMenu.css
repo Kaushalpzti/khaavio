@@ -2374,29 +2374,33 @@
     .public-menu-sticky-cart {
         bottom: calc(78px + env(safe-area-inset-bottom, 0px));
     }
-    .public-menu-bottom-navigation~.public-table-service .public-table-service-fab {
-        bottom: calc(154px + env(safe-area-inset-bottom, 0px));
+    .public-menu-bottom-navigation~.public-help-launcher {
+        right: 12px;
+        bottom: calc(78px + env(safe-area-inset-bottom, 0px));
+    }
+    .public-menu-bottom-navigation~.public-help-launcher.is-raised {
+        bottom: calc(150px + env(safe-area-inset-bottom, 0px));
     }
     .public-menu-bottom-navigation~.ask-khaavio-root {
-        bottom: calc(77px + env(safe-area-inset-bottom, 0px));
+        bottom: calc(78px + env(safe-area-inset-bottom, 0px));
     }
     .public-menu-bottom-navigation~.ask-khaavio-root.is-raised {
-        bottom: calc(157px + env(safe-area-inset-bottom, 0px));
+        bottom: calc(150px + env(safe-area-inset-bottom, 0px));
     }
-    /* The AI panel uses viewport coordinates, separate from its launcher. */
+    /* Concierge opens above the nav/cart while remaining tall enough for the conversation. */
     .public-menu-bottom-navigation~.ask-khaavio-root .ask-khaavio-panel {
         right: 12px;
-        bottom: calc(199px + env(safe-area-inset-bottom, 0px));
+        bottom: calc(80px + env(safe-area-inset-bottom, 0px));
         width: min(350px, calc(100vw - 24px));
-        height: min(650px, calc(100dvh - 236px));
-        min-height: min(320px, calc(100dvh - 236px));
-        max-height: calc(100dvh - 236px);
+        height: min(650px, calc(100dvh - 100px));
+        min-height: min(320px, calc(100dvh - 100px));
+        max-height: calc(100dvh - 100px);
     }
     .public-menu-bottom-navigation~.ask-khaavio-root.is-raised .ask-khaavio-panel {
-        bottom: calc(275px + env(safe-area-inset-bottom, 0px));
-        height: min(650px, calc(100dvh - 312px));
-        min-height: min(320px, calc(100dvh - 312px));
-        max-height: calc(100dvh - 312px);
+        bottom: calc(152px + env(safe-area-inset-bottom, 0px));
+        height: min(650px, calc(100dvh - 172px));
+        min-height: min(300px, calc(100dvh - 172px));
+        max-height: calc(100dvh - 172px);
     }
     .public-menu-rewards-sheet-backdrop {
         align-items: flex-end;

@@ -3,7 +3,7 @@ import {
   Bot,
   ChevronDown,
   LoaderCircle,
-  MessageCircle,
+  Search,
   Send,
   Sparkles,
   Utensils,
@@ -21,7 +21,7 @@ const COPY = {
     open: "Open Ask Khaavio chat",
     close: "Close chat",
     quickTitle: "Try asking",
-    quickPrompts: ["Suggest something spicy", "Vegetarian options", "Under ₹200"],
+    quickPrompts: ["Suggest something spicy", "Vegetarian options", "Under ₹200", "What is special today?"],
     typing: "Finding a helpful answer…",
     unavailable: "Sorry, the assistant is temporarily unavailable. Please try again shortly.",
     add: "Add",
@@ -35,8 +35,8 @@ const COPY = {
     send: "मैसेज भेजें",
     open: "Ask Khaavio चैट खोलें",
     close: "चैट बंद करें",
-    quickTitle: "ये पूछकर देखें",
-    quickPrompts: ["कुछ spicy सुझाओ", "शाकाहारी विकल्प", "₹200 से कम में"],
+    quickTitle: "आप ये पूछ सकते हैं",
+    quickPrompts: ["कुछ spicy सुझाओ", "शाकाहारी विकल्प", "₹200 से कम में", "आज क्या खास है?"],
     typing: "जवाब ढूँढ रहा हूँ…",
     unavailable: "माफ़ कीजिए, असिस्टेंट अभी उपलब्ध नहीं है। थोड़ी देर बाद कोशिश करें।",
     add: "जोड़ें",
@@ -44,14 +44,14 @@ const COPY = {
     offline: "अभी कनेक्ट नहीं हो पाया। कृपया थोड़ी देर बाद फिर कोशिश करें।",
   },
   hinglish: {
-    welcome: "Hey! Main Ask Khaavio hoon 😊 Menu mein kya try karna chahoge?",
-    subtitle: "Tumhara friendly menu assistant",
+    welcome: "Hey! Main Ask Khaavio hoon 😊 Menu explore karo—kya try karna chahoge?",
+    subtitle: "Your friendly menu assistant",
     placeholder: "Dish, price ya recommendation poochho…",
     send: "Message bhejo",
     open: "Ask Khaavio chat kholo",
     close: "Chat band karo",
-    quickTitle: "Yeh poochh sakte ho",
-    quickPrompts: ["Kuch spicy suggest karo", "Veg options batao", "₹200 ke andar"],
+    quickTitle: "Try asking",
+    quickPrompts: ["Kuch spicy suggest karo", "Veg options batao", "₹200 ke andar", "Aaj kya special hai?"],
     typing: "Achha answer dhoondh raha hoon…",
     unavailable: "Sorry bhai, assistant abhi available nahi hai. Thodi der baad try karo.",
     add: "Add karo",
@@ -83,12 +83,15 @@ function getReplyFromError(error, copy) {
 export default function AskKhaavio({
   restaurant,
   menuItems = [],
+  menuOptionGroups = [],
+  publicOffers = [],
   categories = [],
   onAddToCart,
   hasStickyCart = false,
   launcherHidden = false,
   externalOpen,
   onExternalOpenChange,
+  aiEnabled = true,
 }) {
   const [localIsOpen, setLocalIsOpen] = useState(false);
   const isControlledOpen = typeof externalOpen === "boolean";
@@ -140,17 +143,37 @@ export default function AskKhaavio({
   }, [isOpen]);
 
   const preparedMenu = useMemo(
-    () => menuItems
-      .filter((item) => item && item.name && item.is_available !== false)
-      .slice(0, 80)
-      .map((item) => ({
-        name: item.name,
-        description: item.description || "",
-        category: categoryById.get(item.category_id) || "Menu",
-        price: Number(item.price) || 0,
-        available: item.is_available !== false,
-      })),
-    [menuItems, categoryById],
+    () => aiEnabled
+      ? menuItems
+        .filter((item) => item && item.name && item.is_available !== false)
+        .slice(0, 120)
+        .map((item) => ({
+          name: item.name,
+          description: item.description || "",
+          category: categoryById.get(item.category_id) || "Menu",
+          price: Number(item.price) || 0,
+          available: item.is_available !== false,
+          foodType: item.food_type || "unspecified",
+          spiceLevel: item.spice_level || "unspecified",
+          isJainFriendly: item.is_jain_friendly === true,
+          allergens: Array.isArray(item.allergens) ? item.allergens : [],
+          optionGroups: menuOptionGroups
+            .filter((group) => group.menu_item_id === item.id)
+            .slice(0, 8)
+            .map((group) => ({
+              name: group.name || "",
+              minSelections: Number(group.min_selections) || 0,
+              maxSelections: Number(group.max_selections) || 0,
+              options: (Array.isArray(group.options) ? group.options : [])
+                .slice(0, 15)
+                .map((option) => ({
+                  name: option.name || "",
+                  priceDelta: Number(option.price_delta) || 0,
+                })),
+            })),
+        }))
+      : [],
+    [menuItems, menuOptionGroups, categoryById, aiEnabled],
   );
 
   async function requestAI(messageText, history) {
@@ -161,8 +184,20 @@ export default function AskKhaavio({
       restaurant: {
         name: restaurant?.name || "Restaurant",
         cuisine: restaurant?.restaurant_type || "",
+        address: restaurant?.address || "",
+        businessHours: restaurant?.business_hours || null,
       },
       menuItems: preparedMenu,
+      offers: publicOffers.slice(0, 20).map((offer) => ({
+        title: offer.title || "",
+        code: offer.code || "",
+        discountType: offer.discount_type || "",
+        discountValue: Number(offer.discount_value) || 0,
+        minimumOrderAmount: Number(offer.minimum_order_amount) || 0,
+        maximumDiscountAmount: offer.maximum_discount_amount == null
+          ? null
+          : Number(offer.maximum_discount_amount) || 0,
+      })),
       history,
     };
 
@@ -211,7 +246,7 @@ export default function AskKhaavio({
 
   async function sendMessage(optionalText) {
     const text = (optionalText ?? draft).trim();
-    if (!text || sending || text.length > 500) return;
+    if (!aiEnabled || !text || sending || text.length > 500) return;
 
     const userMessage = {
       id: makeId(),
@@ -246,6 +281,7 @@ export default function AskKhaavio({
         id: makeId(),
         role: "assistant",
         content: reply,
+        usedWebResearch: result?.usedWebResearch === true,
         suggestedItems: suggestions,
       }]);
     } catch (error) {
@@ -290,7 +326,7 @@ export default function AskKhaavio({
         <section
           className="ask-khaavio-panel"
           role="dialog"
-          aria-label="Ask Khaavio AI menu assistant"
+          aria-label="Khaavio Concierge menu and table assistant"
           aria-modal="false"
         >
           <header className="ask-khaavio-header">
@@ -328,9 +364,13 @@ export default function AskKhaavio({
 
           <div className="ask-khaavio-context">
             <Utensils size={14} aria-hidden="true" />
-            <span>{restaurant?.name || "Restaurant menu"}</span>
-            <span className="ask-khaavio-context-dot" />
-            <span>{preparedMenu.length} {language === "hi" ? "डिश" : language === "en" ? "dishes" : "dishes"}</span>
+            <span>{restaurant?.name || "Restaurant"}</span>
+            {aiEnabled && (
+              <>
+                <span className="ask-khaavio-context-dot" />
+                <span>{preparedMenu.length} {language === "hi" ? "डिश" : "dishes"}</span>
+              </>
+            )}
           </div>
 
           <div className="ask-khaavio-messages" ref={messageListRef} aria-live="polite">
@@ -346,6 +386,11 @@ export default function AskKhaavio({
                 )}
                 <div className={`ask-khaavio-bubble ${message.isError ? "has-error" : ""}`}>
                   <p>{message.content}</p>
+                  {message.usedWebResearch && (
+                    <small className="ask-khaavio-research-note">
+                      <Search size={11} /> General dish background checked online
+                    </small>
+                  )}
                   {message.suggestedItems?.length > 0 && (
                     <div className="ask-khaavio-suggestions">
                       {message.suggestedItems.map((item) => (
@@ -381,12 +426,12 @@ export default function AskKhaavio({
             )}
           </div>
 
-          {messages.length === 1 && !sending && (
-            <div className="ask-khaavio-quick-prompts">
+          {aiEnabled && (
+            <div className="ask-khaavio-quick-prompts ask-khaavio-concierge-prompts">
               <span>{copy.quickTitle}</span>
               <div>
-                {copy.quickPrompts.map((prompt) => (
-                  <button key={prompt} type="button" onClick={() => void sendMessage(prompt)}>
+                {messages.length === 1 && !sending && copy.quickPrompts.map((prompt) => (
+                  <button key={prompt} type="button" onClick={() => void sendMessage(prompt)} disabled={sending}>
                     {prompt}
                   </button>
                 ))}
@@ -395,27 +440,27 @@ export default function AskKhaavio({
           )}
 
           <form className="ask-khaavio-composer" onSubmit={handleSubmit}>
-            <input
-              ref={inputRef}
-              value={draft}
-              onChange={(event) => setDraft(event.target.value.slice(0, 500))}
-              placeholder={copy.placeholder}
-              aria-label={copy.placeholder}
-              maxLength={500}
-              disabled={sending}
-            />
-            <button
-              type="submit"
-              disabled={sending || !draft.trim()}
-              aria-label={copy.send}
-              title={copy.send}
-            >
-              {sending ? <LoaderCircle size={17} className="ask-khaavio-spin" /> : <Send size={17} />}
-            </button>
-          </form>
+              <input
+                ref={inputRef}
+                value={draft}
+                onChange={(event) => setDraft(event.target.value.slice(0, 500))}
+                placeholder={copy.placeholder}
+                aria-label={copy.placeholder}
+                maxLength={500}
+                disabled={sending}
+              />
+              <button
+                type="submit"
+                disabled={sending || !draft.trim()}
+                aria-label={copy.send}
+                title={copy.send}
+              >
+                {sending ? <LoaderCircle size={17} className="ask-khaavio-spin" /> : <Send size={17} />}
+              </button>
+            </form>
           <div className="ask-khaavio-footer-note">
             <Sparkles size={11} />
-            <span>{language === "hi" ? "मेन्यू पर आधारित सुझाव · एलर्जी की जानकारी स्टाफ से पुष्टि करें" : language === "en" ? "Menu-based suggestions · Confirm allergen details with staff" : "Menu ke basis par suggestions · Allergy details staff se confirm karein"}</span>
+            <span>{language === "hi" ? "मेन्यू की जानकारी पहले · सामान्य डिश जानकारी के लिए वेब रिसर्च · एलर्जी स्टाफ से ज़रूर कन्फर्म करें" : language === "en" ? "Restaurant menu first · Web research for general dish knowledge · Confirm allergies with staff" : "Pehle restaurant menu ki details · General dish info ke liye web research · Allergy staff se confirm karein"}</span>
           </div>
         </section>
       )}

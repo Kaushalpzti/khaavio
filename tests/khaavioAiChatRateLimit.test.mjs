@@ -45,3 +45,31 @@ test("rate-limit keys are bounded and raw IPs are not stored", () => {
   assert.match(migrationSource, /p_limit > 100/);
   assert.match(migrationSource, /p_window_seconds > 3600/);
 });
+
+
+test("AI menu context includes the complete public dietary metadata and a bounded full-menu window", () => {
+  assert.match(functionSource, /const MAX_MENU_ITEMS = 120/);
+  assert.match(functionSource, /const MAX_BODY_LENGTH = 64_000/);
+  assert.match(functionSource, /const MAX_BODY_LENGTH = 64_000/);
+  assert.match(functionSource, /foodType/);
+  assert.match(functionSource, /spiceLevel/);
+  assert.match(functionSource, /isJainFriendly/);
+  assert.match(functionSource, /allergens/);
+  assert.match(functionSource, /Jain friendly/);
+});
+
+test("dish overview questions can use Groq browser search, but exact restaurant facts do not", () => {
+  assert.match(functionSource, /function shouldUseBrowserSearch/);
+  assert.match(functionSource, /dishKnowledgeRequest/);
+  assert.match(functionSource, /restaurantFactRequest/);
+  assert.match(functionSource, /tools: \[\{ type: "browser_search" \}\]/);
+  assert.match(functionSource, /tool_choice: "required"/);
+  assert.match(functionSource, /citation_options: "enabled"/);
+  assert.match(functionSource, /useBrowserSearch \? "medium" : "low"/);
+});
+
+test("web research is clearly separated from restaurant recipe and allergen facts", () => {
+  assert.match(functionSource, /general information about the dish, not the restaurant's exact recipe/);
+  assert.match(functionSource, /Never use generic web results to assert this restaurant's ingredients or allergen status/);
+  assert.match(functionSource, /Ask customers to confirm allergies, ingredients and dietary restrictions with restaurant staff/i);
+});
