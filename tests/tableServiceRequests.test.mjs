@@ -40,7 +40,7 @@ test("Public Menu exposes the Help popup only for enabled service or AI features
   assert.match(publicMenu, /import PublicHelpLauncher from "\.\.\/components\/PublicHelpLauncher"/);
   assert.match(publicMenu, /<PublicHelpLauncher[\s\S]*?showService=\{Boolean\(slug && tableToken && tableContext\?\.restaurant_id\)\}/);
   assert.match(publicMenu, /<PublicHelpLauncher[\s\S]*?slug=\{slug\}[\s\S]*?tableToken=\{tableToken\}/);
-  assert.match(publicMenu, /<AskKhaavio[\s\S]*?aiEnabled=\{canUseAskKhaavio\}[\s\S]*?externalOpen=\{activeFloatingHelpPanel === "concierge"\}/);
+  assert.match(publicMenu, /<AskKhaavio[\s\S]*?externalOpen=\{activeFloatingHelpPanel === "concierge"\}[\s\S]*?aiEnabled=\{canUseAskKhaavio\}/);
   const askStart = publicMenu.indexOf("<AskKhaavio");
   const askEnd = publicMenu.indexOf("/>", askStart);
   const askProps = publicMenu.slice(askStart, askEnd);
