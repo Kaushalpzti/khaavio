@@ -16,7 +16,8 @@ const LEGAL_CONTENT = {
     description:
       "What information Khaavio handles, why it is used, and how restaurant teams and guests can contact us about privacy.",
     intro:
-      "This policy explains how Khaavio handles information when you visit khaavio.in, create a restaurant workspace, send us an enquiry, or use Khaavio-powered menus, QR ordering, bookings and order tracking.",
+      "This policy explains how Khaavio handles information when you visit khaavio.in, create a restaurant workspace, send us an enquiry, or use Khaavio-powered menus, QR ordering, bookings, loyalty, guest feedback and AI-assisted features.",
+    lastUpdated: "31 October 2026",
     sections: [
       {
         title: "1. Who this policy applies to",
@@ -31,6 +32,9 @@ const LEGAL_CONTENT = {
           "Account and authentication information: name, email address, authentication identifiers, account status and access permissions.",
           "Restaurant workspace information: business name, menu slug, contact details, address, opening hours, menu items, prices, photos, logos, table settings and content uploaded by the restaurant team.",
           "Guest order and booking information: name, mobile number, email if supplied, party size, requested date and time, order items, notes, order or booking status, reference identifiers and related service requests. Khaavio requires a mobile number for public menu orders so the restaurant can process the order and provide order-related updates.",
+          "Loyalty and guest engagement information: where a restaurant enables Khaavio Perks, the loyalty phone number or browser-held member identifier, eligible order activity, stamps or rewards, coupon use and related reward activity.",
+          "Feedback and review information: a star rating, feedback category and optional message sent to a restaurant, plus any optional rating and visit notes a guest enters when requesting an AI-assisted review draft.",
+          "AI feature information: questions and conversation messages sent to Ask Khaavio, the limited conversation context needed to answer a follow-up, and relevant restaurant/menu information used to produce a response.",
           "Subscription and support information: selected plan, trial and subscription status, billing cycle, payment amount, Razorpay transaction and subscription references, mandate status, renewal and cancellation records, and support correspondence.",
           "Technical and security information: basic browser/device information, request and diagnostic records, and information needed to protect, troubleshoot and maintain the service.",
         ],
@@ -42,7 +46,8 @@ const LEGAL_CONTENT = {
           "Publish restaurant menus and deliver order, booking and service requests to the relevant restaurant workspace.",
           "Provide order tracking, kitchen updates, receipts, table sessions, subscription administration and support.",
           "Process and verify subscription payments through Razorpay, manage subscription access and authorised recurring mandates, prevent misuse, resolve payment questions and maintain appropriate business records.",
-          "Understand repeat-visit and order trends for the relevant restaurant where the product feature uses guest-provided identifiers. Where relevant, submitting an order is not marketing consent and does not, by itself, authorise promotional marketing messages.",
+          "Understand repeat-visit and order trends, administer restaurant loyalty rewards and apply eligible offers where those features are enabled. Where relevant, submitting an order is not marketing consent and does not, by itself, authorise promotional marketing messages.",
+          "Receive and display private guest feedback for the relevant restaurant, and provide optional AI-assisted responses to menu questions or review-writing prompts when a guest chooses to use those features.",
           "Troubleshoot errors, maintain service reliability, protect users and meet applicable legal obligations.",
         ],
         paragraphs: [
@@ -59,15 +64,16 @@ const LEGAL_CONTENT = {
       {
         title: "5. Sharing and service providers",
         paragraphs: [
-          "We share guest order or booking details with the restaurant that needs those details to respond to the guest. We use technology providers, including Supabase for authentication and database services, Vercel for website hosting and Razorpay for payment and subscription processing. These providers may process relevant information under their applicable terms and safeguards.",
+          "We share guest order, booking, loyalty and private feedback details with the restaurant that needs those details to manage the requested service or rewards. We use Supabase for authentication and database services, Vercel for website hosting and Razorpay for payment and subscription processing. For Ask Khaavio AI and optional AI-assisted review drafting, the relevant guest prompt or conversation context, any review rating/notes supplied, and the restaurant/menu context needed to answer are sent to Groq’s API to generate text. These providers process relevant information under their applicable terms and safeguards.",
           "We may disclose information where reasonably necessary to comply with law or valid legal process, protect the rights and security of users or the service, investigate abuse, or manage a permitted business reorganisation. We do not sell personal information as a business model.",
         ],
       },
       {
-        title: "6. Website forms, email and browser storage",
+        title: "6. Website forms, AI features and browser storage",
         paragraphs: [
           "The Book a Free Demo and Contact Us forms on the current website prepare an email in the visitor's email application. The visitor must send that email to complete the enquiry. The website form does not itself save the request to a Khaavio database or automatically book a calendar slot. If you send an email, we receive and use the information you include to respond to your enquiry.",
-          "Khaavio may use essential browser storage and session technologies to keep users signed in, remember necessary settings and protect account access. If optional analytics, advertising or other non-essential tracking technologies are introduced, we will update this policy and provide any choices or notices required by applicable law.",
+          "Ask Khaavio and optional AI-assisted review drafting are guest-initiated features. The questions, conversation context or review notes a guest submits, together with the relevant restaurant/menu information, are sent to Groq’s API for text generation. AI output may be incomplete or inaccurate; confirm ingredients, allergens, prices, availability and booking details directly with the restaurant. A guest may choose not to use these AI features. Review drafts are editable suggestions only; the guest decides whether to copy, change and submit any review to Google.",
+          "Khaavio-powered public menus may use browser local storage or session storage to preserve a guest’s menu/cart state, table or guest-tab session, and loyalty continuity on the current device. Clearing browser data or changing devices may remove that local state. Essential authentication and security storage may also be used to keep users signed in and protect account access. We do not currently load optional Google Analytics tracking on the basis of this policy text; if optional analytics, advertising or other non-essential tracking technologies are introduced, we will update this policy and provide any choices or notices required by applicable law.",
         ],
       },
       {
@@ -93,7 +99,7 @@ const LEGAL_CONTENT = {
       {
         title: "10. Indian privacy law and policy updates",
         paragraphs: [
-          "Khaavio reviews its data-handling practices against applicable Indian privacy law, including the Digital Personal Data Protection Act, 2023 and the Digital Personal Data Protection Rules, 2025. The notified framework has phased commencement dates. We will implement and update the notices and workflows required as the relevant provisions applicable to the service come into effect; this policy does not state that a provision is in force before its applicable commencement date.",
+          "Khaavio reviews its data-handling practices against applicable Indian privacy law, including the Digital Personal Data Protection Act, 2023 and the Digital Personal Data Protection Rules, 2025. The commencement notification provides phased dates: certain provisions are scheduled from 13 November 2026, while the principal data-processing provisions in sections 3–17 are scheduled from 13 May 2027; the Rules also have phased commencement. We will update notices and workflows as the provisions applicable to the service come into effect. This policy does not state that a provision is already in force before its notified commencement date.",
           "We may update this policy when the service, our providers or applicable requirements change. The latest version and update date will be published on this page. Material changes may also be communicated through the platform or another reasonable channel where appropriate.",
         ],
       },
@@ -268,7 +274,7 @@ export default function LegalPage({ type }) {
         <span className="kh-legal-eyebrow"><ShieldCheck size={14} /> {page.eyebrow}</span>
         <h1>{page.title}</h1>
         <p>{page.intro}</p>
-        <div className="kh-legal-meta">Last updated: {LAST_UPDATED}</div>
+        <div className="kh-legal-meta">Last updated: {page.lastUpdated || LAST_UPDATED}</div>
       </section>
 
       <nav className="kh-legal-tabs" aria-label="Legal pages">
