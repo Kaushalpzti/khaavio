@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { Archive, BadgePercent, CalendarClock, Check, Copy, LoaderCircle, Pencil, Plus, RefreshCw, Tag, Trash2, ToggleLeft, ToggleRight, Users, X } from "lucide-react";
+import { Archive, BadgePercent, CalendarClock, Check, Copy, LoaderCircle, Pencil, Plus, RefreshCw, RotateCcw, Tag, Trash2, ToggleLeft, ToggleRight, Users, X } from "lucide-react";
 import { supabase } from "../lib/supabaseClient";
 import "./OffersDashboard.css";
 
@@ -232,7 +232,31 @@ export default function OffersDashboard() {
       if (editingCouponId === coupon.id) resetCouponForm();
     } catch (deleteError) {
       console.error("Could not delete coupon:", deleteError);
-      setError(deleteError?.message || "Could not delete the coupon.");
+      setError(deleteError?.message || "Could not remove the coupon.");
+    } finally {
+      setDeletingCouponId("");
+    }
+  }
+
+  async function restoreCoupon(coupon) {
+    if (!coupon.is_archived || deletingCouponId) return;
+    setDeletingCouponId(coupon.id);
+    setError("");
+    setNotice("");
+    try {
+      const { data: restored, error: restoreError } = await supabase.rpc(
+        "khaavio_restore_restaurant_coupon",
+        { p_coupon_id: coupon.id },
+      );
+      if (restoreError) throw restoreError;
+      if (restored !== true) throw new Error("Khaavio could not restore this coupon. Refresh and try again.");
+      setCoupons((current) => current.map((entry) => entry.id === coupon.id
+        ? { ...entry, is_active: false, is_archived: false }
+        : entry));
+      setNotice(`${coupon.code} restored as paused. Enable it when you are ready to use it again.`);
+    } catch (restoreError) {
+      console.error("Could not restore coupon:", restoreError);
+      setError(restoreError?.message || "Could not restore the coupon.");
     } finally {
       setDeletingCouponId("");
     }
@@ -330,11 +354,16 @@ export default function OffersDashboard() {
                   {coupons.map((coupon) => {
                     const exhausted = coupon.usage_limit !== null && Number(coupon.used_count) >= Number(coupon.usage_limit);
                     const live = !coupon.is_archived && coupon.is_active && !exhausted && new Date(coupon.starts_at) <= new Date() && (!coupon.ends_at || new Date(coupon.ends_at) > new Date());
-                    return <article className={`offers-coupon-card${live ? " is-live" : ""}`} key={coupon.id}>
+                    return <article className={`offers-coupon-card${live ? " is-live" : coupon.is_archived ? " is-archived" : ""}`} key={coupon.id}>
                       <div className="offers-coupon-top">
                         <div><span className="offers-coupon-kicker">{coupon.title}</span><strong>{coupon.discount_type === "percent" ? `${Number(coupon.discount_value)}% off` : `₹${Number(coupon.discount_value).toFixed(2)} off`}</strong></div>
                         <div className="offers-coupon-actions" aria-label={`Actions for coupon ${coupon.code}`}>
-                          {coupon.is_archived ? <span className="offers-status is-archived"><Archive size={12} /> Archived</span> : (
+                          {coupon.is_archived ? (
+                            <>
+                              <span className="offers-status is-archived"><Archive size={12} /> Archived</span>
+                              <button type="button" className="offers-edit-button" title={`Restore ${coupon.code}`} onClick={() => void restoreCoupon(coupon)} aria-label={`Restore coupon ${coupon.code}`} disabled={Boolean(deletingCouponId)}>{deletingCouponId === coupon.id ? <LoaderCircle size={13} className="offers-spin" /> : <RotateCcw size={13} />}<span>Restore</span></button>
+                            </>
+                          ) : (
                             <>
                               <button type="button" className="offers-toggle" title={coupon.is_active ? "Pause coupon" : "Enable coupon"} aria-label={`${coupon.is_active ? "Pause" : "Activate"} ${coupon.code}`} onClick={() => void toggleCoupon(coupon)}>{coupon.is_active ? <ToggleRight size={22} /> : <ToggleLeft size={22} />}</button>
                               <button type="button" className="offers-edit-button" title={`Edit ${coupon.code}`} onClick={() => editCoupon(coupon)} aria-label={`Edit coupon ${coupon.code}`} disabled={saving || Boolean(deletingCouponId)}><Pencil size={13} /><span>Edit</span></button>
