@@ -3,6 +3,7 @@ import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { buildPageMetadata, injectPageMetadata, normalizeMetadataPath } from "./_seo-utils.js";
 import { getDomainRedirectTarget } from "../src/lib/domainRouting.js";
+import { isKnownMetadataPath } from "../src/lib/seoMetadata.js";
 
 const SITE_URL = "https://khaavio.in";
 
@@ -15,13 +16,17 @@ function getSlugFromPath(pathname) {
 }
 
 async function fetchPublicRestaurant(slug) {
-  if (!slug) return null;
-  const supabaseUrl = String(process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL || "").replace(/\/+$/, "");
+  if (!slug) return { restaurant: null, notFound: true };
+
+  const supabaseUrl = String(process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL || "").replace(/\\/+$/, "");
   const publishableKey = process.env.VITE_SUPABASE_PUBLISHABLE_KEY ||
     process.env.SUPABASE_PUBLISHABLE_KEY ||
     process.env.SUPABASE_ANON_KEY ||
     "";
-  if (!supabaseUrl || !publishableKey) return null;
+  // A missing configuration or failed upstream request is not proof that a
+  // restaurant is unpublished. Keep the page reachable rather than issuing a
+  // false 404 during an infrastructure/configuration incident.
+  if (!supabaseUrl || !publishableKey) return { restaurant: null, notFound: false };
 
   try {
     const response = await fetch(supabaseUrl + "/rest/v1/rpc/khaavio_public_restaurant_menu", {
@@ -34,13 +39,17 @@ async function fetchPublicRestaurant(slug) {
       body: JSON.stringify({ p_slug: slug }),
       signal: AbortSignal.timeout(2800),
     });
-    if (!response.ok) return null;
+    if (!response.ok) return { restaurant: null, notFound: false };
+
     const data = await response.json();
-    if (!data || !data.restaurant || data.restaurant.is_published !== true) return null;
-    return data.restaurant;
+    if (!data || !data.restaurant || data.restaurant.is_published !== true) {
+      return { restaurant: null, notFound: true };
+    }
+
+    return { restaurant: data.restaurant, notFound: false };
   } catch (error) {
     console.warn("Social metadata lookup failed for a public restaurant.", error?.name || "FetchError");
-    return null;
+    return { restaurant: null, notFound: false };
   }
 }
 
@@ -90,18 +99,21 @@ export default async function handler(req, res) {
     }
 
     const slug = getSlugFromPath(pathname);
-    const restaurant = slug ? await fetchPublicRestaurant(slug) : null;
+    const lookup = slug ?
+      await fetchPublicRestaurant(slug) :
+      { restaurant: null, notFound: false };
     const metadata = buildPageMetadata(pathname, {
-      restaurant,
+      restaurant: lookup.restaurant,
       tableToken: requestUrl.searchParams.get("table") || "",
     });
+    const isNotFound = !isKnownMetadataPath(pathname) || lookup.notFound;
     const html = injectPageMetadata(readBuiltHtml(), metadata);
 
-    res.statusCode = 200;
+    res.statusCode = isNotFound ? 404 : 200;
     res.setHeader("Content-Type", "text/html; charset=utf-8");
     res.setHeader("X-Content-Type-Options", "nosniff");
-    res.setHeader("X-Robots-Tag", metadata.indexable ? "index,follow,max-image-preview:large" : "noindex,follow");
-    if (metadata.indexable) {
+    res.setHeader("X-Robots-Tag", isNotFound || !metadata.indexable ? "noindex,follow" : "index,follow,max-image-preview:large");
+    if (metadata.indexable && !isNotFound) {
       res.setHeader("Cache-Control", "public, max-age=0, s-maxage=300, stale-while-revalidate=3600");
       res.setHeader("Vercel-CDN-Cache-Control", "public, s-maxage=300, stale-while-revalidate=3600");
     } else {
