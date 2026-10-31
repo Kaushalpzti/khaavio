@@ -16,10 +16,30 @@ test("coupon edits are limited to restaurant owners and cannot alter usage count
   assert.match(originalMigration, /restaurant_coupons_owner_update[\s\S]*?r\.owner_id = \(SELECT auth\.uid\(\)\)/);
 });
 
-test("coupon delete is protected by the restaurant-owner RLS policy", () => {
-  assert.match(migration, /GRANT DELETE ON public\.restaurant_coupons TO authenticated/);
-  assert.match(migration, /CREATE POLICY restaurant_coupons_owner_delete[\s\S]*?FOR DELETE TO authenticated[\s\S]*?r\.owner_id = \(SELECT auth\.uid\(\)\)/);
+test("coupon removal uses an owner-checked row-locked RPC and archives coupons with order history", () => {
+  const safeRemoval = read("supabase/migrations/20261031100000_restaurant_coupon_safe_archive.sql");
+  for (const snippet of [
+    "ADD COLUMN is_archived boolean NOT NULL DEFAULT false",
+    "CHECK (NOT is_archived OR NOT is_active)",
+    "REVOKE DELETE ON public.restaurant_coupons FROM PUBLIC, anon, authenticated",
+    "DROP POLICY IF EXISTS restaurant_coupons_owner_delete",
+    "CREATE OR REPLACE FUNCTION public.khaavio_remove_restaurant_coupon(p_coupon_id uuid)",
+    "r.owner_id = (SELECT auth.uid())",
+    "FOR UPDATE OF c",
+    "FROM public.orders AS o",
+    "o.coupon_id = v_coupon_id",
+    "SET is_active = false,",
+    "is_archived = true",
+    "RETURN 'archived'",
+    "DELETE FROM public.restaurant_coupons AS c",
+    "RETURN 'deleted'",
+    "GRANT EXECUTE ON FUNCTION public.khaavio_remove_restaurant_coupon(uuid)"
+  ]) assert.ok(safeRemoval.includes(snippet), `Safe coupon removal migration must contain: ${snippet}`);
   assert.match(originalMigration, /coupon_id uuid REFERENCES public\.restaurant_coupons\(id\) ON DELETE SET NULL/);
+  assert.ok(safeRemoval.includes("CREATE OR REPLACE FUNCTION public.khaavio_restore_restaurant_coupon(p_coupon_id uuid)"));
+  assert.ok(safeRemoval.includes("SET is_archived = false,"));
+  assert.ok(safeRemoval.includes("is_active = false,"));
+  assert.ok(safeRemoval.includes("GRANT EXECUTE ON FUNCTION public.khaavio_restore_restaurant_coupon(uuid)"));
 });
 
 test("offers dashboard supports editing every editable field and preserves local date-time values", () => {
@@ -35,11 +55,21 @@ test("offers dashboard supports editing every editable field and preserves local
   assert.match(dashboard, /Cancel coupon editing/);
 });
 
-test("coupon dashboard supports owner-scoped deletion with an explicit confirmation", () => {
-  assert.match(dashboard, /async function deleteCoupon\(coupon\)/);
-  assert.match(dashboard, /window\.confirm\([\s\S]*?Delete coupon/);
-  assert.match(dashboard, /\.delete\(\)[\s\S]*?\.eq\("id", coupon\.id\)[\s\S]*?\.eq\("restaurant_id", restaurantId\)/);
-  assert.match(dashboard, /Existing orders keep their saved coupon code and totals/);
+test("coupon dashboard routes removals and restores through safe RPCs", () => {
+  for (const snippet of [
+    "async function deleteCoupon(coupon)",
+    "Archive coupon",
+    "khaavio_remove_restaurant_coupon",
+    'removalResult === "archived"',
+    "is_active: false, is_archived: true",
+    'removalResult === "deleted"',
+    "is_archived, created_at",
+    "Archived · History kept",
+    "async function restoreCoupon(coupon)",
+    "khaavio_restore_restaurant_coupon",
+    "restored as paused"
+  ]) assert.ok(dashboard.includes(snippet), `Offers dashboard must contain: ${snippet}`);
+  assert.doesNotMatch(dashboard, /\.from\("restaurant_coupons"\)[\s\S]*?\.delete\(\)/);
   assert.match(dashboard, /offers-delete-button/);
   assert.match(dashboard, /offers-edit-button/);
 });

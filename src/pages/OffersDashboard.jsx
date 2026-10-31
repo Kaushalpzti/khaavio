@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { BadgePercent, CalendarClock, Check, Copy, LoaderCircle, Pencil, Plus, RefreshCw, Tag, Trash2, ToggleLeft, ToggleRight, Users, X } from "lucide-react";
+import { Archive, BadgePercent, CalendarClock, Check, Copy, LoaderCircle, Pencil, Plus, RefreshCw, RotateCcw, Tag, Trash2, ToggleLeft, ToggleRight, Users, X } from "lucide-react";
 import { supabase } from "../lib/supabaseClient";
 import "./OffersDashboard.css";
 
@@ -75,7 +75,7 @@ export default function OffersDashboard() {
       }
       const { data, error: couponError } = await supabase
         .from("restaurant_coupons")
-        .select("id, code, title, discount_type, discount_value, minimum_order_amount, maximum_discount_amount, starts_at, ends_at, usage_limit, used_count, is_active, created_at")
+        .select("id, code, title, discount_type, discount_value, minimum_order_amount, maximum_discount_amount, starts_at, ends_at, usage_limit, used_count, is_active, is_archived, created_at")
         .eq("restaurant_id", chosenId)
         .order("created_at", { ascending: false });
       if (couponError) throw couponError;
@@ -182,6 +182,7 @@ export default function OffersDashboard() {
   }
 
   function editCoupon(coupon) {
+    if (coupon.is_archived) return;
     setEditingCouponId(coupon.id);
     setError("");
     setNotice("");
@@ -200,8 +201,11 @@ export default function OffersDashboard() {
 
   async function deleteCoupon(coupon) {
     if (!restaurantId || deletingCouponId) return;
+    const hasRecordedUses = Number(coupon.used_count || 0) > 0;
     const confirmed = window.confirm(
-      `Delete coupon ${coupon.code}? It will stop being available to customers. Existing orders keep their saved coupon code and totals.`,
+      hasRecordedUses
+        ? `Archive coupon ${coupon.code}? It will be paused and removed from active coupon management. Existing orders and bills will remain unchanged.`
+        : `Delete coupon ${coupon.code}? If an order already references it, Khaavio will archive it instead so order history stays unchanged.`,
     );
     if (!confirmed) return;
 
@@ -209,27 +213,57 @@ export default function OffersDashboard() {
     setError("");
     setNotice("");
     try {
-      const { error: deleteError } = await supabase
-        .from("restaurant_coupons")
-        .delete()
-        .eq("id", coupon.id)
-        .eq("restaurant_id", restaurantId)
-        .select("id")
-        .single();
-      if (deleteError) throw deleteError;
-
-      setCoupons((current) => current.filter((entry) => entry.id !== coupon.id));
+      const { data: removalResult, error: removalError } = await supabase.rpc(
+        "khaavio_remove_restaurant_coupon",
+        { p_coupon_id: coupon.id },
+      );
+      if (removalError) throw removalError;
+      if (removalResult === "archived") {
+        setCoupons((current) => current.map((entry) => entry.id === coupon.id
+          ? { ...entry, is_active: false, is_archived: true }
+          : entry));
+        setNotice(`${coupon.code} archived and paused. Historical orders and bills remain unchanged.`);
+      } else if (removalResult === "deleted") {
+        setCoupons((current) => current.filter((entry) => entry.id !== coupon.id));
+        setNotice(`${coupon.code} deleted. No order history was changed.`);
+      } else {
+        throw new Error("Khaavio returned an unexpected coupon removal result. Refresh and try again.");
+      }
       if (editingCouponId === coupon.id) resetCouponForm();
-      setNotice(`${coupon.code} deleted. Existing order totals remain unchanged.`);
     } catch (deleteError) {
       console.error("Could not delete coupon:", deleteError);
-      setError(deleteError?.message || "Could not delete the coupon.");
+      setError(deleteError?.message || "Could not remove the coupon.");
+    } finally {
+      setDeletingCouponId("");
+    }
+  }
+
+  async function restoreCoupon(coupon) {
+    if (!coupon.is_archived || deletingCouponId) return;
+    setDeletingCouponId(coupon.id);
+    setError("");
+    setNotice("");
+    try {
+      const { data: restored, error: restoreError } = await supabase.rpc(
+        "khaavio_restore_restaurant_coupon",
+        { p_coupon_id: coupon.id },
+      );
+      if (restoreError) throw restoreError;
+      if (restored !== true) throw new Error("Khaavio could not restore this coupon. Refresh and try again.");
+      setCoupons((current) => current.map((entry) => entry.id === coupon.id
+        ? { ...entry, is_active: false, is_archived: false }
+        : entry));
+      setNotice(`${coupon.code} restored as paused. Enable it when you are ready to use it again.`);
+    } catch (restoreError) {
+      console.error("Could not restore coupon:", restoreError);
+      setError(restoreError?.message || "Could not restore the coupon.");
     } finally {
       setDeletingCouponId("");
     }
   }
 
   async function toggleCoupon(coupon) {
+    if (coupon.is_archived) return;
     setError("");
     setNotice("");
     const { error: updateError } = await supabase.from("restaurant_coupons")
@@ -253,7 +287,7 @@ export default function OffersDashboard() {
     }
   }
 
-  const activeCount = coupons.filter((coupon) => coupon.is_active).length;
+  const activeCount = coupons.filter((coupon) => coupon.is_active && !coupon.is_archived).length;
   const usedCount = coupons.reduce((sum, coupon) => sum + Number(coupon.used_count || 0), 0);
 
   return (
@@ -314,24 +348,33 @@ export default function OffersDashboard() {
             </section>
 
             <section className="offers-panel offers-list-panel">
-              <div className="offers-panel-heading"><span className="offers-icon is-gold"><Tag size={17} /></span><div><h2>Your coupons</h2><p>Pause an offer any time. Existing orders keep their saved totals.</p></div><span className="offers-count">{coupons.length}</span></div>
+              <div className="offers-panel-heading"><span className="offers-icon is-gold"><Tag size={17} /></span><div><h2>Your coupons</h2><p>Delete unused coupons or archive coupons with order history.</p></div><span className="offers-count">{coupons.length}</span></div>
               {loading ? <div className="offers-state"><LoaderCircle size={23} className="offers-spin" /><span>Loading offers…</span></div> : coupons.length === 0 ? <div className="offers-empty compact"><Tag size={23} /><strong>No coupons yet</strong><p>Create your first offer and its code will work on the restaurant QR menu.</p></div> : (
                 <div className="offers-list">
                   {coupons.map((coupon) => {
                     const exhausted = coupon.usage_limit !== null && Number(coupon.used_count) >= Number(coupon.usage_limit);
-                    const live = coupon.is_active && !exhausted && new Date(coupon.starts_at) <= new Date() && (!coupon.ends_at || new Date(coupon.ends_at) > new Date());
-                    return <article className={`offers-coupon-card${live ? " is-live" : ""}`} key={coupon.id}>
+                    const live = !coupon.is_archived && coupon.is_active && !exhausted && new Date(coupon.starts_at) <= new Date() && (!coupon.ends_at || new Date(coupon.ends_at) > new Date());
+                    return <article className={`offers-coupon-card${live ? " is-live" : coupon.is_archived ? " is-archived" : ""}`} key={coupon.id}>
                       <div className="offers-coupon-top">
                         <div><span className="offers-coupon-kicker">{coupon.title}</span><strong>{coupon.discount_type === "percent" ? `${Number(coupon.discount_value)}% off` : `₹${Number(coupon.discount_value).toFixed(2)} off`}</strong></div>
                         <div className="offers-coupon-actions" aria-label={`Actions for coupon ${coupon.code}`}>
-                          <button type="button" className="offers-toggle" title={coupon.is_active ? "Pause coupon" : "Enable coupon"} aria-label={`${coupon.is_active ? "Pause" : "Activate"} ${coupon.code}`} onClick={() => void toggleCoupon(coupon)}>{coupon.is_active ? <ToggleRight size={22} /> : <ToggleLeft size={22} />}</button>
-                          <button type="button" className="offers-edit-button" title={`Edit ${coupon.code}`} onClick={() => editCoupon(coupon)} aria-label={`Edit coupon ${coupon.code}`} disabled={saving || Boolean(deletingCouponId)}><Pencil size={13} /><span>Edit</span></button>
-                          <button type="button" className="offers-delete-button" title={`Delete ${coupon.code}`} onClick={() => void deleteCoupon(coupon)} aria-label={`Delete coupon ${coupon.code}`} disabled={Boolean(deletingCouponId)}>{deletingCouponId === coupon.id ? <LoaderCircle size={13} className="offers-spin" /> : <Trash2 size={13} />}<span>Delete</span></button>
+                          {coupon.is_archived ? (
+                            <>
+                              <span className="offers-status is-archived"><Archive size={12} /> Archived</span>
+                              <button type="button" className="offers-edit-button" title={`Restore ${coupon.code}`} onClick={() => void restoreCoupon(coupon)} aria-label={`Restore coupon ${coupon.code}`} disabled={Boolean(deletingCouponId)}>{deletingCouponId === coupon.id ? <LoaderCircle size={13} className="offers-spin" /> : <RotateCcw size={13} />}<span>Restore</span></button>
+                            </>
+                          ) : (
+                            <>
+                              <button type="button" className="offers-toggle" title={coupon.is_active ? "Pause coupon" : "Enable coupon"} aria-label={`${coupon.is_active ? "Pause" : "Activate"} ${coupon.code}`} onClick={() => void toggleCoupon(coupon)}>{coupon.is_active ? <ToggleRight size={22} /> : <ToggleLeft size={22} />}</button>
+                              <button type="button" className="offers-edit-button" title={`Edit ${coupon.code}`} onClick={() => editCoupon(coupon)} aria-label={`Edit coupon ${coupon.code}`} disabled={saving || Boolean(deletingCouponId)}><Pencil size={13} /><span>Edit</span></button>
+                              <button type="button" className={`offers-delete-button${Number(coupon.used_count || 0) > 0 ? " is-archive" : ""}`} title={Number(coupon.used_count || 0) > 0 ? `Archive ${coupon.code}` : `Delete ${coupon.code}`} onClick={() => void deleteCoupon(coupon)} aria-label={`${Number(coupon.used_count || 0) > 0 ? "Archive" : "Delete"} coupon ${coupon.code}`} disabled={Boolean(deletingCouponId)}>{deletingCouponId === coupon.id ? <LoaderCircle size={13} className="offers-spin" /> : Number(coupon.used_count || 0) > 0 ? <Archive size={13} /> : <Trash2 size={13} />}<span>{Number(coupon.used_count || 0) > 0 ? "Archive" : "Delete"}</span></button>
+                            </>
+                          )}
                         </div>
                       </div>
                       <div className="offers-code-row"><code>{coupon.code}</code><button type="button" onClick={() => void copyCode(coupon.code)} aria-label={`Copy coupon ${coupon.code}`}>{copiedCode === coupon.code ? <Check size={15} /> : <Copy size={15} />}{copiedCode === coupon.code ? "Copied" : "Copy"}</button></div>
                       <div className="offers-coupon-meta"><span>Min. ₹{Number(coupon.minimum_order_amount).toFixed(0)}</span>{coupon.maximum_discount_amount !== null && <span>Max. ₹{Number(coupon.maximum_discount_amount).toFixed(0)} off</span>}<span>{coupon.used_count} / {coupon.usage_limit ?? "∞"} uses</span></div>
-                      <div className="offers-coupon-footer"><span className={`offers-status${live ? " is-live" : ""}`}>{exhausted ? "Limit reached" : live ? "Active" : coupon.is_active ? "Scheduled / expired" : "Paused"}</span><span><CalendarClock size={13} /> {dateTimeLocal(coupon.ends_at)}</span></div>
+                      <div className="offers-coupon-footer"><span className={`offers-status${live ? " is-live" : coupon.is_archived ? " is-archived" : ""}`}>{coupon.is_archived ? "Archived · History kept" : exhausted ? "Limit reached" : live ? "Active" : coupon.is_active ? "Scheduled / expired" : "Paused"}</span><span><CalendarClock size={13} /> {dateTimeLocal(coupon.ends_at)}</span></div>
                     </article>;
                   })}
                 </div>
