@@ -1,6 +1,8 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync, existsSync } from "node:fs";
+import { buildSitemapXml } from "../api/sitemap.js";
+import { isKnownMetadataPath } from "../src/lib/seoMetadata.js";
 
 const projectRoot = new URL("../",
     import.meta.url);
@@ -12,14 +14,17 @@ test("robots.txt points crawlers to the Khaavio sitemap", () => {
     assert.match(robots, /Sitemap:\s*https:\/\/khaavio\.in\/sitemap\.xml/i);
 });
 
-test("sitemap contains only public canonical marketing and legal pages", () => {
-    const sitemap = readRoot("public/sitemap.xml");
+test("dynamic sitemap includes public canonical pages and only safe published restaurant slugs", () => {
+    const sitemap = buildSitemapXml(["ayushi-cafe", "green-table", "bad/slug", "__proto__", ""]);
     assert.match(sitemap, /https:\/\/khaavio\.in\//);
     assert.match(sitemap, /https:\/\/khaavio\.in\/about/);
+    assert.match(sitemap, /https:\/\/khaavio\.in\/contact/);
     assert.match(sitemap, /https:\/\/khaavio\.in\/privacy/);
     assert.match(sitemap, /https:\/\/khaavio\.in\/terms/);
     assert.match(sitemap, /https:\/\/khaavio\.in\/refund-policy/);
-    assert.doesNotMatch(sitemap, /\/dashboard|\/login|\/signup|\/track\//);
+    assert.match(sitemap, /https:\/\/khaavio\.in\/menu\/ayushi-cafe/);
+    assert.match(sitemap, /https:\/\/khaavio\.in\/menu\/green-table/);
+    assert.doesNotMatch(sitemap, /bad%2Fslug|__proto__|\/dashboard|\/login|\/signup|\/track\//);
 });
 
 test("HTML includes canonical, description, social preview and software schema", () => {
@@ -61,7 +66,7 @@ test("About page has a public route, metadata and homepage quick link", () => {
 
 test("legal policies are reviewed against current Indian privacy and consumer grievance requirements", () => {
     const legal = readRoot("src/pages/LegalPage.jsx");
-    assert.match(legal, /30 October 2026/);
+    assert.match(legal, /31 October 2026/);
     assert.match(legal, /Digital Personal Data Protection Act, 2023/);
     assert.match(legal, /Digital Personal Data Protection Rules, 2025/);
     assert.match(legal, /48 hours/);
@@ -124,4 +129,15 @@ test("legal policies cover privacy handling, subscription terms and refund reque
     assert.match(legal, /duplicate payment/);
     assert.match(legal, /khaavioqr@gmail\.com/);
     assert.match(legal, /917324883263/);
+});
+
+test("known public and private routes are distinguished from unknown paths", () => {
+    assert.equal(isKnownMetadataPath("/"), true);
+    assert.equal(isKnownMetadataPath("/contact"), true);
+    assert.equal(isKnownMetadataPath("/dashboard/menu"), true);
+    assert.equal(isKnownMetadataPath("/menu/valid-restaurant"), true);
+    assert.equal(isKnownMetadataPath("/track/valid-restaurant/123e4567-e89b-12d3-a456-426614174000"), true);
+    assert.equal(isKnownMetadataPath("/menu/invalid%2Fslug"), false);
+    assert.equal(isKnownMetadataPath("/dashboard/not-a-real-page"), false);
+    assert.equal(isKnownMetadataPath("/totally-missing"), false);
 });

@@ -7,6 +7,7 @@ import { KhaavioOperationalAlertsProvider } from "./context/KhaavioOperationalAl
 import SubscriptionAccessGuard from "./components/SubscriptionAccessGuard";
 import RestaurantDashboardLayout from "./components/RestaurantDashboardLayout";
 import SeoManager from "./components/SeoManager";
+import AnalyticsConsent from "./components/AnalyticsConsent";
 import LegalPage from "./pages/LegalPage";
 import "./PageLoader.css";
 import { getDomainRedirectTarget } from "./lib/domainRouting.js";
@@ -19,6 +20,7 @@ const Auth = lazy(() => import("./pages/Auth"));
 const PublicMenu = lazy(() => import("./pages/PublicMenu"));
 const PublicBooking = lazy(() => import("./pages/PublicBooking"));
 const OrderTracking = lazy(() => import("./pages/OrderTracking"));
+const NotFound = lazy(() => import("./pages/NotFound"));
 
 // Restaurant setup and dashboard
 const Onboarding = lazy(() => import("./pages/Onboarding"));
@@ -152,6 +154,7 @@ export default function App() {
         <ScrollToTop />
         <DomainRouteBoundary>
           <SeoManager />
+          <AnalyticsConsent />
         <LocationAwareRouteBoundary>
           <Suspense fallback={<PageLoader />}>
             <Routes>
@@ -375,7 +378,7 @@ export default function App() {
             }
           />
           {/* Unknown routes */}
-          <Route path="*" element={<Navigate to="/" replace />} />
+          <Route path="*" element={<NotFound />} />
                     </Routes>
           </Suspense>
         </LocationAwareRouteBoundary>

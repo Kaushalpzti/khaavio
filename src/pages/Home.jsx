@@ -26,6 +26,7 @@ import {
   Zap,
 } from "lucide-react";
 import khaavioIcon from "../assets/icon.png";
+import { trackAnalyticsEvent } from "../lib/analytics.js";
 import "./Home.css";
 
 const CONTACT_EMAIL = "khaavioqr@gmail.com";
@@ -346,6 +347,7 @@ function DemoRequestForm() {
     const whatsappWindow = window.open(url, "_blank");
     if (whatsappWindow) whatsappWindow.opener = null;
     else window.location.assign(url);
+    trackAnalyticsEvent("demo_whatsapp_opened");
     setStatus(
       "WhatsApp will open with your demo request prepared. Send the message there to complete your enquiry.",
     );

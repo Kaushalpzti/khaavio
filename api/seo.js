@@ -1,7 +1,8 @@
 import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { buildPageMetadata, injectPageMetadata, normalizeMetadataPath } from "./_seo-utils.js";
+import { isKnownMetadataPath, normalizeMetadataPath } from "../src/lib/seoMetadata.js";
+import { buildPageMetadata, injectPageMetadata } from "./_seo-utils.js";
 import { getDomainRedirectTarget } from "../src/lib/domainRouting.js";
 
 const SITE_URL = "https://khaavio.in";
@@ -21,7 +22,7 @@ async function fetchPublicRestaurant(slug) {
     process.env.SUPABASE_PUBLISHABLE_KEY ||
     process.env.SUPABASE_ANON_KEY ||
     "";
-  if (!supabaseUrl || !publishableKey) return null;
+  if (!supabaseUrl || !publishableKey) return undefined;
 
   try {
     const response = await fetch(supabaseUrl + "/rest/v1/rpc/khaavio_public_restaurant_menu", {
@@ -34,13 +35,13 @@ async function fetchPublicRestaurant(slug) {
       body: JSON.stringify({ p_slug: slug }),
       signal: AbortSignal.timeout(2800),
     });
-    if (!response.ok) return null;
+    if (!response.ok) return undefined;
     const data = await response.json();
     if (!data || !data.restaurant || data.restaurant.is_published !== true) return null;
     return data.restaurant;
   } catch (error) {
     console.warn("Social metadata lookup failed for a public restaurant.", error?.name || "FetchError");
-    return null;
+    return undefined;
   }
 }
 
@@ -90,18 +91,21 @@ export default async function handler(req, res) {
     }
 
     const slug = getSlugFromPath(pathname);
+    const isRestaurantPage = /^\/(?:menu|book)\//.test(pathname);
     const restaurant = slug ? await fetchPublicRestaurant(slug) : null;
-    const metadata = buildPageMetadata(pathname, {
+    const routeExists = isKnownMetadataPath(pathname) && (!isRestaurantPage || restaurant !== null);
+    const metadata = buildPageMetadata(routeExists ? pathname : "/__not-found__", {
       restaurant,
       tableToken: requestUrl.searchParams.get("table") || "",
     });
+    metadata.ogUrl = SITE_URL + pathname;
     const html = injectPageMetadata(readBuiltHtml(), metadata);
 
-    res.statusCode = 200;
+    res.statusCode = routeExists ? 200 : 404;
     res.setHeader("Content-Type", "text/html; charset=utf-8");
     res.setHeader("X-Content-Type-Options", "nosniff");
     res.setHeader("X-Robots-Tag", metadata.indexable ? "index,follow,max-image-preview:large" : "noindex,follow");
-    if (metadata.indexable) {
+    if (routeExists && metadata.indexable) {
       res.setHeader("Cache-Control", "public, max-age=0, s-maxage=300, stale-while-revalidate=3600");
       res.setHeader("Vercel-CDN-Cache-Control", "public, s-maxage=300, stale-while-revalidate=3600");
     } else {

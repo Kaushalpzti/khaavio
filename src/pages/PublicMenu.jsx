@@ -26,7 +26,6 @@ import { supabase } from "../lib/supabaseClient";
 import { normalizeIndianMobilePhone } from "../lib/customerInsights";
 import { normalizeTableNumber } from "../lib/tableNumber";
 import { getOrCreateKhaavioLoyaltyToken } from "../lib/loyaltyToken";
-import { getStoredKhaavioLoyaltyPhone, setStoredKhaavioLoyaltyPhone } from "../lib/loyaltyPhone";
 import { DEFAULT_PUBLIC_FEATURES, normalizePublicFeatureFlags, shouldShowPublicReviewsTab } from "../lib/publicPlanFeatures";
 import { hasSocialLinks } from "../lib/restaurantSocialLinks.js";
 import PublicHelpLauncher from "../components/PublicHelpLauncher";
@@ -270,7 +269,6 @@ export default function PublicMenu() {
   const [activePromoSlide, setActivePromoSlide] = useState(0);
   const [customerName, setCustomerName] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
-  const [loyaltyPhone, setLoyaltyPhone] = useState(() => getStoredKhaavioLoyaltyPhone(slug));
   const [orderNotes, setOrderNotes] = useState("");
   const [serviceMode, setServiceMode] = useState("dine_in");
   const [pickupEtaMinutes, setPickupEtaMinutes] = useState(30);
@@ -294,11 +292,6 @@ export default function PublicMenu() {
     hasSocialLinks(restaurant?.social_links),
   );
   const canUseAskKhaavio = publicFeatures.ai_menu_assistant === true;
-
-  function handleLoyaltyPhoneChange(value) {
-    setLoyaltyPhone(value);
-    setStoredKhaavioLoyaltyPhone(slug, value);
-  }
 
   function switchBottomTab(tab) {
     setIsCartOpen(false);
@@ -1169,7 +1162,7 @@ export default function PublicMenu() {
           option_ids: entry.optionIds || [],
         })),
         p_loyalty_member_token: getOrCreateKhaavioLoyaltyToken(slug),
-        p_loyalty_phone: loyaltyPhone || null,
+        p_loyalty_phone: null,
         p_coupon_code: activeCoupon?.code || null,
       };
 
@@ -1183,7 +1176,7 @@ export default function PublicMenu() {
           p_service_mode: selectedMode,
           p_pickup_eta_minutes: selectedMode === "pickup" ? pickupEtaMinutes : null,
           p_coupon_code: activeCoupon?.code || null,
-          p_loyalty_phone: loyaltyPhone || null,
+          p_loyalty_member_token: payload.p_loyalty_member_token,
         });
         if (orderError) throw orderError;
         const result = Array.isArray(data) ? data[0] : data;
@@ -1212,7 +1205,7 @@ export default function PublicMenu() {
               notes: payload.p_notes,
               items: payload.p_items,
               loyaltyMemberToken: payload.p_loyalty_member_token,
-              loyaltyPhone: payload.p_loyalty_phone,
+              loyaltyPhone: null,
               couponCode: payload.p_coupon_code,
             }),
           )
@@ -2123,8 +2116,6 @@ export default function PublicMenu() {
               <div className="public-menu-tab-content">
                 <PublicLoyaltyClub
                   slug={slug}
-                  phone={loyaltyPhone}
-                  onPhoneChange={handleLoyaltyPhoneChange}
                 />
               </div>
             </section>

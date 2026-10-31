@@ -5,10 +5,12 @@ import { readFileSync } from "node:fs";
 import {
   buildPageMetadata,
   createPublicQrDestination,
+  isKnownMetadataPath,
   createSocialQrImageUrl,
 } from "../src/lib/seoMetadata.js";
 import { injectPageMetadata } from "../api/_seo-utils.js";
 import socialQrHandler from "../api/social-qr.js";
+import { buildSitemapXml } from "../api/sitemap.js";
 
 const read = (path) => readFileSync(new URL(path, import.meta.url), "utf8");
 
@@ -147,4 +149,28 @@ test("client SEO manager loads public menu details on route changes", () => {
   assert.match(seoClient, /khaavio_public_restaurant_menu/);
   assert.match(seoClient, /buildPageMetadata/);
   assert.match(seoClient, /\[pathname, search\]/);
+});
+
+
+test("server route classifier rejects missing pages while preserving valid public paths", () => {
+  assert.equal(isKnownMetadataPath("/contact"), true);
+  assert.equal(isKnownMetadataPath("/menu/ayushi-cafe"), true);
+  assert.equal(isKnownMetadataPath("/book/ayushi-cafe"), true);
+  assert.equal(isKnownMetadataPath("/dashboard/orders"), true);
+  assert.equal(isKnownMetadataPath("/dashboard/no-such-page"), false);
+  assert.equal(isKnownMetadataPath("/page-that-does-not-exist"), false);
+});
+
+test("sitemap endpoint builder is dynamic and excludes non-indexable customer routes", () => {
+  const xml = buildSitemapXml([{ slug: "ayushi-cafe" }, { slug: "green-table" }, { slug: "../bad" }]);
+  assert.match(xml, /<loc>https:\/\/khaavio\.in\/contact<\/loc>/);
+  assert.match(xml, /<loc>https:\/\/khaavio\.in\/menu\/ayushi-cafe<\/loc>/);
+  assert.match(xml, /<loc>https:\/\/khaavio\.in\/menu\/green-table<\/loc>/);
+  assert.doesNotMatch(xml, /\/book\/|\/track\/|\.\.%2Fbad/);
+});
+
+test("Vercel exposes the dynamic sitemap before the SEO catch-all rewrite", () => {
+  const config = JSON.parse(read("../vercel.json"));
+  assert.deepEqual(config.rewrites[0], { source: "/sitemap.xml", destination: "/api/sitemap" });
+  assert.equal(config.rewrites[config.rewrites.length - 1].destination, "/api/seo?path=/$1");
 });

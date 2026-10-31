@@ -11,6 +11,7 @@ import {
   X,
 } from "lucide-react";
 import khaavioIcon from "../assets/icon.png";
+import { trackAnalyticsEvent } from "../lib/analytics.js";
 import "./Home.css";
 import "./Contact.css";
 
@@ -48,6 +49,7 @@ export default function Contact() {
     ];
     const href = `mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent("Khaavio — Contact Enquiry")}&body=${encodeURIComponent(fields.join("\n"))}`;
     setStatus("Your email app should open with the enquiry prepared. Send the email to complete your request.");
+    trackAnalyticsEvent("contact_email_composer_opened");
     window.location.href = href;
   }
 

@@ -69,6 +69,12 @@ const STATIC_PAGES = {
         indexable: true,
         canonicalPath: "/refund-policy",
     },
+    "/cancellation-refund": {
+        title: "Refund & Cancellation Policy | Khaavio",
+        description: "Understand Khaavio subscription cancellations, manual payment verification and how to request a refund.",
+        indexable: true,
+        canonicalPath: "/refund-policy",
+    },
 };
 
 const PRIVATE_PAGE_TITLES = {
@@ -144,6 +150,14 @@ const PRIVATE_PAGE_TITLES = {
         "Table Service Requests | Khaavio",
         "Review guest service requests.",
     ],
+    "/dashboard/menu-banners": [
+        "Menu Banners | Khaavio",
+        "Manage promotional banners shown on your restaurant menu.",
+    ],
+    "/dashboard/offers": [
+        "Offers & Coupons | Khaavio",
+        "Manage restaurant discounts and coupon campaigns.",
+    ],
     "/dashboard/feedback": [
         "Guest Feedback | Khaavio",
         "Review guest feedback for your restaurant.",
@@ -176,6 +190,27 @@ export function normalizeMetadataPath(value) {
     }
 
     return path || "/";
+}
+
+const KNOWN_PRIVATE_PATHS = new Set([
+    "/login", "/signup", "/reset-password", "/onboarding",
+    "/dashboard", "/dashboard/menu", "/dashboard/menu-banners", "/dashboard/qr",
+    "/dashboard/table-qr", "/dashboard/orders", "/dashboard/receipts",
+    "/dashboard/bookings", "/dashboard/analytics", "/dashboard/kitchen",
+    "/dashboard/table-sessions", "/dashboard/settings", "/dashboard/subscription",
+    "/dashboard/help", "/dashboard/service-requests", "/dashboard/feedback",
+    "/dashboard/loyalty", "/dashboard/offers", "/platform-admin/subscriptions",
+]);
+
+export function isKnownMetadataPath(value) {
+    const path = normalizeMetadataPath(value);
+    if (STATIC_PAGES[path] || PRIVATE_PAGE_TITLES[path] || KNOWN_PRIVATE_PATHS.has(path)) return true;
+    const customerPath = path.match(/^\/(menu|book)\/([^/]+)$/);
+    if (customerPath) {
+        try { return isSafeRestaurantSlug(decodeURIComponent(customerPath[2])); }
+        catch { return false; }
+    }
+    return /^\/track\/[a-z0-9][a-z0-9-]{0,159}\/[^/]+$/i.test(path);
 }
 
 export function isSafeRestaurantSlug(value) {
