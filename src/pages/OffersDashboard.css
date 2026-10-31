@@ -181,3 +181,24 @@
   min-width: max-content;
   margin-left: auto;
 }
+
+/* Archived coupons remain visible for history, but cannot be edited or reactivated. */
+.offers-coupon-card:has(.offers-status.is-archived) {
+  border-color: #e6e1d1;
+  background: #fbfaf5;
+}
+.offers-status.is-archived {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: #f3efe3;
+  color: #80672d;
+}
+.offers-delete-button.is-archive {
+  border-color: #e8dfc7;
+  color: #80672d;
+}
+.offers-delete-button.is-archive:hover {
+  border-color: #d8c99e;
+  background: #faf6e9;
+}
