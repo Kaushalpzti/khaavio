@@ -172,14 +172,14 @@ test("dynamic sitemap contains public static pages and only validated published 
     await sitemapHandler({ method: "GET" }, res);
 
     assert.equal(res.statusCode, 200);
-    assert.match(res.headers["content-type"], /application\\/xml/);
+    assert.ok(String(res.headers["content-type"]).includes("application/xml"));
     assert.equal(res.headers["x-sitemap-dynamic"], "enabled");
-    assert.match(res.body, /https:\\/\\/khaavio\\.in\\/contact/);
-    assert.match(res.body, /https:\\/\\/khaavio\\.in\\/privacy/);
-    assert.match(res.body, /https:\\/\\/khaavio\\.in\\/menu\\/published-cafe/);
-    assert.match(res.body, /https:\\/\\/khaavio\\.in\\/menu\\/another-restaurant/);
-    assert.doesNotMatch(res.body, /invalid\\/slug/);
-    assert.doesNotMatch(res.body, /\\/dashboard|\\/login|\\/book\\//);
+    assert.ok(res.body.includes("https://khaavio.in/contact"));
+    assert.ok(res.body.includes("https://khaavio.in/privacy"));
+    assert.ok(res.body.includes("https://khaavio.in/menu/published-cafe"));
+    assert.ok(res.body.includes("https://khaavio.in/menu/another-restaurant"));
+    assert.ok(!res.body.includes("invalid/slug"));
+    assert.ok(!res.body.includes("/dashboard") && !res.body.includes("/login") && !res.body.includes("/book/"));
   } finally {
     globalThis.fetch = originalFetch;
     restoreEnv();
