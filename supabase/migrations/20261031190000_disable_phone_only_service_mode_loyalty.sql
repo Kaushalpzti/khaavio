@@ -1,9 +1,8 @@
 BEGIN;
 
--- Public pickup/dine-in orders have no browser-bound Perks token in this flow.
--- Keep the existing RPC signature for client compatibility, but ignore the
--- unverified phone-only loyalty argument. Table QR orders use the token-bound
--- loyalty workflow instead.
+-- Add a token-aware overload for current pickup/dine-in clients while keeping
+-- the legacy RPC safe. A mobile number alone must never attach another guest's
+-- Perks membership to a new order.
 CREATE OR REPLACE FUNCTION public.place_public_order_for_service_mode(
   p_slug text,
   p_customer_name text,
