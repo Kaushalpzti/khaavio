@@ -47,7 +47,7 @@ const STATIC_PAGES = {
     },
     "/privacy": {
         title: "Privacy Policy | Khaavio",
-        description: "Learn how Khaavio handles restaurant account information, guest order and booking details, subscription records and privacy requests.",
+        description: "Learn how Khaavio handles restaurant accounts, guest orders, bookings, loyalty rewards, feedback, AI-assisted features and privacy requests.",
         indexable: true,
         canonicalPath: "/privacy",
     },
