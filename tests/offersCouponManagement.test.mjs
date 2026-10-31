@@ -56,6 +56,8 @@ test("coupon controls stay in one compact row instead of increasing card height"
   const actionBlock = styles.match(/\.offers-coupon-actions\s*\{([^}]+)\}/)?.[1] || "";
   assert.match(actionBlock, /flex-wrap:\s*nowrap/);
   assert.match(actionBlock, /flex:\s*0 0 auto/);
+  assert.match(styles, /\.offers-coupon-top > \.offers-coupon-actions\s*\{[^}]*display:\s*flex/);
+  assert.match(styles, /\.offers-coupon-top > \.offers-coupon-actions\s*\{[^}]*flex-direction:\s*row/);
   assert.match(styles, /\.offers-edit-button span,\s*\.offers-delete-button span\s*\{\s*display:\s*none;/);
   assert.match(styles, /\.offers-coupon-card\s*\{[^}]*padding:\s*9px/);
 });
