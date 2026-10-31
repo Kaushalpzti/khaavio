@@ -48,6 +48,9 @@ test("demo and contact forms store a lead before showing the thank-you route", a
   assert.match(sql, /ENABLE ROW LEVEL SECURITY/);
   assert.match(sql, /GRANT ALL ON TABLE public\.platform_contact_leads TO service_role/);
   assert.match(app, /path="\/thank-you"/);
+  assert.match(home, /markLeadConfirmed\("demo"\)/);
+  assert.match(contact, /markLeadConfirmed\("contact"\)/);
+  assert.match(thankYou, /consumeLeadConfirmation\(leadType\)/);
   assert.match(thankYou, /trackEvent\("generate_lead"/);
 });
 
@@ -61,6 +64,7 @@ test("GA4 loads only with a configured measurement ID and explicit analytics con
   assert.match(manager, /Reject optional/);
   assert.match(manager, /analytics_storage: "denied"/);
   assert.match(analytics, /getItem\(ANALYTICS_CONSENT_KEY\) !== "granted"/);
+  assert.match(analytics, /LEAD_CONFIRMATION_KEY/);
   assert.match(privacy, /Google Analytics 4/);
   assert.match(privacy, /privacy choices/);
 });

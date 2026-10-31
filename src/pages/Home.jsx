@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
+import { markLeadConfirmed } from "../lib/analytics";
 import {
   ArrowDownRight,
   ArrowRight,
@@ -355,6 +356,7 @@ function DemoRequestForm() {
       if (!response.ok || result.ok !== true) {
         throw new Error(result.message || "We couldn't receive your demo request. Please try again.");
       }
+      markLeadConfirmed("demo");
       navigate("/thank-you?type=demo");
     } catch (error) {
       setStatus(error?.message || "We couldn't receive your request. Please try again.");

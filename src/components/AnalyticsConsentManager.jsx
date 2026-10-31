@@ -74,7 +74,6 @@ export default function AnalyticsConsentManager() {
     setConsent(value);
     applyConsent(value);
     setOpen(false);
-    if (value === "granted") loadGoogleAnalytics();
   }
 
   if (!MEASUREMENT_ID) return null;

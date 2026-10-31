@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { markLeadConfirmed } from "../lib/analytics";
 import {
   ArrowLeft,
   ArrowRight,
@@ -59,6 +60,7 @@ export default function Contact() {
       if (!response.ok || result.ok !== true) {
         throw new Error(result.message || "We couldn't receive your enquiry. Please try again.");
       }
+      markLeadConfirmed("contact");
       navigate("/thank-you?type=contact");
     } catch (error) {
       setStatus(error?.message || "We couldn't receive your enquiry. Please try again.");

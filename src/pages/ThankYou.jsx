@@ -1,7 +1,7 @@
 import { useEffect, useRef } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { CheckCircle2, ArrowRight } from "lucide-react";
-import { trackEvent } from "../lib/analytics";
+import { consumeLeadConfirmation, trackEvent } from "../lib/analytics";
 import "./ThankYou.css";
 
 export default function ThankYou() {
@@ -12,6 +12,7 @@ export default function ThankYou() {
   useEffect(() => {
     if (tracked.current) return;
     tracked.current = true;
+    if (!consumeLeadConfirmation(leadType)) return;
     trackEvent("generate_lead", { lead_type: leadType });
   }, [leadType]);
 
