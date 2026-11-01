@@ -237,12 +237,8 @@ jobs:
         run: psql -v ON_ERROR_STOP=1 -f tests/sql/complete-gst-billing-baseline.sql
       - name: Apply complete registration-aware GST billing migration
         run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261101150000_complete_gst_billing.sql
-      - name: Verify complete GST checkout and invoice flows
-        run: psql -v ON_ERROR_STOP=1 -f tests/sql/complete-gst-billing-verify.sql
-      - name: Prepare legacy GST billing fixture
-        run: psql -v ON_ERROR_STOP=1 -f tests/sql/complete-gst-billing-baseline.sql
-      - name: Apply complete registration-aware GST billing migration
-        run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261101150000_complete_gst_billing.sql
+      - name: Apply GST registration GSTIN guard
+        run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261101151000_gst_registration_gstin_required.sql
       - name: Verify GST checkout and final invoice scenarios
         run: psql -v ON_ERROR_STOP=1 -f tests/sql/complete-gst-billing-verify.sql
       - name: Verify grants, public snapshot and staff-verified UPI settlement
