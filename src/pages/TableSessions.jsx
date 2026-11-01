@@ -107,7 +107,7 @@ export default function TableSessions() {
           .limit(100),
         supabase
           .from("table_session_invoices")
-          .select("id, restaurant_id, table_id, session_id, guest_tab_id, invoice_number, total_amount, subtotal_amount, discount_amount, taxable_amount, tax_amount, gstin_snapshot, gst_inclusive, gst_rate_snapshot, cgst_rate, cgst_amount, sgst_rate, sgst_amount, igst_rate, igst_amount, gst_registration_type_snapshot, gst_tax_type_snapshot, gst_document_type_snapshot, supplier_state_code_snapshot, place_of_supply_state_snapshot, place_of_supply_state_code_snapshot, sac_code_snapshot, gst_document_number, gst_document_issued_at, order_count, payment_status, payment_choice, issued_at, issued_by, paid_at, payment_method, voided_at, voided_by, void_reason")
+          .select("id, restaurant_id, table_id, session_id, guest_tab_id, invoice_number, total_amount, subtotal_amount, discount_amount, taxable_amount, tax_amount, gstin_snapshot, gst_inclusive, gst_rate_snapshot, cgst_rate, cgst_amount, sgst_rate, sgst_amount, igst_rate, igst_amount, gst_registration_type_snapshot, gst_tax_type_snapshot, gst_document_type_snapshot, supplier_state_code_snapshot, place_of_supply_state_snapshot, place_of_supply_state_code_snapshot, supplier_legal_name_snapshot, supplier_address_snapshot, supplier_city_snapshot, supplier_state_snapshot, supplier_postal_code_snapshot, supplier_phone_snapshot, sac_code_snapshot, gst_document_number, gst_document_issued_at, order_count, payment_status, payment_choice, issued_at, issued_by, paid_at, payment_method, voided_at, voided_by, void_reason")
           .eq("restaurant_id", restaurantData.id)
           .order("issued_at", { ascending: false })
           .limit(100),
