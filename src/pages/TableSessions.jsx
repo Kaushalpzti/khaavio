@@ -91,7 +91,7 @@ export default function TableSessions() {
 
       const { data: restaurantData, error: restaurantError } = await supabase
         .from("restaurants")
-        .select("id, name, owner_id, upi_payment_enabled, counter_payment_enabled, upi_id")
+        .select("id, name, owner_id, upi_payment_enabled, counter_payment_enabled, upi_id, receipt_paper_width")
         .eq("owner_id", authData.user.id)
         .maybeSingle();
 
@@ -178,6 +178,7 @@ export default function TableSessions() {
       }
 
       setRestaurant(restaurantData);
+      setReceiptWidth(restaurantData.receipt_paper_width === "58" ? "58" : "80");
       if (restaurantData.counter_payment_enabled !== false) setPaymentMethod("Cash");
       else if (restaurantData.upi_payment_enabled === true) setPaymentMethod("UPI");
       else setPaymentMethod("Other");
