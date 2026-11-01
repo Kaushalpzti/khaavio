@@ -42,7 +42,7 @@ export const PUBLIC_MENU_THEMES = [
     colors: {
       primary: "#5B21B6", secondary: "#C7B3FF", accent: "#8B5CF6",
       surface: "#EDE9FE", background: "#FAF9FF", text: "#31165D",
-      muted: "#6D5B85", border: "#E3DDF6", onPrimary: "#FFFFFF", onAccent: "#050A06",
+      muted: "#6D5B85", border: "#E3DDF6", onPrimary: "#FFFFFF", onAccent: "#180B18",
     },
   },
   {
@@ -95,9 +95,9 @@ export const PUBLIC_MENU_THEMES = [
     description: "Earthy, rich and premium.",
     swatches: ["#1A120E", "#3A2418", "#6B4A2E", "#A88462", "#D5C4AE", "#4A4A46"],
     colors: {
-      primary: "#1A120E", secondary: "#6B4A2E", accent: "#A88462",
-      surface: "#3A2418", background: "#1A120E", text: "#F5EDE3",
-      muted: "#D5C4AE", border: "#4A4A46", onPrimary: "#FFFFFF", onAccent: "#1A120E",
+      primary: "#3A2418", secondary: "#D5C4AE", accent: "#A88462",
+      surface: "#FFFCF7", background: "#F5EDE3", text: "#302116",
+      muted: "#705C4D", border: "#E7D9C9", onPrimary: "#FFFFFF", onAccent: "#24170F",
     },
   },
   {
@@ -106,9 +106,9 @@ export const PUBLIC_MENU_THEMES = [
     description: "Dark, confident with a vivid accent.",
     swatches: ["#121212", "#1F2937", "#334155", "#64748B", "#F1F5F9", "#EC4899"],
     colors: {
-      primary: "#121212", secondary: "#334155", accent: "#EC4899",
-      surface: "#1F2937", background: "#121212", text: "#F1F5F9",
-      muted: "#A8B4C5", border: "#334155", onPrimary: "#FFFFFF", onAccent: "#121212",
+      primary: "#121826", secondary: "#D8E0EC", accent: "#EC4899",
+      surface: "#FFFFFF", background: "#F5F7FB", text: "#202B3A",
+      muted: "#66758A", border: "#DEE5EF", onPrimary: "#FFFFFF", onAccent: "#301020",
     },
   },
   {
@@ -117,9 +117,9 @@ export const PUBLIC_MENU_THEMES = [
     description: "Natural, grounded and calm.",
     swatches: ["#0F1F17", "#1E3A2E", "#3E5A3F", "#6B7F67", "#C7CBB8", "#3D4337"],
     colors: {
-      primary: "#0F1F17", secondary: "#3E5A3F", accent: "#6B7F67",
-      surface: "#1E3A2E", background: "#0F1F17", text: "#F1F2E8",
-      muted: "#C7CBB8", border: "#3D4337", onPrimary: "#FFFFFF", onAccent: "#050A06",
+      primary: "#0F1F17", secondary: "#D9E2D2", accent: "#6B7F67",
+      surface: "#FFFFFF", background: "#F3F6EF", text: "#1D2B21",
+      muted: "#5A6A5B", border: "#DCE5D7", onPrimary: "#FFFFFF", onAccent: "#050A06",
     },
   },
   {
@@ -128,9 +128,9 @@ export const PUBLIC_MENU_THEMES = [
     description: "Rich, expressive and playful.",
     swatches: ["#1A0F2E", "#3B1B4F", "#7A2E6F", "#D6598F", "#F4D7D4", "#FF6B6B"],
     colors: {
-      primary: "#1A0F2E", secondary: "#7A2E6F", accent: "#FF6B6B",
-      surface: "#3B1B4F", background: "#1A0F2E", text: "#F4D7D4",
-      muted: "#E0B6D1", border: "#7A2E6F", onPrimary: "#FFFFFF", onAccent: "#1A0F2E",
+      primary: "#2B1639", secondary: "#F2DCEB", accent: "#D6598F",
+      surface: "#FFFBFD", background: "#FBF3F8", text: "#2F1A31",
+      muted: "#735A72", border: "#EBD9E7", onPrimary: "#FFFFFF", onAccent: "#240D21",
     },
   },
 ];
@@ -171,7 +171,7 @@ export function getPublicMenuThemeStyle(themeId) {
     "--khaavio-terracotta": colors.accent,
     "--khaavio-terracotta-dark": colors.primary,
     "--khaavio-soft-orange": colors.secondary,
-    "--khaavio-green": "#28734E",
+    "--khaavio-green": colors.accent,
     "--khaavio-menu-primary": colors.primary,
     "--khaavio-menu-secondary": colors.secondary,
     "--khaavio-menu-accent": colors.accent,
@@ -182,5 +182,7 @@ export function getPublicMenuThemeStyle(themeId) {
     "--khaavio-menu-border": colors.border,
     "--khaavio-menu-on-primary": colors.onPrimary,
     "--khaavio-menu-on-accent": colors.onAccent,
+    "--khaavio-menu-accent-soft": "color-mix(in srgb, " + colors.accent + " 12%, " + colors.surface + ")",
+    "--khaavio-menu-primary-soft": "color-mix(in srgb, " + colors.primary + " 7%, " + colors.surface + ")",
   };
 }
