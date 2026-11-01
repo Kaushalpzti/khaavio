@@ -267,8 +267,8 @@ DECLARE
   v_last_number bigint;
 BEGIN
   IF p_restaurant_id IS NULL THEN RAISE EXCEPTION 'A restaurant is required for a tax document.'; END IF;
-  v_start_year := CASE WHEN pg_catalog.extract(month FROM v_local_date) >= 4
-    THEN pg_catalog.extract(year FROM v_local_date)::integer
+  v_start_year := CASE WHEN EXTRACT(MONTH FROM v_local_date) >= 4
+    THEN EXTRACT(YEAR FROM v_local_date)::integer
     ELSE pg_catalog.extract(year FROM v_local_date)::integer - 1
   END;
   v_financial_year := pg_catalog.lpad((v_start_year % 100)::text, 2, '0')
