@@ -39,12 +39,20 @@ import khaavioIcon from "../assets/icon.png";
 import "./PublicMenu.css";
 import "./PublicMenuExperience.css";
 import "./PublicMenuThemes.css";
+import { APP_SITE_URL } from "../lib/domainRouting.js";
 import {
   DEFAULT_PUBLIC_MENU_THEME_ID,
   getPublicMenuTheme,
   getPublicMenuThemeStyle,
   isValidPublicMenuThemeId,
 } from "../lib/publicMenuThemes.js";
+
+function getThemePreviewParentOrigin() {
+  const host = window.location.hostname.toLowerCase();
+  return host === "khaavio.in" || host === "www.khaavio.in"
+    ? new URL(APP_SITE_URL).origin
+    : window.location.origin;
+}
 
 function formatPrice(price) {
   return new Intl.NumberFormat("en-IN", {
@@ -331,9 +339,11 @@ export default function PublicMenu() {
   useEffect(() => {
     if (!isThemePreview) return undefined;
 
+    const previewParentOrigin = getThemePreviewParentOrigin();
+
     function handleThemePreviewMessage(event) {
       if (
-        event.origin !== window.location.origin
+        event.origin !== previewParentOrigin
         || event.source !== window.parent
         || event.data?.type !== "khaavio:public-menu-theme-preview"
         || !isValidPublicMenuThemeId(event.data.themeId)
@@ -346,7 +356,7 @@ export default function PublicMenu() {
     window.addEventListener("message", handleThemePreviewMessage);
     window.parent.postMessage(
       { type: "khaavio:public-menu-theme-preview-ready" },
-      window.location.origin,
+      previewParentOrigin,
     );
     return () => window.removeEventListener("message", handleThemePreviewMessage);
   }, [isThemePreview]);
