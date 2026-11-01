@@ -364,6 +364,8 @@ export default function OrderTracking() {
                     <span>{order.taxSnapshot.document_type === "tax_invoice" ? "Tax invoice" : "Bill of Supply"}</span>
                     <strong>{order.taxSnapshot.document_number || order.order_reference}</strong>
                   </div>
+                  {order.taxSnapshot.supplier_legal_name && <div><span>Supplier</span><strong>{order.taxSnapshot.supplier_legal_name}</strong></div>}
+                  {order.taxSnapshot.supplier_address && <div><span>Registered address</span><strong>{order.taxSnapshot.supplier_address}{order.taxSnapshot.supplier_city ? ", " + order.taxSnapshot.supplier_city : ""}{order.taxSnapshot.supplier_state ? ", " + order.taxSnapshot.supplier_state : ""}{order.taxSnapshot.supplier_postal_code ? " - " + order.taxSnapshot.supplier_postal_code : ""}</strong></div>}
                   {order.taxSnapshot.gstin_snapshot && <div><span>Supplier GSTIN</span><strong>{order.taxSnapshot.gstin_snapshot}</strong></div>}
                   {Number(order.taxSnapshot.taxable_amount) > 0 && <div><span>Taxable value</span><strong>{formatPrice(order.taxSnapshot.taxable_amount)}</strong></div>}
                   {Number(order.taxSnapshot.cgst_amount) > 0 && <div><span>CGST ({order.taxSnapshot.cgst_rate}%)</span><strong>{formatPrice(order.taxSnapshot.cgst_amount)}</strong></div>}
