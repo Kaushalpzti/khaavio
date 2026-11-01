@@ -1,0 +1,65 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+
+import {
+  DEFAULT_PUBLIC_MENU_THEME_ID,
+  PUBLIC_MENU_THEMES,
+  getPublicMenuTheme,
+  getPublicMenuThemeStyle,
+  isValidPublicMenuThemeId,
+} from "../src/lib/publicMenuThemes.js";
+
+const read = (path) => readFileSync(new URL(path, import.meta.url), "utf8");
+
+test("the Public Menu Studio includes twelve curated palettes with complete colour tokens", () => {
+  assert.equal(PUBLIC_MENU_THEMES.length, 12);
+  assert.equal(new Set(PUBLIC_MENU_THEMES.map((theme) => theme.id)).size, 12);
+  for (const theme of PUBLIC_MENU_THEMES) {
+    assert.ok(theme.name);
+    assert.ok(theme.description);
+    assert.ok(theme.swatches.length >= 5);
+    for (const colour of Object.values(theme.colors)) {
+      assert.match(colour, /^#[0-9A-F]{6}$/i, theme.id + " has an invalid colour");
+    }
+  }
+});
+
+test("the original Khaavio appearance remains the default and unknown IDs fail safely", () => {
+  assert.equal(DEFAULT_PUBLIC_MENU_THEME_ID, "original");
+  assert.equal(isValidPublicMenuThemeId("original"), true);
+  assert.equal(getPublicMenuTheme("original"), null);
+  assert.equal(getPublicMenuTheme("not-a-theme"), null);
+  assert.equal(isValidPublicMenuThemeId("not-a-theme"), false);
+});
+
+test("theme styles expose the Public Menu design tokens without changing QR modules", () => {
+  const style = getPublicMenuThemeStyle("warm-mocha");
+  assert.equal(style["--khaavio-menu-primary"], "#1A120E");
+  assert.equal(style["--khaavio-menu-accent"], "#6B4A2E");
+  assert.equal(style["--khaavio-menu-background"], "#F5EDE3");
+  assert.equal(getPublicMenuThemeStyle("original"), undefined);
+
+  const page = read("../src/pages/PublicMenu.jsx");
+  const qrPage = read("../src/pages/TableQRStudio.jsx");
+  const app = read("../src/App.jsx");
+  const navigation = read("../src/components/RestaurantDashboardLayout.jsx");
+  assert.match(page, /khaavio_public_restaurant_menu_theme/);
+  assert.match(page, /khaavio:public-menu-theme-preview/);
+  assert.match(app, /path="\/dashboard\/menu-appearance"/);
+  assert.match(navigation, /Public menu design/);
+  assert.doesNotMatch(page, /TableQRStudio/);
+  assert.match(qrPage, /table-qr/);
+});
+
+test("theme settings are isolated per restaurant and public reads return only the selected theme ID", () => {
+  const migration = read("../supabase/migrations/20261101110000_public_menu_theme_studio.sql");
+  const dashboard = read("../src/pages/MenuAppearance.jsx");
+  assert.match(migration, /restaurant_id uuid PRIMARY KEY REFERENCES public\.restaurants\(id\)/);
+  assert.match(migration, /ENABLE ROW LEVEL SECURITY/);
+  assert.match(migration, /restaurant_public_menu_themes_owner_insert/);
+  assert.match(migration, /khaavio_public_restaurant_menu_theme\(p_slug text\)/);
+  assert.match(dashboard, /eq\("owner_id", authData\.user\.id\)/);
+  assert.match(dashboard, /onConflict: "restaurant_id"/);
+  assert.match(dashboard, /khaavio:public-menu-theme-preview-ready/);
+});

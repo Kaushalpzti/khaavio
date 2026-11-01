@@ -21,6 +21,7 @@ import {
   Minimize2,
   ImagePlus,
   QrCode,
+  Palette,
   Receipt,
   Settings,
   Store,
@@ -58,6 +59,7 @@ const NAV_GROUPS = [
     items: [
       { label: "Restaurant settings", to: "/dashboard/settings", icon: Settings },
       { label: "Menu manager", to: "/dashboard/menu", icon: UtensilsCrossed },
+      { label: "Public menu design", to: "/dashboard/menu-appearance", icon: Palette },
       { label: "Menu banners", to: "/dashboard/menu-banners", icon: ImagePlus },
       { label: "Menu QR", to: "/dashboard/qr", icon: QrCode },
       { label: "Table QR codes", to: "/dashboard/table-qr", icon: Store },

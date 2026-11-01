@@ -38,6 +38,13 @@ import AskKhaavio from "../components/AskKhaavio";
 import khaavioIcon from "../assets/icon.png";
 import "./PublicMenu.css";
 import "./PublicMenuExperience.css";
+import "./PublicMenuThemes.css";
+import {
+  DEFAULT_PUBLIC_MENU_THEME_ID,
+  getPublicMenuTheme,
+  getPublicMenuThemeStyle,
+  isValidPublicMenuThemeId,
+} from "../lib/publicMenuThemes.js";
 
 function formatPrice(price) {
   return new Intl.NumberFormat("en-IN", {
@@ -227,6 +234,7 @@ export default function PublicMenu() {
 
   const hasTableParam = searchParams.has("table");
   const tableToken = searchParams.get("table");
+  const isThemePreview = searchParams.get("khaavioThemePreview") === "1";
 
   const [restaurant, setRestaurant] = useState(null);
   const [categories, setCategories] = useState([]);
@@ -266,6 +274,7 @@ export default function PublicMenu() {
   const [tableBillError, setTableBillError] = useState("");
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [activeBottomTab, setActiveBottomTab] = useState("menu");
+  const [previewThemeId, setPreviewThemeId] = useState(DEFAULT_PUBLIC_MENU_THEME_ID);
   const [activeFloatingHelpPanel, setActiveFloatingHelpPanel] = useState(null);
   const [activePromoSlide, setActivePromoSlide] = useState(0);
   const [customerName, setCustomerName] = useState("");
@@ -283,6 +292,11 @@ export default function PublicMenu() {
   const [availabilityNow, setAvailabilityNow] = useState(0);
   const [subscriptionAllowsTransactions, setSubscriptionAllowsTransactions] =
     useState(null);
+
+  const activePublicMenuThemeId = isThemePreview && previewThemeId
+    ? previewThemeId
+    : restaurant?.public_menu_theme_id || DEFAULT_PUBLIC_MENU_THEME_ID;
+  const activePublicMenuTheme = getPublicMenuTheme(activePublicMenuThemeId);
 
   const canUseLoyaltyRewards = publicFeatures.loyalty_rewards === true;
   const canUsePrivateFeedback = publicFeatures.private_feedback === true;
@@ -313,6 +327,29 @@ export default function PublicMenu() {
       setActiveBottomTab("menu");
     }
   }, [activeBottomTab, canUseLoyaltyRewards, canShowReviewsTab]);
+
+  useEffect(() => {
+    if (!isThemePreview) return undefined;
+
+    function handleThemePreviewMessage(event) {
+      if (
+        event.origin !== window.location.origin
+        || event.source !== window.parent
+        || event.data?.type !== "khaavio:public-menu-theme-preview"
+        || !isValidPublicMenuThemeId(event.data.themeId)
+      ) {
+        return;
+      }
+      setPreviewThemeId(event.data.themeId);
+    }
+
+    window.addEventListener("message", handleThemePreviewMessage);
+    window.parent.postMessage(
+      { type: "khaavio:public-menu-theme-preview-ready" },
+      window.location.origin,
+    );
+    return () => window.removeEventListener("message", handleThemePreviewMessage);
+  }, [isThemePreview]);
 
   // Give each published restaurant menu a useful, restaurant-specific title.
   useEffect(() => {
@@ -441,7 +478,23 @@ export default function PublicMenu() {
             effectiveBillingMode = "combined";
           }
         }
-        const restaurantData = { ...restaurantRecord, table_billing_mode: effectiveBillingMode };
+        let resolvedPublicMenuThemeId = DEFAULT_PUBLIC_MENU_THEME_ID;
+        try {
+          const { data: savedThemeId, error: themeError } = await supabase.rpc(
+            "khaavio_public_restaurant_menu_theme",
+            { p_slug: slug },
+          );
+          if (!themeError && isValidPublicMenuThemeId(savedThemeId)) {
+            resolvedPublicMenuThemeId = savedThemeId;
+          }
+        } catch {
+          // Theme availability is an enhancement; the existing menu stays usable if the migration is pending.
+        }
+        const restaurantData = {
+          ...restaurantRecord,
+          table_billing_mode: effectiveBillingMode,
+          public_menu_theme_id: resolvedPublicMenuThemeId,
+        };
 
         // Public menus receive only a small, non-sensitive set of plan entitlements.
         // If the RPC is unavailable, Growth-only public features fail closed while
@@ -1298,7 +1351,11 @@ export default function PublicMenu() {
   }
 
   return (
-    <main className="public-menu-page">
+    <main
+      className="public-menu-page"
+      data-public-menu-theme={activePublicMenuTheme?.id || undefined}
+      style={activePublicMenuTheme ? getPublicMenuThemeStyle(activePublicMenuTheme.id) : undefined}
+    >
       <header className="public-menu-header">
         <div
           className="public-menu-brand"

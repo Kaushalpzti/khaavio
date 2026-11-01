@@ -96,6 +96,10 @@ const PRIVATE_PAGE_TITLES = {
         "Menu Manager | Khaavio",
         "Manage dishes, prices and availability in your restaurant menu.",
     ],
+    "/dashboard/menu-appearance": [
+        "Public Menu Appearance | Khaavio",
+        "Choose and preview colours for your restaurant's customer-facing digital menu.",
+    ],
     "/dashboard/qr": [
         "Menu QR Studio | Khaavio",
         "Generate and download the QR code for your restaurant's digital menu.",
