@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - fix/public-menu-voice-alerts-billing-control
+      - feat/khaavio-platform-email-automation
   pull_request:
 
 permissions:
