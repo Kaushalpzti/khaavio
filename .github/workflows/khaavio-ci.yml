@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - fix/public-menu-voice-alerts-billing-control
+      - feat/khaavio-platform-email-automation
   pull_request:
 
 permissions:
@@ -40,6 +41,46 @@ jobs:
       - name: Build Khaavio Control PWA
         working-directory: khaavio-superadmin-pwa
         run: npm run build
+
+  platform_email_migration_sql:
+    name: Compile and exercise platform email automation migration
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_DB: khaavio_test
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d khaavio_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      PGHOST: localhost
+      PGPORT: 5432
+      PGUSER: postgres
+      PGPASSWORD: postgres
+      PGDATABASE: khaavio_test
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Install PostgreSQL client
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes postgresql-client
+      - name: Create minimal platform-email schema fixture
+        run: psql -v ON_ERROR_STOP=1 -f tests/sql/khaavio-platform-email-fixture.sql
+      - name: Apply platform email migration (skip Supabase-only extension install in vanilla PostgreSQL)
+        run: |
+          grep -v -E '^create extension if not exists pg_(cron|net);$' supabase/migrations/20261102100000_khaavio_platform_email_automation.sql > /tmp/khaavio-platform-email-migration.sql
+          psql -v ON_ERROR_STOP=1 -f /tmp/khaavio-platform-email-migration.sql
+      - name: Verify trial, renewal, cancellation, payment issue, expiry, and idempotency behavior
+        run: psql -v ON_ERROR_STOP=1 -f tests/sql/khaavio-platform-email-verify.sql
 
   guest_billing_migration_sql:
     name: Validate guest-billing migration SQL
