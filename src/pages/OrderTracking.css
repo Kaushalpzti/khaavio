@@ -569,3 +569,23 @@
     text-align: center;
   }
 }
+
+
+.order-tracking-tax-summary {
+  display: grid;
+  gap: 8px;
+  padding: 13px;
+  margin-top: 12px;
+  border: 1px solid #e4eae3;
+  border-radius: 12px;
+  background: #f8faf6;
+  font-size: 12px;
+}
+.order-tracking-tax-summary > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+.order-tracking-tax-summary span { color: #718076; }
+.order-tracking-tax-summary strong { color: #243c2d; }
+.order-tracking-tax-document { padding-bottom: 8px; border-bottom: 1px solid #e0e8df; }
