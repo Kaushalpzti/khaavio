@@ -8,10 +8,12 @@ import {
   LoaderCircle,
   Printer,
   Search,
+  Share2,
   Store,
 } from "lucide-react";
 import { supabase } from "../lib/supabaseClient";
 import { normalizeTableNumber } from "../lib/tableNumber";
+import { buildOrderReceiptShareText, getWhatsAppReceiptUrl, printCustomerOrderReceipt } from "../lib/thermalPrinting.js";
 import "./OrderReceipts.css";
 
 function formatPrice(value) {
@@ -51,6 +53,8 @@ export default function OrderReceipts() {
   const [error, setError] = useState("");
   const [search, setSearch] = useState("");
   const [selectedOrderId, setSelectedOrderId] = useState("");
+  const [receiptWidth, setReceiptWidth] = useState("80");
+  const [notice, setNotice] = useState("");
 
   useEffect(() => {
     let active = true;
@@ -69,7 +73,7 @@ export default function OrderReceipts() {
 
         const { data: restaurantData, error: restaurantError } = await supabase
           .from("restaurants")
-          .select("id, name, phone, contact_email, address, city, state, postal_code")
+          .select("id, name, phone, contact_email, address, city, state, postal_code, receipt_paper_width")
           .eq("owner_id", authData.user.id)
           .maybeSingle();
 
@@ -79,6 +83,7 @@ export default function OrderReceipts() {
         }
         if (!active) return;
         setRestaurant(restaurantData);
+        setReceiptWidth(restaurantData.receipt_paper_width === "58" ? "58" : "80");
 
         const [ordersResult, tablesResult] = await Promise.all([
           supabase
@@ -105,7 +110,7 @@ export default function OrderReceipts() {
         if (orderRows.length) {
           const { data, error: itemsError } = await supabase
             .from("order_items")
-            .select("id, order_id, menu_item_id, item_name, unit_price, quantity, line_total")
+            .select("id, order_id, menu_item_id, item_name, unit_price, quantity, line_total, selected_options")
             .in("order_id", orderRows.map((order) => order.id));
           if (itemsError) throw itemsError;
           itemRows = data || [];
@@ -158,7 +163,38 @@ export default function OrderReceipts() {
   const selectedOrder = orders.find((order) => order.id === selectedOrderId) || null;
 
   function handlePrint() {
-    window.print();
+    const printed = printCustomerOrderReceipt({
+      restaurant,
+      order: selectedOrder,
+      widthMm: receiptWidth,
+    });
+    if (!printed) setError("The print window was blocked. Allow pop-ups for this site and try again.");
+  }
+
+  async function handleShareReceipt() {
+    if (!selectedOrder) return;
+    const message = buildOrderReceiptShareText({ restaurant, order: selectedOrder });
+    const whatsappUrl = getWhatsAppReceiptUrl(selectedOrder.customer_phone, message);
+
+    if (whatsappUrl) {
+      window.open(whatsappUrl, "_blank", "noopener,noreferrer");
+      return;
+    }
+
+    try {
+      if (typeof navigator !== "undefined" && navigator.share) {
+        await navigator.share({ title: "Order receipt", text: message });
+        return;
+      }
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(message);
+        setNotice("Receipt details copied. You can paste and share them with the customer.");
+        return;
+      }
+      setError("Receipt sharing is not available in this browser. Add a customer phone number to share through WhatsApp.");
+    } catch (shareError) {
+      if (shareError?.name !== "AbortError") setError("Could not share this receipt. Please try again.");
+    }
   }
 
   return (
@@ -179,6 +215,7 @@ export default function OrderReceipts() {
             </div>
 
             {error && <div className="order-receipts-alert" role="alert">{error}</div>}
+            {notice && <div className="order-receipts-notice" role="status">{notice}</div>}
 
             <div className="order-receipts-toolbar no-print">
               <label className="order-receipts-search">
@@ -238,8 +275,18 @@ export default function OrderReceipts() {
               <button type="button" className="order-receipt-secondary-button" onClick={() => setSelectedOrderId("")}>
                 <ArrowLeft size={16} /> Back to orders
               </button>
+              <label className="order-receipt-width-select-label">
+                <span>Paper</span>
+                <select value={receiptWidth} onChange={(event) => setReceiptWidth(event.target.value)} aria-label="Receipt paper width">
+                  <option value="58">58mm</option>
+                  <option value="80">80mm</option>
+                </select>
+              </label>
+              <button type="button" className="order-receipt-secondary-button" onClick={handleShareReceipt}>
+                <Share2 size={16} /> Share receipt
+              </button>
               <button type="button" className="order-receipt-print-button" onClick={handlePrint}>
-                <Printer size={17} /> Print receipt
+                <Printer size={17} /> Print / Save PDF
               </button>
             </div>
 
@@ -284,7 +331,7 @@ export default function OrderReceipts() {
               <p className="receipt-thank-you">Thank you for dining with us!</p>
               <p className="receipt-footer">Powered by Khaavio · Every Table, Digitally Connected.</p>
             </section>
-            <p className="receipt-screen-hint no-print">Use your browser's print dialog to print or choose “Save as PDF”.</p>
+            <p className="receipt-screen-hint no-print">Print in 58mm or 80mm thermal format, or choose “Save as PDF” in your browser print dialog.</p>
           </>
         )}
       </div>
