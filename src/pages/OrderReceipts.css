@@ -248,3 +248,56 @@
   .no-print, .order-receipt-preview-toolbar, .receipt-screen-hint { display: none !important; }
   * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 }
+
+.order-receipts-notice {
+  margin-bottom: 15px;
+  padding: 12px 14px;
+  border: 1px solid #d4e7d3;
+  border-radius: 10px;
+  background: #eff8ec;
+  color: #286341;
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.order-receipt-width-select-label {
+  display: inline-flex;
+  min-height: 37px;
+  align-items: center;
+  gap: 7px;
+  padding: 0 9px;
+  border: 1px solid #dfe6dc;
+  border-radius: 9px;
+  background: #fff;
+  color: #617064;
+  font-size: 10px;
+  font-weight: 750;
+}
+
+.order-receipt-width-select-label select {
+  min-width: 58px;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: #2f6242;
+  font: inherit;
+  cursor: pointer;
+}
+
+.order-receipt-preview-toolbar {
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 600px) {
+  .order-receipt-preview-toolbar {
+    align-items: stretch;
+  }
+  .order-receipt-preview-toolbar > button,
+  .order-receipt-width-select-label {
+    flex: 1 1 auto;
+  }
+  .order-receipt-width-select-label {
+    justify-content: space-between;
+  }
+}

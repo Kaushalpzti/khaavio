@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Banknote, CheckCircle2, Copy, Download, ExternalLink, LoaderCircle, QrCode, ShieldCheck } from "lucide-react";
+import { Banknote, CheckCircle2, Copy, Download, ExternalLink, LoaderCircle, QrCode, Share2, ShieldCheck } from "lucide-react";
 import QRCode from "qrcode";
 import { supabase } from "../lib/supabaseClient";
 import { buildUpiIntentUrl, isValidUpiTransactionReference } from "../lib/upiPayment.js";
@@ -37,6 +37,7 @@ export default function PublicInvoicePayment({
 
   const upiEnabled = paymentSettings?.upi_enabled === true && Boolean(paymentSettings?.upi_id);
   const counterEnabled = paymentSettings?.counter_payment_enabled !== false;
+  const receiptWidth = paymentSettings?.receipt_paper_width === "58" ? "58" : "80";
   const invoiceUnpaid = invoice?.payment_status === "unpaid";
   const submissionPending = paymentSubmission?.status === "pending";
   const selectedMethod = localPaymentChoice?.invoiceId === invoice?.id
@@ -45,7 +46,8 @@ export default function PublicInvoicePayment({
 
   useEffect(() => {
     const clearPrintState = () => {
-      document.body.classList.remove("khaavio-printing-public-invoice");
+      document.body.classList.remove("khaavio-printing-public-invoice", "khaavio-printing-public-invoice-58", "khaavio-printing-public-invoice-80");
+      document.getElementById("khaavio-public-invoice-page-size")?.remove();
     };
     window.addEventListener("afterprint", clearPrintState);
     return () => {
@@ -55,8 +57,43 @@ export default function PublicInvoicePayment({
   }, []);
 
   function printPaidReceipt() {
-    document.body.classList.add("khaavio-printing-public-invoice");
+    let pageStyle = document.getElementById("khaavio-public-invoice-page-size");
+    if (!pageStyle) {
+      pageStyle = document.createElement("style");
+      pageStyle.id = "khaavio-public-invoice-page-size";
+      document.head.appendChild(pageStyle);
+    }
+    pageStyle.textContent = "@page { size: " + receiptWidth + "mm auto; margin: 0; }";
+    document.body.classList.remove("khaavio-printing-public-invoice-58", "khaavio-printing-public-invoice-80");
+    document.body.classList.add("khaavio-printing-public-invoice", "khaavio-printing-public-invoice-" + receiptWidth);
     window.setTimeout(() => window.print(), 150);
+  }
+
+  async function sharePaidReceipt() {
+    const receiptLines = Array.isArray(receiptItems) ? receiptItems : [];
+    const message = [
+      (restaurantName || paymentSettings?.payee_name || "Restaurant") + " — Payment Receipt",
+      "Invoice: " + (invoice?.invoice_number || "—"),
+      "Payment status: PAID",
+      "Payment method: " + (invoice?.payment_method || "Confirmed by restaurant"),
+      tableNumber ? "Table: " + tableNumber : "",
+      guestName ? "Guest: " + guestName : "",
+      "",
+      ...receiptLines.map((item) => (Number(item.quantity) || 1) + " × " + (item.item_name || "Item") + " — " + formatPrice(item.line_total ?? ((Number(item.unit_price) || 0) * (Number(item.quantity) || 1)))),
+      "",
+      "TOTAL PAID: " + formatPrice(invoice?.total_amount),
+      "Thank you for dining with us!",
+    ].filter(Boolean).join("\n");
+
+    try {
+      if (typeof navigator !== "undefined" && navigator.share) {
+        await navigator.share({ title: "Payment receipt", text: message });
+        return;
+      }
+      window.open("https://wa.me/?text=" + encodeURIComponent(message), "_blank", "noopener,noreferrer");
+    } catch (shareError) {
+      if (shareError?.name !== "AbortError") setError("Could not share this receipt. Please try again.");
+    }
   }
 
   const qrKey = [
@@ -207,10 +244,16 @@ export default function PublicInvoicePayment({
             <strong>Payment received</strong>
             <p>This bill is confirmed as paid by the restaurant.</p>
           </div>
-          <button type="button" className="public-invoice-receipt-download" onClick={printPaidReceipt}>
-            <Download size={16} />
-            Download bill / Save PDF
-          </button>
+          <div className="public-invoice-receipt-paid-actions">
+            <button type="button" className="public-invoice-receipt-download" onClick={printPaidReceipt}>
+              <Download size={16} />
+              Download bill / Save PDF
+            </button>
+            <button type="button" className="public-invoice-receipt-share" onClick={sharePaidReceipt}>
+              <Share2 size={16} />
+              Share receipt
+            </button>
+          </div>
         </section>
 
         <section className="public-invoice-receipt-print-surface" aria-label="Paid invoice receipt">

@@ -350,3 +350,66 @@
     break-inside: avoid;
   }
 }
+
+.public-invoice-receipt-paid-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px;
+}
+
+.public-invoice-receipt-share {
+  display: inline-flex;
+  min-height: 42px;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  padding: 0 14px;
+  border: 1px solid #d7e2d5;
+  border-radius: 11px;
+  background: #fff;
+  color: #315b3d;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.public-invoice-receipt-share:hover {
+  background: #f2f7ef;
+}
+
+@media (max-width: 420px) {
+  .public-invoice-receipt-paid-actions,
+  .public-invoice-receipt-download,
+  .public-invoice-receipt-share {
+    width: 100%;
+  }
+}
+
+@media print {
+  body.khaavio-printing-public-invoice-58 .public-invoice-receipt-print-surface {
+    width: 58mm !important;
+    max-width: 58mm !important;
+    padding: 3mm !important;
+  }
+
+  body.khaavio-printing-public-invoice-80 .public-invoice-receipt-print-surface {
+    width: 80mm !important;
+    max-width: 80mm !important;
+    padding: 4mm !important;
+  }
+
+  body.khaavio-printing-public-invoice .public-invoice-receipt-items {
+    gap: 6px;
+    padding: 9px 0;
+  }
+
+  body.khaavio-printing-public-invoice .public-invoice-receipt-footer {
+    margin-top: 12px;
+    padding-top: 8px;
+  }
+
+  body.khaavio-printing-public-invoice .public-invoice-receipt-totals {
+    max-width: none;
+  }
+}
