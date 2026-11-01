@@ -68,7 +68,7 @@ test("owner order receipts and thermal print/share show the confirmed GST payabl
   assert.match(receipts, /grand_total/);
   assert.match(receipts, /gst_cgst_amount_snapshot/);
   assert.match(receipts, /gst_document_number/);
-  assert.match(thermal, /order.grand_total ?? order.total_amount/);
+  assert.ok(thermal.includes("order.grand_total ?? order.total_amount"));
   assert.match(thermal, /TAX INVOICE/);
   assert.match(thermal, /CGST/);
   assert.match(thermal, /SGST/);
