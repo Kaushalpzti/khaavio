@@ -303,7 +303,7 @@ export default function OrderReceipts() {
 
               <div className="receipt-divider receipt-dashed" />
               <div className="receipt-title-line">
-                <strong>ORDER RECEIPT</strong>
+                <strong>{selectedOrder.gst_document_type_snapshot === "tax_invoice" ? "TAX INVOICE" : selectedOrder.gst_document_type_snapshot === "bill_of_supply" ? "BILL OF SUPPLY" : "ORDER RECEIPT"}</strong>
                 <span>#{getReference(selectedOrder.id)}</span>
               </div>
               <div className="receipt-meta-line"><span>Date</span><span>{formatDate(selectedOrder.created_at)}</span></div>
