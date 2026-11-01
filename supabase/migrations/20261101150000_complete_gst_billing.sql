@@ -4,7 +4,8 @@
 BEGIN;
 
 ALTER TABLE public.restaurants
-  ADD COLUMN IF NOT EXISTS gst_registration_type text NOT NULL DEFAULT 'unregistered';
+  ADD COLUMN IF NOT EXISTS gst_registration_type text NOT NULL DEFAULT 'unregistered',
+  ADD COLUMN IF NOT EXISTS gst_legal_name text;
 
 DO $gst_registration_type$
 BEGIN
@@ -46,6 +47,12 @@ ALTER TABLE public.orders
   ADD COLUMN IF NOT EXISTS gst_supplier_state_code_snapshot text,
   ADD COLUMN IF NOT EXISTS gst_place_of_supply_state_snapshot text,
   ADD COLUMN IF NOT EXISTS gst_place_of_supply_state_code_snapshot text,
+  ADD COLUMN IF NOT EXISTS gst_supplier_name_snapshot text,
+  ADD COLUMN IF NOT EXISTS gst_supplier_address_snapshot text,
+  ADD COLUMN IF NOT EXISTS gst_supplier_city_snapshot text,
+  ADD COLUMN IF NOT EXISTS gst_supplier_state_snapshot text,
+  ADD COLUMN IF NOT EXISTS gst_supplier_postal_code_snapshot text,
+  ADD COLUMN IF NOT EXISTS gst_supplier_phone_snapshot text,
   ADD COLUMN IF NOT EXISTS gst_sac_code_snapshot text NOT NULL DEFAULT '996331',
   ADD COLUMN IF NOT EXISTS gst_document_number text,
   ADD COLUMN IF NOT EXISTS gst_document_issued_at timestamptz;
@@ -65,6 +72,12 @@ ALTER TABLE public.table_session_invoices
   ADD COLUMN IF NOT EXISTS supplier_state_code_snapshot text,
   ADD COLUMN IF NOT EXISTS place_of_supply_state_snapshot text,
   ADD COLUMN IF NOT EXISTS place_of_supply_state_code_snapshot text,
+  ADD COLUMN IF NOT EXISTS supplier_legal_name_snapshot text,
+  ADD COLUMN IF NOT EXISTS supplier_address_snapshot text,
+  ADD COLUMN IF NOT EXISTS supplier_city_snapshot text,
+  ADD COLUMN IF NOT EXISTS supplier_state_snapshot text,
+  ADD COLUMN IF NOT EXISTS supplier_postal_code_snapshot text,
+  ADD COLUMN IF NOT EXISTS supplier_phone_snapshot text,
   ADD COLUMN IF NOT EXISTS sac_code_snapshot text NOT NULL DEFAULT '996331',
   ADD COLUMN IF NOT EXISTS gst_document_number text,
   ADD COLUMN IF NOT EXISTS gst_document_issued_at timestamptz;
@@ -298,6 +311,12 @@ DECLARE
   v_discount numeric(12,2);
   v_net numeric(12,2);
   v_breakdown jsonb;
+  v_supplier_name text;
+  v_supplier_address text;
+  v_supplier_city text;
+  v_supplier_state text;
+  v_supplier_postal_code text;
+  v_supplier_phone text;
 BEGIN
   SELECT
     COALESCE(pg_catalog.sum(o.total_amount + o.discount_amount), 0)::numeric(12,2),
@@ -323,6 +342,13 @@ BEGIN
     RAISE EXCEPTION 'Restaurant GST settings could not be loaded.' USING ERRCODE = 'P0002';
   END IF;
 
+  SELECT COALESCE(NULLIF(pg_catalog.btrim(r.gst_legal_name), ''), r.name),
+         r.address, r.city, r.state, r.postal_code, r.phone
+    INTO v_supplier_name, v_supplier_address, v_supplier_city,
+         v_supplier_state, v_supplier_postal_code, v_supplier_phone
+  FROM public.restaurants r
+  WHERE r.id = NEW.restaurant_id;
+
   NEW.subtotal_amount := v_subtotal;
   NEW.discount_amount := v_discount;
   NEW.taxable_amount := (v_breakdown ->> 'taxable_amount')::numeric;
@@ -342,6 +368,12 @@ BEGIN
   NEW.supplier_state_code_snapshot := v_breakdown ->> 'supplier_state_code';
   NEW.place_of_supply_state_snapshot := v_breakdown ->> 'place_of_supply_state';
   NEW.place_of_supply_state_code_snapshot := v_breakdown ->> 'place_of_supply_state_code';
+  NEW.supplier_legal_name_snapshot := v_supplier_name;
+  NEW.supplier_address_snapshot := v_supplier_address;
+  NEW.supplier_city_snapshot := v_supplier_city;
+  NEW.supplier_state_snapshot := v_supplier_state;
+  NEW.supplier_postal_code_snapshot := v_supplier_postal_code;
+  NEW.supplier_phone_snapshot := v_supplier_phone;
   NEW.sac_code_snapshot := COALESCE(v_breakdown ->> 'sac_code', '996331');
   NEW.total_amount := (v_breakdown ->> 'grand_total')::numeric;
 
@@ -370,6 +402,11 @@ DECLARE
   v_gst_rate numeric(5,2);
   v_gst_inclusive boolean;
   v_supplier_state text;
+  v_supplier_name text;
+  v_supplier_address text;
+  v_supplier_city text;
+  v_supplier_postal_code text;
+  v_supplier_phone text;
 BEGIN
   -- Table/guest orders keep their running order totals tax-free. Their tax is
   -- calculated exactly once when the table or guest invoice is issued.
@@ -400,9 +437,13 @@ BEGIN
 
   IF TG_OP = 'INSERT' THEN
     SELECT r.gst_registration_type, r.gst_enabled, r.gstin, r.gst_rate,
-           r.gst_price_inclusive, r.state
+           r.gst_price_inclusive, r.state,
+           COALESCE(NULLIF(pg_catalog.btrim(r.gst_legal_name), ''), r.name),
+           r.address, r.city, r.postal_code, r.phone
       INTO v_registration_type, v_gst_enabled, v_gstin, v_gst_rate,
-           v_gst_inclusive, v_supplier_state
+           v_gst_inclusive, v_supplier_state, v_supplier_name,
+           v_supplier_address, v_supplier_city, v_supplier_postal_code,
+           v_supplier_phone
     FROM public.restaurants r
     WHERE r.id = NEW.restaurant_id;
     IF NOT FOUND THEN RAISE EXCEPTION 'Restaurant GST settings could not be loaded.'; END IF;
@@ -413,6 +454,11 @@ BEGIN
     v_gst_rate := OLD.gst_rate_snapshot;
     v_gst_inclusive := OLD.gst_inclusive_snapshot;
     v_supplier_state := OLD.gst_place_of_supply_state_snapshot;
+    v_supplier_name := OLD.gst_supplier_name_snapshot;
+    v_supplier_address := OLD.gst_supplier_address_snapshot;
+    v_supplier_city := OLD.gst_supplier_city_snapshot;
+    v_supplier_postal_code := OLD.gst_supplier_postal_code_snapshot;
+    v_supplier_phone := OLD.gst_supplier_phone_snapshot;
     NEW.gst_document_number := OLD.gst_document_number;
     NEW.gst_document_issued_at := OLD.gst_document_issued_at;
   END IF;
@@ -441,6 +487,12 @@ BEGIN
   NEW.gst_supplier_state_code_snapshot := v_breakdown ->> 'supplier_state_code';
   NEW.gst_place_of_supply_state_snapshot := v_breakdown ->> 'place_of_supply_state';
   NEW.gst_place_of_supply_state_code_snapshot := v_breakdown ->> 'place_of_supply_state_code';
+  NEW.gst_supplier_name_snapshot := v_supplier_name;
+  NEW.gst_supplier_address_snapshot := v_supplier_address;
+  NEW.gst_supplier_city_snapshot := v_supplier_city;
+  NEW.gst_supplier_state_snapshot := v_supplier_state;
+  NEW.gst_supplier_postal_code_snapshot := v_supplier_postal_code;
+  NEW.gst_supplier_phone_snapshot := v_supplier_phone;
   NEW.gst_sac_code_snapshot := COALESCE(v_breakdown ->> 'sac_code', '996331');
 
   IF NEW.gst_document_type_snapshot IN ('tax_invoice', 'bill_of_supply')
@@ -523,6 +575,12 @@ AS $function$
     'supplier_state_code', o.gst_supplier_state_code_snapshot,
     'place_of_supply_state', o.gst_place_of_supply_state_snapshot,
     'place_of_supply_state_code', o.gst_place_of_supply_state_code_snapshot,
+    'supplier_legal_name', o.gst_supplier_name_snapshot,
+    'supplier_address', o.gst_supplier_address_snapshot,
+    'supplier_city', o.gst_supplier_city_snapshot,
+    'supplier_state', o.gst_supplier_state_snapshot,
+    'supplier_postal_code', o.gst_supplier_postal_code_snapshot,
+    'supplier_phone', o.gst_supplier_phone_snapshot,
     'sac_code', o.gst_sac_code_snapshot,
     'grand_total', COALESCE(o.grand_total, o.total_amount)
   )
@@ -626,6 +684,12 @@ BEGIN
     'supplier_state_code', v_invoice.supplier_state_code_snapshot,
     'place_of_supply_state', v_invoice.place_of_supply_state_snapshot,
     'place_of_supply_state_code', v_invoice.place_of_supply_state_code_snapshot,
+    'supplier_legal_name', v_invoice.supplier_legal_name_snapshot,
+    'supplier_address', v_invoice.supplier_address_snapshot,
+    'supplier_city', v_invoice.supplier_city_snapshot,
+    'supplier_state', v_invoice.supplier_state_snapshot,
+    'supplier_postal_code', v_invoice.supplier_postal_code_snapshot,
+    'supplier_phone', v_invoice.supplier_phone_snapshot,
     'sac_code', v_invoice.sac_code_snapshot
   );
 END;
