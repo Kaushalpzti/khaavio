@@ -858,8 +858,13 @@ export default function TableSessions() {
                               <img src={khaavioIcon} alt="" />
                                 <div>
                                   <span>{invoice.gst_document_type_snapshot === "tax_invoice" ? "GST TAX INVOICE" : invoice.gst_document_type_snapshot === "bill_of_supply" ? "BILL OF SUPPLY" : invoice.guest_tab_id ? "GUEST INVOICE" : "FINAL TABLE INVOICE"}</span>
-                                  <h2>{restaurant?.name || "Restaurant"}</h2>
+                                  <h2>{invoice.supplier_legal_name_snapshot || restaurant?.name || "Restaurant"}</h2>
                                   <p>{invoice.gst_document_number || invoice.invoice_number}</p>
+                                  {invoice.supplier_address_snapshot && <p>{invoice.supplier_address_snapshot}</p>}
+                                  {(invoice.supplier_city_snapshot || invoice.supplier_state_snapshot || invoice.supplier_postal_code_snapshot) && (
+                                    <p>{[invoice.supplier_city_snapshot, invoice.supplier_state_snapshot, invoice.supplier_postal_code_snapshot].filter(Boolean).join(", ")}</p>
+                                  )}
+                                  {invoice.supplier_phone_snapshot && <p>Phone: {invoice.supplier_phone_snapshot}</p>}
                                   {invoice.gstin_snapshot && <p>GSTIN: {invoice.gstin_snapshot}</p>}
                                   {invoice.place_of_supply_state_snapshot && <p>Place of supply: {invoice.place_of_supply_state_snapshot}</p>}
                                   {invoice.sac_code_snapshot && <p>SAC: {invoice.sac_code_snapshot}</p>}
