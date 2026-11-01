@@ -160,7 +160,11 @@ BEGIN
      OR v_invoice.total_amount IS DISTINCT FROM 472.50::numeric
      OR v_invoice.gst_document_type_snapshot IS DISTINCT FROM 'tax_invoice'
      OR v_invoice.gst_document_number IS NULL THEN
-    RAISE EXCEPTION 'Split guest final invoice did not calculate its own tax correctly';
+    RAISE EXCEPTION 'Split guest final invoice mismatch: subtotal %, discount %, taxable %, tax %, CGST %, SGST %, IGST %, total %, inclusive %, doc type %, doc number %',
+      v_invoice.subtotal_amount, v_invoice.discount_amount, v_invoice.taxable_amount,
+      v_invoice.tax_amount, v_invoice.cgst_amount, v_invoice.sgst_amount,
+      v_invoice.igst_amount, v_invoice.total_amount, v_invoice.gst_inclusive,
+      v_invoice.gst_document_type_snapshot, v_invoice.gst_document_number;
   END IF;
 
   SELECT public.khaavio_public_invoice_tax_snapshot(
