@@ -147,6 +147,7 @@ export function printKitchenOrderTicket({ restaurantName, order, widthMm = "80" 
     "</header>",
     "<hr class='rule'>",
     "<div class='meta'><span>Order</span><strong>#", escapeHtml(reference), "</strong></div>",
+    documentType !== "receipt" ? "<div class='meta'><span>Document number</span><strong>" + escapeHtml(order.gst_document_number || reference) + "</strong></div>" : "",
     "<div class='meta'><span>Service</span><strong>", escapeHtml(fulfillment), "</strong></div>",
     "<div class='meta'><span>Time</span><strong>", escapeHtml(formatThermalDate(order.created_at)), "</strong></div>",
     "<div class='meta'><span>Customer</span><strong>", escapeHtml(order.customer_name || "Guest"), "</strong></div>",
@@ -187,13 +188,37 @@ export function printCustomerOrderReceipt({ restaurant, order, widthMm = "80" })
     }).join("")
     : "<p class='muted'>Item details unavailable.</p>";
 
+  const documentType = order.gst_document_type_snapshot || "receipt";
+  const payableTotal = Number(order.grand_total ?? order.total_amount) || 0;
+  const gstDocumentHtml = documentType === "tax_invoice" || documentType === "bill_of_supply"
+    ? [
+      "<div class='gst-document'>",
+      "<div class='meta'><strong>", documentType === "tax_invoice" ? "TAX INVOICE" : "BILL OF SUPPLY", "</strong><strong>", escapeHtml(order.gst_document_number || reference), "</strong></div>",
+      order.gst_supplier_name_snapshot ? "<div class='muted'>" + escapeHtml(order.gst_supplier_name_snapshot) + "</div>" : "",
+      order.gst_supplier_address_snapshot ? "<div class='muted'>" + escapeHtml(order.gst_supplier_address_snapshot) + "</div>" : "",
+      [order.gst_supplier_city_snapshot, order.gst_supplier_state_snapshot, order.gst_supplier_postal_code_snapshot].filter(Boolean).length
+        ? "<div class='muted'>" + escapeHtml([order.gst_supplier_city_snapshot, order.gst_supplier_state_snapshot, order.gst_supplier_postal_code_snapshot].filter(Boolean).join(", ")) + "</div>"
+        : "",
+      order.gst_supplier_phone_snapshot ? "<div class='muted'>Phone: " + escapeHtml(order.gst_supplier_phone_snapshot) + "</div>" : "",
+      order.gstin_snapshot ? "<div class='meta'><span>GSTIN</span><strong>" + escapeHtml(order.gstin_snapshot) + "</strong></div>" : "",
+      Number(order.gst_taxable_amount) > 0 ? "<div class='meta'><span>Taxable value</span><strong>" + escapeHtml(formatThermalPrice(order.gst_taxable_amount)) + "</strong></div>" : "",
+      Number(order.gst_cgst_amount_snapshot) > 0 ? "<div class='meta'><span>CGST (" + escapeHtml(order.gst_cgst_rate_snapshot) + "%)</span><strong>" + escapeHtml(formatThermalPrice(order.gst_cgst_amount_snapshot)) + "</strong></div>" : "",
+      Number(order.gst_sgst_amount_snapshot) > 0 ? "<div class='meta'><span>SGST (" + escapeHtml(order.gst_sgst_rate_snapshot) + "%)</span><strong>" + escapeHtml(formatThermalPrice(order.gst_sgst_amount_snapshot)) + "</strong></div>" : "",
+      Number(order.gst_igst_amount_snapshot) > 0 ? "<div class='meta'><span>IGST (" + escapeHtml(order.gst_igst_rate_snapshot) + "%)</span><strong>" + escapeHtml(formatThermalPrice(order.gst_igst_amount_snapshot)) + "</strong></div>" : "",
+      Number(order.gst_amount) > 0 ? "<div class='meta'><span>GST total" + (order.gst_inclusive_snapshot ? " (included)" : "") + "</span><strong>" + escapeHtml(formatThermalPrice(order.gst_amount)) + "</strong></div>" : "",
+      order.gst_place_of_supply_state_snapshot ? "<div class='muted'>Place of supply: " + escapeHtml(order.gst_place_of_supply_state_snapshot) + "</div>" : "",
+      order.gst_sac_code_snapshot ? "<div class='muted'>SAC: " + escapeHtml(order.gst_sac_code_snapshot) + "</div>" : "",
+      "</div>",
+    ].join("")
+    : "";
+
   const html = [
     "<header class='center'>",
     "<div class='brand'>", escapeHtml(restaurant?.name || "Restaurant"), "</div>",
     address ? "<div class='muted'>" + escapeHtml(address) + "</div>" : "",
     restaurant?.phone ? "<div class='muted'>Phone: " + escapeHtml(restaurant.phone) + "</div>" : "",
     restaurant?.contact_email ? "<div class='muted'>" + escapeHtml(restaurant.contact_email) + "</div>" : "",
-    "<div class='subtitle'>ORDER RECEIPT</div>",
+    "<div class='subtitle'>", documentType === "tax_invoice" ? "TAX INVOICE" : documentType === "bill_of_supply" ? "BILL OF SUPPLY" : "ORDER RECEIPT", "</div>",
     "</header>",
     "<hr class='rule'>",
     "<div class='meta'><span>Order</span><strong>#", escapeHtml(reference), "</strong></div>",
@@ -209,7 +234,8 @@ export function printCustomerOrderReceipt({ restaurant, order, widthMm = "80" })
     Number(order.discount_amount) > 0
       ? "<div class='meta'><span>Discount" + (order.coupon_code ? " (" + escapeHtml(order.coupon_code) + ")" : "") + "</span><strong>−" + escapeHtml(formatThermalPrice(order.discount_amount)) + "</strong></div>"
       : "",
-    "<div class='total'><span>TOTAL</span><strong>", escapeHtml(formatThermalPrice(order.total_amount)), "</strong></div>",
+    gstDocumentHtml,
+    "<div class='total'><span>", documentType === "tax_invoice" ? "AMOUNT PAYABLE" : "TOTAL", "</span><strong>", escapeHtml(formatThermalPrice(payableTotal)), "</strong></div>",
     order.notes ? "<div class='notes'>ORDER NOTES<br>" + escapeHtml(order.notes) + "</div>" : "",
     "<hr class='rule'>",
     "<div class='center' style='font-weight:700;margin-top:8px'>Thank you for dining with us!</div>",
@@ -234,7 +260,18 @@ export function buildOrderReceiptShareText({ restaurant, order }) {
       (Number(item.quantity) || 1) + " × " + (item.item_name || "Menu item") + " — " + formatThermalPrice(item.line_total),
     ),
     "",
-    "Total: " + formatThermalPrice(order.total_amount),
+    ...(order.gst_document_type_snapshot && order.gst_document_type_snapshot !== "receipt"
+      ? [
+        (order.gst_document_type_snapshot === "tax_invoice" ? "Tax Invoice: " : "Bill of Supply: ") + (order.gst_document_number || getOrderReference(order)),
+        order.gst_supplier_name_snapshot || "",
+        order.gstin_snapshot ? "GSTIN: " + order.gstin_snapshot : "",
+        Number(order.gst_taxable_amount) > 0 ? "Taxable value: " + formatThermalPrice(order.gst_taxable_amount) : "",
+        Number(order.gst_cgst_amount_snapshot) > 0 ? "CGST (" + order.gst_cgst_rate_snapshot + "%): " + formatThermalPrice(order.gst_cgst_amount_snapshot) : "",
+        Number(order.gst_sgst_amount_snapshot) > 0 ? "SGST (" + order.gst_sgst_rate_snapshot + "%): " + formatThermalPrice(order.gst_sgst_amount_snapshot) : "",
+        Number(order.gst_igst_amount_snapshot) > 0 ? "IGST (" + order.gst_igst_rate_snapshot + "%): " + formatThermalPrice(order.gst_igst_amount_snapshot) : "",
+      ].filter(Boolean)
+      : []),
+    "Total: " + formatThermalPrice(order.grand_total ?? order.total_amount),
     "Status: " + (order.status || "received"),
     "",
     "Thank you for dining with " + (restaurant?.name || "us") + "!",
