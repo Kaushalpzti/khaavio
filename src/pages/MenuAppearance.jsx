@@ -19,6 +19,7 @@ import {
   DEFAULT_PUBLIC_MENU_THEME_ID,
   PUBLIC_MENU_THEMES,
   getPublicMenuTheme,
+  getPublicMenuThemeStyle,
   isValidPublicMenuThemeId,
 } from "../lib/publicMenuThemes.js";
 import "./MenuAppearance.css";
@@ -215,7 +216,11 @@ export default function MenuAppearance() {
   }
 
   return (
-    <main className="menu-appearance-page">
+    <main
+      className="menu-appearance-page"
+      data-public-menu-theme={selectedTheme?.id || undefined}
+      style={selectedTheme ? getPublicMenuThemeStyle(selectedTheme.id) : undefined}
+    >
       <header className="menu-appearance-header">
         <div>
           <Link className="menu-appearance-back" to="/dashboard/menu">
