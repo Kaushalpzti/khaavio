@@ -61,6 +61,34 @@ test("palette text, muted labels and primary action labels meet WCAG AA contrast
   }
 });
 
+
+test("previously dark palettes keep light menu surfaces and use their own accent tokens", () => {
+  for (const id of ["warm-mocha", "midnight-pop", "forest-sage", "royal-berry"]) {
+    const theme = getPublicMenuTheme(id);
+    assert.ok(getRelativeLuminance(theme.colors.surface) > 0.9, id + " surface should remain light");
+    assert.ok(getRelativeLuminance(theme.colors.background) > 0.8, id + " page background should remain light");
+    assert.ok(getContrastRatio(theme.colors.text, theme.colors.surface) >= 4.5);
+    assert.ok(getContrastRatio(theme.colors.muted, theme.colors.surface) >= 4.5);
+  }
+});
+
+test("theme overrides cover fixed-green fulfillment, help, assistant, rewards, booking and review controls", () => {
+  const styles = read("../src/pages/PublicMenuThemes.css");
+  for (const selector of [
+    ".public-menu-fulfillment-options label.is-selected",
+    ".public-help-launcher-fab",
+    ".public-help-launcher-fab::after",
+    ".ask-khaavio-header",
+    ".public-perks-card",
+    ".public-reviews",
+    ".booking-table-option.selected",
+    ".public-menu-sticky-cart",
+  ]) {
+    assert.ok(styles.includes(selector), "Missing themed selector: " + selector);
+  }
+  assert.match(styles, /--khaavio-menu-accent-soft/);
+});
+
 test("the original Khaavio appearance remains the default and unknown IDs fail safely", () => {
   assert.equal(DEFAULT_PUBLIC_MENU_THEME_ID, "original");
   assert.equal(isValidPublicMenuThemeId("original"), true);
@@ -73,7 +101,7 @@ test("theme styles expose the Public Menu design tokens without changing QR modu
   const style = getPublicMenuThemeStyle("warm-mocha");
   assert.equal(style["--khaavio-menu-primary"], "#1A120E");
   assert.equal(style["--khaavio-menu-accent"], "#A88462");
-  assert.equal(style["--khaavio-menu-background"], "#1A120E");
+  assert.equal(style["--khaavio-menu-background"], "#F5EDE3");
   for (const theme of PUBLIC_MENU_THEMES) {
     assert.ok(theme.colors.onAccent);
     assert.ok(theme.colors.onPrimary);
