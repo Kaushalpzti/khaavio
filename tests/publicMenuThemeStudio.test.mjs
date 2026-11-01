@@ -37,7 +37,7 @@ test("theme styles expose the Public Menu design tokens without changing QR modu
   const style = getPublicMenuThemeStyle("warm-mocha");
   assert.equal(style["--khaavio-menu-primary"], "#1A120E");
   assert.equal(style["--khaavio-menu-accent"], "#6B4A2E");
-  assert.equal(style["--khaavio-menu-background"], "#F5EDE3");
+  assert.equal(style["--khaavio-menu-background"], "#1A120E");
   assert.equal(getPublicMenuThemeStyle("original"), undefined);
 
   const page = read("../src/pages/PublicMenu.jsx");
@@ -46,6 +46,10 @@ test("theme styles expose the Public Menu design tokens without changing QR modu
   const navigation = read("../src/components/RestaurantDashboardLayout.jsx");
   assert.match(page, /khaavio_public_restaurant_menu_theme/);
   assert.match(page, /khaavio:public-menu-theme-preview/);
+  assert.match(page, /getThemePreviewParentOrigin/);
+  const appearance = read("../src/pages/MenuAppearance.jsx");
+  assert.match(appearance, /PUBLIC_SITE_URL/);
+  assert.match(appearance, /publicPreviewOrigin \+ "\/menu\//);
   assert.match(app, /path="\/dashboard\/menu-appearance"/);
   assert.match(navigation, /Public menu design/);
   assert.doesNotMatch(page, /TableQRStudio/);
