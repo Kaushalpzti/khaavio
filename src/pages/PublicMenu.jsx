@@ -1587,7 +1587,7 @@ export default function PublicMenu() {
                 {guestTabSnapshot.invoice ? (
                   <>
                   <div className="public-guest-bill-invoice">
-                    <strong>{guestTabSnapshot.invoice.gst_document_type === "tax_invoice" ? "Tax Invoice" : guestTabSnapshot.invoice.gst_document_type === "bill_of_supply" ? "Bill of Supply" : "Final Bill"} · {guestTabSnapshot.invoice.gst_document_number || guestTabSnapshot.invoice.invoice_number}</strong>
+                    <strong>{guestTabSnapshot.invoice.document_type === "tax_invoice" ? "Tax Invoice" : guestTabSnapshot.invoice.document_type === "bill_of_supply" ? "Bill of Supply" : "Final Bill"} · {guestTabSnapshot.invoice.gst_document_number || guestTabSnapshot.invoice.invoice_number}</strong>
                     {guestTabSnapshot.invoice.supplier_legal_name && <span>{guestTabSnapshot.invoice.supplier_legal_name}</span>}
                     {guestTabSnapshot.invoice.supplier_address && <span>{guestTabSnapshot.invoice.supplier_address}{guestTabSnapshot.invoice.supplier_city ? ", " + guestTabSnapshot.invoice.supplier_city : ""}{guestTabSnapshot.invoice.supplier_state ? ", " + guestTabSnapshot.invoice.supplier_state : ""}{guestTabSnapshot.invoice.supplier_postal_code ? " - " + guestTabSnapshot.invoice.supplier_postal_code : ""}</span>}
                     {guestTabSnapshot.invoice.gstin_snapshot && <span>GSTIN: {guestTabSnapshot.invoice.gstin_snapshot}</span>}
@@ -1717,7 +1717,7 @@ export default function PublicMenu() {
                   <strong>{formatPrice(tableBillSnapshot.invoice.total_amount)}</strong>
                 </div>
                 <div className="public-guest-bill-invoice">
-                  <strong>{tableBillSnapshot.invoice.gst_document_type === "tax_invoice" ? "Tax Invoice" : tableBillSnapshot.invoice.gst_document_type === "bill_of_supply" ? "Bill of Supply" : "Final Bill"} · {tableBillSnapshot.invoice.gst_document_number || tableBillSnapshot.invoice.invoice_number}</strong>
+                  <strong>{tableBillSnapshot.invoice.document_type === "tax_invoice" ? "Tax Invoice" : tableBillSnapshot.invoice.document_type === "bill_of_supply" ? "Bill of Supply" : "Final Bill"} · {tableBillSnapshot.invoice.gst_document_number || tableBillSnapshot.invoice.invoice_number}</strong>
                   {tableBillSnapshot.invoice.supplier_legal_name && <span>{tableBillSnapshot.invoice.supplier_legal_name}</span>}
                   {tableBillSnapshot.invoice.supplier_address && <span>{tableBillSnapshot.invoice.supplier_address}{tableBillSnapshot.invoice.supplier_city ? ", " + tableBillSnapshot.invoice.supplier_city : ""}{tableBillSnapshot.invoice.supplier_state ? ", " + tableBillSnapshot.invoice.supplier_state : ""}{tableBillSnapshot.invoice.supplier_postal_code ? " - " + tableBillSnapshot.invoice.supplier_postal_code : ""}</span>}
                   {tableBillSnapshot.invoice.gstin_snapshot && <span>GSTIN: {tableBillSnapshot.invoice.gstin_snapshot}</span>}
