@@ -144,9 +144,12 @@ jobs:
         run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261030203552_restaurant_invoice_upi_payments.sql
       - name: Apply empty session cleanup migration to disposable PostgreSQL
         run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261030204300_empty_session_cleanup.sql
+      - name: Apply historical Public Menu theme permission migration safely
+        run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261101063806_fix_public_menu_theme_upsert_permissions.sql
       - name: Apply and verify Public Menu Theme Studio migration
         run: |
           psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261101110000_public_menu_theme_studio.sql
+          psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261101130000_fix_public_menu_theme_upsert_permissions.sql
           psql -v ON_ERROR_STOP=1 <<'SQL'
           INSERT INTO public.restaurant_public_menu_themes (restaurant_id, theme_id)
           VALUES ('00000000-0000-4000-8000-000000000001', 'warm-mocha');
@@ -181,8 +184,11 @@ jobs:
             IF NOT pg_catalog.has_table_privilege('authenticated', 'public.restaurant_public_menu_themes', 'SELECT') THEN
               RAISE EXCEPTION 'Authenticated owner SELECT grant is missing';
             END IF;
+            IF NOT pg_catalog.has_column_privilege('authenticated', 'public.restaurant_public_menu_themes', 'restaurant_id', 'UPDATE') THEN
+              RAISE EXCEPTION 'Authenticated restaurant_id UPDATE grant is missing for Supabase upsert';
+            END IF;
             IF NOT pg_catalog.has_column_privilege('authenticated', 'public.restaurant_public_menu_themes', 'theme_id', 'UPDATE') THEN
-              RAISE EXCEPTION 'Authenticated theme update grant is missing';
+              RAISE EXCEPTION 'Authenticated theme_id UPDATE grant is missing';
             END IF;
             IF NOT pg_catalog.has_function_privilege('anon', 'public.khaavio_public_restaurant_menu_theme(text)', 'EXECUTE') THEN
               RAISE EXCEPTION 'Public menu theme lookup RPC grant is missing';

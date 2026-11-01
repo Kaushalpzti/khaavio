@@ -127,6 +127,10 @@ test("theme styles expose the Public Menu design tokens without changing QR modu
 test("theme settings are isolated per restaurant and public reads return only the selected theme ID", () => {
   const migration = read("../supabase/migrations/20261101110000_public_menu_theme_studio.sql");
   const dashboard = read("../src/pages/MenuAppearance.jsx");
+  const historicalGrant = read("../supabase/migrations/20261101063806_fix_public_menu_theme_upsert_permissions.sql");
+  const upsertGrant = read("../supabase/migrations/20261101130000_fix_public_menu_theme_upsert_permissions.sql");
+  assert.match(historicalGrant, /to_regclass\('public\.restaurant_public_menu_themes'\)/);
+  assert.match(upsertGrant, /GRANT UPDATE \(restaurant_id, theme_id\)/);
   assert.match(migration, /restaurant_id uuid PRIMARY KEY REFERENCES public\.restaurants\(id\)/);
   assert.match(migration, /ENABLE ROW LEVEL SECURITY/);
   assert.match(migration, /restaurant_public_menu_themes_owner_insert/);
