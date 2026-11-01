@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 
 import { supabase } from "../lib/supabaseClient";
+import { PUBLIC_SITE_URL } from "../lib/domainRouting.js";
 import {
   DEFAULT_PUBLIC_MENU_THEME_ID,
   PUBLIC_MENU_THEMES,
@@ -72,6 +73,9 @@ export default function MenuAppearance() {
   const [notice, setNotice] = useState("");
 
   const isDirty = selectedThemeId !== savedThemeId;
+  const publicPreviewOrigin = window.location.hostname.toLowerCase() === "app.khaavio.in"
+    ? new URL(PUBLIC_SITE_URL).origin
+    : window.location.origin;
   const selectedTheme = getPublicMenuTheme(selectedThemeId);
 
   useEffect(() => {
@@ -136,15 +140,15 @@ export default function MenuAppearance() {
     if (!frameWindow || !previewReady) return;
     frameWindow.postMessage(
       { type: PREVIEW_MESSAGE, themeId: selectedThemeId },
-      window.location.origin,
+      publicPreviewOrigin,
     );
-  }, [selectedThemeId, previewReady, restaurant?.slug]);
+  }, [selectedThemeId, previewReady, restaurant?.slug, publicPreviewOrigin]);
 
   useEffect(() => {
     function handlePreviewMessage(event) {
       const frameWindow = iframeRef.current?.contentWindow;
       if (
-        event.origin !== window.location.origin
+        event.origin !== publicPreviewOrigin
         || !frameWindow
         || event.source !== frameWindow
         || event.data?.type !== PREVIEW_READY_MESSAGE
@@ -166,7 +170,7 @@ export default function MenuAppearance() {
     setPreviewReady(true);
     iframeRef.current?.contentWindow?.postMessage(
       { type: PREVIEW_MESSAGE, themeId: selectedThemeId },
-      window.location.origin,
+      publicPreviewOrigin,
     );
   }
 
@@ -338,7 +342,7 @@ export default function MenuAppearance() {
                 <iframe
                   ref={iframeRef}
                   title={restaurant.name + " public menu theme preview"}
-                  src={"/menu/" + encodeURIComponent(restaurant.slug) + "?khaavioThemePreview=1"}
+                  src={publicPreviewOrigin + "/menu/" + encodeURIComponent(restaurant.slug) + "?khaavioThemePreview=1"}
                   onLoad={handleIframeLoad}
                   loading="eager"
                 />
