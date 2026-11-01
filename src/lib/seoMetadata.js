@@ -46,7 +46,7 @@ const STATIC_PAGES = {
         canonicalPath: "/contact",
     },
     "/privacy": {
-        title: "Privacy Policy | Khaavio",
+        title: "Khaavio Privacy Policy | Data Protection & Privacy",
         description: "Learn how Khaavio handles restaurant accounts, guest orders, bookings, loyalty rewards, feedback, AI-assisted features and privacy requests.",
         indexable: true,
         canonicalPath: "/privacy",
@@ -90,7 +90,7 @@ const PRIVATE_PAGE_TITLES = {
     ],
     "/dashboard": [
         "Restaurant Dashboard | Khaavio",
-        "Manage your restaurant workspace with Khaavio.",
+        "Manage restaurant orders, digital menus, table bookings, kitchen service and billing from your Khaavio restaurant workspace.",
     ],
     "/dashboard/menu": [
         "Menu Manager | Khaavio",

@@ -1319,7 +1319,11 @@ export default function PublicMenu() {
             )}
           </span>
           <span className="public-menu-brand-copy">
-            <strong>{restaurant?.name || "Restaurant"}</strong>
+            {restaurant?.name ? (
+              <h1 className="public-menu-brand-title">{restaurant.name} Menu</h1>
+            ) : (
+              <strong>Restaurant</strong>
+            )}
             <small>
               {restaurant?.restaurant_type
                 ? restaurant.restaurant_type.replace(/_/g, " ")
@@ -1629,10 +1633,10 @@ export default function PublicMenu() {
                 <span aria-hidden="true" />
                 {currentPromoSlide.eyebrow}
               </span>
-              <h1>
+              <h2>
                 <span>{currentPromoSlide.titleStart}</span>
                   {currentPromoSlide.titleAccent && <strong>{currentPromoSlide.titleAccent}</strong>}
-              </h1>
+              </h2>
               <p>{currentPromoSlide.description}</p>
             </div>}
 
@@ -2117,7 +2121,7 @@ export default function PublicMenu() {
             <section className="public-menu-tab-view public-menu-rewards-view" aria-labelledby="public-menu-rewards-title">
               <div className="public-menu-tab-hero public-menu-tab-hero-rewards">
                 <span className="public-menu-tab-eyebrow"><Gift size={15} /> YOUR REWARDS</span>
-                <h1 id="public-menu-rewards-title">Dine more, get rewarded.</h1>
+                <h2 id="public-menu-rewards-title">Dine more, get rewarded.</h2>
                 <p>Collect stamps on eligible orders and unlock treats from {restaurant.name}.</p>
               </div>
               <div className="public-menu-tab-content">
@@ -2144,7 +2148,7 @@ export default function PublicMenu() {
             <section className="public-menu-tab-view public-menu-reviews-view" aria-labelledby="public-menu-reviews-heading">
               <div className="public-menu-tab-hero public-menu-tab-hero-reviews">
                 <span className="public-menu-tab-eyebrow"><Star size={15} /> RATINGS & REVIEW</span>
-                <h1 id="public-menu-reviews-heading">{canUsePrivateFeedback ? "Your feedback means a lot." : "Enjoyed your visit?"}</h1>
+                <h2 id="public-menu-reviews-heading">{canUsePrivateFeedback ? "Your feedback means a lot." : "Enjoyed your visit?"}</h2>
                 <p>{canUsePrivateFeedback
                   ? `Tell ${restaurant.name} how your experience went, or leave an honest Google review.`
                   : `Leave an honest Google review to help other guests discover ${restaurant.name}.`}</p>
