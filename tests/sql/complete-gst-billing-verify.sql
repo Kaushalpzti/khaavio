@@ -32,7 +32,7 @@ INSERT INTO public.orders (
   status, total_amount, discount_amount, service_mode
 )
 VALUES (
-  '00000000-0000-4000-8000-000000000011',
+  '00000000-0000-4000-8000-000000000101',
   '00000000-0000-4000-8000-000000000001',
   NULL, NULL, NULL, 'Pickup Customer',
   'pending', 900, 100, 'pickup'
@@ -45,7 +45,7 @@ DECLARE
   v_tracking record;
 BEGIN
   SELECT * INTO v_order FROM public.orders
-  WHERE id = '00000000-0000-4000-8000-000000000011';
+  WHERE id = '00000000-0000-4000-8000-000000000101';
   IF v_order.gst_enabled_snapshot IS DISTINCT FROM true
      OR v_order.gst_amount IS DISTINCT FROM 45::numeric
      OR v_order.grand_total IS DISTINCT FROM 945::numeric
@@ -86,7 +86,7 @@ INSERT INTO public.orders (
   status, total_amount, discount_amount
 )
 VALUES (
-  '00000000-0000-4000-8000-000000000012',
+  '00000000-0000-4000-8000-000000000102',
   '00000000-0000-4000-8000-000000000001',
   '00000000-0000-4000-8000-000000000002',
   '00000000-0000-4000-8000-000000000004',
@@ -95,15 +95,15 @@ VALUES (
 
 DO $table_order_guard$
 BEGIN
-  IF (SELECT gst_amount FROM public.orders WHERE id = '00000000-0000-4000-8000-000000000012') <> 0
-     OR (SELECT grand_total FROM public.orders WHERE id = '00000000-0000-4000-8000-000000000012') IS NOT NULL THEN
+  IF (SELECT gst_amount FROM public.orders WHERE id = '00000000-0000-4000-8000-000000000102') <> 0
+     OR (SELECT grand_total FROM public.orders WHERE id = '00000000-0000-4000-8000-000000000102') IS NOT NULL THEN
     RAISE EXCEPTION 'Table orders must not receive individual GST snapshots';
   END IF;
 END;
 $table_order_guard$;
 
 INSERT INTO public.table_sessions (id, restaurant_id, table_id, status, billing_mode)
-VALUES ('00000000-0000-4000-8000-000000000020',
+VALUES ('00000000-0000-4000-8000-000000000110',
         '00000000-0000-4000-8000-000000000001',
         '00000000-0000-4000-8000-000000000002',
         'billing', 'per_guest');
@@ -111,11 +111,11 @@ INSERT INTO public.table_session_tabs (
   id, restaurant_id, table_id, session_id, guest_tab_token, status, display_name
 )
 VALUES (
-  '00000000-0000-4000-8000-000000000021',
+  '00000000-0000-4000-8000-000000000111',
   '00000000-0000-4000-8000-000000000001',
   '00000000-0000-4000-8000-000000000002',
-  '00000000-0000-4000-8000-000000000020',
-  '00000000-0000-4000-8000-000000000022',
+  '00000000-0000-4000-8000-000000000110',
+  '00000000-0000-4000-8000-000000000112',
   'billing', 'Guest A'
 );
 INSERT INTO public.orders (
@@ -123,11 +123,11 @@ INSERT INTO public.orders (
   status, total_amount, discount_amount
 )
 VALUES (
-  '00000000-0000-4000-8000-000000000023',
+  '00000000-0000-4000-8000-000000000113',
   '00000000-0000-4000-8000-000000000001',
   '00000000-0000-4000-8000-000000000002',
-  '00000000-0000-4000-8000-000000000020',
-  '00000000-0000-4000-8000-000000000021',
+  '00000000-0000-4000-8000-000000000110',
+  '00000000-0000-4000-8000-000000000111',
   'Guest A', 'completed', 450, 50
 );
 INSERT INTO public.table_session_invoices (
@@ -135,11 +135,11 @@ INSERT INTO public.table_session_invoices (
   invoice_number, total_amount, order_count, payment_status
 )
 VALUES (
-  '00000000-0000-4000-8000-000000000024',
+  '00000000-0000-4000-8000-000000000114',
   '00000000-0000-4000-8000-000000000001',
   '00000000-0000-4000-8000-000000000002',
-  '00000000-0000-4000-8000-000000000020',
-  '00000000-0000-4000-8000-000000000021',
+  '00000000-0000-4000-8000-000000000110',
+  '00000000-0000-4000-8000-000000000111',
   'KHV-TEST-GUEST-001', 450, 1, 'unpaid'
 );
 
@@ -149,7 +149,7 @@ DECLARE
   v_public jsonb;
 BEGIN
   SELECT * INTO v_invoice FROM public.table_session_invoices
-  WHERE id = '00000000-0000-4000-8000-000000000024';
+  WHERE id = '00000000-0000-4000-8000-000000000114';
   IF v_invoice.subtotal_amount IS DISTINCT FROM 500::numeric
      OR v_invoice.discount_amount IS DISTINCT FROM 50::numeric
      OR v_invoice.taxable_amount IS DISTINCT FROM 450::numeric
@@ -171,7 +171,7 @@ BEGIN
     'green-table',
     '00000000-0000-4000-8000-000000000003',
     v_invoice.id,
-    '00000000-0000-4000-8000-000000000022'
+    '00000000-0000-4000-8000-000000000112'
   ) INTO v_public;
   IF v_public ->> 'document_type' IS DISTINCT FROM 'tax_invoice'
      OR (v_public ->> 'cgst_amount')::numeric IS DISTINCT FROM 11.25::numeric
@@ -184,7 +184,7 @@ $split_guest$;
 -- Inclusive menu prices extract GST without increasing the customer total.
 UPDATE public.restaurants SET gst_price_inclusive = true WHERE slug = 'green-table';
 INSERT INTO public.table_sessions (id, restaurant_id, table_id, status, billing_mode)
-VALUES ('00000000-0000-4000-8000-000000000030',
+VALUES ('00000000-0000-4000-8000-000000000120',
         '00000000-0000-4000-8000-000000000001',
         '00000000-0000-4000-8000-000000000002',
         'billing', 'per_guest');
@@ -192,11 +192,11 @@ INSERT INTO public.table_session_tabs (
   id, restaurant_id, table_id, session_id, guest_tab_token, status, display_name
 )
 VALUES (
-  '00000000-0000-4000-8000-000000000031',
+  '00000000-0000-4000-8000-000000000121',
   '00000000-0000-4000-8000-000000000001',
   '00000000-0000-4000-8000-000000000002',
-  '00000000-0000-4000-8000-000000000030',
-  '00000000-0000-4000-8000-000000000032',
+  '00000000-0000-4000-8000-000000000120',
+  '00000000-0000-4000-8000-000000000122',
   'billing', 'Guest B'
 );
 INSERT INTO public.orders (
@@ -204,11 +204,11 @@ INSERT INTO public.orders (
   status, total_amount, discount_amount
 )
 VALUES (
-  '00000000-0000-4000-8000-000000000033',
+  '00000000-0000-4000-8000-000000000123',
   '00000000-0000-4000-8000-000000000001',
   '00000000-0000-4000-8000-000000000002',
-  '00000000-0000-4000-8000-000000000030',
-  '00000000-0000-4000-8000-000000000031',
+  '00000000-0000-4000-8000-000000000120',
+  '00000000-0000-4000-8000-000000000121',
   'Guest B', 'completed', 105, 0
 );
 INSERT INTO public.table_session_invoices (
@@ -216,11 +216,11 @@ INSERT INTO public.table_session_invoices (
   invoice_number, total_amount, order_count, payment_status
 )
 VALUES (
-  '00000000-0000-4000-8000-000000000034',
+  '00000000-0000-4000-8000-000000000124',
   '00000000-0000-4000-8000-000000000001',
   '00000000-0000-4000-8000-000000000002',
-  '00000000-0000-4000-8000-000000000030',
-  '00000000-0000-4000-8000-000000000031',
+  '00000000-0000-4000-8000-000000000120',
+  '00000000-0000-4000-8000-000000000121',
   'KHV-TEST-GUEST-002', 105, 1, 'unpaid'
 );
 
@@ -229,7 +229,7 @@ DECLARE
   v_invoice public.table_session_invoices%ROWTYPE;
 BEGIN
   SELECT * INTO v_invoice FROM public.table_session_invoices
-  WHERE id = '00000000-0000-4000-8000-000000000034';
+  WHERE id = '00000000-0000-4000-8000-000000000124';
   IF v_invoice.taxable_amount IS DISTINCT FROM 100::numeric
      OR v_invoice.tax_amount IS DISTINCT FROM 5::numeric
      OR v_invoice.cgst_amount IS DISTINCT FROM 2.50::numeric
@@ -249,7 +249,7 @@ INSERT INTO public.restaurants (
   gst_price_inclusive, address, city
 )
 VALUES (
-  '00000000-0000-4000-8000-000000000041',
+  '00000000-0000-4000-8000-000000000141',
   '00000000-0000-4000-8000-000000000099',
   'Interstate Test Outlet', 'interstate-test', true, 'per_guest', 'Delhi',
   'regular', 'Interstate Hospitality Pvt Ltd', true, '10ABCDE1234F1Z5', 18,
@@ -257,27 +257,27 @@ VALUES (
 );
 INSERT INTO public.restaurant_tables (id, restaurant_id, qr_token, is_active, table_number)
 VALUES (
-  '00000000-0000-4000-8000-000000000042',
-  '00000000-0000-4000-8000-000000000041',
-  '00000000-0000-4000-8000-000000000043',
+  '00000000-0000-4000-8000-000000000142',
+  '00000000-0000-4000-8000-000000000141',
+  '00000000-0000-4000-8000-000000000143',
   true, '2'
 );
 INSERT INTO public.table_sessions (id, restaurant_id, table_id, status, billing_mode)
 VALUES (
-  '00000000-0000-4000-8000-000000000044',
-  '00000000-0000-4000-8000-000000000041',
-  '00000000-0000-4000-8000-000000000042',
+  '00000000-0000-4000-8000-000000000144',
+  '00000000-0000-4000-8000-000000000141',
+  '00000000-0000-4000-8000-000000000142',
   'billing', 'per_guest'
 );
 INSERT INTO public.table_session_tabs (
   id, restaurant_id, table_id, session_id, guest_tab_token, status
 )
 VALUES (
-  '00000000-0000-4000-8000-000000000045',
-  '00000000-0000-4000-8000-000000000041',
-  '00000000-0000-4000-8000-000000000042',
-  '00000000-0000-4000-8000-000000000044',
-  '00000000-0000-4000-8000-000000000046',
+  '00000000-0000-4000-8000-000000000145',
+  '00000000-0000-4000-8000-000000000141',
+  '00000000-0000-4000-8000-000000000142',
+  '00000000-0000-4000-8000-000000000144',
+  '00000000-0000-4000-8000-000000000146',
   'billing'
 );
 INSERT INTO public.orders (
@@ -285,11 +285,11 @@ INSERT INTO public.orders (
   status, total_amount, discount_amount
 )
 VALUES (
-  '00000000-0000-4000-8000-000000000047',
-  '00000000-0000-4000-8000-000000000041',
-  '00000000-0000-4000-8000-000000000042',
-  '00000000-0000-4000-8000-000000000044',
-  '00000000-0000-4000-8000-000000000045',
+  '00000000-0000-4000-8000-000000000147',
+  '00000000-0000-4000-8000-000000000141',
+  '00000000-0000-4000-8000-000000000142',
+  '00000000-0000-4000-8000-000000000144',
+  '00000000-0000-4000-8000-000000000145',
   'Guest C', 'completed', 100, 0
 );
 INSERT INTO public.table_session_invoices (
@@ -297,11 +297,11 @@ INSERT INTO public.table_session_invoices (
   invoice_number, total_amount, order_count, payment_status
 )
 VALUES (
-  '00000000-0000-4000-8000-000000000048',
-  '00000000-0000-4000-8000-000000000041',
-  '00000000-0000-4000-8000-000000000042',
-  '00000000-0000-4000-8000-000000000044',
-  '00000000-0000-4000-8000-000000000045',
+  '00000000-0000-4000-8000-000000000148',
+  '00000000-0000-4000-8000-000000000141',
+  '00000000-0000-4000-8000-000000000142',
+  '00000000-0000-4000-8000-000000000144',
+  '00000000-0000-4000-8000-000000000145',
   'KHV-TEST-IGST-001', 100, 1, 'unpaid'
 );
 
@@ -310,7 +310,7 @@ DECLARE
   v_invoice public.table_session_invoices%ROWTYPE;
 BEGIN
   SELECT * INTO v_invoice FROM public.table_session_invoices
-  WHERE id = '00000000-0000-4000-8000-000000000048';
+  WHERE id = '00000000-0000-4000-8000-000000000148';
   IF v_invoice.gst_tax_type_snapshot IS DISTINCT FROM 'igst'
      OR v_invoice.igst_rate IS DISTINCT FROM 18::numeric
      OR v_invoice.igst_amount IS DISTINCT FROM 18::numeric
@@ -330,7 +330,7 @@ SET gst_registration_type = 'composition',
     gst_price_inclusive = false
 WHERE id = '00000000-0000-4000-8000-000000000001';
 INSERT INTO public.table_sessions (id, restaurant_id, table_id, status, billing_mode)
-VALUES ('00000000-0000-4000-8000-000000000050',
+VALUES ('00000000-0000-4000-8000-000000000150',
         '00000000-0000-4000-8000-000000000001',
         '00000000-0000-4000-8000-000000000002',
         'billing', 'per_guest');
@@ -338,11 +338,11 @@ INSERT INTO public.table_session_tabs (
   id, restaurant_id, table_id, session_id, guest_tab_token, status
 )
 VALUES (
-  '00000000-0000-4000-8000-000000000051',
+  '00000000-0000-4000-8000-000000000151',
   '00000000-0000-4000-8000-000000000001',
   '00000000-0000-4000-8000-000000000002',
-  '00000000-0000-4000-8000-000000000050',
-  '00000000-0000-4000-8000-000000000052',
+  '00000000-0000-4000-8000-000000000150',
+  '00000000-0000-4000-8000-000000000152',
   'billing'
 );
 INSERT INTO public.orders (
@@ -350,11 +350,11 @@ INSERT INTO public.orders (
   status, total_amount, discount_amount
 )
 VALUES (
-  '00000000-0000-4000-8000-000000000053',
+  '00000000-0000-4000-8000-000000000153',
   '00000000-0000-4000-8000-000000000001',
   '00000000-0000-4000-8000-000000000002',
-  '00000000-0000-4000-8000-000000000050',
-  '00000000-0000-4000-8000-000000000051',
+  '00000000-0000-4000-8000-000000000150',
+  '00000000-0000-4000-8000-000000000151',
   'Guest D', 'completed', 100, 0
 );
 INSERT INTO public.table_session_invoices (
@@ -362,11 +362,11 @@ INSERT INTO public.table_session_invoices (
   invoice_number, total_amount, order_count, payment_status
 )
 VALUES (
-  '00000000-0000-4000-8000-000000000054',
+  '00000000-0000-4000-8000-000000000154',
   '00000000-0000-4000-8000-000000000001',
   '00000000-0000-4000-8000-000000000002',
-  '00000000-0000-4000-8000-000000000050',
-  '00000000-0000-4000-8000-000000000051',
+  '00000000-0000-4000-8000-000000000150',
+  '00000000-0000-4000-8000-000000000151',
   'KHV-TEST-BOS-001', 100, 1, 'unpaid'
 );
 
@@ -375,7 +375,7 @@ DECLARE
   v_invoice public.table_session_invoices%ROWTYPE;
 BEGIN
   SELECT * INTO v_invoice FROM public.table_session_invoices
-  WHERE id = '00000000-0000-4000-8000-000000000054';
+  WHERE id = '00000000-0000-4000-8000-000000000154';
   IF v_invoice.gst_document_type_snapshot IS DISTINCT FROM 'bill_of_supply'
      OR v_invoice.gstin_snapshot IS DISTINCT FROM '10ABCDE1234F1Z5'
      OR v_invoice.tax_amount IS DISTINCT FROM 0::numeric
