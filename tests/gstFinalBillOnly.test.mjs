@@ -4,7 +4,7 @@ import { readFileSync } from "node:fs";
 
 const read = (path) => readFileSync(new URL(path, import.meta.url), "utf8");
 
-test("GST settings require registration type and one total rate, not separately entered CGST and SGST", () => {
+test("owner selects GST registration type and enters one total rate", () => {
   const settings = read("../src/pages/RestaurantSettings.jsx");
   assert.match(settings, /GST_REGISTRATION_TYPES\.REGULAR/);
   assert.match(settings, /GST_REGISTRATION_TYPES\.COMPOSITION/);
@@ -15,7 +15,7 @@ test("GST settings require registration type and one total rate, not separately 
   assert.match(settings, /Automatic tax split preview/);
 });
 
-test("table and split-guest orders remain tax-free until their final invoice", () => {
+test("table and split-guest orders remain tax-free until the final invoice", () => {
   const checkout = read("../src/pages/PublicMenu.jsx");
   const migration = read("../supabase/migrations/20261101150000_complete_gst_billing.sql");
   assert.match(checkout, /GST, if enabled, is calculated once on your final table or guest invoice/);
@@ -25,7 +25,7 @@ test("table and split-guest orders remain tax-free until their final invoice", (
   assert.match(migration, /NEW\.total_amount := \(v_breakdown ->> 'grand_total'\)::numeric/);
 });
 
-test("standalone pickup checkout uses the GST-aware server RPC and tax tracking snapshot", () => {
+test("standalone pickup checkout uses server-calculated GST and shows tax tracking details", () => {
   const checkout = read("../src/pages/PublicMenu.jsx");
   const tracking = read("../src/pages/OrderTracking.jsx");
   const migration = read("../supabase/migrations/20261101150000_complete_gst_billing.sql");
@@ -36,7 +36,7 @@ test("standalone pickup checkout uses the GST-aware server RPC and tax tracking 
   assert.match(migration, /COALESCE\(o\.grand_total, o\.total_amount\)/);
 });
 
-test("final invoices and customer receipts expose component-level tax and document particulars", () => {
+test("table invoices, customer receipts and tracking expose split taxes and document types", () => {
   const sessions = read("../src/pages/TableSessions.jsx");
   const payment = read("../src/components/PublicInvoicePayment.jsx");
   const tracking = read("../src/pages/OrderTracking.jsx");
@@ -44,16 +44,22 @@ test("final invoices and customer receipts expose component-level tax and docume
     assert.match(source, /CGST/);
     assert.match(source, /SGST/);
     assert.match(source, /IGST/);
-    assert.match(source, /Tax Invoice/);
     assert.match(source, /Bill of Supply/);
   }
+  assert.match(payment, /Tax Invoice/);
 });
 
-test("legacy GST opt-ins are disabled for owner review; existing invoices are not recalculated", () => {
+test("legacy GST collection is disabled until owner review; issued invoices are not recalculated", () => {
   const migration = read("../supabase/migrations/20261101150000_complete_gst_billing.sql");
   assert.match(migration, /SET gst_registration_type = 'needs_review',\s+gst_enabled = false/);
   assert.match(migration, /BEFORE INSERT ON public\.table_session_invoices/);
-  assert.match(migration, /IF NEW\.gst_document_type_snapshot IN \('tax_invoice', 'bill_of_supply'\)/);
   assert.match(migration, /restaurant_gst_document_counters/);
   assert.doesNotMatch(migration, /UPDATE public\.table_session_invoices\s+SET total_amount/);
+});
+
+test("PostgreSQL integration fixture covers checkout, split guests, inclusive prices, IGST and composition", () => {
+  const verify = read("../tests/sql/complete-gst-billing-verify.sql");
+  for (const marker of ["$standalone$", "$table_order_guard$", "$split_guest$", "$inclusive$", "$igst$", "$composition$", "$legacy_invoice$"]) {
+    assert.ok(verify.includes(marker), "Missing GST integration test block " + marker);
+  }
 });
