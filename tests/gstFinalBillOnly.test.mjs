@@ -44,7 +44,7 @@ test("table invoices, customer receipts and tracking expose split taxes and docu
     assert.match(source, /CGST/);
     assert.match(source, /SGST/);
     assert.match(source, /IGST/);
-    assert.match(source, /Bill of Supply/);
+    assert.match(source, /Bill of Supply/i);
   }
   assert.match(payment, /Tax Invoice/);
 });
@@ -52,7 +52,9 @@ test("table invoices, customer receipts and tracking expose split taxes and docu
 test("legacy GST collection is disabled until owner review; issued invoices are not recalculated", () => {
   const migration = read("../supabase/migrations/20261101150000_complete_gst_billing.sql");
   assert.match(migration, /SET gst_registration_type = 'needs_review',\s+gst_enabled = false/);
-  assert.match(migration, /BEFORE INSERT ON public\.table_session_invoices/);
+  assert.match(migration, /CREATE OR REPLACE FUNCTION public\.khaavio_snapshot_invoice_gst\(\)/);
+  const originalGstMigration = read("../supabase/migrations/20261029065457_gst_final_bill_only.sql");
+  assert.match(originalGstMigration, /CREATE TRIGGER khaavio_snapshot_invoice_gst BEFORE INSERT ON public\.table_session_invoices/);
   assert.match(migration, /restaurant_gst_document_counters/);
   assert.doesNotMatch(migration, /UPDATE public\.table_session_invoices\s+SET total_amount/);
 });
