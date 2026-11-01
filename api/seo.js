@@ -1,7 +1,7 @@
 import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { buildPageMetadata, injectPageMetadata, normalizeMetadataPath } from "./_seo-utils.js";
+import { buildPageMetadata, extractPrerenderedPages, injectPageMetadata, injectPrerenderedContent, normalizeMetadataPath } from "./_seo-utils.js";
 import { getDomainRedirectTarget } from "../src/lib/domainRouting.js";
 import { isKnownMetadataPath } from "../src/lib/seoMetadata.js";
 
@@ -51,6 +51,54 @@ async function fetchPublicRestaurant(slug) {
     console.warn("Social metadata lookup failed for a public restaurant.", error?.name || "FetchError");
     return { restaurant: null, notFound: false };
   }
+}
+
+
+function escapeHtml(value) {
+  return String(value == null ? "" : value)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function buildPublicMenuPrerender(restaurant) {
+  if (!restaurant || restaurant.is_published !== true) return "";
+
+  const name = String(restaurant.name || "")
+    .replace(/[\u0000-\u001f\u007f]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, 100);
+  if (!name) return "";
+
+  const cuisine = String(restaurant.restaurant_type || "")
+    .replace(/_/g, " ")
+    .replace(/[\u0000-\u001f\u007f]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, 70);
+  const safeName = escapeHtml(name);
+  const cuisineCopy = cuisine ? " Browse the " + escapeHtml(cuisine.toLowerCase()) + " menu." : "";
+
+  return [
+    '<main class="seo-prerendered-page seo-prerendered-menu" aria-label="' + safeName + ' digital menu">',
+    '  <header class="seo-prerendered-intro">',
+    '    <p>RESTAURANT DIGITAL MENU</p>',
+    '    <h1>' + safeName + ' Menu</h1>',
+    '    <p>Explore the published digital menu for ' + safeName + '.' + cuisineCopy + ' Review dish names, descriptions and prices shared by the restaurant, check item availability, and choose from the options shown on the menu.</p>',
+    '  </header>',
+    '  <section>',
+    '    <h2>Browse the menu</h2>',
+    '    <p>Menu items, prices, descriptions, customisations and availability are provided by the restaurant and may change. The restaurant is responsible for confirming orders and fulfilling them.</p>',
+    '  </section>',
+    '  <section>',
+    '    <h2>Order with Khaavio</h2>',
+    '    <p>Khaavio helps restaurants share mobile-friendly digital menus and table QR ordering. Guests can open a menu in a phone browser without installing a separate app. Scan the restaurant table QR when provided to open the menu with its table context.</p>',
+    '  </section>',
+    '</main>',
+  ].join("\n");
 }
 
 function readBuiltHtml() {
@@ -107,7 +155,16 @@ export default async function handler(req, res) {
       tableToken: requestUrl.searchParams.get("table") || "",
     });
     const isNotFound = !isKnownMetadataPath(pathname) || lookup.notFound;
-    const html = injectPageMetadata(readBuiltHtml(), metadata);
+    const prerendered = extractPrerenderedPages(readBuiltHtml());
+    const staticSnapshotPath = pathname === "/refunds" ? "/refund-policy" : pathname;
+    const prerenderedContent = isNotFound
+      ? ""
+      : prerendered.pages[staticSnapshotPath] ||
+        (pathname.startsWith("/menu/") ? buildPublicMenuPrerender(lookup.restaurant) : "");
+    const html = injectPageMetadata(
+      injectPrerenderedContent(prerendered.html, prerenderedContent),
+      metadata,
+    );
 
     res.statusCode = isNotFound ? 404 : 200;
     res.setHeader("Content-Type", "text/html; charset=utf-8");

@@ -38,6 +38,21 @@ import AskKhaavio from "../components/AskKhaavio";
 import khaavioIcon from "../assets/icon.png";
 import "./PublicMenu.css";
 import "./PublicMenuExperience.css";
+import "./PublicMenuThemes.css";
+import { APP_SITE_URL } from "../lib/domainRouting.js";
+import {
+  DEFAULT_PUBLIC_MENU_THEME_ID,
+  getPublicMenuTheme,
+  getPublicMenuThemeStyle,
+  isValidPublicMenuThemeId,
+} from "../lib/publicMenuThemes.js";
+
+function getThemePreviewParentOrigin() {
+  const host = window.location.hostname.toLowerCase();
+  return host === "khaavio.in" || host === "www.khaavio.in"
+    ? new URL(APP_SITE_URL).origin
+    : window.location.origin;
+}
 
 function formatPrice(price) {
   return new Intl.NumberFormat("en-IN", {
@@ -227,6 +242,7 @@ export default function PublicMenu() {
 
   const hasTableParam = searchParams.has("table");
   const tableToken = searchParams.get("table");
+  const isThemePreview = searchParams.get("khaavioThemePreview") === "1";
 
   const [restaurant, setRestaurant] = useState(null);
   const [categories, setCategories] = useState([]);
@@ -266,6 +282,7 @@ export default function PublicMenu() {
   const [tableBillError, setTableBillError] = useState("");
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [activeBottomTab, setActiveBottomTab] = useState("menu");
+  const [previewThemeId, setPreviewThemeId] = useState(DEFAULT_PUBLIC_MENU_THEME_ID);
   const [activeFloatingHelpPanel, setActiveFloatingHelpPanel] = useState(null);
   const [activePromoSlide, setActivePromoSlide] = useState(0);
   const [customerName, setCustomerName] = useState("");
@@ -283,6 +300,11 @@ export default function PublicMenu() {
   const [availabilityNow, setAvailabilityNow] = useState(0);
   const [subscriptionAllowsTransactions, setSubscriptionAllowsTransactions] =
     useState(null);
+
+  const activePublicMenuThemeId = isThemePreview && previewThemeId
+    ? previewThemeId
+    : restaurant?.public_menu_theme_id || DEFAULT_PUBLIC_MENU_THEME_ID;
+  const activePublicMenuTheme = getPublicMenuTheme(activePublicMenuThemeId);
 
   const canUseLoyaltyRewards = publicFeatures.loyalty_rewards === true;
   const canUsePrivateFeedback = publicFeatures.private_feedback === true;
@@ -313,6 +335,31 @@ export default function PublicMenu() {
       setActiveBottomTab("menu");
     }
   }, [activeBottomTab, canUseLoyaltyRewards, canShowReviewsTab]);
+
+  useEffect(() => {
+    if (!isThemePreview) return undefined;
+
+    const previewParentOrigin = getThemePreviewParentOrigin();
+
+    function handleThemePreviewMessage(event) {
+      if (
+        event.origin !== previewParentOrigin
+        || event.source !== window.parent
+        || event.data?.type !== "khaavio:public-menu-theme-preview"
+        || !isValidPublicMenuThemeId(event.data.themeId)
+      ) {
+        return;
+      }
+      setPreviewThemeId(event.data.themeId);
+    }
+
+    window.addEventListener("message", handleThemePreviewMessage);
+    window.parent.postMessage(
+      { type: "khaavio:public-menu-theme-preview-ready" },
+      previewParentOrigin,
+    );
+    return () => window.removeEventListener("message", handleThemePreviewMessage);
+  }, [isThemePreview]);
 
   // Give each published restaurant menu a useful, restaurant-specific title.
   useEffect(() => {
@@ -441,7 +488,23 @@ export default function PublicMenu() {
             effectiveBillingMode = "combined";
           }
         }
-        const restaurantData = { ...restaurantRecord, table_billing_mode: effectiveBillingMode };
+        let resolvedPublicMenuThemeId = DEFAULT_PUBLIC_MENU_THEME_ID;
+        try {
+          const { data: savedThemeId, error: themeError } = await supabase.rpc(
+            "khaavio_public_restaurant_menu_theme",
+            { p_slug: slug },
+          );
+          if (!themeError && isValidPublicMenuThemeId(savedThemeId)) {
+            resolvedPublicMenuThemeId = savedThemeId;
+          }
+        } catch {
+          // Theme availability is an enhancement; the existing menu stays usable if the migration is pending.
+        }
+        const restaurantData = {
+          ...restaurantRecord,
+          table_billing_mode: effectiveBillingMode,
+          public_menu_theme_id: resolvedPublicMenuThemeId,
+        };
 
         // Public menus receive only a small, non-sensitive set of plan entitlements.
         // If the RPC is unavailable, Growth-only public features fail closed while
@@ -1298,7 +1361,11 @@ export default function PublicMenu() {
   }
 
   return (
-    <main className="public-menu-page">
+    <main
+      className="public-menu-page"
+      data-public-menu-theme={activePublicMenuTheme?.id || undefined}
+      style={activePublicMenuTheme ? getPublicMenuThemeStyle(activePublicMenuTheme.id) : undefined}
+    >
       <header className="public-menu-header">
         <div
           className="public-menu-brand"
@@ -1319,7 +1386,11 @@ export default function PublicMenu() {
             )}
           </span>
           <span className="public-menu-brand-copy">
-            <strong>{restaurant?.name || "Restaurant"}</strong>
+            {restaurant?.name ? (
+              <h1 className="public-menu-brand-title">{restaurant.name} Menu</h1>
+            ) : (
+              <strong>Restaurant</strong>
+            )}
             <small>
               {restaurant?.restaurant_type
                 ? restaurant.restaurant_type.replace(/_/g, " ")
@@ -1629,10 +1700,10 @@ export default function PublicMenu() {
                 <span aria-hidden="true" />
                 {currentPromoSlide.eyebrow}
               </span>
-              <h1>
+              <h2>
                 <span>{currentPromoSlide.titleStart}</span>
                   {currentPromoSlide.titleAccent && <strong>{currentPromoSlide.titleAccent}</strong>}
-              </h1>
+              </h2>
               <p>{currentPromoSlide.description}</p>
             </div>}
 
@@ -2117,7 +2188,7 @@ export default function PublicMenu() {
             <section className="public-menu-tab-view public-menu-rewards-view" aria-labelledby="public-menu-rewards-title">
               <div className="public-menu-tab-hero public-menu-tab-hero-rewards">
                 <span className="public-menu-tab-eyebrow"><Gift size={15} /> YOUR REWARDS</span>
-                <h1 id="public-menu-rewards-title">Dine more, get rewarded.</h1>
+                <h2 id="public-menu-rewards-title">Dine more, get rewarded.</h2>
                 <p>Collect stamps on eligible orders and unlock treats from {restaurant.name}.</p>
               </div>
               <div className="public-menu-tab-content">
@@ -2144,7 +2215,7 @@ export default function PublicMenu() {
             <section className="public-menu-tab-view public-menu-reviews-view" aria-labelledby="public-menu-reviews-heading">
               <div className="public-menu-tab-hero public-menu-tab-hero-reviews">
                 <span className="public-menu-tab-eyebrow"><Star size={15} /> RATINGS & REVIEW</span>
-                <h1 id="public-menu-reviews-heading">{canUsePrivateFeedback ? "Your feedback means a lot." : "Enjoyed your visit?"}</h1>
+                <h2 id="public-menu-reviews-heading">{canUsePrivateFeedback ? "Your feedback means a lot." : "Enjoyed your visit?"}</h2>
                 <p>{canUsePrivateFeedback
                   ? `Tell ${restaurant.name} how your experience went, or leave an honest Google review.`
                   : `Leave an honest Google review to help other guests discover ${restaurant.name}.`}</p>

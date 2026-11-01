@@ -33,6 +33,7 @@ const PlatformAdminSubscriptions = lazy(
 
 // Menu and QR management
 const MenuManager = lazy(() => import("./pages/MenuManager"));
+const MenuAppearance = lazy(() => import("./pages/MenuAppearance"));
 const QRStudio = lazy(() => import("./pages/QRStudio"));
 const TableQRStudio = lazy(() => import("./pages/TableQRStudio"));
 const TableSessions = lazy(() => import("./pages/TableSessions"));
@@ -256,6 +257,14 @@ export default function App() {
             element={
               <ProtectedRestaurantPage>
                 <MenuManager />
+              </ProtectedRestaurantPage>
+            }
+          />
+          <Route
+            path="/dashboard/menu-appearance"
+            element={
+              <ProtectedRestaurantPage>
+                <MenuAppearance />
               </ProtectedRestaurantPage>
             }
           />

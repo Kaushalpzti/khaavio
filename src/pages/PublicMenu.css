@@ -124,7 +124,9 @@
     gap: 2px;
 }
 
-.public-menu-brand-copy strong {
+.public-menu-brand-copy h1, .public-menu-brand-copy strong {
+    display: block;
+    margin: 0;
     font-size: 20px;
     font-weight: 850;
     letter-spacing: -0.7px;
@@ -1582,7 +1584,7 @@
         height: 100%;
         border-radius: inherit;
     }
-    .public-menu-brand-copy strong {
+    .public-menu-brand-copy h1, .public-menu-brand-copy strong {
         font-size: 18px;
     }
     .public-menu-brand-copy small {
@@ -1595,7 +1597,7 @@
     .public-menu-brand-copy {
         min-width: 0;
     }
-    .public-menu-brand-copy strong {
+    .public-menu-brand-copy h1, .public-menu-brand-copy strong {
         max-width: clamp(130px, calc(100vw - 185px), 240px);
         overflow: hidden;
         text-overflow: ellipsis;

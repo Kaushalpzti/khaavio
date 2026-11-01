@@ -43,6 +43,40 @@ function upsertStructuredData(html, structuredData) {
   return html.replace(/<\/head>/i, "    " + tag + "\n</head>");
 }
 
+
+const PRERENDER_SCRIPT_PATTERN =
+  /<script\b(?=[^>]*\bid=["']khaavio-seo-prerender["'])[^>]*>([\s\S]*?)<\/script>/i;
+
+export function extractPrerenderedPages(html) {
+  const source = String(html || "");
+  const match = source.match(PRERENDER_SCRIPT_PATTERN);
+  if (!match) return { html: source, pages: {} };
+
+  let pages = {};
+  try {
+    const parsed = JSON.parse(match[1]);
+    if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+      pages = parsed;
+    }
+  } catch {
+    // A malformed optional snapshot must not take down the public site.
+  }
+
+  return {
+    html: source.replace(PRERENDER_SCRIPT_PATTERN, ""),
+    pages,
+  };
+}
+
+export function injectPrerenderedContent(html, content) {
+  if (typeof content !== "string" || !content.trim()) return html;
+  const rootPattern = /(<div\b[^>]*\bid=["']root["'][^>]*>)\s*(<\/div>)/i;
+  if (!rootPattern.test(html)) return html;
+  return html.replace(rootPattern, (_match, openingTag, closingTag) =>
+    openingTag + content + closingTag,
+  );
+}
+
 export function injectPageMetadata(html, metadata) {
   let output = upsertTitle(html, metadata.title);
   const tags = [

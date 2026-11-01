@@ -144,6 +144,89 @@ jobs:
         run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261030203552_restaurant_invoice_upi_payments.sql
       - name: Apply empty session cleanup migration to disposable PostgreSQL
         run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261030204300_empty_session_cleanup.sql
+      - name: Apply and verify Public Menu Theme Studio migration
+        run: |
+          psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261101110000_public_menu_theme_studio.sql
+          psql -v ON_ERROR_STOP=1 <<'SQL'
+          INSERT INTO public.restaurant_public_menu_themes (restaurant_id, theme_id)
+          VALUES ('00000000-0000-4000-8000-000000000001', 'warm-mocha');
+
+          INSERT INTO public.restaurants (id, owner_id, name, slug, is_published)
+          VALUES (
+            '00000000-0000-4000-8000-000000000091',
+            '00000000-0000-4000-8000-000000000099',
+            'Unpublished Restaurant',
+            'unpublished-theme-test',
+            false
+          );
+
+          DO $verify_theme$
+          DECLARE
+            v_theme_id text;
+            v_rls_enabled boolean;
+          BEGIN
+            SELECT c.relrowsecurity INTO v_rls_enabled
+            FROM pg_catalog.pg_class AS c
+            JOIN pg_catalog.pg_namespace AS n ON n.oid = c.relnamespace
+            WHERE n.nspname = 'public'
+              AND c.relname = 'restaurant_public_menu_themes';
+
+            IF v_rls_enabled IS DISTINCT FROM true THEN
+              RAISE EXCEPTION 'Public Menu theme settings must have RLS enabled';
+            END IF;
+
+            IF pg_catalog.has_table_privilege('anon', 'public.restaurant_public_menu_themes', 'SELECT') THEN
+              RAISE EXCEPTION 'Anonymous users must not directly read restaurant theme settings';
+            END IF;
+            IF NOT pg_catalog.has_table_privilege('authenticated', 'public.restaurant_public_menu_themes', 'SELECT') THEN
+              RAISE EXCEPTION 'Authenticated owner SELECT grant is missing';
+            END IF;
+            IF NOT pg_catalog.has_column_privilege('authenticated', 'public.restaurant_public_menu_themes', 'theme_id', 'UPDATE') THEN
+              RAISE EXCEPTION 'Authenticated theme update grant is missing';
+            END IF;
+            IF NOT pg_catalog.has_function_privilege('anon', 'public.khaavio_public_restaurant_menu_theme(text)', 'EXECUTE') THEN
+              RAISE EXCEPTION 'Public menu theme lookup RPC grant is missing';
+            END IF;
+
+            IF NOT EXISTS (
+              SELECT 1 FROM pg_catalog.pg_policies
+              WHERE schemaname = 'public'
+                AND tablename = 'restaurant_public_menu_themes'
+                AND policyname = 'restaurant_public_menu_themes_owner_select'
+            ) THEN
+              RAISE EXCEPTION 'Restaurant owner SELECT policy is missing';
+            END IF;
+            IF NOT EXISTS (
+              SELECT 1 FROM pg_catalog.pg_policies
+              WHERE schemaname = 'public'
+                AND tablename = 'restaurant_public_menu_themes'
+                AND policyname = 'restaurant_public_menu_themes_owner_insert'
+            ) THEN
+              RAISE EXCEPTION 'Restaurant owner INSERT policy is missing';
+            END IF;
+            IF NOT EXISTS (
+              SELECT 1 FROM pg_catalog.pg_policies
+              WHERE schemaname = 'public'
+                AND tablename = 'restaurant_public_menu_themes'
+                AND policyname = 'restaurant_public_menu_themes_owner_update'
+            ) THEN
+              RAISE EXCEPTION 'Restaurant owner UPDATE policy is missing';
+            END IF;
+
+            SELECT public.khaavio_public_restaurant_menu_theme('green-table') INTO v_theme_id;
+            IF v_theme_id IS DISTINCT FROM 'warm-mocha' THEN
+              RAISE EXCEPTION 'Published restaurant must expose its saved theme ID';
+            END IF;
+
+            SELECT public.khaavio_public_restaurant_menu_theme('unpublished-theme-test') INTO v_theme_id;
+            IF v_theme_id IS NOT NULL THEN
+              RAISE EXCEPTION 'Unpublished restaurants must not expose their theme ID';
+            END IF;
+
+            RAISE NOTICE 'PASS: theme migration, RLS, grants and published-only theme lookup verified';
+          END;
+          $verify_theme$;
+          SQL
       - name: Verify grants, public snapshot and staff-verified UPI settlement
         run: |
           psql -v ON_ERROR_STOP=1 <<'SQL'

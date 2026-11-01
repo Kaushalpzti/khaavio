@@ -73,7 +73,7 @@
 .public-menu-brand img,
 .public-menu-footer img { display: block; flex: 0 0 auto; width: 42px; height: 42px; border-radius: 15px; object-fit: contain; }
 .public-menu-brand-copy { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
-.public-menu-brand-copy strong { max-width: min(48vw, 340px); overflow: hidden; color: var(--pm-ink); font-size: 19px; font-weight: 850; letter-spacing: -0.65px; text-overflow: ellipsis; white-space: nowrap; }
+.public-menu-brand-copy h1, .public-menu-brand-copy strong { display: block; margin: 0; max-width: min(48vw, 340px); overflow: hidden; color: var(--pm-ink); font-size: 19px; font-weight: 850; letter-spacing: -0.65px; text-overflow: ellipsis; white-space: nowrap; }
 .public-menu-brand-copy small { color: var(--pm-muted); font-size: 10px; font-weight: 650; letter-spacing: 0.25px; text-transform: capitalize; }
 .public-menu-header-actions { display: flex; align-items: center; justify-content: flex-end; gap: 10px; }
 .public-menu-label,
@@ -459,7 +459,7 @@
   .public-menu-header { top: 7px; width: calc(100% - 20px); min-height: 65px; margin-top: 7px; padding: 9px 11px; border-radius: 20px; }
   .public-menu-brand { gap: 9px; }
   .public-menu-brand-mark { flex-basis: 39px; width: 39px; height: 39px; border-radius: 14px; }
-  .public-menu-brand-copy strong { max-width: calc(100vw - 180px); font-size: 16px; }
+  .public-menu-brand-copy h1, .public-menu-brand-copy strong { max-width: calc(100vw - 180px); font-size: 16px; }
   .public-menu-brand-copy small { font-size: 9px; }
   .public-menu-header-cart { gap: 6px; min-height: 40px; padding: 6px 7px 6px 10px; border-radius: 13px; font-size: 10px; }
   .public-menu-header-cart svg { width: 15px; height: 15px; }
@@ -644,7 +644,7 @@
 .public-menu-tab-view { width: min(900px, calc(100% - 32px)); min-height: 55vh; margin: 22px auto 28px; }
 .public-menu-tab-hero { padding: clamp(23px, 4vw, 38px); overflow: hidden; border-radius: 25px; color: #fffaf0; background: linear-gradient(120deg, #003e2c, #07543e 66%, #215e3e); box-shadow: 0 15px 34px rgba(6, 68, 47, .14); }
 .public-menu-tab-eyebrow { display: inline-flex; align-items: center; gap: 8px; color: #c8e9ba; font-size: 10px; font-weight: 850; letter-spacing: 1.25px; }
-.public-menu-tab-hero h1 { max-width: 660px; margin: 13px 0 8px; color: #fffaf0; font-family: Georgia, "Times New Roman", serif; font-size: clamp(30px, 4.7vw, 45px); letter-spacing: -1.2px; line-height: 1.05; }
+.public-menu-tab-hero h2 { max-width: 660px; margin: 13px 0 8px; color: #fffaf0; font-family: Georgia, "Times New Roman", serif; font-size: clamp(30px, 4.7vw, 45px); letter-spacing: -1.2px; line-height: 1.05; }
 .public-menu-tab-hero p { max-width: 600px; margin: 0; color: rgba(255,250,240,.79); font-size: 13px; line-height: 1.7; }
 .public-menu-tab-hero-reviews { background: linear-gradient(120deg, #00392b, #07533d 70%, #36583b); }
 .public-menu-tab-content { margin-top: 19px; padding: clamp(14px, 3vw, 24px); border: 1px solid #e9e3d9; border-radius: 23px; background: rgba(255,254,250,.94); box-shadow: 0 8px 24px rgba(45,53,37,.045); }
@@ -701,7 +701,7 @@
   .public-menu-header { position: sticky; top: 6px; width: calc(100% - 18px); min-height: 62px; margin-top: 6px; padding: 8px 9px; gap: 8px; border-radius: 18px; }
   .public-menu-brand { gap: 7px; }
   .public-menu-brand-mark { flex-basis: 38px; width: 38px; height: 38px; border-radius: 12px; }
-  .public-menu-brand-copy strong { max-width: calc(100vw - 205px); font-size: 14px; letter-spacing: -.35px; }
+  .public-menu-brand-copy h1, .public-menu-brand-copy strong { max-width: calc(100vw - 205px); font-size: 14px; letter-spacing: -.35px; }
   .public-menu-brand-copy small { max-width: calc(100vw - 205px); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 8px; }
   .public-menu-header-actions { gap: 5px; }
   .public-menu-table-badge { min-height: 37px; max-width: 90px; gap: 4px; padding: 7px 6px; border-radius: 12px; font-size: 10px; }
@@ -765,7 +765,7 @@
   }
   .public-menu-tab-view { width: calc(100% - 18px); min-height: 52vh; margin: 12px auto 24px; }
   .public-menu-tab-hero { padding: 22px 17px; border-radius: 21px; }
-  .public-menu-tab-hero h1 { font-size: clamp(28px, 8vw, 36px); }
+  .public-menu-tab-hero h2 { font-size: clamp(28px, 8vw, 36px); }
   .public-menu-tab-hero p { font-size: 11px; }
   .public-menu-tab-content { margin-top: 12px; padding: 12px; border-radius: 19px; }
   .public-menu-tab-view .booking-page-embedded .booking-hero { padding: 22px 17px; border-radius: 21px; }
@@ -854,7 +854,7 @@
   background: #f7a21a;
   box-shadow: 0 0 0 4px rgba(247, 162, 26, .13);
 }
-.public-menu-promo-copy h1 {
+.public-menu-promo-copy h2 {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
@@ -868,9 +868,9 @@
   line-height: .98;
   text-wrap: balance;
 }
-.public-menu-promo-copy h1 span,
-.public-menu-promo-copy h1 strong { display: block; }
-.public-menu-promo-copy h1 strong { color: #ff9d1c; font-weight: 750; }
+.public-menu-promo-copy h2 span,
+.public-menu-promo-copy h2 strong { display: block; }
+.public-menu-promo-copy h2 strong { color: #ff9d1c; font-weight: 750; }
 .public-menu-promo-copy p {
   max-width: 420px;
   margin: 0;
@@ -976,7 +976,7 @@
   .public-menu-promo-copy { width: 75%; }
   .public-menu-promo-eyebrow { gap: 5px; margin-bottom: 6px; font-size: 7px; letter-spacing: .9px; }
   .public-menu-promo-eyebrow > span { width: 6px; height: 6px; }
-  .public-menu-promo-copy h1 { margin-bottom: 6px; font-size: clamp(23px, 7.1vw, 29px); letter-spacing: -.65px; line-height: .99; }
+  .public-menu-promo-copy h2 { margin-bottom: 6px; font-size: clamp(23px, 7.1vw, 29px); letter-spacing: -.65px; line-height: .99; }
   .public-menu-promo-copy p { max-width: 205px; font-size: 9px; line-height: 1.35; }
   .public-menu-promo-dots { bottom: 9px; left: 14px; gap: 6px; }
   .public-menu-promo-dots button { width: 6px; height: 6px; }
