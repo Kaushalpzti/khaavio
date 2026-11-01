@@ -264,9 +264,9 @@ export default function PublicInvoicePayment({
           </header>
 
           <div className="public-invoice-receipt-meta">
-            <div><span>Invoice number</span><strong>{invoice.gst_document_number || invoice.invoice_number || "—"}</strong></div>
-            {invoice.gst_document_type && <div><span>Document type</span><strong>{invoice.gst_document_type === "tax_invoice" ? "Tax Invoice" : invoice.gst_document_type === "bill_of_supply" ? "Bill of Supply" : "Receipt"}</strong></div>}
-            <div><span>Bill issued</span><strong>{invoice.gst_document_issued_at || invoice.issued_at ? new Intl.DateTimeFormat("en-IN", { dateStyle: "medium", timeStyle: "short" }).format(new Date(invoice.gst_document_issued_at || invoice.issued_at)) : "—"}</strong></div>
+            <div><span>Invoice number</span><strong>{invoice.document_number || invoice.invoice_number || "—"}</strong></div>
+            {invoice.document_type && <div><span>Document type</span><strong>{invoice.document_type === "tax_invoice" ? "Tax Invoice" : invoice.document_type === "bill_of_supply" ? "Bill of Supply" : "Receipt"}</strong></div>}
+            <div><span>Bill issued</span><strong>{invoice.document_issued_at || invoice.issued_at ? new Intl.DateTimeFormat("en-IN", { dateStyle: "medium", timeStyle: "short" }).format(new Date(invoice.document_issued_at || invoice.issued_at)) : "—"}</strong></div>
             <div><span>Payment status</span><strong>PAID</strong></div>
             <div><span>Payment method</span><strong>{invoice.payment_method || "Confirmed by restaurant"}</strong></div>
             {invoice.paid_at && <div><span>Paid at</span><strong>{new Intl.DateTimeFormat("en-IN", { dateStyle: "medium", timeStyle: "short" }).format(new Date(invoice.paid_at))}</strong></div>}
