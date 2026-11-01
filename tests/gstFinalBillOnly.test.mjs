@@ -53,8 +53,8 @@ test("legacy GST collection is disabled until owner review; issued invoices are 
   const migration = read("../supabase/migrations/20261101150000_complete_gst_billing.sql");
   assert.match(migration, /SET gst_registration_type = 'needs_review',\s+gst_enabled = false/);
   assert.match(migration, /CREATE OR REPLACE FUNCTION public\.khaavio_snapshot_invoice_gst\(\)/);
-  const originalGstMigration = read("../supabase/migrations/20261029065457_gst_final_bill_only.sql");
-  assert.match(originalGstMigration, /CREATE TRIGGER khaavio_snapshot_invoice_gst BEFORE INSERT ON public\.table_session_invoices/);
+  const triggerMigration = read("../supabase/migrations/20261101152000_activate_final_invoice_gst_trigger.sql");
+  assert.match(triggerMigration, /CREATE TRIGGER khaavio_snapshot_invoice_gst\s+BEFORE INSERT ON public\.table_session_invoices/);
   assert.match(migration, /restaurant_gst_document_counters/);
   assert.doesNotMatch(migration, /UPDATE public\.table_session_invoices\s+SET total_amount/);
 });
