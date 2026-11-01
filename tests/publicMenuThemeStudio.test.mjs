@@ -12,6 +12,20 @@ import {
 
 const read = (path) => readFileSync(new URL(path, import.meta.url), "utf8");
 
+function getRelativeLuminance(hex) {
+  const channels = hex.match(/[0-9A-F]{2}/gi).map((part) => parseInt(part, 16) / 255);
+  const [red, green, blue] = channels.map((value) =>
+    value <= 0.04045 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4
+  );
+  return 0.2126 * red + 0.7152 * green + 0.0722 * blue;
+}
+
+function getContrastRatio(first, second) {
+  const [lighter, darker] = [getRelativeLuminance(first), getRelativeLuminance(second)]
+    .sort((a, b) => b - a);
+  return (lighter + 0.05) / (darker + 0.05);
+}
+
 test("the Public Menu Studio includes twelve curated palettes with complete colour tokens", () => {
   assert.equal(PUBLIC_MENU_THEMES.length, 12);
   assert.equal(new Set(PUBLIC_MENU_THEMES.map((theme) => theme.id)).size, 12);
@@ -22,6 +36,28 @@ test("the Public Menu Studio includes twelve curated palettes with complete colo
     for (const colour of Object.values(theme.colors)) {
       assert.match(colour, /^#[0-9A-F]{6}$/i, theme.id + " has an invalid colour");
     }
+  }
+});
+
+
+test("palette text, muted labels and primary action labels meet WCAG AA contrast", () => {
+  for (const theme of PUBLIC_MENU_THEMES) {
+    assert.ok(
+      getContrastRatio(theme.colors.text, theme.colors.surface) >= 4.5,
+      theme.id + " text must remain readable on its surface"
+    );
+    assert.ok(
+      getContrastRatio(theme.colors.muted, theme.colors.surface) >= 4.5,
+      theme.id + " muted copy must remain readable on its surface"
+    );
+    assert.ok(
+      getContrastRatio(theme.colors.onAccent, theme.colors.accent) >= 4.5,
+      theme.id + " accent button label must remain readable"
+    );
+    assert.ok(
+      getContrastRatio(theme.colors.onPrimary, theme.colors.primary) >= 4.5,
+      theme.id + " primary label must remain readable"
+    );
   }
 });
 
@@ -36,7 +72,7 @@ test("the original Khaavio appearance remains the default and unknown IDs fail s
 test("theme styles expose the Public Menu design tokens without changing QR modules", () => {
   const style = getPublicMenuThemeStyle("warm-mocha");
   assert.equal(style["--khaavio-menu-primary"], "#1A120E");
-  assert.equal(style["--khaavio-menu-accent"], "#6B4A2E");
+  assert.equal(style["--khaavio-menu-accent"], "#A88462");
   assert.equal(style["--khaavio-menu-background"], "#1A120E");
   for (const theme of PUBLIC_MENU_THEMES) {
     assert.ok(theme.colors.onAccent);
