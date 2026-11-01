@@ -19,7 +19,7 @@ import "./RestaurantSettings.css";
 import "./RestaurantSettingsLogo.css";
 
 const RESTAURANT_FIELDS =
-  "id, name, slug, restaurant_type, logo_url, phone, contact_email, address, city, state, postal_code, description, google_review_url, social_links, table_billing_mode, pickup_enabled, dine_in_enabled, gst_enabled, gstin, gst_rate, gst_price_inclusive, upi_payment_enabled, counter_payment_enabled, upi_id, is_published";
+  "id, name, slug, restaurant_type, logo_url, phone, contact_email, address, city, state, postal_code, description, google_review_url, social_links, table_billing_mode, pickup_enabled, dine_in_enabled, gst_enabled, gstin, gst_rate, gst_price_inclusive, upi_payment_enabled, counter_payment_enabled, upi_id, receipt_paper_width, is_published";
 
 const GOOGLE_REVIEW_HOSTS = new Set([
   "g.page",
@@ -133,6 +133,7 @@ const INITIAL_FORM = {
   upi_payment_enabled: false,
   counter_payment_enabled: true,
   upi_id: "",
+  receipt_paper_width: "80",
 };
 
 const BUSINESS_TYPES = [
@@ -166,6 +167,7 @@ function formFromRestaurant(restaurant) {
     upi_payment_enabled: restaurant.upi_payment_enabled === true,
     counter_payment_enabled: restaurant.counter_payment_enabled !== false,
     upi_id: restaurant.upi_id || "",
+    receipt_paper_width: restaurant.receipt_paper_width === "58" ? "58" : "80",
   };
 }
 
@@ -431,6 +433,7 @@ export default function RestaurantSettings() {
         upi_payment_enabled: form.upi_payment_enabled,
         counter_payment_enabled: form.counter_payment_enabled,
         upi_id: upiId || null,
+        receipt_paper_width: form.receipt_paper_width === "58" ? "58" : "80",
       };
 
       const { data, error: updateError } = await supabase
@@ -718,6 +721,32 @@ export default function RestaurantSettings() {
                       placeholder="cafe@example.com"
                       maxLength={254}
                     />
+                  </div>
+                </div>
+              </section>
+
+              <section className="restaurant-settings-section" aria-labelledby="settings-printing-heading">
+                <div className="restaurant-settings-section-heading">
+                  <div>
+                    <h2 id="settings-printing-heading">Printing &amp; receipts</h2>
+                    <p>Choose the thermal paper width used for kitchen tickets and customer receipts.</p>
+                  </div>
+                </div>
+                <div className="restaurant-settings-grid">
+                  <div className="restaurant-settings-field full-width">
+                    <label htmlFor="settings-receipt-paper-width">Thermal printer paper size</label>
+                    <select
+                      id="settings-receipt-paper-width"
+                      name="receipt_paper_width"
+                      value={form.receipt_paper_width}
+                      onChange={updateField}
+                    >
+                      <option value="80">80mm — standard wide thermal printer</option>
+                      <option value="58">58mm — compact thermal printer</option>
+                    </select>
+                    <span className="restaurant-settings-field-hint">
+                      Applies to KOT printing, order receipts and customer bill printing. You can temporarily choose another width where a print screen offers a size selector.
+                    </span>
                   </div>
                 </div>
               </section>
