@@ -99,7 +99,7 @@ test("the original Khaavio appearance remains the default and unknown IDs fail s
 
 test("theme styles expose the Public Menu design tokens without changing QR modules", () => {
   const style = getPublicMenuThemeStyle("warm-mocha");
-  assert.equal(style["--khaavio-menu-primary"], "#1A120E");
+  assert.equal(style["--khaavio-menu-primary"], "#3A2418");
   assert.equal(style["--khaavio-menu-accent"], "#A88462");
   assert.equal(style["--khaavio-menu-background"], "#F5EDE3");
   for (const theme of PUBLIC_MENU_THEMES) {
