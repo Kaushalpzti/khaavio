@@ -38,6 +38,10 @@ test("theme styles expose the Public Menu design tokens without changing QR modu
   assert.equal(style["--khaavio-menu-primary"], "#1A120E");
   assert.equal(style["--khaavio-menu-accent"], "#6B4A2E");
   assert.equal(style["--khaavio-menu-background"], "#1A120E");
+  for (const theme of PUBLIC_MENU_THEMES) {
+    assert.ok(theme.colors.onAccent);
+    assert.ok(theme.colors.onPrimary);
+  }
   assert.equal(getPublicMenuThemeStyle("original"), undefined);
 
   const page = read("../src/pages/PublicMenu.jsx");
