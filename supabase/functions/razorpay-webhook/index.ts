@@ -32,6 +32,17 @@ function dateForCharge(subscription: Record<string, unknown>, interval: "monthly
   if (!endIso || Date.parse(endIso) <= Date.parse(startIso)) endIso = addBillingInterval(startIso, interval);
   return { startIso, endIso };
 }
+
+function displayEmailDate(value: string): string {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return new Intl.DateTimeFormat("en-IN", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    timeZone: "Asia/Kolkata",
+  }).format(date);
+}
 async function setEventState(eventId: string, state: "processed" | "failed" | "ignored", errorMessage?: string) {
   await dbRequest(`razorpay_webhook_events?event_id=eq.${encodeURIComponent(eventId)}`, {
     method: "PATCH",
@@ -174,6 +185,47 @@ Deno.serve(async (req: Request) => {
       });
       await dbRequest(`razorpay_subscription_attempts?id=eq.${encodeURIComponent(attempt.id)}`, {
         method: "PATCH", body: { status: "charged", razorpay_payment_id: paymentId, updated_at: new Date().toISOString() },
+      });
+
+      // Queue the platform email only after the captured INR payment has been
+      // recorded and the subscription access row has been updated. The first
+      // captured payment for this billing attempt gets the activation template;
+      // later captured payments get the renewal-success template. Looking up
+      // the earliest payment keeps the choice stable if Razorpay retries after
+      // a partial webhook failure.
+      const earliestPayments = await dbRequest<Array<{ razorpay_payment_id: string }>>(
+        `razorpay_subscription_payments?attempt_id=eq.${encodeURIComponent(attempt.id)}&select=razorpay_payment_id&order=paid_at.asc,created_at.asc&limit=1`,
+      );
+      const isInitialCharge = earliestPayments?.[0]?.razorpay_payment_id === paymentId;
+      const catalogPlans = await dbRequest<Array<{ name: string; billing_interval: string | null }>>(
+        `subscription_plans?plan_key=eq.${encodeURIComponent(attempt.plan_key)}&select=name,billing_interval&limit=1`,
+      );
+      const planName = catalogPlans?.[0]?.name || attempt.plan_key;
+      const billingInterval = attempt.billing_interval === "yearly" ? "Yearly" : "Monthly";
+      const amountLabel = `₹${(amountPaise / 100).toLocaleString("en-IN", { maximumFractionDigits: 2 })}`;
+      const paymentDateIso = fromUnixSeconds(payment.created_at) || new Date().toISOString();
+      const emailVariables: Record<string, string> = {
+        PLAN_NAME: planName,
+        BILLING_INTERVAL: billingInterval,
+        AMOUNT: amountLabel,
+        PAYMENT_DATE: displayEmailDate(paymentDateIso),
+        PAYMENT_ID: paymentId,
+      };
+      if (isInitialCharge) {
+        emailVariables.PERIOD_START_DATE = displayEmailDate(dates.startIso);
+        emailVariables.PERIOD_END_DATE = displayEmailDate(dates.endIso);
+      } else {
+        emailVariables.NEXT_RENEWAL_DATE = displayEmailDate(dates.endIso);
+      }
+
+      await dbRequest("rpc/khaavio_enqueue_platform_email", {
+        method: "POST",
+        body: {
+          p_event_key: `subscription-charge:${paymentId}`,
+          p_template_key: isInitialCharge ? "subscription_activated" : "subscription_renewal_successful",
+          p_restaurant_id: attempt.restaurant_id,
+          p_variables: emailVariables,
+        },
       });
     } else if (eventType === "subscription.pending" || eventType === "subscription.halted") {
       const currentRows = await dbRequest<Array<{ razorpay_subscription_id: string | null }>>(
