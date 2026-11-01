@@ -164,7 +164,7 @@ export default function MenuAppearance() {
 
     window.addEventListener("message", handlePreviewMessage);
     return () => window.removeEventListener("message", handlePreviewMessage);
-  }, [selectedThemeId]);
+  }, [selectedThemeId, publicPreviewOrigin]);
 
   function handleIframeLoad() {
     setPreviewReady(true);
