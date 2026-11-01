@@ -478,3 +478,43 @@
 .restaurant-settings-checkbox span { display: grid; gap: 3px; }
 .restaurant-settings-checkbox strong { color: #324638; font-size: 13px; }
 .restaurant-settings-checkbox small { color: #738074; font-size: 11px; line-height: 1.45; }
+
+
+/* GST registration and automatic tax preview */
+.settings-gst-notice {
+  padding: 13px 15px;
+  border: 1px solid #eadfbe;
+  border-radius: 11px;
+  color: #765b26;
+  background: #fffaf0;
+  font-size: 12px;
+  line-height: 1.65;
+}
+.settings-gst-preview {
+  padding: 15px;
+  border: 1px solid #dce9df;
+  border-radius: 12px;
+  background: #f8fbf7;
+  color: #344d3b;
+}
+.settings-gst-preview > strong { font-size: 12px; }
+.settings-gst-preview-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 10px;
+}
+.settings-gst-preview-grid > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 145px;
+  padding: 10px 12px;
+  border: 1px solid #dce8dd;
+  border-radius: 9px;
+  background: #fff;
+  color: #607468;
+  font-size: 11px;
+}
+.settings-gst-preview-grid b { color: #245b40; font-size: 15px; }
+.settings-gst-preview p { margin: 9px 0 0; color: #8a672f; font-size: 11px; }
