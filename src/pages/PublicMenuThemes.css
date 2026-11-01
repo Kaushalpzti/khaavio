@@ -211,3 +211,105 @@
   border-color: var(--khaavio-menu-accent) !important;
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--khaavio-menu-accent) 18%, transparent) !important;
 }
+
+
+/* Controls and supporting content that use fixed colours in the legacy menu CSS. */
+.public-menu-page[data-public-menu-theme] .public-menu-categories button:not(.active),
+.public-menu-page[data-public-menu-theme] .public-menu-filter-trigger,
+.public-menu-page[data-public-menu-theme] .public-menu-header-bill,
+.public-menu-page[data-public-menu-theme] .public-menu-empty,
+.public-menu-page[data-public-menu-theme] .public-menu-state,
+.public-menu-page[data-public-menu-theme] .public-menu-offer-details code,
+.public-menu-page[data-public-menu-theme] .public-order-service-modes,
+.public-menu-page[data-public-menu-theme] .public-order-service-modes > label:not(.public-order-pickup-time) {
+  border-color: var(--khaavio-menu-border) !important;
+  color: var(--khaavio-menu-text) !important;
+  background: var(--khaavio-menu-surface) !important;
+}
+.public-menu-page[data-public-menu-theme] .public-menu-categories button.active,
+.public-menu-page[data-public-menu-theme] .public-menu-diet-toggle button.is-active,
+.public-menu-page[data-public-menu-theme] .public-menu-add-controls button,
+.public-menu-page[data-public-menu-theme] .public-menu-filter-count,
+.public-menu-page[data-public-menu-theme] .public-menu-filter-trigger.is-open {
+  border-color: var(--khaavio-menu-accent) !important;
+  color: var(--khaavio-menu-on-accent) !important;
+  background: var(--khaavio-menu-accent) !important;
+}
+.public-menu-page[data-public-menu-theme] .public-menu-search {
+  color: var(--khaavio-menu-muted) !important;
+  background: var(--khaavio-menu-surface) !important;
+  box-shadow: 0 8px 24px color-mix(in srgb, var(--khaavio-menu-primary) 6%, transparent) !important;
+}
+.public-menu-page[data-public-menu-theme] .public-menu-search svg,
+.public-menu-page[data-public-menu-theme] .public-menu-clear-search {
+  color: var(--khaavio-menu-primary) !important;
+}
+.public-menu-page[data-public-menu-theme] .public-menu-search input::placeholder {
+  color: var(--khaavio-menu-muted) !important;
+  opacity: .82;
+}
+.public-menu-page[data-public-menu-theme] .public-menu-filter-trigger:hover,
+.public-menu-page[data-public-menu-theme] .public-menu-categories button:not(.active):hover {
+  border-color: var(--khaavio-menu-accent) !important;
+}
+.public-menu-page[data-public-menu-theme] .public-menu-empty-icon,
+.public-menu-page[data-public-menu-theme] .public-menu-state-icon {
+  border-color: var(--khaavio-menu-border) !important;
+  color: var(--khaavio-menu-primary) !important;
+  background: var(--khaavio-menu-secondary) !important;
+}
+.public-menu-page[data-public-menu-theme] .public-menu-empty h3,
+.public-menu-page[data-public-menu-theme] .public-menu-state h1,
+.public-menu-page[data-public-menu-theme] .public-menu-empty p,
+.public-menu-page[data-public-menu-theme] .public-menu-state p {
+  color: var(--khaavio-menu-text) !important;
+}
+.public-menu-page[data-public-menu-theme] .public-menu-offer-copy > strong,
+.public-menu-page[data-public-menu-theme] .public-menu-offer-discount,
+.public-menu-page[data-public-menu-theme] .public-menu-offer-details {
+  color: var(--khaavio-menu-text) !important;
+}
+.public-menu-page[data-public-menu-theme] .public-menu-offer-details code {
+  border-color: var(--khaavio-menu-border) !important;
+  color: var(--khaavio-menu-text) !important;
+}
+.public-menu-page[data-public-menu-theme] .public-menu-offer-card > button {
+  border-color: var(--khaavio-menu-accent) !important;
+  color: var(--khaavio-menu-on-accent) !important;
+  background: var(--khaavio-menu-accent) !important;
+}
+.public-menu-page[data-public-menu-theme] .public-menu-header-bill:hover {
+  border-color: var(--khaavio-menu-accent) !important;
+  background: var(--khaavio-menu-secondary) !important;
+}
+.public-menu-page[data-public-menu-theme] .public-menu-hero-kicker {
+  background: color-mix(in srgb, var(--khaavio-menu-on-primary) 12%, transparent) !important;
+}
+.public-menu-page[data-public-menu-theme] .public-menu-kicker-dot {
+  background: var(--khaavio-menu-accent) !important;
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--khaavio-menu-accent) 22%, transparent) !important;
+}
+.public-menu-page[data-public-menu-theme] .public-menu-food-tag,
+.public-menu-page[data-public-menu-theme] .public-menu-diet-icon,
+.public-menu-page[data-public-menu-theme] .public-menu-item-available {
+  /* Dietary, allergen and availability signals retain their familiar semantic colours. */
+}
+.public-menu-page[data-public-menu-theme] .booking-hero {
+  border-color: var(--khaavio-menu-border) !important;
+  color: var(--khaavio-menu-text) !important;
+  background: var(--khaavio-menu-surface) !important;
+}
+.public-menu-page[data-public-menu-theme] .booking-hero h1,
+.public-menu-page[data-public-menu-theme] .booking-section-title h2,
+.public-menu-page[data-public-menu-theme] .booking-success h2,
+.public-menu-page[data-public-menu-theme] .booking-summary strong,
+.public-menu-page[data-public-menu-theme] .booking-reference strong {
+  color: var(--khaavio-menu-text) !important;
+}
+.public-menu-page[data-public-menu-theme] .booking-hero p,
+.public-menu-page[data-public-menu-theme] .booking-section-title p,
+.public-menu-page[data-public-menu-theme] .booking-field > span,
+.public-menu-page[data-public-menu-theme] .booking-disclaimer,
+.public-menu-page[data-public-menu-theme] .booking-success > p {
+  color: var(--khaavio-menu-muted) !important;
+}
