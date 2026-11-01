@@ -1656,3 +1656,42 @@
     padding-inline: 8px;
   }
 }
+
+
+/* Public checkout GST estimate and issued tax-document details. */
+.public-order-gst-preview,
+.public-order-confirmed-tax {
+  display: grid;
+  gap: 7px;
+  margin-top: 12px;
+  padding: 13px;
+  border: 1px solid var(--khaavio-menu-border, #e6eae2);
+  border-radius: 12px;
+  color: var(--khaavio-menu-text, #26372d);
+  background: var(--khaavio-menu-surface, #fff);
+  font-size: 12px;
+}
+.public-order-gst-preview > div,
+.public-order-confirmed-tax > div {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+}
+.public-order-gst-preview span,
+.public-order-confirmed-tax span { color: var(--khaavio-menu-muted, #718076); }
+.public-order-gst-preview strong,
+.public-order-confirmed-tax strong { color: var(--khaavio-menu-text, #26372d); text-align: right; }
+.public-order-gst-preview > div:last-child {
+  padding-top: 8px;
+  border-top: 1px solid var(--khaavio-menu-border, #e6eae2);
+  font-weight: 800;
+}
+.public-order-tax-document {
+  align-items: center !important;
+  padding-bottom: 8px;
+  margin-bottom: 2px;
+  border-bottom: 1px solid var(--khaavio-menu-border, #e6eae2);
+}
+.public-order-tax-document > strong { color: var(--khaavio-menu-primary, #245b40); }
+.public-order-estimate-note { line-height: 1.6; }

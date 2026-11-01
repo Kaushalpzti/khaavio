@@ -413,3 +413,15 @@
     max-width: none;
   }
 }
+
+
+.public-invoice-receipt-document {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 9px 0;
+  border-bottom: 1px dashed #dce3dc;
+  color: #617267;
+  font-size: 10px;
+}
+.public-invoice-receipt-document strong { color: #243c2d; text-align: right; }

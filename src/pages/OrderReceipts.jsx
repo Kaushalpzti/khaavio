@@ -88,7 +88,7 @@ export default function OrderReceipts() {
         const [ordersResult, tablesResult] = await Promise.all([
           supabase
             .from("orders")
-            .select("id, restaurant_id, table_id, customer_name, customer_phone, notes, status, total_amount, discount_amount, coupon_code, created_at")
+            .select("id, restaurant_id, table_id, customer_name, customer_phone, notes, status, total_amount, discount_amount, coupon_code, created_at, grand_total, gst_taxable_amount, gst_amount, gst_enabled_snapshot, gstin_snapshot, gst_rate_snapshot, gst_inclusive_snapshot, gst_cgst_rate_snapshot, gst_cgst_amount_snapshot, gst_sgst_rate_snapshot, gst_sgst_amount_snapshot, gst_igst_rate_snapshot, gst_igst_amount_snapshot, gst_registration_type_snapshot, gst_tax_type_snapshot, gst_document_type_snapshot, gst_document_number, gst_document_issued_at, gst_supplier_name_snapshot, gst_supplier_address_snapshot, gst_supplier_city_snapshot, gst_supplier_state_snapshot, gst_supplier_postal_code_snapshot, gst_supplier_phone_snapshot, gst_sac_code_snapshot, gst_place_of_supply_state_snapshot")
             .eq("restaurant_id", restaurantData.id)
             .order("created_at", { ascending: false })
             .limit(100),
@@ -249,7 +249,7 @@ export default function OrderReceipts() {
                       <span className="order-receipt-row-date"><CalendarDays size={13} /> {formatDate(order.created_at)}</span>
                     </div>
                     <div className="order-receipt-row-end">
-                      <strong>{formatPrice(order.total_amount)}</strong>
+                      <strong>{formatPrice(order.grand_total ?? order.total_amount)}</strong>
                       <button type="button" onClick={() => setSelectedOrderId(order.id)}>
                         View receipt <ChevronRight size={15} />
                       </button>
@@ -303,7 +303,7 @@ export default function OrderReceipts() {
 
               <div className="receipt-divider receipt-dashed" />
               <div className="receipt-title-line">
-                <strong>ORDER RECEIPT</strong>
+                <strong>{selectedOrder.gst_document_type_snapshot === "tax_invoice" ? "TAX INVOICE" : selectedOrder.gst_document_type_snapshot === "bill_of_supply" ? "BILL OF SUPPLY" : "ORDER RECEIPT"}</strong>
                 <span>#{getReference(selectedOrder.id)}</span>
               </div>
               <div className="receipt-meta-line"><span>Date</span><span>{formatDate(selectedOrder.created_at)}</span></div>
@@ -325,7 +325,24 @@ export default function OrderReceipts() {
               ))}
               <div className="receipt-divider receipt-dashed" />
               {Number(selectedOrder.discount_amount) > 0 && <div className="receipt-total-line"><span>Coupon {selectedOrder.coupon_code || "discount"}</span><strong>−{formatPrice(selectedOrder.discount_amount)}</strong></div>}
-              <div className="receipt-total-line"><span>TOTAL</span><strong>{formatPrice(selectedOrder.total_amount)}</strong></div>
+              {selectedOrder.gst_document_type_snapshot && selectedOrder.gst_document_type_snapshot !== "receipt" && (
+                <div className="receipt-gst-summary">
+                  <strong>{selectedOrder.gst_document_type_snapshot === "tax_invoice" ? "TAX INVOICE" : "BILL OF SUPPLY"}</strong>
+                  {selectedOrder.gst_document_number && <span>{selectedOrder.gst_document_number}</span>}
+                  {selectedOrder.gst_supplier_name_snapshot && <span>{selectedOrder.gst_supplier_name_snapshot}</span>}
+                  {selectedOrder.gst_supplier_address_snapshot && <span>{selectedOrder.gst_supplier_address_snapshot}{selectedOrder.gst_supplier_city_snapshot ? ", " + selectedOrder.gst_supplier_city_snapshot : ""}{selectedOrder.gst_supplier_state_snapshot ? ", " + selectedOrder.gst_supplier_state_snapshot : ""}{selectedOrder.gst_supplier_postal_code_snapshot ? " - " + selectedOrder.gst_supplier_postal_code_snapshot : ""}</span>}
+                  {selectedOrder.gst_supplier_phone_snapshot && <span>Phone: {selectedOrder.gst_supplier_phone_snapshot}</span>}
+                  {selectedOrder.gstin_snapshot && <span>GSTIN: {selectedOrder.gstin_snapshot}</span>}
+                  {Number(selectedOrder.gst_taxable_amount) > 0 && <div className="receipt-total-line"><span>Taxable value</span><strong>{formatPrice(selectedOrder.gst_taxable_amount)}</strong></div>}
+                  {Number(selectedOrder.gst_cgst_amount_snapshot) > 0 && <div className="receipt-total-line"><span>CGST ({selectedOrder.gst_cgst_rate_snapshot}%)</span><strong>{formatPrice(selectedOrder.gst_cgst_amount_snapshot)}</strong></div>}
+                  {Number(selectedOrder.gst_sgst_amount_snapshot) > 0 && <div className="receipt-total-line"><span>SGST ({selectedOrder.gst_sgst_rate_snapshot}%)</span><strong>{formatPrice(selectedOrder.gst_sgst_amount_snapshot)}</strong></div>}
+                  {Number(selectedOrder.gst_igst_amount_snapshot) > 0 && <div className="receipt-total-line"><span>IGST ({selectedOrder.gst_igst_rate_snapshot}%)</span><strong>{formatPrice(selectedOrder.gst_igst_amount_snapshot)}</strong></div>}
+                  {Number(selectedOrder.gst_amount) > 0 && <div className="receipt-total-line"><span>GST total {selectedOrder.gst_inclusive_snapshot ? "(included)" : ""}</span><strong>{formatPrice(selectedOrder.gst_amount)}</strong></div>}
+                  {selectedOrder.gst_place_of_supply_state_snapshot && <span>Place of supply: {selectedOrder.gst_place_of_supply_state_snapshot}</span>}
+                  {selectedOrder.gst_sac_code_snapshot && <span>SAC: {selectedOrder.gst_sac_code_snapshot}</span>}
+                </div>
+              )}
+              <div className="receipt-total-line"><span>{selectedOrder.gst_document_type_snapshot === "bill_of_supply" ? "TOTAL" : "AMOUNT PAYABLE"}</span><strong>{formatPrice(selectedOrder.grand_total ?? selectedOrder.total_amount)}</strong></div>
               {selectedOrder.notes && (
                 <div className="receipt-notes"><strong>Order notes</strong><p>{selectedOrder.notes}</p></div>
               )}

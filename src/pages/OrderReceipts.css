@@ -301,3 +301,20 @@
     justify-content: space-between;
   }
 }
+
+
+.receipt-gst-summary {
+  display: grid;
+  gap: 6px;
+  padding: 9px 0;
+  border-top: 1px dashed #b8c1b8;
+  border-bottom: 1px dashed #b8c1b8;
+  font-size: 10px;
+  line-height: 1.5;
+}
+.receipt-gst-summary > strong {
+  text-align: center;
+  letter-spacing: .8px;
+}
+.receipt-gst-summary > span { color: #53645a; overflow-wrap: anywhere; }
+.receipt-gst-summary .receipt-total-line { margin: 0; }

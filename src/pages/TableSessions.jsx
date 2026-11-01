@@ -107,7 +107,7 @@ export default function TableSessions() {
           .limit(100),
         supabase
           .from("table_session_invoices")
-          .select("id, restaurant_id, table_id, session_id, guest_tab_id, invoice_number, total_amount, subtotal_amount, discount_amount, tax_amount, gstin_snapshot, gst_inclusive, order_count, payment_status, payment_choice, issued_at, issued_by, paid_at, payment_method, voided_at, voided_by, void_reason")
+          .select("id, restaurant_id, table_id, session_id, guest_tab_id, invoice_number, total_amount, subtotal_amount, discount_amount, taxable_amount, tax_amount, gstin_snapshot, gst_inclusive, gst_rate_snapshot, cgst_rate, cgst_amount, sgst_rate, sgst_amount, igst_rate, igst_amount, gst_registration_type_snapshot, gst_tax_type_snapshot, gst_document_type_snapshot, supplier_state_code_snapshot, place_of_supply_state_snapshot, place_of_supply_state_code_snapshot, supplier_legal_name_snapshot, supplier_address_snapshot, supplier_city_snapshot, supplier_state_snapshot, supplier_postal_code_snapshot, supplier_phone_snapshot, sac_code_snapshot, gst_document_number, gst_document_issued_at, order_count, payment_status, payment_choice, issued_at, issued_by, paid_at, payment_method, voided_at, voided_by, void_reason")
           .eq("restaurant_id", restaurantData.id)
           .order("issued_at", { ascending: false })
           .limit(100),
@@ -856,7 +856,20 @@ export default function TableSessions() {
                           <section className={`ts-session-details ts-invoice-print-surface ${printingInvoiceId === invoice.id ? "print-target" : ""}`}>
                               <div className="ts-print-heading">
                               <img src={khaavioIcon} alt="" />
-                                <div><span>{invoice.guest_tab_id ? "GUEST INVOICE" : "FINAL TABLE INVOICE"}</span><h2>{restaurant?.name || "Restaurant"}</h2><p>{invoice.invoice_number}</p>{invoice.gstin_snapshot && <p>GSTIN: {invoice.gstin_snapshot}</p>}{invoice.guest_tab_id && <p>{guestTabNames.get(invoice.guest_tab_id) || "Guest"}</p>}</div>
+                                <div>
+                                  <span>{invoice.gst_document_type_snapshot === "tax_invoice" ? "GST TAX INVOICE" : invoice.gst_document_type_snapshot === "bill_of_supply" ? "BILL OF SUPPLY" : invoice.guest_tab_id ? "GUEST INVOICE" : "FINAL TABLE INVOICE"}</span>
+                                  <h2>{invoice.supplier_legal_name_snapshot || restaurant?.name || "Restaurant"}</h2>
+                                  <p>{invoice.gst_document_number || invoice.invoice_number}</p>
+                                  {invoice.supplier_address_snapshot && <p>{invoice.supplier_address_snapshot}</p>}
+                                  {(invoice.supplier_city_snapshot || invoice.supplier_state_snapshot || invoice.supplier_postal_code_snapshot) && (
+                                    <p>{[invoice.supplier_city_snapshot, invoice.supplier_state_snapshot, invoice.supplier_postal_code_snapshot].filter(Boolean).join(", ")}</p>
+                                  )}
+                                  {invoice.supplier_phone_snapshot && <p>Phone: {invoice.supplier_phone_snapshot}</p>}
+                                  {invoice.gstin_snapshot && <p>GSTIN: {invoice.gstin_snapshot}</p>}
+                                  {invoice.place_of_supply_state_snapshot && <p>Place of supply: {invoice.place_of_supply_state_snapshot}</p>}
+                                  {invoice.sac_code_snapshot && <p>SAC: {invoice.sac_code_snapshot}</p>}
+                                  {invoice.guest_tab_id && <p>{guestTabNames.get(invoice.guest_tab_id) || "Guest"}</p>}
+                                </div>
                             </div>
                             <div className="ts-print-meta"><span>Table <strong>{normalizeTableNumber(tableNumber)}</strong></span><span>Issued <strong>{formatDate(invoice.issued_at)}</strong></span><span>Payment <strong>{titleCase(invoice.payment_status)}</strong></span></div>
                             {invoice.payment_status === "void" && (
@@ -865,11 +878,22 @@ export default function TableSessions() {
                               </p>
                             )}
                             {renderInvoiceSnapshot(invoice, session)}
-                            {Number(invoice.tax_amount) > 0 && (
+                            {(Number(invoice.tax_amount) > 0 || invoice.gst_document_type_snapshot === "bill_of_supply") && (
                               <div className="ts-print-tax-summary">
                                 {Number(invoice.subtotal_amount) > 0 && <div><span>Items subtotal</span><strong>{formatPrice(invoice.subtotal_amount)}</strong></div>}
                                 {Number(invoice.discount_amount) > 0 && <div><span>Discounts</span><strong>−{formatPrice(invoice.discount_amount)}</strong></div>}
-                                <div><span>GST {invoice.gst_inclusive ? "included in prices" : "added"}</span><strong>{formatPrice(invoice.tax_amount)}</strong></div>
+                                {Number(invoice.taxable_amount) > 0 && <div><span>Taxable value</span><strong>{formatPrice(invoice.taxable_amount)}</strong></div>}
+                                {Number(invoice.cgst_amount) > 0 && <div><span>CGST ({invoice.cgst_rate}%)</span><strong>{formatPrice(invoice.cgst_amount)}</strong></div>}
+                                {Number(invoice.sgst_amount) > 0 && <div><span>SGST ({invoice.sgst_rate}%)</span><strong>{formatPrice(invoice.sgst_amount)}</strong></div>}
+                                {Number(invoice.igst_amount) > 0 && <div><span>IGST ({invoice.igst_rate}%)</span><strong>{formatPrice(invoice.igst_amount)}</strong></div>}
+                                {Number(invoice.tax_amount) > 0 && <div><span>GST total {invoice.gst_inclusive ? "(included in prices)" : ""}</span><strong>{formatPrice(invoice.tax_amount)}</strong></div>}
+                                <div className="ts-tax-meta">
+                                  {invoice.gst_document_type_snapshot === "bill_of_supply"
+                                    ? "Composition scheme · GST is not collected from the customer."
+                                    : invoice.gst_document_type_snapshot === "tax_invoice"
+                                      ? "Tax invoice · Place of supply: " + (invoice.place_of_supply_state_snapshot || "—") + " · SAC: " + (invoice.sac_code_snapshot || "996331")
+                                      : ""}
+                                </div>
                               </div>
                             )}
                             <div className="ts-print-grand-total"><span>FINAL TOTAL</span><strong>{formatPrice(invoice.total_amount)}</strong></div>

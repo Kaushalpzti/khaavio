@@ -264,12 +264,18 @@ export default function PublicInvoicePayment({
           </header>
 
           <div className="public-invoice-receipt-meta">
-            <div><span>Invoice number</span><strong>{invoice.invoice_number || "—"}</strong></div>
-            <div><span>Bill issued</span><strong>{invoice.issued_at ? new Intl.DateTimeFormat("en-IN", { dateStyle: "medium", timeStyle: "short" }).format(new Date(invoice.issued_at)) : "—"}</strong></div>
+            <div><span>Invoice number</span><strong>{invoice.document_number || invoice.invoice_number || "—"}</strong></div>
+            {invoice.document_type && <div><span>Document type</span><strong>{invoice.document_type === "tax_invoice" ? "Tax Invoice" : invoice.document_type === "bill_of_supply" ? "Bill of Supply" : "Receipt"}</strong></div>}
+            <div><span>Bill issued</span><strong>{invoice.document_issued_at || invoice.issued_at ? new Intl.DateTimeFormat("en-IN", { dateStyle: "medium", timeStyle: "short" }).format(new Date(invoice.document_issued_at || invoice.issued_at)) : "—"}</strong></div>
             <div><span>Payment status</span><strong>PAID</strong></div>
             <div><span>Payment method</span><strong>{invoice.payment_method || "Confirmed by restaurant"}</strong></div>
             {invoice.paid_at && <div><span>Paid at</span><strong>{new Intl.DateTimeFormat("en-IN", { dateStyle: "medium", timeStyle: "short" }).format(new Date(invoice.paid_at))}</strong></div>}
-            {invoice.gstin_snapshot && <div><span>GSTIN</span><strong>{invoice.gstin_snapshot}</strong></div>}
+            {invoice.supplier_legal_name && <div><span>Supplier legal name</span><strong>{invoice.supplier_legal_name}</strong></div>}
+            {invoice.supplier_address && <div><span>Registered address</span><strong>{invoice.supplier_address}{invoice.supplier_city ? ", " + invoice.supplier_city : ""}{invoice.supplier_state ? ", " + invoice.supplier_state : ""}{invoice.supplier_postal_code ? " - " + invoice.supplier_postal_code : ""}</strong></div>}
+            {invoice.supplier_phone && <div><span>Supplier phone</span><strong>{invoice.supplier_phone}</strong></div>}
+            {invoice.gstin_snapshot && <div><span>Supplier GSTIN</span><strong>{invoice.gstin_snapshot}</strong></div>}
+            {invoice.place_of_supply_state && <div><span>Place of supply</span><strong>{invoice.place_of_supply_state}</strong></div>}
+            {invoice.sac_code && <div><span>SAC</span><strong>{invoice.sac_code}</strong></div>}
           </div>
 
           <div className="public-invoice-receipt-items">
@@ -288,9 +294,13 @@ export default function PublicInvoicePayment({
           </div>
 
           <div className="public-invoice-receipt-totals">
-            {Number(invoice.subtotal_amount) > 0 && <div><span>Subtotal</span><strong>{formatPrice(invoice.subtotal_amount)}</strong></div>}
+            {Number(invoice.subtotal_amount) > 0 && <div><span>Items subtotal</span><strong>{formatPrice(invoice.subtotal_amount)}</strong></div>}
             {Number(invoice.discount_amount) > 0 && <div><span>Discount</span><strong>−{formatPrice(invoice.discount_amount)}</strong></div>}
-            {Number(invoice.tax_amount) > 0 && <div><span>GST {invoice.gst_inclusive ? "included" : "added"}</span><strong>{formatPrice(invoice.tax_amount)}</strong></div>}
+            {Number(invoice.taxable_amount) > 0 && <div><span>Taxable value</span><strong>{formatPrice(invoice.taxable_amount)}</strong></div>}
+            {Number(invoice.cgst_amount) > 0 && <div><span>CGST ({invoice.cgst_rate}%)</span><strong>{formatPrice(invoice.cgst_amount)}</strong></div>}
+            {Number(invoice.sgst_amount) > 0 && <div><span>SGST ({invoice.sgst_rate}%)</span><strong>{formatPrice(invoice.sgst_amount)}</strong></div>}
+            {Number(invoice.igst_amount) > 0 && <div><span>IGST ({invoice.igst_rate}%)</span><strong>{formatPrice(invoice.igst_amount)}</strong></div>}
+            {Number(invoice.tax_amount) > 0 && <div><span>GST total {invoice.gst_inclusive ? "(included)" : ""}</span><strong>{formatPrice(invoice.tax_amount)}</strong></div>}
             <div className="public-invoice-receipt-grand-total"><span>TOTAL PAID</span><strong>{formatPrice(invoice.total_amount)}</strong></div>
           </div>
 

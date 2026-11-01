@@ -40,6 +40,7 @@ import "./PublicMenu.css";
 import "./PublicMenuExperience.css";
 import "./PublicMenuThemes.css";
 import { APP_SITE_URL } from "../lib/domainRouting.js";
+import { calculateGstBreakdown } from "../lib/gstBilling.js";
 import {
   DEFAULT_PUBLIC_MENU_THEME_ID,
   getPublicMenuTheme,
@@ -500,10 +501,22 @@ export default function PublicMenu() {
         } catch {
           // Theme availability is an enhancement; the existing menu stays usable if the migration is pending.
         }
+        let resolvedGstSummary = null;
+        try {
+          const { data: gstSummary, error: gstSummaryError } = await supabase.rpc(
+            "khaavio_public_restaurant_gst_summary",
+            { p_slug: slug },
+          );
+          if (!gstSummaryError && gstSummary) resolvedGstSummary = gstSummary;
+        } catch {
+          resolvedGstSummary = null;
+        }
+
         const restaurantData = {
           ...restaurantRecord,
           table_billing_mode: effectiveBillingMode,
           public_menu_theme_id: resolvedPublicMenuThemeId,
+          gst_summary: resolvedGstSummary,
         };
 
         // Public menus receive only a small, non-sensitive set of plan entitlements.
@@ -725,7 +738,17 @@ export default function PublicMenu() {
         { p_slug: slug, p_table_token: tableToken, p_guest_tab_token: token },
       );
       if (snapshotError) throw snapshotError;
-      setGuestTabSnapshot(data || null);
+      let snapshot = data || null;
+      if (snapshot?.invoice?.id) {
+        const { data: taxSnapshot, error: taxSnapshotError } = await supabase.rpc(
+          "khaavio_public_invoice_tax_snapshot",
+          { p_slug: slug, p_table_token: tableToken, p_invoice_id: snapshot.invoice.id, p_guest_tab_token: token },
+        );
+        if (!taxSnapshotError && taxSnapshot) {
+          snapshot = { ...snapshot, invoice: { ...snapshot.invoice, ...taxSnapshot } };
+        }
+      }
+      setGuestTabSnapshot(snapshot);
     } catch (snapshotError) {
       setGuestBillError(getErrorMessage(snapshotError, "Could not load your bill. Please refresh the menu or ask staff for help."));
     } finally {
@@ -743,7 +766,17 @@ export default function PublicMenu() {
         { p_slug: slug, p_table_token: tableToken },
       );
       if (snapshotError) throw snapshotError;
-      setTableBillSnapshot(data || null);
+      let snapshot = data || null;
+      if (snapshot?.invoice?.id) {
+        const { data: taxSnapshot, error: taxSnapshotError } = await supabase.rpc(
+          "khaavio_public_invoice_tax_snapshot",
+          { p_slug: slug, p_table_token: tableToken, p_invoice_id: snapshot.invoice.id, p_guest_tab_token: null },
+        );
+        if (!taxSnapshotError && taxSnapshot) {
+          snapshot = { ...snapshot, invoice: { ...snapshot.invoice, ...taxSnapshot } };
+        }
+      }
+      setTableBillSnapshot(snapshot);
     } catch (snapshotError) {
       setTableBillError(getErrorMessage(snapshotError, "Could not load the table bill. Please ask restaurant staff for help."));
     } finally {
@@ -945,6 +978,19 @@ export default function PublicMenu() {
   const activeCoupon = appliedCoupon?.fingerprint === cartFingerprint ? appliedCoupon : null;
   const cartDiscount = Number(activeCoupon?.discountAmount) || 0;
   const cartFinalTotal = Math.max(0, cartTotal - cartDiscount);
+  const publicGstSummary = restaurant?.gst_summary;
+  const shouldChargeCheckoutGst = !tableContext
+    && publicGstSummary?.registration_type === "regular"
+    && publicGstSummary?.gst_enabled === true;
+  const checkoutGstBreakdown = shouldChargeCheckoutGst
+    ? calculateGstBreakdown({
+      amount: cartFinalTotal,
+      totalRate: publicGstSummary.gst_rate,
+      inclusive: publicGstSummary.gst_inclusive,
+      taxType: publicGstSummary.tax_type,
+    })
+    : null;
+  const checkoutGrandTotal = checkoutGstBreakdown?.grandTotal ?? cartFinalTotal;
 
   const baseOrderingAvailability = getRestaurantAvailability(
     restaurant,
@@ -1237,7 +1283,7 @@ export default function PublicMenu() {
       };
 
       if (!tableContext) {
-        const { data, error: orderError } = await supabase.rpc("place_public_order_for_service_mode", {
+        const { data, error: orderError } = await supabase.rpc("place_public_order_for_service_mode_with_gst", {
           p_slug: slug,
           p_customer_name: name,
           p_customer_phone: phone,
@@ -1251,7 +1297,29 @@ export default function PublicMenu() {
         if (orderError) throw orderError;
         const result = Array.isArray(data) ? data[0] : data;
         if (!result?.order_id) throw new Error("We couldn't confirm the order reference. Please contact the restaurant before trying again.");
-        setOrderResult({ id: result.order_id, reference: result.order_reference, total: Number(result.total_amount) || 0, trackingToken: result.tracking_token || null, couponCode: activeCoupon?.code || null, discountAmount: cartDiscount, serviceMode: selectedMode, pickupEtaMinutes: selectedMode === "pickup" ? pickupEtaMinutes : null });
+        let orderTaxSnapshot = null;
+        if (result.tracking_token) {
+          try {
+            const { data: taxData, error: taxError } = await supabase.rpc(
+              "khaavio_public_order_tax_snapshot",
+              { p_slug: slug, p_order_id: result.order_id, p_tracking_token: result.tracking_token },
+            );
+            if (!taxError && taxData) orderTaxSnapshot = taxData;
+          } catch {
+            orderTaxSnapshot = null;
+          }
+        }
+        setOrderResult({
+          id: result.order_id,
+          reference: result.order_reference,
+          total: Number(orderTaxSnapshot?.grand_total ?? result.total_amount) || 0,
+          trackingToken: result.tracking_token || null,
+          couponCode: activeCoupon?.code || null,
+          discountAmount: cartDiscount,
+          serviceMode: selectedMode,
+          pickupEtaMinutes: selectedMode === "pickup" ? pickupEtaMinutes : null,
+          taxSnapshot: orderTaxSnapshot,
+        });
         setCart([]);
         setOrderNotes("");
         setCouponInput("");
@@ -1519,9 +1587,17 @@ export default function PublicMenu() {
                 {guestTabSnapshot.invoice ? (
                   <>
                   <div className="public-guest-bill-invoice">
-                    <strong>{guestTabSnapshot.invoice.invoice_number}</strong>
+                    <strong>{guestTabSnapshot.invoice.document_type === "tax_invoice" ? "Tax Invoice" : guestTabSnapshot.invoice.document_type === "bill_of_supply" ? "Bill of Supply" : "Final Bill"} · {guestTabSnapshot.invoice.gst_document_number || guestTabSnapshot.invoice.invoice_number}</strong>
+                    {guestTabSnapshot.invoice.supplier_legal_name && <span>{guestTabSnapshot.invoice.supplier_legal_name}</span>}
+                    {guestTabSnapshot.invoice.supplier_address && <span>{guestTabSnapshot.invoice.supplier_address}{guestTabSnapshot.invoice.supplier_city ? ", " + guestTabSnapshot.invoice.supplier_city : ""}{guestTabSnapshot.invoice.supplier_state ? ", " + guestTabSnapshot.invoice.supplier_state : ""}{guestTabSnapshot.invoice.supplier_postal_code ? " - " + guestTabSnapshot.invoice.supplier_postal_code : ""}</span>}
                     {guestTabSnapshot.invoice.gstin_snapshot && <span>GSTIN: {guestTabSnapshot.invoice.gstin_snapshot}</span>}
-                    {Number(guestTabSnapshot.invoice.tax_amount) > 0 && <span>GST {guestTabSnapshot.invoice.gst_inclusive ? "included" : "added"}: {formatPrice(guestTabSnapshot.invoice.tax_amount)}</span>}
+                    {Number(guestTabSnapshot.invoice.taxable_amount) > 0 && <span>Taxable value: {formatPrice(guestTabSnapshot.invoice.taxable_amount)}</span>}
+                    {Number(guestTabSnapshot.invoice.cgst_amount) > 0 && <span>CGST ({guestTabSnapshot.invoice.cgst_rate}%): {formatPrice(guestTabSnapshot.invoice.cgst_amount)}</span>}
+                    {Number(guestTabSnapshot.invoice.sgst_amount) > 0 && <span>SGST ({guestTabSnapshot.invoice.sgst_rate}%): {formatPrice(guestTabSnapshot.invoice.sgst_amount)}</span>}
+                    {Number(guestTabSnapshot.invoice.igst_amount) > 0 && <span>IGST ({guestTabSnapshot.invoice.igst_rate}%): {formatPrice(guestTabSnapshot.invoice.igst_amount)}</span>}
+                    {Number(guestTabSnapshot.invoice.tax_amount) > 0 && <span>GST total {guestTabSnapshot.invoice.gst_inclusive ? "included" : "added"}: {formatPrice(guestTabSnapshot.invoice.tax_amount)}</span>}
+                    {guestTabSnapshot.invoice.place_of_supply_state && <span>Place of supply: {guestTabSnapshot.invoice.place_of_supply_state}</span>}
+                    {guestTabSnapshot.invoice.sac_code && <span>SAC: {guestTabSnapshot.invoice.sac_code}</span>}
                     <span>Status: {guestTabSnapshot.invoice.payment_status}</span>
                     {guestTabSnapshot.invoice.payment_status === "paid" ? (
                       <p>Your bill is paid. Thank you for dining with us!</p>
@@ -1641,8 +1717,17 @@ export default function PublicMenu() {
                   <strong>{formatPrice(tableBillSnapshot.invoice.total_amount)}</strong>
                 </div>
                 <div className="public-guest-bill-invoice">
+                  <strong>{tableBillSnapshot.invoice.document_type === "tax_invoice" ? "Tax Invoice" : tableBillSnapshot.invoice.document_type === "bill_of_supply" ? "Bill of Supply" : "Final Bill"} · {tableBillSnapshot.invoice.gst_document_number || tableBillSnapshot.invoice.invoice_number}</strong>
+                  {tableBillSnapshot.invoice.supplier_legal_name && <span>{tableBillSnapshot.invoice.supplier_legal_name}</span>}
+                  {tableBillSnapshot.invoice.supplier_address && <span>{tableBillSnapshot.invoice.supplier_address}{tableBillSnapshot.invoice.supplier_city ? ", " + tableBillSnapshot.invoice.supplier_city : ""}{tableBillSnapshot.invoice.supplier_state ? ", " + tableBillSnapshot.invoice.supplier_state : ""}{tableBillSnapshot.invoice.supplier_postal_code ? " - " + tableBillSnapshot.invoice.supplier_postal_code : ""}</span>}
                   {tableBillSnapshot.invoice.gstin_snapshot && <span>GSTIN: {tableBillSnapshot.invoice.gstin_snapshot}</span>}
-                  {Number(tableBillSnapshot.invoice.tax_amount) > 0 && <span>GST {tableBillSnapshot.invoice.gst_inclusive ? "included" : "added"}: {formatPrice(tableBillSnapshot.invoice.tax_amount)}</span>}
+                  {Number(tableBillSnapshot.invoice.taxable_amount) > 0 && <span>Taxable value: {formatPrice(tableBillSnapshot.invoice.taxable_amount)}</span>}
+                  {Number(tableBillSnapshot.invoice.cgst_amount) > 0 && <span>CGST ({tableBillSnapshot.invoice.cgst_rate}%): {formatPrice(tableBillSnapshot.invoice.cgst_amount)}</span>}
+                  {Number(tableBillSnapshot.invoice.sgst_amount) > 0 && <span>SGST ({tableBillSnapshot.invoice.sgst_rate}%): {formatPrice(tableBillSnapshot.invoice.sgst_amount)}</span>}
+                  {Number(tableBillSnapshot.invoice.igst_amount) > 0 && <span>IGST ({tableBillSnapshot.invoice.igst_rate}%): {formatPrice(tableBillSnapshot.invoice.igst_amount)}</span>}
+                  {Number(tableBillSnapshot.invoice.tax_amount) > 0 && <span>GST total {tableBillSnapshot.invoice.gst_inclusive ? "included" : "added"}: {formatPrice(tableBillSnapshot.invoice.tax_amount)}</span>}
+                  {tableBillSnapshot.invoice.place_of_supply_state && <span>Place of supply: {tableBillSnapshot.invoice.place_of_supply_state}</span>}
+                  {tableBillSnapshot.invoice.sac_code && <span>SAC: {tableBillSnapshot.invoice.sac_code}</span>}
                   <span>Status: {tableBillSnapshot.invoice.payment_status}</span>
                 </div>
                 <PublicInvoicePayment
@@ -2300,6 +2385,21 @@ export default function PublicMenu() {
                     </div>
 
                     {orderResult.discountAmount > 0 && <p className="public-order-confirmed-discount">Coupon {orderResult.couponCode} saved {formatPrice(orderResult.discountAmount)}</p>}
+                    {orderResult.taxSnapshot?.document_type && orderResult.taxSnapshot.document_type !== "receipt" && (
+                      <div className="public-order-confirmed-tax">
+                        <div className="public-order-tax-document">
+                          <strong>{orderResult.taxSnapshot.document_type === "tax_invoice" ? "Tax Invoice" : "Bill of Supply"}</strong>
+                          {orderResult.taxSnapshot.document_number && <span>{orderResult.taxSnapshot.document_number}</span>}
+                        </div>
+                        {orderResult.taxSnapshot.gstin_snapshot && <div><span>Supplier GSTIN</span><strong>{orderResult.taxSnapshot.gstin_snapshot}</strong></div>}
+                        <div><span>Taxable value</span><strong>{formatPrice(orderResult.taxSnapshot.taxable_amount)}</strong></div>
+                        {Number(orderResult.taxSnapshot.cgst_amount) > 0 && <div><span>CGST ({orderResult.taxSnapshot.cgst_rate}%)</span><strong>{formatPrice(orderResult.taxSnapshot.cgst_amount)}</strong></div>}
+                        {Number(orderResult.taxSnapshot.sgst_amount) > 0 && <div><span>SGST ({orderResult.taxSnapshot.sgst_rate}%)</span><strong>{formatPrice(orderResult.taxSnapshot.sgst_amount)}</strong></div>}
+                        {Number(orderResult.taxSnapshot.igst_amount) > 0 && <div><span>IGST ({orderResult.taxSnapshot.igst_rate}%)</span><strong>{formatPrice(orderResult.taxSnapshot.igst_amount)}</strong></div>}
+                        {orderResult.taxSnapshot.place_of_supply_state && <div><span>Place of supply</span><strong>{orderResult.taxSnapshot.place_of_supply_state}</strong></div>}
+                        {orderResult.taxSnapshot.sac_code && <div><span>SAC</span><strong>{orderResult.taxSnapshot.sac_code}</strong></div>}
+                      </div>
+                    )}
                     <div className="public-order-confirmed-total">
                       <span>Confirmed total</span>
                       <strong>{formatPrice(orderResult.total)}</strong>
@@ -2428,9 +2528,24 @@ export default function PublicMenu() {
                         <strong>{formatPrice(cartTotal)}</strong>
                       </div>
                       {activeCoupon && <div className="public-order-discount-row"><span>Coupon {activeCoupon.code}</span><strong>−{formatPrice(cartDiscount)}</strong></div>}
-                      <div className="public-order-final-total"><span>Estimated total</span><strong>{formatPrice(cartFinalTotal)}</strong></div>
+                      {checkoutGstBreakdown && (
+                        <div className="public-order-gst-preview">
+                          <div><span>Taxable value</span><strong>{formatPrice(checkoutGstBreakdown.taxableAmount)}</strong></div>
+                          {checkoutGstBreakdown.cgstAmount > 0 && <div><span>CGST ({checkoutGstBreakdown.cgstRate}%)</span><strong>{formatPrice(checkoutGstBreakdown.cgstAmount)}</strong></div>}
+                          {checkoutGstBreakdown.sgstAmount > 0 && <div><span>SGST ({checkoutGstBreakdown.sgstRate}%)</span><strong>{formatPrice(checkoutGstBreakdown.sgstAmount)}</strong></div>}
+                          {checkoutGstBreakdown.igstAmount > 0 && <div><span>IGST ({checkoutGstBreakdown.igstRate}%)</span><strong>{formatPrice(checkoutGstBreakdown.igstAmount)}</strong></div>}
+                          <div><span>GST {checkoutGstBreakdown.inclusive ? "included" : "total"}</span><strong>{formatPrice(checkoutGstBreakdown.taxAmount)}</strong></div>
+                        </div>
+                      )}
+                      <div className="public-order-final-total"><span>Estimated total</span><strong>{formatPrice(checkoutGrandTotal)}</strong></div>
                       <p className="public-order-estimate-note">
-                        Coupon eligibility and the final order total are checked again when you submit. GST, if enabled, is calculated on the final bill.
+                        {tableContext
+                          ? "GST, if enabled, is calculated once on your final table or guest invoice—not on each individual order."
+                          : publicGstSummary?.registration_type === "composition"
+                            ? "Composition scheme selected: GST is not added to customer bills. A Bill of Supply is issued."
+                            : checkoutGstBreakdown
+                              ? "This is an estimate. The server confirms the applicable tax and final total when you place the order."
+                              : "Coupon eligibility and the final order total are checked again when you submit."}
                       </p>
                     </div>
 

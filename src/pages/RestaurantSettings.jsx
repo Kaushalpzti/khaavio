@@ -15,11 +15,12 @@ import { supabase } from "../lib/supabaseClient";
 import { createPublicQrDestination } from "../lib/seoMetadata.js";
 import { normalizeSocialLinks, SOCIAL_LINK_FIELDS, validateSocialLinks } from "../lib/restaurantSocialLinks.js";
 import { isValidUpiId, normalizeUpiId } from "../lib/upiPayment.js";
+import { GST_REGISTRATION_TYPES, getGstTaxType, getIndianGstStateCode } from "../lib/gstBilling.js";
 import "./RestaurantSettings.css";
 import "./RestaurantSettingsLogo.css";
 
 const RESTAURANT_FIELDS =
-  "id, name, slug, restaurant_type, logo_url, phone, contact_email, address, city, state, postal_code, description, google_review_url, social_links, table_billing_mode, pickup_enabled, dine_in_enabled, gst_enabled, gstin, gst_rate, gst_price_inclusive, upi_payment_enabled, counter_payment_enabled, upi_id, receipt_paper_width, is_published";
+  "id, name, slug, restaurant_type, logo_url, phone, contact_email, address, city, state, postal_code, description, google_review_url, social_links, table_billing_mode, pickup_enabled, dine_in_enabled, gst_registration_type, gst_legal_name, gst_enabled, gstin, gst_rate, gst_price_inclusive, upi_payment_enabled, counter_payment_enabled, upi_id, receipt_paper_width, is_published";
 
 const GOOGLE_REVIEW_HOSTS = new Set([
   "g.page",
@@ -126,6 +127,8 @@ const INITIAL_FORM = {
   table_billing_mode: "combined",
   pickup_enabled: true,
   dine_in_enabled: true,
+  gst_registration_type: GST_REGISTRATION_TYPES.UNREGISTERED,
+  gst_legal_name: "",
   gst_enabled: false,
   gstin: "",
   gst_rate: "",
@@ -160,6 +163,8 @@ function formFromRestaurant(restaurant) {
     table_billing_mode: restaurant.table_billing_mode === "per_guest" ? "per_guest" : "combined",
     pickup_enabled: restaurant.pickup_enabled !== false,
     dine_in_enabled: restaurant.dine_in_enabled !== false,
+    gst_registration_type: restaurant.gst_registration_type || (restaurant.gst_enabled === true ? GST_REGISTRATION_TYPES.NEEDS_REVIEW : GST_REGISTRATION_TYPES.UNREGISTERED),
+    gst_legal_name: restaurant.gst_legal_name || "",
     gst_enabled: restaurant.gst_enabled === true,
     gstin: restaurant.gstin || "",
     gst_rate: restaurant.gst_rate == null ? "" : String(restaurant.gst_rate),
@@ -386,13 +391,36 @@ export default function RestaurantSettings() {
 
     const gstRate = Number(form.gst_rate);
     const gstin = form.gstin.trim().toUpperCase();
+    const gstLegalName = form.gst_legal_name.trim();
+    const registrationType = form.gst_registration_type;
+    const validGstin = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][A-Z0-9]Z[A-Z0-9]$/.test(gstin);
+    const gstStateCode = getIndianGstStateCode(form.state);
+    const gstTaxType = getGstTaxType({ gstin, placeOfSupplyState: form.state });
     const upiId = normalizeUpiId(form.upi_id);
-    if (form.gst_enabled && (!Number.isFinite(gstRate) || gstRate <= 0 || gstRate > 100)) {
-      setError("Enter a GST rate greater than 0 and no more than 100%.");
+
+    if (!Object.values(GST_REGISTRATION_TYPES).includes(registrationType)) {
+      setError("Choose a valid GST registration type.");
       return;
     }
-    if (form.gst_enabled && gstin && !/^[0-9A-Z]{15}$/.test(gstin)) {
-      setError("GSTIN must contain 15 letters or numbers.");
+    if ([GST_REGISTRATION_TYPES.REGULAR, GST_REGISTRATION_TYPES.COMPOSITION].includes(registrationType) && !validGstin) {
+      setError("Enter a valid 15-character GSTIN for this registration type.");
+      return;
+    }
+    if ([GST_REGISTRATION_TYPES.REGULAR, GST_REGISTRATION_TYPES.COMPOSITION].includes(registrationType) && !gstStateCode) {
+      setError("Choose a valid restaurant outlet state before saving GST registration details.");
+      return;
+    }
+    if ([GST_REGISTRATION_TYPES.REGULAR, GST_REGISTRATION_TYPES.COMPOSITION].includes(registrationType)
+      && (gstLegalName.length < 2 || !form.address.trim() || !form.city.trim())) {
+      setError("Enter the GST-registered legal business name, full street address and city before enabling tax documents.");
+      return;
+    }
+    if (registrationType === GST_REGISTRATION_TYPES.REGULAR && (!Number.isFinite(gstRate) || gstRate <= 0 || gstRate > 100)) {
+      setError("Enter the total GST rate confirmed by your accountant (greater than 0 and no more than 100%).");
+      return;
+    }
+    if (registrationType === GST_REGISTRATION_TYPES.REGULAR && !gstTaxType) {
+      setError("We could not classify this GSTIN against the restaurant state. Check the GSTIN and outlet state.");
       return;
     }
     if (form.upi_payment_enabled && !isValidUpiId(upiId)) {
@@ -426,10 +454,14 @@ export default function RestaurantSettings() {
         table_billing_mode: form.table_billing_mode === "per_guest" ? "per_guest" : "combined",
         pickup_enabled: form.pickup_enabled,
         dine_in_enabled: form.dine_in_enabled,
-        gst_enabled: form.gst_enabled,
-        gstin: gstin || null,
-        gst_rate: form.gst_enabled ? gstRate : 0,
-        gst_price_inclusive: form.gst_price_inclusive,
+        gst_registration_type: registrationType,
+        gst_legal_name: [GST_REGISTRATION_TYPES.REGULAR, GST_REGISTRATION_TYPES.COMPOSITION].includes(registrationType)
+          ? gstLegalName
+          : (registrationType === GST_REGISTRATION_TYPES.NEEDS_REVIEW ? (gstLegalName || null) : null),
+        gst_enabled: registrationType === GST_REGISTRATION_TYPES.REGULAR,
+        gstin: registrationType === GST_REGISTRATION_TYPES.UNREGISTERED ? null : (gstin || null),
+        gst_rate: registrationType === GST_REGISTRATION_TYPES.REGULAR ? gstRate : (registrationType === GST_REGISTRATION_TYPES.NEEDS_REVIEW ? (Number.isFinite(gstRate) && gstRate > 0 && gstRate <= 100 ? gstRate : 0) : 0),
+        gst_price_inclusive: registrationType === GST_REGISTRATION_TYPES.REGULAR && form.gst_price_inclusive,
         upi_payment_enabled: form.upi_payment_enabled,
         counter_payment_enabled: form.counter_payment_enabled,
         upi_id: upiId || null,
@@ -755,34 +787,140 @@ export default function RestaurantSettings() {
                 <div className="restaurant-settings-section-heading">
                   <div>
                     <h2 id="settings-gst-heading">GST &amp; billing</h2>
-                    <p>Show your GST on new QR orders and bills. Confirm your GST details and rate with your accountant.</p>
+                    <p>Choose the restaurant's GST registration status. Khaavio calculates the tax split automatically; confirm registration and applicable rates with your accountant.</p>
                   </div>
                 </div>
                 <div className="restaurant-settings-grid">
-                  <div className="restaurant-settings-field full-width settings-gst-toggle">
-                    <label htmlFor="settings-gst-enabled">Enable GST</label>
-                    <div className="settings-gst-control">
-                      <input id="settings-gst-enabled" name="gst_enabled" type="checkbox" checked={form.gst_enabled} onChange={(event) => setForm((current) => ({ ...current, gst_enabled: event.target.checked }))} />
-                      <span>{form.gst_enabled ? "GST will be calculated when the final bill is created" : "GST is off on final bills"}</span>
-                    </div>
+                  <div className="restaurant-settings-field full-width">
+                    <label htmlFor="settings-gst-registration-type">GST registration type</label>
+                    <select
+                      id="settings-gst-registration-type"
+                      name="gst_registration_type"
+                      value={form.gst_registration_type}
+                      onChange={updateField}
+                    >
+                      {form.gst_registration_type === GST_REGISTRATION_TYPES.NEEDS_REVIEW && (
+                        <option value={GST_REGISTRATION_TYPES.NEEDS_REVIEW}>Needs review — legacy GST settings are disabled</option>
+                      )}
+                      <option value={GST_REGISTRATION_TYPES.REGULAR}>Regular GST registration</option>
+                      <option value={GST_REGISTRATION_TYPES.COMPOSITION}>Composition scheme</option>
+                      <option value={GST_REGISTRATION_TYPES.UNREGISTERED}>Not registered for GST</option>
+                    </select>
+                    <span className="restaurant-settings-field-hint">
+                      Regular registration can collect GST from customers. Composition and unregistered businesses must not add GST to customer bills.
+                    </span>
                   </div>
-                  {form.gst_enabled && <>
-                    <div className="restaurant-settings-field">
-                      <label htmlFor="settings-gstin">GSTIN <span className="restaurant-settings-field-hint">(optional)</span></label>
-                      <input id="settings-gstin" name="gstin" value={form.gstin} onChange={updateField} placeholder="15-character GSTIN" maxLength={15} autoCapitalize="characters" />
+
+                  {form.gst_registration_type === GST_REGISTRATION_TYPES.NEEDS_REVIEW && (
+                    <div className="restaurant-settings-field full-width settings-gst-notice" role="status">
+                      Previous GST settings were not automatically carried forward. GST is currently disabled until you confirm the correct registration type and details.
                     </div>
-                    <div className="restaurant-settings-field">
-                      <label htmlFor="settings-gst-rate">GST rate (%) *</label>
-                      <input id="settings-gst-rate" name="gst_rate" type="number" inputMode="decimal" min="0.01" max="100" step="0.01" value={form.gst_rate} onChange={updateField} placeholder="e.g. 5" required />
-                    </div>
-                    <div className="restaurant-settings-field full-width settings-gst-toggle">
-                      <label htmlFor="settings-gst-inclusive">Menu prices include GST</label>
-                      <div className="settings-gst-control">
-                        <input id="settings-gst-inclusive" name="gst_price_inclusive" type="checkbox" checked={form.gst_price_inclusive} onChange={(event) => setForm((current) => ({ ...current, gst_price_inclusive: event.target.checked }))} />
-                        <span>{form.gst_price_inclusive ? "Menu prices already include GST; show its amount on the final bill" : "Add GST to the discounted subtotal on the final bill"}</span>
+                  )}
+
+                  {[GST_REGISTRATION_TYPES.REGULAR, GST_REGISTRATION_TYPES.COMPOSITION].includes(form.gst_registration_type) && (
+                    <>
+                      <div className="restaurant-settings-field full-width">
+                        <label htmlFor="settings-gst-legal-name">GST-registered legal business name *</label>
+                        <input
+                          id="settings-gst-legal-name"
+                          name="gst_legal_name"
+                          value={form.gst_legal_name}
+                          onChange={updateField}
+                          placeholder="Name shown on your GST registration"
+                          maxLength={160}
+                          required
+                        />
                       </div>
+                      <div className="restaurant-settings-field">
+                        <label htmlFor="settings-gstin">GSTIN *</label>
+                        <input
+                          id="settings-gstin"
+                          name="gstin"
+                          value={form.gstin}
+                          onChange={updateField}
+                          placeholder="15-character GSTIN"
+                          maxLength={15}
+                          autoCapitalize="characters"
+                          required
+                        />
+                      </div>
+                      <div className="restaurant-settings-field">
+                        <label htmlFor="settings-gst-outlet-state">Outlet state / place of supply</label>
+                        <input
+                          id="settings-gst-outlet-state"
+                          value={form.state}
+                          readOnly
+                          aria-describedby="settings-gst-state-help"
+                        />
+                        <span id="settings-gst-state-help" className="restaurant-settings-field-hint">
+                          Taken from the restaurant address above. Restaurant service place of supply is where the service is actually performed.
+                        </span>
+                      </div>
+                    </>
+                  )}
+
+                  {form.gst_registration_type === GST_REGISTRATION_TYPES.REGULAR && (
+                    <>
+                      <div className="restaurant-settings-field">
+                        <label htmlFor="settings-gst-rate">Total GST rate (%) *</label>
+                        <input
+                          id="settings-gst-rate"
+                          name="gst_rate"
+                          type="number"
+                          inputMode="decimal"
+                          min="0.01"
+                          max="100"
+                          step="0.01"
+                          value={form.gst_rate}
+                          onChange={updateField}
+                          placeholder="Enter accountant-confirmed rate"
+                          required
+                        />
+                        <span className="restaurant-settings-field-hint">Enter the total rate once. Do not enter CGST and SGST separately.</span>
+                      </div>
+                      <div className="restaurant-settings-field settings-gst-toggle">
+                        <label htmlFor="settings-gst-inclusive">Menu prices include GST</label>
+                        <div className="settings-gst-control">
+                          <input
+                            id="settings-gst-inclusive"
+                            name="gst_price_inclusive"
+                            type="checkbox"
+                            checked={form.gst_price_inclusive}
+                            onChange={(event) => setForm((current) => ({ ...current, gst_price_inclusive: event.target.checked }))}
+                          />
+                          <span>{form.gst_price_inclusive ? "GST is included in menu prices" : "GST is added to the discounted taxable value"}</span>
+                        </div>
+                      </div>
+                      <div className="restaurant-settings-field full-width settings-gst-preview">
+                        <strong>Automatic tax split preview</strong>
+                        {getGstTaxType({ gstin: form.gstin, placeOfSupplyState: form.state }) === "cgst_sgst" ? (
+                          <div className="settings-gst-preview-grid">
+                            <span>CGST <b>{((Number(form.gst_rate) || 0) / 2).toFixed(2)}%</b></span>
+                            <span>SGST <b>{((Number(form.gst_rate) || 0) / 2).toFixed(2)}%</b></span>
+                          </div>
+                        ) : getGstTaxType({ gstin: form.gstin, placeOfSupplyState: form.state }) === "igst" ? (
+                          <div className="settings-gst-preview-grid">
+                            <span>IGST <b>{(Number(form.gst_rate) || 0).toFixed(2)}%</b></span>
+                          </div>
+                        ) : (
+                          <p>Enter a valid GSTIN and select a recognised outlet state to preview the applicable tax split.</p>
+                        )}
+                        <span className="restaurant-settings-field-hint">Khaavio compares the GSTIN state code with the outlet state. Restaurant service place of supply is the outlet where the service is performed.</span>
+                      </div>
+                    </>
+                  )}
+
+                  {form.gst_registration_type === GST_REGISTRATION_TYPES.COMPOSITION && (
+                    <div className="restaurant-settings-field full-width settings-gst-notice" role="status">
+                      Composition scheme selected. Khaavio will not collect or add GST to customer bills. Eligible supplies will use a Bill of Supply document.
                     </div>
-                  </>}
+                  )}
+
+                  {form.gst_registration_type === GST_REGISTRATION_TYPES.UNREGISTERED && (
+                    <div className="restaurant-settings-field full-width settings-gst-notice" role="status">
+                      GST is off. Khaavio will not add GST to customer bills or display a GST tax invoice.
+                    </div>
+                  )}
                 </div>
               </section>
 

@@ -916,3 +916,32 @@
     margin-top: 6px;
   }
 }
+
+
+.ts-print-document-type {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 9px;
+  margin: 7px 0;
+  border: 1px solid #d8e7d5;
+  border-radius: 7px;
+  color: #2b6542;
+  background: #f2f8f0;
+  font-size: 9px;
+  font-weight: 850;
+  letter-spacing: .5px;
+}
+.ts-print-tax-summary .ts-tax-components {
+  display: grid;
+  gap: 6px;
+  padding: 8px 0;
+  border-top: 1px dashed #dfe7dc;
+  border-bottom: 1px dashed #dfe7dc;
+}
+.ts-print-tax-summary .ts-tax-meta {
+  margin-top: 5px;
+  color: #718076;
+  font-size: 9px;
+  line-height: 1.55;
+}
