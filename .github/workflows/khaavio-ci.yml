@@ -190,9 +190,6 @@ jobs:
             IF NOT pg_catalog.has_column_privilege('authenticated', 'public.restaurant_public_menu_themes', 'theme_id', 'UPDATE') THEN
               RAISE EXCEPTION 'Authenticated theme_id UPDATE grant is missing';
             END IF;
-            IF NOT pg_catalog.has_column_privilege('authenticated', 'public.restaurant_public_menu_themes', 'theme_id', 'UPDATE') THEN
-              RAISE EXCEPTION 'Authenticated theme update grant is missing';
-            END IF;
             IF NOT pg_catalog.has_function_privilege('anon', 'public.khaavio_public_restaurant_menu_theme(text)', 'EXECUTE') THEN
               RAISE EXCEPTION 'Public menu theme lookup RPC grant is missing';
             END IF;
