@@ -11,6 +11,9 @@ const dispatcher = read("supabase/functions/khaavio-email-dispatch/index.ts");
 const webhook = read("supabase/functions/razorpay-webhook/index.ts");
 const config = read("supabase/config.toml");
 const runbook = read("docs/KHAAVIO-EMAIL-AUTOMATION.md");
+const workflow = read(".github/workflows/khaavio-ci.yml");
+const sqlFixture = read("tests/sql/khaavio-platform-email-fixture.sql");
+const sqlVerify = read("tests/sql/khaavio-platform-email-verify.sql");
 
 test("email outbox is private, event-key idempotent and service-role only", () => {
   assert.match(migration, /create table if not exists public\.khaavio_email_outbox/i);
@@ -80,4 +83,19 @@ test("runbook separates staging review from production deployment and documents 
   assert.match(runbook, /vault\.create_secret/);
   assert.match(runbook, /cron\.schedule/);
   assert.match(runbook, /Manual\/offline renewal approvals do not send/i);
+});
+
+
+test("GitHub Actions compiles the email migration on disposable PostgreSQL", () => {
+  assert.match(workflow, /platform_email_migration_sql/);
+  assert.match(workflow, /tests\/sql\/khaavio-platform-email-fixture\.sql/);
+  assert.match(workflow, /tests\/sql\/khaavio-platform-email-verify\.sql/);
+  assert.match(sqlFixture, /create table public\.restaurants/i);
+  assert.match(sqlFixture, /create table public\.restaurant_subscriptions/i);
+  assert.match(sqlVerify, /trial_started/);
+  assert.match(sqlVerify, /trial_ending_reminder/);
+  assert.match(sqlVerify, /subscription_renewal_reminder/);
+  assert.match(sqlVerify, /subscription_cancelled/);
+  assert.match(sqlVerify, /subscription_payment_issue/);
+  assert.match(sqlVerify, /subscription_expired/);
 });
