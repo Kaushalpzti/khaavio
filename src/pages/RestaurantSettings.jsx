@@ -20,7 +20,7 @@ import "./RestaurantSettings.css";
 import "./RestaurantSettingsLogo.css";
 
 const RESTAURANT_FIELDS =
-  "id, name, slug, restaurant_type, logo_url, phone, contact_email, address, city, state, postal_code, description, google_review_url, social_links, table_billing_mode, pickup_enabled, dine_in_enabled, gst_registration_type, gst_enabled, gstin, gst_rate, gst_price_inclusive, upi_payment_enabled, counter_payment_enabled, upi_id, receipt_paper_width, is_published";
+  "id, name, slug, restaurant_type, logo_url, phone, contact_email, address, city, state, postal_code, description, google_review_url, social_links, table_billing_mode, pickup_enabled, dine_in_enabled, gst_registration_type, gst_legal_name, gst_enabled, gstin, gst_rate, gst_price_inclusive, upi_payment_enabled, counter_payment_enabled, upi_id, receipt_paper_width, is_published";
 
 const GOOGLE_REVIEW_HOSTS = new Set([
   "g.page",
@@ -128,6 +128,7 @@ const INITIAL_FORM = {
   pickup_enabled: true,
   dine_in_enabled: true,
   gst_registration_type: GST_REGISTRATION_TYPES.UNREGISTERED,
+  gst_legal_name: "",
   gst_enabled: false,
   gstin: "",
   gst_rate: "",
@@ -163,6 +164,7 @@ function formFromRestaurant(restaurant) {
     pickup_enabled: restaurant.pickup_enabled !== false,
     dine_in_enabled: restaurant.dine_in_enabled !== false,
     gst_registration_type: restaurant.gst_registration_type || (restaurant.gst_enabled === true ? GST_REGISTRATION_TYPES.NEEDS_REVIEW : GST_REGISTRATION_TYPES.UNREGISTERED),
+    gst_legal_name: restaurant.gst_legal_name || "",
     gst_enabled: restaurant.gst_enabled === true,
     gstin: restaurant.gstin || "",
     gst_rate: restaurant.gst_rate == null ? "" : String(restaurant.gst_rate),
@@ -389,6 +391,7 @@ export default function RestaurantSettings() {
 
     const gstRate = Number(form.gst_rate);
     const gstin = form.gstin.trim().toUpperCase();
+    const gstLegalName = form.gst_legal_name.trim();
     const registrationType = form.gst_registration_type;
     const validGstin = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][A-Z0-9]Z[A-Z0-9]$/.test(gstin);
     const gstStateCode = getIndianGstStateCode(form.state);
@@ -405,6 +408,11 @@ export default function RestaurantSettings() {
     }
     if ([GST_REGISTRATION_TYPES.REGULAR, GST_REGISTRATION_TYPES.COMPOSITION].includes(registrationType) && !gstStateCode) {
       setError("Choose a valid restaurant outlet state before saving GST registration details.");
+      return;
+    }
+    if ([GST_REGISTRATION_TYPES.REGULAR, GST_REGISTRATION_TYPES.COMPOSITION].includes(registrationType)
+      && (gstLegalName.length < 2 || !form.address.trim() || !form.city.trim())) {
+      setError("Enter the GST-registered legal business name, full street address and city before enabling tax documents.");
       return;
     }
     if (registrationType === GST_REGISTRATION_TYPES.REGULAR && (!Number.isFinite(gstRate) || gstRate <= 0 || gstRate > 100)) {
@@ -447,6 +455,9 @@ export default function RestaurantSettings() {
         pickup_enabled: form.pickup_enabled,
         dine_in_enabled: form.dine_in_enabled,
         gst_registration_type: registrationType,
+        gst_legal_name: [GST_REGISTRATION_TYPES.REGULAR, GST_REGISTRATION_TYPES.COMPOSITION].includes(registrationType)
+          ? gstLegalName
+          : (registrationType === GST_REGISTRATION_TYPES.NEEDS_REVIEW ? (gstLegalName || null) : null),
         gst_enabled: registrationType === GST_REGISTRATION_TYPES.REGULAR,
         gstin: registrationType === GST_REGISTRATION_TYPES.UNREGISTERED ? null : (gstin || null),
         gst_rate: registrationType === GST_REGISTRATION_TYPES.REGULAR ? gstRate : (registrationType === GST_REGISTRATION_TYPES.NEEDS_REVIEW ? (Number.isFinite(gstRate) && gstRate > 0 && gstRate <= 100 ? gstRate : 0) : 0),
@@ -808,6 +819,18 @@ export default function RestaurantSettings() {
 
                   {[GST_REGISTRATION_TYPES.REGULAR, GST_REGISTRATION_TYPES.COMPOSITION].includes(form.gst_registration_type) && (
                     <>
+                      <div className="restaurant-settings-field full-width">
+                        <label htmlFor="settings-gst-legal-name">GST-registered legal business name *</label>
+                        <input
+                          id="settings-gst-legal-name"
+                          name="gst_legal_name"
+                          value={form.gst_legal_name}
+                          onChange={updateField}
+                          placeholder="Name shown on your GST registration"
+                          maxLength={160}
+                          required
+                        />
+                      </div>
                       <div className="restaurant-settings-field">
                         <label htmlFor="settings-gstin">GSTIN *</label>
                         <input
