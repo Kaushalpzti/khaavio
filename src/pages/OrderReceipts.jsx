@@ -38,7 +38,7 @@ function formatDate(value) {
 }
 
 function getReference(id) {
-  return String(id || "").replace(/-/g, "").slice(-6).toUpperCase() || "------";
+  return String(id || "").replace(/-/g, "").slice(0, 8).toUpperCase() || "--------";
 }
 
 function titleCase(value) {
@@ -271,6 +271,8 @@ export default function OrderReceipts() {
           </>
         ) : (
           <>
+            {notice && <div className="order-receipts-notice no-print" role="status">{notice}</div>}
+            {error && <div className="order-receipts-alert no-print" role="alert">{error}</div>}
             <div className="order-receipt-preview-toolbar no-print">
               <button type="button" className="order-receipt-secondary-button" onClick={() => setSelectedOrderId("")}>
                 <ArrowLeft size={16} /> Back to orders
