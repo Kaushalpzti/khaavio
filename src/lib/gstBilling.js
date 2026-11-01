@@ -22,6 +22,8 @@ const GST_STATE_CODES = new Map([
   ["OTHER TERRITORY", "97"],
 ]);
 
+const VALID_GST_STATE_CODES = new Set(GST_STATE_CODES.values());
+
 function normalizeStateName(value) {
   return String(value || "")
     .trim()
@@ -41,7 +43,7 @@ export function getIndianGstStateCode(state) {
 export function getGstTaxType({ gstin, placeOfSupplyState }) {
   const supplierStateCode = String(gstin || "").trim().slice(0, 2);
   const placeOfSupplyStateCode = getIndianGstStateCode(placeOfSupplyState);
-  if (!/^\d{2}$/.test(supplierStateCode) || !placeOfSupplyStateCode) return null;
+  if (!VALID_GST_STATE_CODES.has(supplierStateCode) || !placeOfSupplyStateCode) return null;
   return supplierStateCode === placeOfSupplyStateCode ? "cgst_sgst" : "igst";
 }
 
