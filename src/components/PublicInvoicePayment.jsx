@@ -270,6 +270,9 @@ export default function PublicInvoicePayment({
             <div><span>Payment status</span><strong>PAID</strong></div>
             <div><span>Payment method</span><strong>{invoice.payment_method || "Confirmed by restaurant"}</strong></div>
             {invoice.paid_at && <div><span>Paid at</span><strong>{new Intl.DateTimeFormat("en-IN", { dateStyle: "medium", timeStyle: "short" }).format(new Date(invoice.paid_at))}</strong></div>}
+            {invoice.supplier_legal_name && <div><span>Supplier legal name</span><strong>{invoice.supplier_legal_name}</strong></div>}
+            {invoice.supplier_address && <div><span>Registered address</span><strong>{invoice.supplier_address}{invoice.supplier_city ? ", " + invoice.supplier_city : ""}{invoice.supplier_state ? ", " + invoice.supplier_state : ""}{invoice.supplier_postal_code ? " - " + invoice.supplier_postal_code : ""}</strong></div>}
+            {invoice.supplier_phone && <div><span>Supplier phone</span><strong>{invoice.supplier_phone}</strong></div>}
             {invoice.gstin_snapshot && <div><span>Supplier GSTIN</span><strong>{invoice.gstin_snapshot}</strong></div>}
             {invoice.place_of_supply_state && <div><span>Place of supply</span><strong>{invoice.place_of_supply_state}</strong></div>}
             {invoice.sac_code && <div><span>SAC</span><strong>{invoice.sac_code}</strong></div>}
