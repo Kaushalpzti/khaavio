@@ -213,3 +213,35 @@
   .menu-appearance-preview-frame iframe { height: 650px; }
   .menu-appearance-preview-stage.is-mobile .menu-appearance-preview-frame iframe { height: 636px; }
 }
+
+
+/* The selected swatch, save action and focus accents follow the currently chosen palette. */
+.menu-appearance-page[data-public-menu-theme] .menu-appearance-heading-icon,
+.menu-appearance-page[data-public-menu-theme] .menu-appearance-count,
+.menu-appearance-page[data-public-menu-theme] .menu-appearance-tip {
+  border-color: var(--khaavio-menu-border) !important;
+  color: var(--khaavio-menu-primary) !important;
+  background: var(--khaavio-menu-accent-soft) !important;
+}
+.menu-appearance-page[data-public-menu-theme] .menu-appearance-original-card.is-selected,
+.menu-appearance-page[data-public-menu-theme] .menu-appearance-theme-card.is-selected {
+  border-color: var(--khaavio-menu-accent) !important;
+  background: var(--khaavio-menu-accent-soft) !important;
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--khaavio-menu-accent) 16%, transparent) !important;
+}
+.menu-appearance-page[data-public-menu-theme] .menu-appearance-card-check {
+  color: var(--khaavio-menu-primary) !important;
+  background: var(--khaavio-menu-accent-soft) !important;
+}
+.menu-appearance-page[data-public-menu-theme] .is-selected .menu-appearance-card-check {
+  color: var(--khaavio-menu-on-accent) !important;
+  background: var(--khaavio-menu-accent) !important;
+}
+.menu-appearance-page[data-public-menu-theme] .menu-appearance-header-actions .menu-appearance-save {
+  border-color: var(--khaavio-menu-accent) !important;
+  color: var(--khaavio-menu-on-accent) !important;
+  background: var(--khaavio-menu-accent) !important;
+}
+.menu-appearance-page[data-public-menu-theme] .menu-appearance-preview-footer .is-saved > span {
+  background: var(--khaavio-menu-accent) !important;
+}
