@@ -552,3 +552,154 @@
 }
 .kitchen-item-options { grid-column: 2 / 4; color: #7b715f; font-size: 11px; line-height: 1.4; }
 .order-item-line small { display: block; margin-top: 3px; color: #778477; font-size: 11px; }
+
+/* Compact kitchen tickets: keep the full workflow visible with less scrolling. */
+#root .restaurant-dashboard-layout .restaurant-dashboard-content .kitchen-page .kitchen-order-grid {
+  gap: 12px;
+}
+
+#root .restaurant-dashboard-layout .restaurant-dashboard-content .kitchen-page .kitchen-order-card {
+  padding: 12px;
+  border-radius: 13px;
+  box-shadow: 0 4px 13px rgb(20 48 34 / 4%);
+}
+
+#root .restaurant-dashboard-layout .restaurant-dashboard-content .kitchen-page .kitchen-order-card-top {
+  gap: 8px;
+}
+
+#root .restaurant-dashboard-layout .restaurant-dashboard-content .kitchen-page .kitchen-order-reference {
+  margin-bottom: 3px;
+  font-size: 8px;
+}
+
+#root .restaurant-dashboard-layout .restaurant-dashboard-content .kitchen-page .kitchen-order-card-top h2 {
+  font-size: 15px;
+  line-height: 1.25;
+}
+
+#root .restaurant-dashboard-layout .restaurant-dashboard-content .kitchen-page .kitchen-status-pill {
+  padding: 4px 7px;
+  font-size: 8px;
+}
+
+#root .restaurant-dashboard-layout .restaurant-dashboard-content .kitchen-page .kitchen-order-meta {
+  gap: 7px 10px;
+  padding: 8px 0;
+  margin-top: 8px;
+  font-size: 9px;
+  line-height: 1.35;
+}
+
+#root .restaurant-dashboard-layout .restaurant-dashboard-content .kitchen-page .kitchen-order-meta svg {
+  width: 12px;
+  height: 12px;
+}
+
+#root .restaurant-dashboard-layout .restaurant-dashboard-content .kitchen-page .kitchen-order-age {
+  gap: 4px;
+  padding: 3px 6px;
+  font-size: 9px;
+}
+
+#root .restaurant-dashboard-layout .restaurant-dashboard-content .kitchen-page .kitchen-customer {
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 3px 8px;
+  margin-top: 8px;
+}
+
+#root .restaurant-dashboard-layout .restaurant-dashboard-content .kitchen-page .kitchen-customer span {
+  font-size: 8px;
+}
+
+#root .restaurant-dashboard-layout .restaurant-dashboard-content .kitchen-page .kitchen-customer strong {
+  font-size: 11px;
+}
+
+#root .restaurant-dashboard-layout .restaurant-dashboard-content .kitchen-page .kitchen-customer small {
+  font-size: 9px;
+}
+
+#root .restaurant-dashboard-layout .restaurant-dashboard-content .kitchen-page .kitchen-items {
+  margin-top: 7px;
+}
+
+#root .restaurant-dashboard-layout .restaurant-dashboard-content .kitchen-page .kitchen-item-row {
+  grid-template-columns: 26px minmax(0, 1fr) auto;
+  gap: 6px;
+  padding: 6px 0;
+  font-size: 10px;
+}
+
+#root .restaurant-dashboard-layout .restaurant-dashboard-content .kitchen-page .kitchen-quantity {
+  min-height: 22px;
+  border-radius: 6px;
+  font-size: 9px;
+}
+
+#root .restaurant-dashboard-layout .restaurant-dashboard-content .kitchen-page .kitchen-item-name {
+  padding-top: 3px;
+  font-size: 10px;
+}
+
+#root .restaurant-dashboard-layout .restaurant-dashboard-content .kitchen-page .kitchen-item-row strong {
+  padding-top: 3px;
+  font-size: 9px;
+}
+
+#root .restaurant-dashboard-layout .restaurant-dashboard-content .kitchen-page .kitchen-item-options {
+  font-size: 9px;
+  line-height: 1.35;
+}
+
+#root .restaurant-dashboard-layout .restaurant-dashboard-content .kitchen-page .kitchen-no-items {
+  margin: 4px 0;
+  font-size: 10px;
+}
+
+#root .restaurant-dashboard-layout .restaurant-dashboard-content .kitchen-page .kitchen-order-notes {
+  margin-top: 8px;
+  padding: 8px 9px;
+}
+
+#root .restaurant-dashboard-layout .restaurant-dashboard-content .kitchen-page .kitchen-order-notes b {
+  font-size: 9px;
+}
+
+#root .restaurant-dashboard-layout .restaurant-dashboard-content .kitchen-page .kitchen-order-notes p {
+  margin-top: 4px;
+  font-size: 10px;
+  line-height: 1.45;
+}
+
+#root .restaurant-dashboard-layout .restaurant-dashboard-content .kitchen-page .kitchen-order-total {
+  gap: 8px;
+  margin-top: 8px;
+  padding: 8px 0 1px;
+  font-size: 10px;
+}
+
+#root .restaurant-dashboard-layout .restaurant-dashboard-content .kitchen-page .kitchen-order-total strong {
+  font-size: 15px;
+}
+
+#root .restaurant-dashboard-layout .restaurant-dashboard-content .kitchen-page .kitchen-next-action {
+  min-height: 36px;
+  gap: 7px;
+  margin-top: 9px;
+  padding: 8px 10px;
+  font-size: 10px;
+}
+
+@media (max-width: 680px) {
+  #root .restaurant-dashboard-layout .restaurant-dashboard-content .kitchen-page .kitchen-order-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 10px;
+  }
+
+  #root .restaurant-dashboard-layout .restaurant-dashboard-content .kitchen-page .kitchen-order-card {
+    padding: 12px;
+  }
+}
