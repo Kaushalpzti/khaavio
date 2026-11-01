@@ -31,7 +31,7 @@ test("Kitchen Display prints a per-order KOT using the saved width", () => {
   );
   assert.match(kot, /KITCHEN ORDER TICKET/);
   assert.doesNotMatch(kot, /formatThermalPrice|Order total|TOTAL/);
-  assert.match(kot, /selected_options/);
+  assert.match(thermal, /item\?\.selected_options/);
   assert.match(kot, /order\.notes/);
 });
 
