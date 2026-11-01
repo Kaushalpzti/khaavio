@@ -95,9 +95,9 @@ export const PUBLIC_MENU_THEMES = [
     description: "Earthy, rich and premium.",
     swatches: ["#1A120E", "#3A2418", "#6B4A2E", "#A88462", "#D5C4AE", "#4A4A46"],
     colors: {
-      primary: "#1A120E", secondary: "#A88462", accent: "#6B4A2E",
-      surface: "#E8D9C6", background: "#F5EDE3", text: "#241A14",
-      muted: "#4A4A46", border: "#D2BCA3", onPrimary: "#FFFFFF", onAccent: "#FFFFFF",
+      primary: "#1A120E", secondary: "#6B4A2E", accent: "#A88462",
+      surface: "#3A2418", background: "#1A120E", text: "#F5EDE3",
+      muted: "#D5C4AE", border: "#4A4A46", onPrimary: "#FFFFFF", onAccent: "#1A120E",
     },
   },
   {
@@ -107,8 +107,8 @@ export const PUBLIC_MENU_THEMES = [
     swatches: ["#121212", "#1F2937", "#334155", "#64748B", "#F1F5F9", "#EC4899"],
     colors: {
       primary: "#121212", secondary: "#334155", accent: "#EC4899",
-      surface: "#F1F5F9", background: "#FAFCFF", text: "#121826",
-      muted: "#64748B", border: "#DDE3EA", onPrimary: "#FFFFFF", onAccent: "#FFFFFF",
+      surface: "#1F2937", background: "#121212", text: "#F1F5F9",
+      muted: "#A8B4C5", border: "#334155", onPrimary: "#FFFFFF", onAccent: "#121212",
     },
   },
   {
@@ -118,8 +118,8 @@ export const PUBLIC_MENU_THEMES = [
     swatches: ["#0F1F17", "#1E3A2E", "#3E5A3F", "#6B7F67", "#C7CBB8", "#3D4337"],
     colors: {
       primary: "#0F1F17", secondary: "#3E5A3F", accent: "#6B7F67",
-      surface: "#C7CBB8", background: "#F1F2E8", text: "#172319",
-      muted: "#3D4337", border: "#D8DDCC", onPrimary: "#FFFFFF", onAccent: "#FFFFFF",
+      surface: "#1E3A2E", background: "#0F1F17", text: "#F1F2E8",
+      muted: "#C7CBB8", border: "#3D4337", onPrimary: "#FFFFFF", onAccent: "#0F1F17",
     },
   },
   {
@@ -129,8 +129,8 @@ export const PUBLIC_MENU_THEMES = [
     swatches: ["#1A0F2E", "#3B1B4F", "#7A2E6F", "#D6598F", "#F4D7D4", "#FF6B6B"],
     colors: {
       primary: "#1A0F2E", secondary: "#7A2E6F", accent: "#FF6B6B",
-      surface: "#F4D7D4", background: "#FFF6F5", text: "#2D183C",
-      muted: "#744B6D", border: "#EDCBD0", onPrimary: "#FFFFFF", onAccent: "#1A0F2E",
+      surface: "#3B1B4F", background: "#1A0F2E", text: "#F4D7D4",
+      muted: "#E0B6D1", border: "#7A2E6F", onPrimary: "#FFFFFF", onAccent: "#1A0F2E",
     },
   },
 ];
