@@ -11,6 +11,7 @@ import {
   LoaderCircle,
   Maximize2,
   Minimize2,
+  Printer,
   RefreshCw,
   Utensils,
   Volume2,
@@ -20,6 +21,7 @@ import { supabase } from "../lib/supabaseClient";
 import { normalizeTableNumber } from "../lib/tableNumber";
 import { useKhaavioOperationalAlerts } from "../context/KhaavioOperationalAlertsContext";
 import { activateKhaavioAlertSound, cancelKhaavioVoice } from "../lib/khaavioVoiceAlerts";
+import { printKitchenOrderTicket } from "../lib/thermalPrinting.js";
 import "./KitchenDisplay.css";
 
 const ACTIVE_STATUSES = ["pending", "accepted", "preparing", "ready"];
@@ -199,7 +201,7 @@ export default function KitchenDisplay() {
           const { data: restaurantData, error: restaurantError } =
             await supabase
               .from("restaurants")
-              .select("id, name, slug")
+              .select("id, name, slug, receipt_paper_width")
               .eq("owner_id", authData.user.id)
               .maybeSingle();
 
@@ -362,6 +364,17 @@ export default function KitchenDisplay() {
       }
     } catch (fullscreenError) {
       setError(fullscreenError?.message || "Could not change fullscreen mode.");
+    }
+  }
+
+  function printKOT(order) {
+    const printed = printKitchenOrderTicket({
+      restaurantName: restaurant?.name,
+      order,
+      widthMm: restaurant?.receipt_paper_width || "80",
+    });
+    if (!printed) {
+      setError("The KOT print window was blocked. Allow pop-ups for this site and try again.");
     }
   }
 
@@ -595,21 +608,32 @@ export default function KitchenDisplay() {
                     <strong>{formatPrice(order.total_amount)}</strong>
                   </div>
 
-                  {action ? (
+                  <div className="kitchen-order-actions">
                     <button
                       type="button"
-                      className="kitchen-next-action"
-                      onClick={() => updateStatus(order, action.next)}
-                      disabled={Boolean(updatingOrderId)}
+                      className="kitchen-print-kot"
+                      onClick={() => printKOT(order)}
+                      aria-label={"Print KOT for order " + getReference(order.id)}
                     >
-                      {updatingOrderId === order.id ? (
-                        <LoaderCircle className="kitchen-spin" size={16} />
-                      ) : (
-                        <CheckCircle2 size={16} />
-                      )}
-                      {updatingOrderId === order.id ? "Updating…" : action.label}
+                      <Printer size={15} />
+                      Print KOT
                     </button>
-                  ) : null}
+                    {action ? (
+                      <button
+                        type="button"
+                        className="kitchen-next-action"
+                        onClick={() => updateStatus(order, action.next)}
+                        disabled={Boolean(updatingOrderId)}
+                      >
+                        {updatingOrderId === order.id ? (
+                          <LoaderCircle className="kitchen-spin" size={16} />
+                        ) : (
+                          <CheckCircle2 size={16} />
+                        )}
+                        {updatingOrderId === order.id ? "Updating…" : action.label}
+                      </button>
+                    ) : null}
+                  </div>
                 </article>
               );
             })}
