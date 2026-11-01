@@ -3,6 +3,10 @@
 -- the original GST migrations; this fixture adds the same baseline safely.
 ALTER TABLE public.restaurants
   ADD COLUMN IF NOT EXISTS state text,
+  ADD COLUMN IF NOT EXISTS address text,
+  ADD COLUMN IF NOT EXISTS city text,
+  ADD COLUMN IF NOT EXISTS postal_code text,
+  ADD COLUMN IF NOT EXISTS phone text,
   ADD COLUMN IF NOT EXISTS gst_enabled boolean NOT NULL DEFAULT false,
   ADD COLUMN IF NOT EXISTS gstin text,
   ADD COLUMN IF NOT EXISTS gst_rate numeric(5,2) NOT NULL DEFAULT 0,
