@@ -104,7 +104,18 @@ export default function OrderTracking() {
           }
         }
 
-        setOrder({ ...result, items: Array.isArray(items) ? items : [] });
+        let taxSnapshot = null;
+        try {
+          const { data: taxData, error: taxError } = await supabase.rpc(
+            "khaavio_public_order_tax_snapshot",
+            { p_slug: slug, p_order_id: result.order_id, p_tracking_token: token },
+          );
+          if (!taxError && taxData) taxSnapshot = taxData;
+        } catch {
+          taxSnapshot = null;
+        }
+
+        setOrder({ ...result, items: Array.isArray(items) ? items : [], taxSnapshot });
         setLastUpdated(new Date().toISOString());
         setError("");
       } catch (requestError) {
@@ -161,7 +172,18 @@ export default function OrderTracking() {
         }
       }
 
-      setOrder({ ...result, items: Array.isArray(items) ? items : [] });
+      let taxSnapshot = null;
+      try {
+        const { data: taxData, error: taxError } = await supabase.rpc(
+          "khaavio_public_order_tax_snapshot",
+          { p_slug: slug, p_order_id: result.order_id, p_tracking_token: token },
+        );
+        if (!taxError && taxData) taxSnapshot = taxData;
+      } catch {
+        taxSnapshot = null;
+      }
+
+      setOrder({ ...result, items: Array.isArray(items) ? items : [], taxSnapshot });
       setLastUpdated(new Date().toISOString());
       setError("");
     } catch (requestError) {
@@ -335,6 +357,21 @@ export default function OrderTracking() {
                 </div>
               ) : (
                 <p className="order-tracking-empty-items">Item details are not available.</p>
+              )}
+              {order.taxSnapshot?.document_type && order.taxSnapshot.document_type !== "receipt" && (
+                <div className="order-tracking-tax-summary">
+                  <div className="order-tracking-tax-document">
+                    <span>{order.taxSnapshot.document_type === "tax_invoice" ? "Tax invoice" : "Bill of Supply"}</span>
+                    <strong>{order.taxSnapshot.document_number || order.order_reference}</strong>
+                  </div>
+                  {order.taxSnapshot.gstin_snapshot && <div><span>Supplier GSTIN</span><strong>{order.taxSnapshot.gstin_snapshot}</strong></div>}
+                  {Number(order.taxSnapshot.taxable_amount) > 0 && <div><span>Taxable value</span><strong>{formatPrice(order.taxSnapshot.taxable_amount)}</strong></div>}
+                  {Number(order.taxSnapshot.cgst_amount) > 0 && <div><span>CGST ({order.taxSnapshot.cgst_rate}%)</span><strong>{formatPrice(order.taxSnapshot.cgst_amount)}</strong></div>}
+                  {Number(order.taxSnapshot.sgst_amount) > 0 && <div><span>SGST ({order.taxSnapshot.sgst_rate}%)</span><strong>{formatPrice(order.taxSnapshot.sgst_amount)}</strong></div>}
+                  {Number(order.taxSnapshot.igst_amount) > 0 && <div><span>IGST ({order.taxSnapshot.igst_rate}%)</span><strong>{formatPrice(order.taxSnapshot.igst_amount)}</strong></div>}
+                  {order.taxSnapshot.place_of_supply_state && <div><span>Place of supply</span><strong>{order.taxSnapshot.place_of_supply_state}</strong></div>}
+                  {order.taxSnapshot.sac_code && <div><span>SAC</span><strong>{order.taxSnapshot.sac_code}</strong></div>}
+                </div>
               )}
               <div className="order-tracking-total">
                 <span>Total</span>
