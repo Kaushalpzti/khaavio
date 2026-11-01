@@ -1283,7 +1283,7 @@ export default function PublicMenu() {
       };
 
       if (!tableContext) {
-        const { data, error: orderError } = await supabase.rpc("place_public_order_for_service_mode", {
+        const { data, error: orderError } = await supabase.rpc("place_public_order_for_service_mode_with_gst", {
           p_slug: slug,
           p_customer_name: name,
           p_customer_phone: phone,
