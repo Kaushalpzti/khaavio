@@ -42,7 +42,7 @@ export const PUBLIC_MENU_THEMES = [
     colors: {
       primary: "#5B21B6", secondary: "#C7B3FF", accent: "#8B5CF6",
       surface: "#EDE9FE", background: "#FAF9FF", text: "#31165D",
-      muted: "#6D5B85", border: "#E3DDF6", onPrimary: "#FFFFFF", onAccent: "#FFFFFF",
+      muted: "#6D5B85", border: "#E3DDF6", onPrimary: "#FFFFFF", onAccent: "#050A06",
     },
   },
   {
@@ -53,7 +53,7 @@ export const PUBLIC_MENU_THEMES = [
     colors: {
       primary: "#6D0D3F", secondary: "#F9A8D4", accent: "#EC4899",
       surface: "#FCE7F3", background: "#FFF9FB", text: "#52112F",
-      muted: "#8C536F", border: "#F5D3E4", onPrimary: "#FFFFFF", onAccent: "#FFFFFF",
+      muted: "#8C536F", border: "#F5D3E4", onPrimary: "#FFFFFF", onAccent: "#301020",
     },
   },
   {
@@ -119,7 +119,7 @@ export const PUBLIC_MENU_THEMES = [
     colors: {
       primary: "#0F1F17", secondary: "#3E5A3F", accent: "#6B7F67",
       surface: "#1E3A2E", background: "#0F1F17", text: "#F1F2E8",
-      muted: "#C7CBB8", border: "#3D4337", onPrimary: "#FFFFFF", onAccent: "#0F1F17",
+      muted: "#C7CBB8", border: "#3D4337", onPrimary: "#FFFFFF", onAccent: "#050A06",
     },
   },
   {
