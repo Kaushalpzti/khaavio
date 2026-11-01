@@ -62,6 +62,19 @@ test("invalid rate or tax type cannot silently add tax", () => {
   assert.equal(badType.grandTotal, 100);
 });
 
+test("owner order receipts and thermal print/share show the confirmed GST payable total", () => {
+  const receipts = read("../src/pages/OrderReceipts.jsx");
+  const thermal = read("../src/lib/thermalPrinting.js");
+  assert.match(receipts, /grand_total/);
+  assert.match(receipts, /gst_cgst_amount_snapshot/);
+  assert.match(receipts, /gst_document_number/);
+  assert.match(thermal, /order.grand_total ?? order.total_amount/);
+  assert.match(thermal, /TAX INVOICE/);
+  assert.match(thermal, /CGST/);
+  assert.match(thermal, /SGST/);
+  assert.match(thermal, /IGST/);
+});
+
 test("migration snapshots supplier, tax components and preserves legacy invoices", () => {
   const migration = read("../supabase/migrations/20261101150000_complete_gst_billing.sql");
   assert.match(migration, /gst_registration_consistency_check/);
