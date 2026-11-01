@@ -247,7 +247,7 @@ export default function PublicInvoicePayment({
           <div className="public-invoice-receipt-paid-actions">
             <button type="button" className="public-invoice-receipt-download" onClick={printPaidReceipt}>
               <Download size={16} />
-              Download bill / Print
+              Download bill / Save PDF
             </button>
             <button type="button" className="public-invoice-receipt-share" onClick={sharePaidReceipt}>
               <Share2 size={16} />
