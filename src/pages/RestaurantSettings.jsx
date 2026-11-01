@@ -872,12 +872,12 @@ export default function RestaurantSettings() {
                         <strong>Automatic tax split preview</strong>
                         {getGstTaxType({ gstin: form.gstin, placeOfSupplyState: form.state }) === "cgst_sgst" ? (
                           <div className="settings-gst-preview-grid">
-                            <span>CGST <b>{(gstRate / 2 || 0).toFixed(2)}%</b></span>
-                            <span>SGST <b>{(gstRate / 2 || 0).toFixed(2)}%</b></span>
+                            <span>CGST <b>{((Number(form.gst_rate) || 0) / 2).toFixed(2)}%</b></span>
+                            <span>SGST <b>{((Number(form.gst_rate) || 0) / 2).toFixed(2)}%</b></span>
                           </div>
                         ) : getGstTaxType({ gstin: form.gstin, placeOfSupplyState: form.state }) === "igst" ? (
                           <div className="settings-gst-preview-grid">
-                            <span>IGST <b>{(gstRate || 0).toFixed(2)}%</b></span>
+                            <span>IGST <b>{(Number(form.gst_rate) || 0).toFixed(2)}%</b></span>
                           </div>
                         ) : (
                           <p>Enter a valid GSTIN and select a recognised outlet state to preview the applicable tax split.</p>
