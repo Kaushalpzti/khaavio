@@ -26,9 +26,10 @@ import {
   Zap,
 } from "lucide-react";
 import khaavioIcon from "../assets/icon.png";
+import { KHAAVIO_EMAILS } from "../lib/contactEmails.js";
 import "./Home.css";
 
-const CONTACT_EMAIL = "khaavioqr@gmail.com";
+const CONTACT_EMAIL = KHAAVIO_EMAILS.general;
 const WHATSAPP_NUMBER = "917324883263";
 
 const featureCards = [
