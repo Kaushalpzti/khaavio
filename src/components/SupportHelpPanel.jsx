@@ -15,6 +15,7 @@ import {
   Search,
   UtensilsCrossed,
 } from "lucide-react";
+import { KHAAVIO_EMAILS } from "../lib/contactEmails.js";
 import "./SupportHelpPanel.css";
 
 const HELP_ARTICLES = [
@@ -133,7 +134,9 @@ export default function SupportHelpPanel({ restaurant, accountEmail, id = "help-
     );
   }, [query]);
 
-  const supportEmail = String(import.meta.env.VITE_KHAAVIO_SUPPORT_EMAIL || "").trim();
+  const supportEmail = String(
+    import.meta.env.VITE_KHAAVIO_SUPPORT_EMAIL || KHAAVIO_EMAILS.support,
+  ).trim();
   const supportWhatsApp = String(
     import.meta.env.VITE_KHAAVIO_SUPPORT_WHATSAPP || "",
   ).replace(/\D/g, "");
