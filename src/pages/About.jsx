@@ -12,9 +12,10 @@ import {
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import khaavioIcon from "../assets/icon.png";
+import { KHAAVIO_EMAILS } from "../lib/contactEmails.js";
 import "./About.css";
 
-const SUPPORT_EMAIL = "khaavioqr@gmail.com";
+const SUPPORT_EMAIL = KHAAVIO_EMAILS.support;
 
 const pillars = [
   {
