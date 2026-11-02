@@ -134,9 +134,7 @@ export default function SupportHelpPanel({ restaurant, accountEmail, id = "help-
     );
   }, [query]);
 
-  const supportEmail = String(
-    import.meta.env.VITE_KHAAVIO_SUPPORT_EMAIL || KHAAVIO_EMAILS.support,
-  ).trim();
+  const supportEmail = KHAAVIO_EMAILS.support;
   const supportWhatsApp = String(
     import.meta.env.VITE_KHAAVIO_SUPPORT_WHATSAPP || "",
   ).replace(/\D/g, "");
