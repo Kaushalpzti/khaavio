@@ -17,6 +17,8 @@ It does not send order, booking, or other restaurant-customer emails.
 | `subscription_expired` | Subscription access actually reaches its end or Razorpay completes it |
 
 The Resend template IDs are pinned in `supabase/functions/khaavio-email-dispatch/index.ts`.
+The dispatcher sends from `hello@khaavio.in` and sets replies to `billing@khaavio.in` for subscription lifecycle messages. Public support links use `support@khaavio.in`, while general website enquiries use `hello@khaavio.in`.
+
 The dispatcher uses Resend's template send API and a deterministic idempotency key.
 The database `event_key` is the durable duplicate-prevention key; Resend's key additionally
 protects short-window retries.
