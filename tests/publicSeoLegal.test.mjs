@@ -95,20 +95,21 @@ test("privacy policy discloses current AI, loyalty, feedback and browser-storage
 test("operator identity and grievance contact appear on legal pages but not the homepage", () => {
     const legal = readRoot("src/pages/LegalPage.jsx");
     const home = readRoot("src/pages/Home.jsx");
+    const emailConfig = readRoot("src/lib/contactEmails.js");
     for (const text of[
             "Kaushal Kumar",
             "Patna, Bihar – 800011, India",
             "Grievance Officer",
             "+91 9471640485",
-            "kaushalpzti@gmail.com",
+            "KHAAVIO_EMAILS.support",
             "48 hours",
             "30 days",
         ]) {
-        assert.ok(legal.includes(text), `legal pages should show ${text}`);
+        assert.ok(legal.includes(text) || emailConfig.includes(text), `legal pages should show ${text}`);
     }
     assert.ok(legal.includes('const OPERATOR_PHONE = "+919471640485";'));
     assert.ok(legal.includes('href={`tel:${OPERATOR_PHONE}`}'));
-    assert.match(legal, /href=\{`mailto:\$\{GRIEVANCE_EMAIL\}`\}/);
+    assert.match(legal, /href=\{`mailto:\$\{GRIEVANCE_EMAIL\}`\}/);\n    assert.match(legal, /const BILLING_EMAIL = KHAAVIO_EMAILS.billing;/);\n    assert.match(emailConfig, /support: "support@khaavio\\.in"/);\n    assert.match(emailConfig, /billing: "billing@khaavio\\.in"/);
     assert.doesNotMatch(home, /kh-footer-operator|Kaushal Kumar|Patna, Bihar|Grievance Officer|tel:\+919471640485|mailto:kaushalpzti@gmail\.com/);
 });
 
@@ -140,11 +141,12 @@ test("route navigation resets scroll to the top before paint", () => {
 
 test("legal policies cover privacy handling, subscription terms and refund requests", () => {
     const legal = readRoot("src/pages/LegalPage.jsx");
+    const emailConfig = readRoot("src/lib/contactEmails.js");
     assert.match(legal, /Information we may handle/);
     assert.match(legal, /Razorpay/);
     assert.match(legal, /7-day free trial/);
     assert.match(legal, /AutoPay mandate/);
     assert.match(legal, /duplicate payment/);
-    assert.match(legal, /khaavioqr@gmail\.com/);
+    assert.match(legal, /BILLING_EMAIL/);\n    assert.match(emailConfig, /billing: "billing@khaavio\\.in"/);\n    assert.doesNotMatch(legal, /khaavioqr@gmail\\.com|kaushalpzti@gmail\\.com/);
     assert.match(legal, /917324883263/);
 });
