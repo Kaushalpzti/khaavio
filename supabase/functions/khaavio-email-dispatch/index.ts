@@ -37,8 +37,8 @@ const TEMPLATE_IDS: Record<TemplateKey, string> = {
   subscription_expired: "13037d3a-f80f-4799-b5ec-5f537ffbf0e5",
 };
 
-const FROM = "Khaavio <notifications@khaavio.in>";
-const REPLY_TO = "support@khaavio.in";
+const FROM = "Khaavio <hello@khaavio.in>";
+const REPLY_TO = "billing@khaavio.in";
 
 function errorText(value: unknown): string {
   return value instanceof Error ? value.message : "Unknown email delivery error";
