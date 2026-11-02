@@ -109,7 +109,10 @@ test("operator identity and grievance contact appear on legal pages but not the 
     }
     assert.ok(legal.includes('const OPERATOR_PHONE = "+919471640485";'));
     assert.ok(legal.includes('href={`tel:${OPERATOR_PHONE}`}'));
-    assert.match(legal, /href=\{`mailto:\$\{GRIEVANCE_EMAIL\}`\}/);\n    assert.match(legal, /const BILLING_EMAIL = KHAAVIO_EMAILS.billing;/);\n    assert.match(emailConfig, /support: "support@khaavio\\.in"/);\n    assert.match(emailConfig, /billing: "billing@khaavio\\.in"/);
+    assert.match(legal, /href=\{`mailto:\$\{GRIEVANCE_EMAIL\}`\}/);
+    assert.match(legal, /const BILLING_EMAIL = KHAAVIO_EMAILS.billing;/);
+    assert.match(emailConfig, /support: "support@khaavio\.in"/);
+    assert.match(emailConfig, /billing: "billing@khaavio\.in"/);
     assert.doesNotMatch(home, /kh-footer-operator|Kaushal Kumar|Patna, Bihar|Grievance Officer|tel:\+919471640485|mailto:kaushalpzti@gmail\.com/);
 });
 
@@ -147,6 +150,8 @@ test("legal policies cover privacy handling, subscription terms and refund reque
     assert.match(legal, /7-day free trial/);
     assert.match(legal, /AutoPay mandate/);
     assert.match(legal, /duplicate payment/);
-    assert.match(legal, /BILLING_EMAIL/);\n    assert.match(emailConfig, /billing: "billing@khaavio\\.in"/);\n    assert.doesNotMatch(legal, /khaavioqr@gmail\\.com|kaushalpzti@gmail\\.com/);
+    assert.match(legal, /BILLING_EMAIL/);
+    assert.match(emailConfig, /billing: "billing@khaavio\.in"/);
+    assert.doesNotMatch(legal, /khaavioqr@gmail\.com|kaushalpzti@gmail\.com/);
     assert.match(legal, /917324883263/);
 });
