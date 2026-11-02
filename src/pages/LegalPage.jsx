@@ -1,10 +1,12 @@
 import { ArrowLeft, ArrowUpRight, Mail, ShieldCheck } from "lucide-react";
 import { Link } from "react-router-dom";
 import khaavioIcon from "../assets/icon.png";
+import { KHAAVIO_EMAILS } from "../lib/contactEmails.js";
 import "./LegalPage.css";
 
-const SUPPORT_EMAIL = "khaavioqr@gmail.com";
-const GRIEVANCE_EMAIL = "kaushalpzti@gmail.com";
+const SUPPORT_EMAIL = KHAAVIO_EMAILS.support;
+const GRIEVANCE_EMAIL = KHAAVIO_EMAILS.support;
+const BILLING_EMAIL = KHAAVIO_EMAILS.billing;
 const SUPPORT_WHATSAPP = "917324883263";
 const OPERATOR_PHONE = "+919471640485";
 const LAST_UPDATED = "30 October 2026";
@@ -222,7 +224,7 @@ const LEGAL_CONTENT = {
       {
         title: "4. How to request a refund",
         bullets: [
-          "Email khaavioqr@gmail.com from the email associated with the account.",
+          `Email ${BILLING_EMAIL} from the email associated with the account.`,
           "Include the restaurant name, account email, plan, payment date, amount and payment reference/UTR if applicable.",
           "Explain the reason for the request and attach a receipt or payment confirmation if available.",
           "Never send passwords, card PINs, banking passwords or OTPs. We may request reasonable additional information to verify the payment and prevent fraud.",
@@ -298,6 +300,7 @@ export default function LegalPage({ type }) {
           <div><dt>Phone</dt><dd><a href={`tel:${OPERATOR_PHONE}`}>+91 9471640485</a></dd></div>
           <div><dt>Grievance email</dt><dd><a href={`mailto:${GRIEVANCE_EMAIL}`}>{GRIEVANCE_EMAIL}</a></dd></div>
           <div><dt>Support email</dt><dd><a href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL}</a></dd></div>
+          <div><dt>Billing email</dt><dd><a href={`mailto:${BILLING_EMAIL}`}>{BILLING_EMAIL}</a></dd></div>
         </dl>
         <p className="kh-legal-operator-timing">We aim to acknowledge consumer complaints within 48 hours and redress them within 30 days of receipt, or sooner where applicable law requires.</p>
       </section>
@@ -317,6 +320,7 @@ export default function LegalPage({ type }) {
             <p>For privacy requests, cancellation questions, subscription billing or consumer complaints, contact Khaavio. Please do not send passwords, card PINs, banking passwords or OTPs.</p>
             <div className="kh-legal-contact-actions">
               <a href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL} <ArrowUpRight size={14} /></a>
+              <a href={`mailto:${BILLING_EMAIL}`}>Billing: {BILLING_EMAIL} <ArrowUpRight size={14} /></a>
               <a href={`https://wa.me/${SUPPORT_WHATSAPP}`} target="_blank" rel="noreferrer">WhatsApp support <ArrowUpRight size={14} /></a>
             </div>
           </div>
