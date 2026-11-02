@@ -21,9 +21,11 @@ import {
 import { supabase } from "../lib/supabaseClient";
 import { loadRazorpayCheckout } from "../lib/razorpayCheckout";
 import khaavioIcon from "../assets/icon.png";
+import { KHAAVIO_EMAILS } from "../lib/contactEmails.js";
 import "./Subscription.css";
 
 const INITIAL_NOW = new Date();
+const BILLING_EMAIL = KHAAVIO_EMAILS.billing;
 
 // Launch offers are informational until checkout and offer eligibility are implemented.
 // The founding offer must be confirmed manually by Khaavio; the UI does not count customers.
@@ -258,7 +260,7 @@ export default function Subscription() {
       );
       if (createError) throw new Error(await getCheckoutFunctionError(createError, "Could not create the Razorpay subscription."));
       if (!data?.subscription_id || !data?.attempt_id || !data?.key_id) {
-        throw new Error("The billing server did not return a valid checkout session. Please contact Khaavio support.");
+        throw new Error(`The billing server did not return a valid checkout session. Please contact Khaavio Billing at ${BILLING_EMAIL}.`);
       }
       checkoutData = data;
       const Checkout = window.Razorpay;
@@ -291,7 +293,7 @@ export default function Subscription() {
               },
             );
             if (verifyError) throw new Error(await getCheckoutFunctionError(verifyError, "Checkout signature verification failed."));
-            if (!verification?.verified) throw new Error("The checkout could not be verified. If you were charged, do not pay again; contact Khaavio support.");
+            if (!verification?.verified) throw new Error(`The checkout could not be verified. If you were charged, do not pay again; contact Khaavio Billing at ${BILLING_EMAIL}.`);
             if (verification.access_active) {
               setRequestNotice("Payment verified and your subscription is active. Welcome to Khaavio!");
             } else {
@@ -299,7 +301,7 @@ export default function Subscription() {
             }
             setRefreshKey((current) => current + 1);
           } catch (verifyError) {
-            setError(getErrorMessage(verifyError, "Payment returned, but the verification response could not be confirmed. If money was deducted, do not retry payment; contact Khaavio support."));
+            setError(getErrorMessage(verifyError, `Payment returned, but the verification response could not be confirmed. If money was deducted, do not retry payment; contact Khaavio Billing at ${BILLING_EMAIL}.`));
           } finally {
             setRequestingPlanKey("");
           }
@@ -322,7 +324,7 @@ export default function Subscription() {
         const description = event?.error?.description;
         setError(typeof description === "string" && description.trim()
           ? `Razorpay reported a payment issue: ${description}`
-          : "Razorpay could not complete this payment. Please try again or contact Khaavio support.");
+          : `Razorpay could not complete this payment. Please try again or contact Khaavio Billing at ${BILLING_EMAIL}.`);
         setRequestingPlanKey("");
       });
       checkout.open();
@@ -429,7 +431,8 @@ export default function Subscription() {
                 </h2>
                 <p>
                   Your restaurant data and history are preserved. Select an
-                  annual or monthly plan below, then contact Khaavio support to
+                  annual or monthly plan below, then contact Khaavio Billing at{" "}
+                  <a href={`mailto:${BILLING_EMAIL}`}>{BILLING_EMAIL}</a> to
                   verify payment and activate access. Payments are still handled
                   manually.
                 </p>
@@ -491,7 +494,8 @@ export default function Subscription() {
               ) : (
                 <p className="subscription-unassigned-note">
                   No subscription record is assigned to this restaurant yet.
-                  Contact Khaavio support to review access.
+                  Contact Khaavio Billing at{" "}
+                  <a href={`mailto:${BILLING_EMAIL}`}>{BILLING_EMAIL}</a> to review access.
                 </p>
               )}
 
@@ -982,7 +986,11 @@ export default function Subscription() {
               <CalendarClock size={21} />
               <div>
                 <h3>Need to change your plan?</h3>
-                <p>Switching between active paid subscriptions is not automated yet. Contact Khaavio support before starting a second paid subscription.</p>
+                <p>
+                  Switching between active paid subscriptions is not automated yet.
+                  Contact Khaavio Billing at{" "}
+                  <a href={`mailto:${BILLING_EMAIL}`}>{BILLING_EMAIL}</a> before starting a second paid subscription.
+                </p>
               </div>
             </section>
           </>
