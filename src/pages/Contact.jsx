@@ -11,10 +11,11 @@ import {
   X,
 } from "lucide-react";
 import khaavioIcon from "../assets/icon.png";
+import { KHAAVIO_EMAILS } from "../lib/contactEmails.js";
 import "./Home.css";
 import "./Contact.css";
 
-const CONTACT_EMAIL = "khaavioqr@gmail.com";
+const CONTACT_EMAIL = KHAAVIO_EMAILS.general;
 
 function ContactBrand() {
   return (
